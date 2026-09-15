@@ -455,10 +455,11 @@ final class ClinicalFeatureExtractors
         if ($low === '') {
             return null;
         }
+        $min = $awaitingPainQuestion ? 1 : 0;
         if (preg_match('/\b(\d{1,2})\s*\/\s*10\b/u', $low, $m) || preg_match('/\b(\d{1,2})\s*out of\s*10\b/u', $low, $m)) {
             $val = (int) $m[1];
 
-            return ($val >= 0 && $val <= 10) ? $val : null;
+            return ($val >= $min && $val <= 10) ? $val : null;
         }
         if (!$awaitingPainQuestion) {
             return null;
@@ -466,7 +467,7 @@ final class ClinicalFeatureExtractors
         if (preg_match('/^\s*(\d{1,2})\s*(?:\/\s*10)?(?:\s|$)/u', $low, $m)) {
             $val = (int) $m[1];
 
-            return ($val >= 0 && $val <= 10) ? $val : null;
+            return ($val >= 1 && $val <= 10) ? $val : null;
         }
 
         return null;

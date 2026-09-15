@@ -97,6 +97,8 @@ final class NegationDetector
         }
 
         // Generic window: longer Hiligaynon forms first so "wala ko X" is not captured as "ko X".
+        // Do NOT treat bare "wala" as negation — in Hiligaynon "wala nga …" often means LEFT side
+        // ("wala nga kamot" = left hand), not "no hand".
         // Do NOT treat "indi ko maka..." ability denials as symptom negation —
         // "indi ko makaginhawa" means cannot breathe (POSITIVE emergency finding).
         $genericHay = preg_replace(
@@ -104,8 +106,14 @@ final class NegationDetector
             ' ',
             $hay
         ) ?? $hay;
+        // Strip laterality phrases so "wala nga kamot/tiil/mata" never become negations.
+        $genericHay = preg_replace(
+            '/\b(wala|tuo|left|right)\s+nga\s+(kamot|tiil|paa|mata|bahin|dughan|ulo|ilong)\b/u',
+            ' ',
+            $genericHay
+        ) ?? $genericHay;
         if (preg_match_all(
-            '/\b(?:no|not|without|denies|wala\s+ko|wala\s+akong|wala\s+ako|walang|walay|wala|indi|hindi(?:\s+ako)?)\s+([a-z0-9\-\s]{2,40})/u',
+            '/\b(?:no|not|without|denies|wala\s+ko|wala\s+akong|wala\s+ako|walang|walay|indi|hindi(?:\s+ako)?)\s+([a-z0-9\-\s]{2,40})/u',
             $genericHay,
             $m
         )) {

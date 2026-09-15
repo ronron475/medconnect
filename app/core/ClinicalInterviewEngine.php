@@ -228,7 +228,7 @@ final class ClinicalInterviewEngine
 
         $missing = null;
         if (self::needsFollowUpQuestion($assessment, $context, $clinicalText, $raw)) {
-            $missing = self::nextQuestion($context, $clinicalText);
+            $missing = self::nextQuestion($context, $clinicalText, $assessment);
         }
         $askedCount = count($context['questions_asked']);
         $factsNow = is_array($context['facts'] ?? null) ? $context['facts'] : [];
@@ -239,7 +239,7 @@ final class ClinicalInterviewEngine
         // Cap question count, but never finalize while a confirmed associated symptom is unnamed.
         $sufficient = ($missing === null || $askedCount >= self::MAX_QUESTIONS) && !$mustKeepInterviewing;
         if ($mustKeepInterviewing && $missing === null) {
-            $missing = self::nextQuestion($context, $clinicalText);
+            $missing = self::nextQuestion($context, $clinicalText, $assessment);
             if ($missing === null && class_exists('ClinicalFollowUpQuestionBank')) {
                 $detail = ClinicalFollowUpQuestionBank::byId('ASSOCIATED_DETAIL');
                 if (is_array($detail)) {
@@ -871,8 +871,12 @@ final class ClinicalInterviewEngine
             }
         }
         $pain = ClinicalFeatureExtractors::extractPainScale($turn);
-        if ($pain['score'] !== null) {
-            $facts['pain_score'] = (int) $pain['score'];
+        $painScore = isset($pain['score']) && $pain['score'] !== null && $pain['score'] !== ''
+            ? (int) $pain['score']
+            : null;
+        // Interview pain scale is 1–10; do not store 0 or out-of-range values as confirmed scores.
+        if ($painScore !== null && $painScore >= 1 && $painScore <= 10) {
+            $facts['pain_score'] = $painScore;
         } elseif ($awaiting === 'PAIN_SEVERITY' || $awaiting === '') {
             $standalone = ClinicalFeatureExtractors::extractStandalonePainScore($turn, $awaiting === 'PAIN_SEVERITY');
             if ($standalone !== null) {
@@ -960,7 +964,7 @@ final class ClinicalInterviewEngine
             }
         }
 
-        $facts = self::absorbImplicitRedFlags($facts, $low);
+        $facts = self::absorbImplicitRedFlags($facts, mb_strtolower($combined));
 
         // Free-text follow-ups can introduce new clinical facts (e.g. "Ga suka ko"
         // while awaiting ONSET). Accumulate them into the case without replacing prior facts.
@@ -1269,9 +1273,11 @@ final class ClinicalInterviewEngine
 
         if (preg_match('/\b(no|wala|hindi|indi|without)\s+(weakness|numbness|pamamanhid|numb)\b/u', $low)) {
             $facts['weakness'] = false;
-        } elseif (preg_match('/nangaluya|kaluya|one[- ]sided|wala nga kamot|left arm|weakness in one|pamamanhid|naga\s*numb|\bnumbness\b/u', $low)
-            || (preg_match('/\bweakness\b/u', $low) && !preg_match('/\b(no|without)\s+weakness\b/u', $low))
-        ) {
+        } elseif (preg_match(
+            '/nangaluya|kaluya|one[- ]sided|wala nga kamot|left arm|weakness in one|pamamanhid|naga\s*numb'
+            . '|(?<!\bno\s)(?<!\bwithout\s)(?<!\bwala\s)(?<!\bhindi\s)(?<!\bindi\s)\b(?:weakness|numbness)\b/u',
+            $low
+        )) {
             $facts['weakness'] = true;
         }
         if (preg_match('/indi\s+ko\s+makahambal|cannot speak|slurred|hirap magsalita/u', $low)) {
@@ -1516,7 +1522,7 @@ final class ClinicalInterviewEngine
      */
     private static function nextBlockingQuestionSlot(array $context, string $transcript, array $assessment): ?array
     {
-        $slot = self::nextQuestionSlot($context, $transcript);
+        $slot = self::nextQuestionSlot($context, $transcript, $assessment);
         if ($slot === null) {
             return null;
         }
@@ -1599,15 +1605,16 @@ final class ClinicalInterviewEngine
 
     /**
      * @param array<string, mixed> $context
+     * @param array<string, mixed> $assessment
      * @return array<string, mixed>|null
      */
-    private static function nextQuestionSlot(array $context, string $transcript): ?array
+    private static function nextQuestionSlot(array $context, string $transcript, array $assessment = []): ?array
     {
-        // Prefer triage-relevant adaptive selection (promoted from demo policy).
+        // Prefer triage-relevant adaptive selection over the full accumulated case.
         // On any failure, fall back to legacy bank-order selection below.
         try {
             if (class_exists('ClinicalInterviewAdaptivePolicy')) {
-                $adaptive = ClinicalInterviewAdaptivePolicy::selectNextSlot($context, $transcript);
+                $adaptive = ClinicalInterviewAdaptivePolicy::selectNextSlot($context, $transcript, $assessment);
                 if (is_array($adaptive) && ($adaptive['question_id'] ?? '') !== '') {
                     return [
                         'question_id' => (string) $adaptive['question_id'],
@@ -1656,11 +1663,12 @@ final class ClinicalInterviewEngine
 
     /**
      * @param array<string, mixed> $context
+     * @param array<string, mixed> $assessment
      * @return array<string, mixed>|null
      */
-    private static function nextQuestion(array $context, string $transcript): ?array
+    private static function nextQuestion(array $context, string $transcript, array $assessment = []): ?array
     {
-        $slot = self::nextQuestionSlot($context, $transcript);
+        $slot = self::nextQuestionSlot($context, $transcript, $assessment);
         if ($slot === null) {
             return null;
         }
@@ -1893,6 +1901,12 @@ final class ClinicalInterviewEngine
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
         $low = mb_strtolower($turn);
         $awaitingUpper = strtoupper(trim($awaiting));
+        $originalComplaint = trim((string) ($context['chief_complaint'] ?? ''));
+        $combined = trim(implode('. ', array_filter([
+            $originalComplaint,
+            $turn,
+            self::transcript($context),
+        ], static fn ($v): bool => trim((string) $v) !== '')));
 
         // Never invent facts from bare yes/no.
         $yn = ClinicalFeatureExtractors::extractYesNo($turn);
@@ -1945,7 +1959,7 @@ final class ClinicalInterviewEngine
             }
         }
 
-        $facts = self::absorbImplicitRedFlags($facts, $low);
+        $facts = self::absorbImplicitRedFlags($facts, mb_strtolower($combined));
 
         // Timing volunteered inside a wrong-slot answer can still fill an empty onset.
         if (!in_array($awaitingUpper, ['ONSET', 'DURATION'], true)) {

@@ -1,13 +1,14 @@
 <?php
 /**
- * Production adaptive interview policy (promoted from Step 3 demo logic).
+ * Production adaptive interview policy.
  *
- * Selects only triage-relevant follow-ups and decides when enough information
- * exists for EMERGENCY / URGENT / NON-URGENT. Does not diagnose and does not
- * replace ClinicalTriageEngine / WHO IITT classification.
+ * Selects the next clinically useful follow-up from the shared question bank
+ * using the COMPLETE accumulated case (facts + transcript + prior answers).
+ * Does not diagnose and does not replace ClinicalTriageEngine.
  *
- * Safe to call from ClinicalInterviewEngine; callers should catch Throwables
- * and fall back to the legacy bank-order path.
+ * Selection is universal: domain tags from ClinicalInterviewContextResolver
+ * gate relevance; open clinical gaps + bank metadata decide priority.
+ * Symptom-category hardcoding is intentionally avoided.
  */
 final class ClinicalInterviewAdaptivePolicy
 {
@@ -33,6 +34,9 @@ final class ClinicalInterviewAdaptivePolicy
             $concepts
         ))));
 
+        $caseHaystack = self::fullCaseHaystack($context, $transcript, $facts);
+        $gaps = self::openClinicalGaps($facts, $transcript, $concepts, $caseHaystack);
+
         $queue = [];
         foreach (ClinicalFollowUpQuestionBank::questions() as $question) {
             if (!is_array($question)) {
@@ -51,16 +55,17 @@ final class ClinicalInterviewAdaptivePolicy
                 continue;
             }
             $when = array_map('strtolower', (array) ($question['required_when'] ?? []));
+            // Empty required_when = always eligible (e.g. ASSOCIATED_DETAIL after yes).
             if ($when !== [] && array_intersect($when, $concepts) === []) {
                 continue;
             }
-            if (!self::shouldConsiderQuestion($question, $concepts, $facts)) {
+            if (self::alreadyAnswered($qid, $facts, $transcript, $concepts, $caseHaystack)) {
                 continue;
             }
-            if (self::alreadyAnswered($qid, $facts, $transcript, $concepts)) {
+            if (self::purposeAlreadyKnown($question, $caseHaystack, $facts)) {
                 continue;
             }
-            $impact = self::triageRelevantPriority($qid, $concepts, $facts, $transcript);
+            $impact = self::scoreQuestionPriority($question, $qid, $gaps, $facts, $concepts);
             if ($impact === null) {
                 continue;
             }
@@ -77,7 +82,17 @@ final class ClinicalInterviewAdaptivePolicy
             return null;
         }
 
-        usort($queue, static fn (array $a, array $b): int => ((int) $a['priority']) <=> ((int) $b['priority']));
+        usort($queue, static function (array $a, array $b): int {
+            $p = ((int) $a['priority']) <=> ((int) $b['priority']);
+            if ($p !== 0) {
+                return $p;
+            }
+            // Prefer red-flag probes when priorities tie.
+            $ra = !empty($a['red_flag_related']) ? 0 : 1;
+            $rb = !empty($b['red_flag_related']) ? 0 : 1;
+
+            return $ra <=> $rb;
+        });
 
         return $queue[0];
     }
@@ -97,65 +112,456 @@ final class ClinicalInterviewAdaptivePolicy
         }
         $concepts = ClinicalInterviewContextResolver::deriveFamilies($complaints, $transcript, $facts);
         $concepts = self::enrichConcepts($concepts, $facts, $transcript);
+        $caseHaystack = self::fullCaseHaystack($context, $transcript, $facts);
+        $gaps = self::openClinicalGaps($facts, $transcript, $concepts, $caseHaystack);
 
-        $sev = $facts['pain_score'] ?? null;
-        $sev = $sev !== null ? (int) $sev : null;
-        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
-        $assocDone = self::associatedSymptomsResolved($facts);
-        $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
-        $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
-        $painLike = array_intersect($concepts, ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']) !== [];
-
-        if (!empty($facts['needs_associated_detail'])
-            || (($facts['has_other_symptoms'] ?? null) === true
-                && self::associatedSymptomNames($facts) === []
-                && empty($facts['denied_associated']))
-        ) {
+        // Critical gaps that should block early finalize.
+        if (!empty($gaps['associated_detail'])) {
             return false;
         }
-
-        if (array_intersect($concepts, ['chest_pain', 'breathing', 'cough', 'respiratory']) !== []) {
-            if (($facts['breathing_difficulty'] ?? null) === null && empty($facts['denied_associated'])) {
-                return false;
-            }
-        }
-        if (array_intersect($concepts, ['eye', 'eye_pain']) !== []) {
-            $locs = self::bodyLocations($facts);
-            $hasLaterality = (bool) preg_match('/\b(left|right|tuo|wala|both|duha|isa)\b/u', mb_strtolower($transcript))
-                || count($locs) >= 1;
-            if (!$hasLaterality && !$assocDone) {
-                return false;
-            }
-        }
-        if (in_array('bleeding', $concepts, true)) {
-            if (($facts['bleeding_continuing'] ?? null) === null && ($facts['bleeding_heavy'] ?? null) === null) {
-                return false;
-            }
-        }
-        if ($painLike && $sev === null) {
+        if (!empty($gaps['severity'])) {
             return false;
         }
-        // Pain-like complaints also need timing before early finalize.
-        if ($painLike && !$hasTiming) {
+        if (!empty($gaps['timing']) && self::timingIsMaterial($concepts, $facts)) {
             return false;
         }
-        if (!$hasTiming && array_intersect($concepts, ['general_unwell', 'pain_unspecified']) === []) {
-            if ($painLike || array_intersect($concepts, ['cough', 'fever', 'urinary', 'skin', 'dizziness']) !== []) {
-                return false;
-            }
+        if (!empty($gaps['location']) && self::locationIsMaterial($concepts, $facts)) {
+            return false;
         }
-        $needsAssoc = $sudden || ($sev !== null && $sev >= 7)
-            || in_array('abdominal_pain', $concepts, true)
-            || in_array('chest_pain', $concepts, true)
-            || count(array_intersect($concepts, ['headache', 'abdominal_pain', 'chest_pain', 'eye'])) >= 2;
-        if ($needsAssoc && !$assocDone
-            && ($facts['breathing_difficulty'] ?? null) === null
-            && ($facts['abdominal_associated'] ?? null) === null
-        ) {
+        // Open red-flag probes that still match this case domain.
+        if (!empty($gaps['red_flag'])) {
+            return false;
+        }
+        if (!empty($gaps['associated']) && self::associatedIsMaterial($concepts, $facts, $transcript)) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Build one text blob of everything already known about the case.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $facts
+     */
+    public static function fullCaseHaystack(array $context, string $transcript, array $facts): string
+    {
+        $parts = [];
+        $chief = trim((string) ($context['chief_complaint'] ?? ''));
+        if ($chief !== '') {
+            $parts[] = $chief;
+        }
+        $parts[] = $transcript;
+        foreach ((array) ($context['questions_answered'] ?? []) as $qa) {
+            if (!is_array($qa)) {
+                continue;
+            }
+            $q = trim((string) ($qa['question'] ?? $qa['text'] ?? ''));
+            $a = trim((string) ($qa['answer'] ?? $qa['patient_answer'] ?? ''));
+            if ($q !== '') {
+                $parts[] = $q;
+            }
+            if ($a !== '') {
+                $parts[] = $a;
+            }
+        }
+        foreach ((array) ($context['patient_turns'] ?? []) as $turn) {
+            $t = is_string($turn) ? trim($turn) : trim((string) (is_array($turn) ? ($turn['text'] ?? '') : ''));
+            if ($t !== '') {
+                $parts[] = $t;
+            }
+        }
+        $parts[] = self::factsSummary($facts);
+
+        return mb_strtolower(trim(implode("\n", array_filter($parts, static fn ($p): bool => trim((string) $p) !== ''))));
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function factsSummary(array $facts): string
+    {
+        $bits = [];
+        foreach (['body_locations', 'symptoms', 'associated_symptoms', 'negative_symptoms', 'red_flags', 'risk_factors'] as $key) {
+            $list = is_array($facts[$key] ?? null) ? $facts[$key] : [];
+            foreach ($list as $item) {
+                $s = trim((string) $item);
+                if ($s !== '') {
+                    $bits[] = $key . ':' . $s;
+                }
+            }
+        }
+        if (($facts['pain_score'] ?? null) !== null && $facts['pain_score'] !== '') {
+            $bits[] = 'pain_score:' . (int) $facts['pain_score'];
+        }
+        foreach (['onset', 'duration_label', 'pain_qualifier'] as $key) {
+            $v = trim((string) ($facts[$key] ?? ''));
+            if ($v !== '') {
+                $bits[] = $key . ':' . $v;
+            }
+        }
+        foreach ([
+            'breathing_difficulty', 'weakness', 'speech_difficulty', 'vision_change',
+            'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+            'sweating', 'abdominal_associated', 'has_other_symptoms', 'denied_associated',
+            'needs_associated_detail',
+        ] as $flag) {
+            if (array_key_exists($flag, $facts) && $facts[$flag] !== null && $facts[$flag] !== '') {
+                $bits[] = $flag . ':' . (is_bool($facts[$flag]) ? ($facts[$flag] ? 'yes' : 'no') : (string) $facts[$flag]);
+            }
+        }
+
+        return implode('; ', $bits);
+    }
+
+    /**
+     * Universal open gaps for the current case (not symptom-category specific).
+     *
+     * @param array<string, mixed> $facts
+     * @param list<string> $concepts
+     * @return array<string, bool>
+     */
+    private static function openClinicalGaps(array $facts, string $transcript, array $concepts, string $caseHaystack): array
+    {
+        $gaps = [
+            'severity' => false,
+            'location' => false,
+            'timing' => false,
+            'associated' => false,
+            'associated_detail' => false,
+            'red_flag' => false,
+            'clarify' => false,
+        ];
+
+        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
+        $assocDone = self::associatedSymptomsResolved($facts);
+        $sev = $facts['pain_score'] ?? null;
+        $sev = $sev !== null ? (int) $sev : null;
+        $locs = self::bodyLocations($facts);
+        if ($locs === []) {
+            $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
+        }
+
+        if (self::caseSuggestsPainIntensity($concepts, $facts, $caseHaystack) && $sev === null) {
+            // Numeric score is preferred, but do not block triage when intensity is already
+            // described qualitatively or when a critical red-flag fact is already known.
+            $qual = trim((string) ($facts['pain_qualifier'] ?? ''));
+            $criticalKnown = ($facts['weakness'] ?? null) === true
+                || ($facts['speech_difficulty'] ?? null) === true
+                || ($facts['vision_change'] ?? null) === true
+                || ($facts['breathing_difficulty'] ?? null) === true
+                || ($facts['bleeding_heavy'] ?? null) === true;
+            $qualEnough = $qual !== '' || (bool) preg_match(
+                '/\b(mild|moderate|severe|grabe|gamay|medyo|tunga-tunga|pinakagrabe|unbearable)\b/u',
+                $caseHaystack
+            );
+            if (!$criticalKnown && !$qualEnough) {
+                $gaps['severity'] = true;
+            }
+        }
+        if (self::locationIsMaterial($concepts, $facts) && $locs === []) {
+            $gaps['location'] = true;
+        }
+        if (!$hasTiming && self::timingIsMaterial($concepts, $facts)) {
+            $gaps['timing'] = true;
+        }
+        if (!empty($facts['needs_associated_detail'])
+            || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === [] && empty($facts['denied_associated']))
+        ) {
+            $gaps['associated_detail'] = true;
+        }
+        if (!$assocDone && self::associatedIsMaterial($concepts, $facts, $transcript)) {
+            $gaps['associated'] = true;
+        }
+
+        // Any red-flag bank item whose domain tags match and whose slot fact is unknown.
+        foreach (ClinicalFollowUpQuestionBank::questions() as $question) {
+            if (!is_array($question) || empty($question['red_flag_related'])) {
+                continue;
+            }
+            $qid = strtoupper(trim((string) ($question['question_id'] ?? '')));
+            $when = array_map('strtolower', (array) ($question['required_when'] ?? []));
+            if ($when !== [] && array_intersect($when, $concepts) === []) {
+                continue;
+            }
+            if (self::alreadyAnswered($qid, $facts, $transcript, $concepts, $caseHaystack)) {
+                continue;
+            }
+            $gaps['red_flag'] = true;
+            break;
+        }
+
+        return $gaps;
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param array<string, mixed> $facts
+     */
+    private static function caseSuggestsPainIntensity(array $concepts, array $facts, string $caseHaystack): bool
+    {
+        if (array_intersect($concepts, [
+            'pain', 'pain_unspecified', 'pain_no_location', 'headache', 'chest_pain',
+            'abdominal_pain', 'nose_pain', 'eye', 'eye_pain',
+        ]) !== []) {
+            return true;
+        }
+        // Universal: complaint language indicates pain/discomfort without relying on one disease label.
+        return (bool) preg_match(
+            '/\b(sakit|masakit|kasakit|gasakit|hapdi|pain|hurt|aching|cramp|cramping|throbbing|stinging)\b/u',
+            $caseHaystack
+        );
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param array<string, mixed> $facts
+     */
+    private static function locationIsMaterial(array $concepts, array $facts): bool
+    {
+        // System-implied complaints already locate the problem clinically.
+        if (array_intersect($concepts, [
+            'urinary', 'cough', 'respiratory', 'breathing', 'fever', 'dizziness', 'bleeding',
+        ]) !== []) {
+            return false;
+        }
+
+        return array_intersect($concepts, [
+            'pain_unspecified', 'pain_no_location', 'general_unwell', 'needs_specific_location', 'skin',
+        ]) !== []
+            || (($facts['body_locations'] ?? []) === [] && array_intersect($concepts, ['pain', 'skin', 'injury']) !== []);
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param array<string, mixed> $facts
+     */
+    private static function timingIsMaterial(array $concepts, array $facts): bool
+    {
+        // Almost all clinical presentations benefit from onset/duration when unknown.
+        if ($concepts === []) {
+            return true;
+        }
+        if (array_intersect($concepts, ['general_unwell']) !== [] && ($facts['pain_score'] ?? null) === null) {
+            return true;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param list<string> $concepts
+     * @param array<string, mixed> $facts
+     */
+    private static function associatedIsMaterial(array $concepts, array $facts, string $transcript): bool
+    {
+        if (!empty($facts['denied_associated']) || ($facts['has_other_symptoms'] ?? null) === false) {
+            return false;
+        }
+        $sev = $facts['pain_score'] ?? null;
+        $sev = $sev !== null ? (int) $sev : null;
+        $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
+        $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
+        // Seek associated symptoms when acuity cues exist or when core complaint facts are sparse.
+        if ($sudden || ($sev !== null && $sev >= 5)) {
+            return true;
+        }
+        if (array_intersect($concepts, ClinicalInterviewContextResolver::acuityRedFlagFamilies()) !== []) {
+            return true;
+        }
+        // After severity+timing known, one associated probe is still useful when none recorded.
+        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
+
+        return $hasTiming && ($sev !== null || self::bodyLocations($facts) !== []);
+    }
+
+    /**
+     * Score a bank question using open gaps + bank priority (universal, not disease-specific).
+     *
+     * @param array<string, mixed> $question
+     * @param array<string, bool> $gaps
+     * @param array<string, mixed> $facts
+     * @param list<string> $concepts
+     */
+    private static function scoreQuestionPriority(
+        array $question,
+        string $qid,
+        array $gaps,
+        array $facts,
+        array $concepts
+    ): ?int {
+        $qid = strtoupper($qid);
+        $bankPriority = (int) ($question['priority'] ?? 99);
+        $gapKey = self::questionGapKey($qid);
+        $redFlag = !empty($question['red_flag_related']);
+
+        // Associated detail is mandatory once the patient said there are other symptoms.
+        if ($qid === 'ASSOCIATED_DETAIL') {
+            return !empty($gaps['associated_detail']) ? 1 : null;
+        }
+
+        if ($gapKey === 'severity' && empty($gaps['severity'])) {
+            return null;
+        }
+        if ($gapKey === 'location' && empty($gaps['location'])) {
+            return null;
+        }
+        if ($gapKey === 'timing' && empty($gaps['timing'])) {
+            return null;
+        }
+        if ($gapKey === 'associated' && empty($gaps['associated'])) {
+            return null;
+        }
+        if ($gapKey === 'associated_detail' && empty($gaps['associated_detail'])) {
+            return null;
+        }
+
+        // Gap-driven boosts so the most useful unknown fact is asked first.
+        // Order is case-dependent: missing location outranks severity; acuity can
+        // elevate red-flag probes above routine history.
+        if ($gapKey === 'location' && !empty($gaps['location'])) {
+            return 2;
+        }
+        if ($gapKey === 'severity' && !empty($gaps['severity'])) {
+            // Prefer locating the complaint before scoring intensity when site unknown.
+            return !empty($gaps['location']) ? 4 : 3;
+        }
+        if ($gapKey === 'associated_detail' && !empty($gaps['associated_detail'])) {
+            return 3;
+        }
+        if ($gapKey === 'timing' && !empty($gaps['timing'])) {
+            // Prefer ONSET slightly over DURATION when both open.
+            return $qid === 'ONSET' ? 5 : 6;
+        }
+        if ($gapKey === 'associated' && !empty($gaps['associated'])) {
+            return 10;
+        }
+
+        // Red-flag probes: only when domain-relevant (already filtered) and slot unknown.
+        if ($redFlag) {
+            // High-acuity cues: prefer warning-sign questions over routine severity/timing.
+            $acuity = self::acuityCueScore($facts, $concepts);
+            $boosted = max(1, min(25, $bankPriority - 25 - $acuity));
+
+            return $boosted;
+        }
+
+        // Clarifying / character questions (cough type, dizziness type, urinary detail, etc.):
+        // ask only when their domain tags matched and no higher gap still open for core triage.
+        if (in_array($gapKey, ['clarify', 'detail'], true)) {
+            if (!empty($gaps['severity']) || !empty($gaps['timing']) || !empty($gaps['associated_detail']) || !empty($gaps['red_flag'])) {
+                return null;
+            }
+
+            return $bankPriority;
+        }
+
+        return $bankPriority;
+    }
+
+    /**
+     * Extra priority boost for red-flag probes when the case already shows acuity cues.
+     *
+     * @param array<string, mixed> $facts
+     * @param list<string> $concepts
+     */
+    private static function acuityCueScore(array $facts, array $concepts): int
+    {
+        $score = 0;
+        $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
+        if ((bool) preg_match('/\b(sudden|gulpi|bigla|abrupt|kalit)\b/u', $onset)) {
+            $score += 3;
+        }
+        $sev = $facts['pain_score'] ?? null;
+        if ($sev !== null && (int) $sev >= 7) {
+            $score += 2;
+        }
+        if (array_intersect($concepts, ClinicalInterviewContextResolver::acuityRedFlagFamilies()) !== []) {
+            $score += 2;
+        }
+        if (($facts['breathing_difficulty'] ?? null) === true
+            || ($facts['weakness'] ?? null) === true
+            || ($facts['speech_difficulty'] ?? null) === true
+            || ($facts['bleeding_heavy'] ?? null) === true
+        ) {
+            $score += 3;
+        }
+
+        return min(8, $score);
+    }
+
+    private static function questionGapKey(string $qid): string
+    {
+        $qid = strtoupper($qid);
+
+        return match ($qid) {
+            'PAIN_SEVERITY' => 'severity',
+            'PAIN_LOCATION', 'UNWELL_WHAT', 'SPECIFIC_LOCATION', 'EYE_LATERALITY', 'SKIN_SITE', 'NOSE_PAIN_WHERE' => 'location',
+            'ONSET', 'DURATION' => 'timing',
+            'ASSOCIATED_SYMPTOMS' => 'associated',
+            'ASSOCIATED_DETAIL' => 'associated_detail',
+            'BREATHING_SEVERITY', 'NEURO_WEAKNESS', 'NEURO_SPEECH', 'NEURO_VISION', 'EYE_VISION',
+            'BLEEDING_CONTINUING', 'BLEEDING_HEAVY', 'BLEEDING_DIZZY',
+            'CHEST_RADIATION', 'CHEST_SWEATING', 'ABDOMINAL_ASSOCIATED', 'FEVER_CONFIRM' => 'red_flag',
+            'COUGH_TYPE', 'DIZZINESS_TYPE', 'URINARY_DETAIL' => 'clarify',
+            default => 'detail',
+        };
+    }
+
+    /**
+     * Semantic/contextual: clinical purpose already covered by the full case text.
+     *
+     * @param array<string, mixed> $question
+     * @param array<string, mixed> $facts
+     */
+    private static function purposeAlreadyKnown(array $question, string $caseHaystack, array $facts): bool
+    {
+        $purpose = mb_strtolower(trim((string) ($question['clinical_purpose'] ?? '')));
+        $qid = strtoupper(trim((string) ($question['question_id'] ?? '')));
+        if ($purpose === '' && $qid === '') {
+            return false;
+        }
+
+        // Purpose keyword → evidence already present in the case haystack / facts.
+        $checks = [
+            'pain score' => ($facts['pain_score'] ?? null) !== null,
+            'numeric pain' => ($facts['pain_score'] ?? null) !== null,
+            'locate' => self::bodyLocations($facts) !== [],
+            'location' => self::bodyLocations($facts) !== [],
+            'where' => self::bodyLocations($facts) !== [],
+            'onset' => trim((string) ($facts['onset'] ?? '')) !== ''
+                || ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
+            'how long' => ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
+            'duration' => ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
+            'sudden versus gradual' => ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
+            'breathing' => ($facts['breathing_difficulty'] ?? null) !== null
+                || (bool) preg_match('/\b(budlay.*ginhawa|difficulty breathing|hirap huminga|shortness of breath|sobra.*ginhawa)\b/u', $caseHaystack),
+            'weakness' => ($facts['weakness'] ?? null) !== null
+                || (bool) preg_match('/\b(kaluya|panghihina|weakness|numbness|pamamanhid)\b/u', $caseHaystack),
+            'speech' => ($facts['speech_difficulty'] ?? null) !== null,
+            'vision' => ($facts['vision_change'] ?? null) !== null
+                || (bool) preg_match('/\b(panulok|paningin|blurry|double vision|vision loss)\b/u', $caseHaystack),
+            'other symptoms' => ($facts['has_other_symptoms'] ?? null) !== null || !empty($facts['denied_associated']),
+            'associated' => self::associatedSymptomsResolved($facts),
+            'bleeding is ongoing' => ($facts['bleeding_continuing'] ?? null) !== null,
+            'heavy' => ($facts['bleeding_heavy'] ?? null) !== null,
+            'dizzy' => ($facts['dizziness'] ?? null) !== null,
+            'fever' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $caseHaystack),
+        ];
+
+        foreach ($checks as $needle => $known) {
+            if ($known && str_contains($purpose, $needle)) {
+                return true;
+            }
+        }
+
+        // If the patient already answered with a clear numeric pain score in free text.
+        if ($qid === 'PAIN_SEVERITY' && ($facts['pain_score'] ?? null) !== null) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -180,7 +586,13 @@ final class ClinicalInterviewAdaptivePolicy
             $concepts[] = 'fever';
         }
         $locs = self::bodyLocations($facts);
-        if ($locs === [] && preg_match('/\b(sakit|masakit|pain|hapdi|kasakit|gasakit)\b/u', $low)) {
+        // Do not invent "unspecified pain location" when the complaint already implies
+        // a system/site (urinary, respiratory, skin, etc.) — avoids irrelevant PAIN_LOCATION.
+        $siteImplied = array_intersect($concepts, [
+            'urinary', 'cough', 'respiratory', 'breathing', 'fever', 'skin', 'bleeding',
+            'dizziness', 'eye', 'nose_pain', 'chest_pain', 'abdominal_pain', 'headache',
+        ]) !== [];
+        if ($locs === [] && !$siteImplied && preg_match('/\b(sakit|masakit|pain|hapdi|kasakit|gasakit)\b/u', $low)) {
             $concepts[] = 'pain';
             $concepts[] = 'pain_unspecified';
             $concepts[] = 'pain_no_location';
@@ -189,8 +601,7 @@ final class ClinicalInterviewAdaptivePolicy
             $concepts[] = 'eye';
             $concepts[] = 'needs_laterality';
         }
-        // Burns / thermal injury / swelling: ask site (+ associated) so WHO red vs yellow can be distinguished.
-        if ((bool) preg_match('/\b(burn|burns|nasunog|paso|scald|quemadura|hubag|gahabok|gahubag|swelling|swollen|pamamaga)\b/u', $low)) {
+        if ((bool) preg_match('/\b(burn|burns|nasunog|paso|scald|hubag|gahabok|gahubag|swelling|swollen|pamamaga)\b/u', $low)) {
             $concepts[] = 'skin';
         }
         if (in_array('abdomen', $locs, true) || in_array('chest', $locs, true)) {
@@ -201,142 +612,21 @@ final class ClinicalInterviewAdaptivePolicy
     }
 
     /**
-     * @param list<string> $concepts
      * @param array<string, mixed> $facts
+     * @param list<string> $concepts
      */
-    private static function triageRelevantPriority(
+    private static function alreadyAnswered(
         string $qid,
-        array $concepts,
         array $facts,
-        string $transcript
-    ): ?int {
-        $qid = strtoupper($qid);
-        $sev = $facts['pain_score'] ?? null;
-        $sev = $sev !== null ? (int) $sev : null;
-        $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
-        $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
-        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
-        $assocDone = self::associatedSymptomsResolved($facts);
-        $locs = self::bodyLocations($facts);
-        if ($locs === []) {
-            $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
-        }
-        $multiSite = count($locs) >= 2
-            || count(array_intersect($concepts, ['headache', 'abdominal_pain', 'chest_pain', 'eye', 'nose_pain'])) >= 2;
-        $painLike = array_intersect($concepts, ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']) !== [];
-        $highRisk = array_intersect($concepts, ['chest_pain', 'breathing', 'bleeding', 'neuro']) !== [];
-        $acuity = $sudden || ($sev !== null && $sev >= 7) || $highRisk;
-
-        return match ($qid) {
-            'BREATHING_SEVERITY' => array_intersect($concepts, ['chest_pain', 'breathing', 'cough', 'respiratory']) !== []
-                ? 1
-                : null,
-            'EYE_LATERALITY' => array_intersect($concepts, ['eye', 'eye_pain', 'needs_laterality']) !== [] ? 2 : null,
-            'EYE_VISION' => array_intersect($concepts, ['eye', 'eye_pain']) !== [] ? 4 : null,
-            'PAIN_SEVERITY' => $painLike && $sev === null ? 2 : null,
-            'PAIN_LOCATION', 'UNWELL_WHAT' => (
-                array_intersect($concepts, ['pain_unspecified', 'pain_no_location', 'general_unwell']) !== []
-                && $locs === []
-            ) ? 3 : null,
-            'ASSOCIATED_DETAIL' => (
-                !empty($facts['needs_associated_detail'])
-                || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === [])
-            ) ? 3 : null,
-            'ONSET', 'DURATION' => !$hasTiming ? 5 : null,
-            'SPECIFIC_LOCATION' => in_array('needs_specific_location', $concepts, true)
-                && ($sev === null || $sev >= 5 || $sudden || $multiSite)
-                ? 6
-                : null,
-            'ABDOMINAL_ASSOCIATED' => in_array('abdominal_pain', $concepts, true) && !$assocDone ? 7 : null,
-            'CHEST_RADIATION', 'CHEST_SWEATING' => in_array('chest_pain', $concepts, true) && !$assocDone
-                ? 8
-                : null,
-            'NEURO_WEAKNESS', 'NEURO_SPEECH', 'NEURO_VISION' => (
-                array_intersect($concepts, ['headache', 'neuro']) !== [] && $acuity && !$assocDone
-            ) ? 9 : null,
-            'FEVER_CONFIRM' => array_intersect($concepts, ['fever', 'cough', 'respiratory']) !== []
-                ? 10
-                : null,
-            'ASSOCIATED_SYMPTOMS' => self::shouldAskAssociatedNow($concepts, $assocDone, $acuity, $sev, $multiSite),
-            'COUGH_TYPE' => null,
-            'DIZZINESS_TYPE' => in_array('dizziness', $concepts, true) && ($facts['dizziness'] ?? null) === null
-                ? 11
-                : null,
-            'SKIN_SITE' => in_array('skin', $concepts, true) ? 6 : null,
-            'URINARY_DETAIL' => in_array('urinary', $concepts, true) ? 6 : null,
-            'BLEEDING_CONTINUING', 'BLEEDING_HEAVY', 'BLEEDING_DIZZY' => in_array('bleeding', $concepts, true) ? 2 : null,
-            'NOSE_PAIN_WHERE' => in_array('nose_pain', $concepts, true) ? 8 : null,
-            default => null,
-        };
-    }
-
-    /**
-     * @param list<string> $concepts
-     */
-    private static function shouldAskAssociatedNow(
+        string $transcript,
         array $concepts,
-        bool $assocDone,
-        bool $acuity,
-        ?int $sev,
-        bool $multiSite
-    ): ?int {
-        if ($assocDone) {
-            return null;
-        }
-        if (in_array('abdominal_pain', $concepts, true) || in_array('chest_pain', $concepts, true)) {
-            return null;
-        }
-        if (array_intersect($concepts, ['headache', 'pain', 'eye', 'dizziness', 'fever', 'skin', 'urinary', 'cough']) === []) {
-            return null;
-        }
-        if ($acuity || $multiSite || $sev === null || ($sev !== null && $sev >= 5)) {
-            return 10;
-        }
-
-        return null;
-    }
-
-    /**
-     * @param list<string> $concepts
-     * @param array<string, mixed> $facts
-     */
-    private static function shouldConsiderQuestion(array $question, array $concepts, array $facts): bool
-    {
-        if (empty($question['red_flag_related'])) {
-            return true;
-        }
-        $qid = strtoupper((string) ($question['question_id'] ?? ''));
-        if ($qid === 'BREATHING_SEVERITY'
-            && array_intersect($concepts, ['breathing', 'cough', 'respiratory', 'chest_pain']) !== []
-        ) {
-            return true;
-        }
-        $always = ClinicalInterviewContextResolver::acuityRedFlagFamilies();
-        if (array_intersect($concepts, $always) !== []) {
-            return true;
-        }
-        $sev = $facts['pain_score'] ?? null;
-        if ($sev !== null && (int) $sev >= 7) {
-            return true;
-        }
-        $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
-        if ($onset !== '' && preg_match('/\b(sudden|gulpi|bigla)\b/u', $onset)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * @param array<string, mixed> $facts
-     * @param list<string> $concepts
-     */
-    private static function alreadyAnswered(string $qid, array $facts, string $transcript, array $concepts): bool
-    {
+        string $caseHaystack = ''
+    ): bool {
         $qid = strtoupper($qid);
-        $low = mb_strtolower($transcript);
-        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
-        // Numeric 0–10 only — language intensifiers must not complete this clinical slot.
+        $hay = $caseHaystack !== '' ? $caseHaystack : mb_strtolower($transcript);
+        $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts)
+            || ClinicalFeatureExtractors::hasTimingInformation($hay, $facts);
+        // Numeric 1–10 only completes severity — intensifiers alone do not.
         $hasSeverity = ($facts['pain_score'] ?? null) !== null;
         $assocDone = self::associatedSymptomsResolved($facts);
         $assocYesPendingDetail = !empty($facts['needs_associated_detail'])
@@ -344,6 +634,9 @@ final class ClinicalInterviewAdaptivePolicy
         $locs = self::bodyLocations($facts);
         if ($locs === []) {
             $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
+            if ($locs === []) {
+                $locs = ClinicalFeatureExtractors::extractBodyLocations($hay);
+            }
         }
 
         return match ($qid) {
@@ -355,7 +648,10 @@ final class ClinicalInterviewAdaptivePolicy
                 ),
             'PAIN_SEVERITY' => $hasSeverity,
             'ONSET', 'DURATION' => $hasTiming,
-            'NEURO_WEAKNESS' => ($facts['weakness'] ?? null) !== null || $assocDone,
+            'NEURO_WEAKNESS' => ($facts['weakness'] ?? null) !== null
+                || $assocDone
+                || (bool) preg_match('/\b(no|wala|hindi|indi|without)\s+(weakness|numbness|pamamanhid|numb|kaluya)\b/u', $hay)
+                || (bool) preg_match('/nangaluya|kaluya|one[- ]sided|wala nga kamot|weakness in one/u', $hay),
             'NEURO_SPEECH' => ($facts['speech_difficulty'] ?? null) !== null || $assocDone || ($facts['weakness'] ?? null) !== null,
             'NEURO_VISION', 'EYE_VISION' => ($facts['vision_change'] ?? null) !== null || $assocDone || ($facts['weakness'] ?? null) !== null,
             'BREATHING_SEVERITY' => ($facts['breathing_difficulty'] ?? null) !== null || !empty($facts['denied_associated']),
@@ -365,27 +661,23 @@ final class ClinicalInterviewAdaptivePolicy
             'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
             'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
             'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null || $assocDone,
-            // Yes/no associated question is done once polarity is known; detail is a separate slot.
             'ASSOCIATED_SYMPTOMS' => ($facts['has_other_symptoms'] ?? null) !== null
                 || !empty($facts['denied_associated'])
                 || ($facts['weakness'] ?? null) !== null
                 || ($facts['breathing_difficulty'] ?? null) !== null,
             'ASSOCIATED_DETAIL' => !$assocYesPendingDetail,
-            'EYE_LATERALITY' => (bool) preg_match('/\b(left|right|tuo|wala|both|duha|kaliwa|kanan)\b/u', $low) || $locs !== [],
-            'SPECIFIC_LOCATION' => (bool) preg_match('/\b(upper|lower|tuo|wala|left|right|pusod|center|tunga)\b/u', $low),
-            'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
+            'EYE_LATERALITY' => (bool) preg_match('/\b(left|right|tuo|wala|both|duha|kaliwa|kanan)\b/u', $hay) || $locs !== [],
+            'SPECIFIC_LOCATION' => (bool) preg_match('/\b(upper|lower|tuo|wala|left|right|pusod|center|tunga)\b/u', $hay),
+            'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $hay),
             'SKIN_SITE' => $locs !== [],
-            'FEVER_CONFIRM' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+lagnat)\b/u', $low),
+            'FEVER_CONFIRM' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $hay),
             'DIZZINESS_TYPE' => ($facts['dizziness'] ?? null) !== null,
-            'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat)\b/u', $low),
+            'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat)\b/u', $hay),
             default => false,
         };
     }
 
     /**
-     * Associated slot is complete only after denial OR a named associated symptom.
-     * Bare "oo" must not count as complete.
-     *
      * @param array<string, mixed> $facts
      */
     private static function associatedSymptomsResolved(array $facts): bool

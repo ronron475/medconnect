@@ -47,6 +47,19 @@ final class ClinicalFollowUpAnswerValidator
             return self::reject($qid, $kind, $corrected, false, 'prank', self::retryMessage($lang), 'PRANK_OR_NON_MEDICAL');
         }
 
+        // Pain intensity uses 1–10 only — clarify out-of-range numerics (do not silently convert).
+        if ($kind === 'PAIN_SEVERITY' && self::outOfRangePainNumeric($low)) {
+            return self::reject(
+                $qid,
+                $kind,
+                $corrected,
+                false,
+                'pain_scale_out_of_range',
+                self::painScaleRetryMessage($lang),
+                'UNCLEAR'
+            );
+        }
+
         // Uncertainty itself answers the question ("I don't know") — never reject as unrelated.
         if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($corrected)) {
             return self::accept(
@@ -272,6 +285,43 @@ final class ClinicalFollowUpAnswerValidator
         };
     }
 
+    public static function painScaleRetryMessage(string $langKey): string
+    {
+        return match (strtolower($langKey)) {
+            'hiligaynon', 'ilonggo' => 'Palihog hatag sang numero halin 1 tubtob 10 lang (1 = gamay gid, 10 = pinakagrabe).',
+            'tagalog', 'filipino' => 'Pakibigay ng numero mula 1 hanggang 10 lang (1 = napakagaan, 10 = pinakamalala).',
+            default => 'Please enter a number from 1 to 10 only (1 = very mild, 10 = worst pain).',
+        };
+    }
+
+    /** True when the answer is a numeric pain value outside the 1–10 interview scale. */
+    private static function outOfRangePainNumeric(string $low): bool
+    {
+        $low = trim($low);
+        if ($low === '0' || $low === 'zero') {
+            return true;
+        }
+        if (preg_match('/^(?:about|around|maybe|like|almost)?\s*(?:a\s+)?(0|1[1-9]|[2-9]\d)(?:\s*(?:\/\s*10|out of\s*10))?\.?$/u', $low)) {
+            return true;
+        }
+        if (preg_match('/\b(0|1[1-9]|[2-9]\d)\s*(?:\/\s*10|out of\s*10)\b/u', $low)) {
+            return true;
+        }
+
+        return (bool) preg_match('/\bzero\s*(?:\/\s*10|out of\s*10|pain|sakit)?\b/u', $low);
+    }
+
+    /** @return int|null Score only when in the interview 1–10 scale. */
+    private static function validInterviewPainScore(mixed $score): ?int
+    {
+        if ($score === null || $score === '') {
+            return null;
+        }
+        $n = (int) $score;
+
+        return ($n >= 1 && $n <= 10) ? $n : null;
+    }
+
     private static function expectedKind(string $qid): string
     {
         if (str_contains($qid, 'SEVERITY') || $qid === 'PAIN_SEVERITY') {
@@ -399,7 +449,7 @@ final class ClinicalFollowUpAnswerValidator
         try {
             return match ($kind) {
                 'PAIN_SEVERITY' => (
-                    (ClinicalFeatureExtractors::extractPainScale($text)['score'] ?? null) !== null
+                    self::validInterviewPainScore(ClinicalFeatureExtractors::extractPainScale($text)['score'] ?? null)
                     || ClinicalFeatureExtractors::extractStandalonePainScore($text, true) !== null
                 ),
                 'SYMPTOM_DURATION' => (
@@ -488,7 +538,7 @@ final class ClinicalFollowUpAnswerValidator
             if ($score !== null || $hasQualSeverity) {
                 return false;
             }
-            // Location or a different symptom is not a 0–10 answer.
+            // Location or a different symptom is not a 1–10 answer.
             return $hasLocation || ($newComplaint && !$hasQualSeverity);
         }
 
@@ -549,7 +599,7 @@ final class ClinicalFollowUpAnswerValidator
             $payload = match ($kind) {
                 'PAIN_SEVERITY' => [
                     'pain_severity' => ClinicalFeatureExtractors::extractStandalonePainScore($text, true)
-                        ?? (ClinicalFeatureExtractors::extractPainScale($text)['score'] ?? null),
+                        ?? self::validInterviewPainScore(ClinicalFeatureExtractors::extractPainScale($text)['score'] ?? null),
                     'pain_qualifier' => ClinicalFeatureExtractors::extractPainQualifier($text),
                 ],
                 'SYMPTOM_DURATION' => [
@@ -672,13 +722,13 @@ final class ClinicalFollowUpAnswerValidator
         if (preg_match('/\b(10|[0-9]|zero|one|two|three|four|five|six|seven|eight|nine|ten)\s*(days?|weeks?|hours?|months?|years?|adlaw|semana|linggo|oras|bulan|tuig|taon|araw|buwan)\b/u', $low)) {
             return false;
         }
-        if (preg_match('/\b(10|[0-9])\s*(\/|out of|sa|tubtob|hanggang)?\s*10\b/u', $low)) {
+        if (preg_match('/\b(10|[1-9])\s*(\/|out of|sa|tubtob|hanggang)?\s*10\b/u', $low)) {
             return true;
         }
-        if (preg_match('/^(?:it(?:\'s| is)?\s+)?(?:about|around|maybe|like|almost)?\s*(?:a\s+)?(10|[0-9])(?:\s*(?:\/\s*10|out of\s*10))?\.?$/u', $low)) {
+        if (preg_match('/^(?:it(?:\'s| is)?\s+)?(?:about|around|maybe|like|almost)?\s*(?:a\s+)?(10|[1-9])(?:\s*(?:\/\s*10|out of\s*10))?\.?$/u', $low)) {
             return true;
         }
-        if (preg_match('/\b(around|about|maybe|like|almost|is)\s+(?:a\s+)?(10|[0-9])\b/u', $low)
+        if (preg_match('/\b(around|about|maybe|like|almost|is)\s+(?:a\s+)?(10|[1-9])\b/u', $low)
             && !preg_match('/\b(year|years|old|tuig|taon|kids?|children|apples?)\b/u', $low)
         ) {
             return true;
