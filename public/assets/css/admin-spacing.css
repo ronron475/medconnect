@@ -5,21 +5,21 @@
 
 /* ── Desktop / laptop: tighten page rhythm without cramping ── */
 body.admin-body .portal-page-body {
-  padding: 16px 24px 24px;
-  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 14px);
-  gap: 16px;
+  padding: 16px 24px 24px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 14px) !important;
+  gap: 16px !important;
 }
 
 body.admin-body [data-live-dashboard] {
-  gap: 22px;
+  gap: 22px !important;
 }
 
 body.admin-body [data-live-dashboard] > section {
-  gap: 12px;
+  gap: 12px !important;
 }
 
 body.admin-body [data-live-dashboard] .adm-charts-section {
-  gap: 12px;
+  gap: 12px !important;
 }
 
 body.admin-body [data-live-dashboard] .adm-metrics {
@@ -217,23 +217,23 @@ body.admin-body .pagination {
   }
 
   body.admin-body .portal-page-body {
-    padding-left: var(--mob-adm-pad);
-    padding-right: var(--mob-adm-pad);
-    padding-top: calc(var(--mc-header-offset, 64px) + 8px);
-    padding-bottom: calc(var(--mob-adm-pad) * 1.25);
-    gap: var(--mob-adm-gap);
+    padding-left: var(--mob-adm-pad) !important;
+    padding-right: var(--mob-adm-pad) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + 8px) !important;
+    padding-bottom: calc(var(--mob-adm-pad) * 1.25) !important;
+    gap: var(--mob-adm-gap) !important;
   }
 
   body.admin-body [data-live-dashboard] {
-    gap: var(--mob-adm-section-gap);
+    gap: var(--mob-adm-section-gap) !important;
   }
 
   body.admin-body [data-live-dashboard] > section {
-    gap: 10px;
+    gap: 10px !important;
   }
 
   body.admin-body [data-live-dashboard] .adm-charts-section {
-    gap: 10px;
+    gap: 10px !important;
   }
 
   body.admin-body .adm-banner {
