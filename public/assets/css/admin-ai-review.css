@@ -93,7 +93,7 @@
   font-weight: 700;
 }
 
-/* Read / unread action only */
+/* Read / unread action only — never render provider select/Save in Actions */
 .air-review-actions {
   display: inline-flex;
   align-items: center;
@@ -101,6 +101,14 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   max-width: 100%;
+}
+
+.air-review-page .staff-apps-td--actions select,
+.air-review-page .ai-review-provider-select,
+.air-review-page .ai-review-save,
+.air-review-page .air-review-actions__select,
+.air-review-page .air-review-actions__save {
+  display: none !important;
 }
 
 .air-review-actions__toggle {
