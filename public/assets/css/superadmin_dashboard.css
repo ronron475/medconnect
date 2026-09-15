@@ -11,8 +11,11 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
 }
 
 .adm-sidebar--superadmin .adm-nav-item.is-active {
-  background: rgba(255, 255, 255, 0.14);
-  border-left: 3px solid #5eead4;
+  background: rgba(0, 151, 167, 0.20);
+  border: 1px solid rgba(0, 151, 167, 0.22);
+  border-left: 1px solid rgba(0, 151, 167, 0.22);
+  color: #fff;
+  font-weight: 600;
 }
 
 .superadmin-body .mc-badge--super {
@@ -25,14 +28,14 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
 .superadmin-banner-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   position: relative;
   z-index: 1;
@@ -47,14 +50,14 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .superadmin-approval-card {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   border-radius: 12px;
   background: #fff;
   border: 1px solid #fde68a;
@@ -70,7 +73,7 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
 }
 
 .superadmin-approval-card strong {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   line-height: 1;
   color: #b45309;
 }
@@ -81,7 +84,7 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
 }
 
 .superadmin-metric-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .superadmin-metric-group-title {
@@ -96,22 +99,27 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
 .superadmin-stat-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 12px;
+  margin-bottom: 0;
 }
 
 .superadmin-stat-grid--compact {
   margin-bottom: 0;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.superadmin-stat-card {
+  padding: 14px;
 }
 
 .superadmin-stat-card .text-h1 {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   line-height: 1.1;
 }
 
 .superadmin-dashboard-grid {
-  margin-top: 8px;
+  margin-top: 0;
 }
 
 .superadmin-health-pill {
