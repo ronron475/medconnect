@@ -33,10 +33,21 @@ final class MedicalMisspellingsLoader
                     array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
                     array_map(static fn ($v) => trim((string) $v), $row)
                 ) ?: [];
+                $status = strtolower((string) ($data['status'] ?? 'active'));
+                if ($status !== '' && $status !== 'active') {
+                    continue;
+                }
                 $correct = strtolower((string) ($data['correct_term'] ?? ''));
                 $wrong = strtolower((string) ($data['misspelling'] ?? ''));
                 // Skip padded generator artifacts
                 if ($wrong !== '' && preg_match('/\d{3,}$/', $wrong)) {
+                    continue;
+                }
+                // Do not collapse longer valid complaint phrases into shorter roots.
+                // Example: "masakit ulo ko" must not become "sakit ulo" via expression_variant.
+                if ($wrong !== '' && $correct !== '' && str_contains($wrong, $correct) && $wrong !== $correct
+                    && str_contains((string) ($data['term_type'] ?? ''), 'expression')
+                ) {
                     continue;
                 }
                 if ($correct !== '' && $wrong !== '' && !isset(self::$map[$wrong])) {

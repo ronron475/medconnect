@@ -80,7 +80,9 @@ final class WhoIittTriageRulesLoader
      * Order: EMERGENCY (RED) first, then URGENT (YELLOW). No match → null (GREEN / defer).
      * Matches against raw + normalized text so Hiligaynon spelling normalization
      * (e.g. kasakit→gasakit) does not drop WHO criteria.
+     * Negated findings (e.g. "wala ko difficulty breathing") do not fire.
      *
+     * @param list<string> $negatedConcepts
      * @return array{
      *   triage_level:string,
      *   rule_id:string,
@@ -91,7 +93,7 @@ final class WhoIittTriageRulesLoader
      *   matched_rules:list<array<string,mixed>>
      * }|null
      */
-    public static function evaluate(string $original, string $english = ''): ?array
+    public static function evaluate(string $original, string $english = '', array $negatedConcepts = []): ?array
     {
         $hay = strtolower(trim($original . ' ' . $english));
         if (class_exists('ClinicalAnswerNormalizer')) {
@@ -117,10 +119,21 @@ final class WhoIittTriageRulesLoader
             return null;
         }
 
+        if ($negatedConcepts === [] && class_exists('NegationDetector')) {
+            try {
+                $negatedConcepts = NegationDetector::detectNegatedConcepts($hay);
+            } catch (Throwable) {
+                $negatedConcepts = [];
+            }
+        }
+
         $emergencyHits = [];
         $urgentHits = [];
         foreach (self::rules() as $rule) {
             if (!self::patternMatches($hay, (string) $rule['clinical_pattern'])) {
+                continue;
+            }
+            if (self::ruleNegated($hay, $rule, $negatedConcepts)) {
                 continue;
             }
             if (($rule['triage_level'] ?? '') === 'EMERGENCY' || !empty($rule['red_flag'])) {
@@ -159,6 +172,62 @@ final class WhoIittTriageRulesLoader
         }
 
         return null;
+    }
+
+    /**
+     * @param array<string, mixed> $rule
+     * @param list<string> $negatedConcepts
+     */
+    private static function ruleNegated(string $hay, array $rule, array $negatedConcepts): bool
+    {
+        $sign = strtolower(trim((string) ($rule['clinical_sign'] ?? '')));
+        $pattern = strtolower(trim((string) ($rule['clinical_pattern'] ?? '')));
+        $needles = array_values(array_filter([
+            $sign,
+            'difficulty breathing',
+            'shortness of breath',
+            'budlay ginhawa',
+            'chest pain',
+            'heavy bleeding',
+            'seizure',
+            'unresponsive',
+        ], static fn (string $n): bool => $n !== '' && (
+            str_contains($sign, $n)
+            || str_contains($pattern, str_replace(' ', '\s+', $n))
+            || str_contains($pattern, $n)
+        )));
+
+        foreach ($negatedConcepts as $neg) {
+            $neg = strtolower(trim((string) $neg));
+            if ($neg === '') {
+                continue;
+            }
+            foreach ($needles as $needle) {
+                if ($neg === $needle || str_contains($needle, $neg) || str_contains($neg, $needle)) {
+                    return true;
+                }
+            }
+            if (
+                (str_contains($neg, 'breath') || str_contains($neg, 'ginhawa') || str_contains($neg, 'hinga'))
+                && (str_contains($sign, 'breath') || str_contains($sign, 'respiratory') || str_contains($sign, 'cyanosis')
+                    || str_contains($pattern, 'breath') || str_contains($pattern, 'ginhawa') || str_contains($pattern, 'huminga'))
+            ) {
+                return true;
+            }
+        }
+
+        // Direct surface negation with optional person marker.
+        foreach ($needles as $needle) {
+            $quoted = preg_quote($needle, '/');
+            if (preg_match(
+                '/\b(no|not|without|denies|wala(?:\s+(?:ko|ako|akong|sang|man))?|walang|walay|indi(?:\s+ko)?|hindi(?:\s+ako)?)\s+' . $quoted . '\b/u',
+                $hay
+            )) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function patternMatches(string $hay, string $pattern): bool

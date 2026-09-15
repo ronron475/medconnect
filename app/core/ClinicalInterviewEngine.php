@@ -163,7 +163,6 @@ final class ClinicalInterviewEngine
         }
 
         $transcript = self::transcript($context);
-        $clinicalText = self::clinicalContextText($context, $transcript);
         if ($transcript === '') {
             return self::wrapEmpty();
         }
@@ -185,17 +184,36 @@ final class ClinicalInterviewEngine
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
         $context = self::mergeExtractedFacts($context, $turn, $awaiting);
 
+        // Recalculate triage from the complete accumulated case (complaint + turns + structured facts).
+        $clinicalText = self::clinicalContextText($context, $transcript);
         $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText);
         $assessment = self::assessmentFromEngine($raw, $transcript, (string) ($raw['english_translation'] ?? $transcript), $checkboxSymptoms);
         $nlpFacts = self::factsFromAssessment($assessment, $clinicalText);
         $context['facts'] = self::mergeFacts($context['facts'], $nlpFacts);
+        $context = self::absorbAssessmentIntoCase($context, $assessment, $raw);
         $context['chief_complaints'] = ClinicalInterviewContextResolver::deriveComplaints($assessment, $clinicalText, $context['facts']);
-        $context['matched_dataset_entries'] = array_values(array_filter(array_map(
+        $context['matched_dataset_entries'] = array_values(array_unique(array_filter(array_map(
             'strval',
-            is_array($assessment['detected_symptoms'] ?? null) ? $assessment['detected_symptoms'] : []
-        )));
+            array_merge(
+                is_array($context['matched_dataset_entries'] ?? null) ? $context['matched_dataset_entries'] : [],
+                is_array($assessment['detected_symptoms'] ?? null) ? $assessment['detected_symptoms'] : [],
+                self::stringList($context['facts']['symptoms'] ?? [])
+            )
+        ))));
 
-        $clinicalText = self::clinicalContextText($context, $transcript);
+        $expandedText = self::clinicalContextText($context, $transcript);
+        if ($expandedText !== $clinicalText && $expandedText !== '') {
+            $clinicalText = $expandedText;
+            $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText);
+            $assessment = self::assessmentFromEngine(
+                $raw,
+                $transcript,
+                (string) ($raw['english_translation'] ?? $transcript),
+                $checkboxSymptoms
+            );
+            $context['facts'] = self::mergeFacts($context['facts'], self::factsFromAssessment($assessment, $clinicalText));
+            $context = self::absorbAssessmentIntoCase($context, $assessment, $raw);
+        }
 
         $redFlags = self::redFlagNames($assessment);
         $trueEmergency = $redFlags !== [];
@@ -427,6 +445,10 @@ final class ClinicalInterviewEngine
         if ($turns !== '') {
             $parts[] = $turns;
         }
+        $factsHaystack = self::factsHaystack(is_array($context['facts'] ?? null) ? $context['facts'] : []);
+        if ($factsHaystack !== '') {
+            $parts[] = $factsHaystack;
+        }
         // Include Gemini lexical bridge concept so existing dataset NLP can match
         // without replacing the patient's original complaint wording.
         $bridgeConcept = trim((string) (($context['semantic_bridge']['gemini_concept'] ?? '') ?: ''));
@@ -463,6 +485,13 @@ final class ClinicalInterviewEngine
 
         return [
             'body_locations' => self::stringList($seed['body_locations'] ?? []),
+            'symptoms' => self::stringList($seed['symptoms'] ?? []),
+            'associated_symptoms' => self::stringList($seed['associated_symptoms'] ?? []),
+            'negative_symptoms' => self::stringList($seed['negative_symptoms'] ?? []),
+            'vital_signs' => self::stringList($seed['vital_signs'] ?? []),
+            'risk_factors' => self::stringList($seed['risk_factors'] ?? []),
+            'red_flags' => self::stringList($seed['red_flags'] ?? []),
+            'medical_history' => self::stringList($seed['medical_history'] ?? []),
             'pain_score' => isset($seed['pain_score']) && $seed['pain_score'] !== null && $seed['pain_score'] !== ''
                 ? (int) $seed['pain_score']
                 : null,
@@ -482,7 +511,12 @@ final class ClinicalInterviewEngine
             'sweating' => $yesNo($seed['sweating'] ?? null),
             'abdominal_associated' => $yesNo($seed['abdominal_associated'] ?? null),
             'has_other_symptoms' => $yesNo($seed['has_other_symptoms'] ?? null),
+            'fever_confirmed' => $yesNo($seed['fever_confirmed'] ?? null),
+            'blood_in_stool' => $yesNo($seed['blood_in_stool'] ?? null),
+            'pregnancy' => $yesNo($seed['pregnancy'] ?? null),
             'patient_uncertain' => (bool) ($seed['patient_uncertain'] ?? false),
+            'patient_conditional' => (bool) ($seed['patient_conditional'] ?? false),
+            'clinical_state' => is_array($seed['clinical_state'] ?? null) ? $seed['clinical_state'] : [],
         ];
     }
 
@@ -511,6 +545,180 @@ final class ClinicalInterviewEngine
     }
 
     /**
+     * Serialize accumulated interview facts into phrases ClinicalTriageEngine already understands.
+     *
+     * @param array<string, mixed> $facts
+     */
+    private static function factsHaystack(array $facts): string
+    {
+        $parts = [];
+        if (($facts['pain_score'] ?? null) !== null && $facts['pain_score'] !== '') {
+            $parts[] = 'pain ' . (int) $facts['pain_score'] . '/10';
+        }
+        $onset = trim((string) ($facts['onset'] ?? ''));
+        if ($onset !== '' && $onset !== 'uncertain') {
+            $parts[] = $onset === 'sudden' ? 'sudden onset' : ($onset === 'gradual' ? 'gradual onset' : $onset);
+        }
+        $duration = trim((string) ($facts['duration_label'] ?? ''));
+        if ($duration !== '') {
+            $parts[] = $duration;
+        }
+        $qualifier = trim((string) ($facts['pain_qualifier'] ?? ''));
+        if ($qualifier !== '') {
+            $parts[] = $qualifier . ' pain';
+        }
+        foreach (self::stringList($facts['body_locations'] ?? []) as $loc) {
+            $parts[] = $loc;
+        }
+        foreach (array_merge(
+            self::stringList($facts['symptoms'] ?? []),
+            self::stringList($facts['associated_symptoms'] ?? [])
+        ) as $symptom) {
+            $parts[] = $symptom;
+        }
+        $positive = [
+            'weakness' => 'weakness in one arm or leg',
+            'speech_difficulty' => 'difficulty speaking',
+            'vision_change' => 'sudden vision change',
+            'breathing_difficulty' => 'difficulty breathing',
+            'bleeding_continuing' => 'ongoing bleeding',
+            'bleeding_heavy' => 'heavy bleeding',
+            'dizziness' => 'dizziness',
+            'chest_radiation' => 'chest pain spreading to arm',
+            'sweating' => 'sweating with chest pain',
+            'abdominal_associated' => 'vomiting with abdominal pain',
+            'fever_confirmed' => 'fever',
+            'blood_in_stool' => 'blood in stool',
+            'pregnancy' => 'pregnant',
+        ];
+        foreach ($positive as $key => $phrase) {
+            if (($facts[$key] ?? null) === true) {
+                $parts[] = $phrase;
+            } elseif (($facts[$key] ?? null) === false) {
+                $parts[] = 'no ' . $phrase;
+            }
+        }
+        foreach (self::stringList($facts['negative_symptoms'] ?? []) as $neg) {
+            $parts[] = 'no ' . $neg;
+            $parts[] = 'wala ko ' . $neg;
+        }
+        foreach (self::stringList($facts['risk_factors'] ?? []) as $risk) {
+            $parts[] = $risk;
+        }
+        foreach (self::stringList($facts['vital_signs'] ?? []) as $vital) {
+            $parts[] = $vital;
+        }
+        foreach (self::stringList($facts['medical_history'] ?? []) as $hx) {
+            $parts[] = $hx;
+        }
+
+        $parts = array_values(array_unique(array_filter(array_map('trim', $parts))));
+
+        return implode('. ', $parts);
+    }
+
+    /**
+     * Fold engine output into the accumulated clinical case without duplicating or undoing negations.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $assessment
+     * @param array<string, mixed> $raw
+     * @return array<string, mixed>
+     */
+    private static function absorbAssessmentIntoCase(array $context, array $assessment, array $raw): array
+    {
+        $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+        $negated = self::stringList($raw['negated_concepts'] ?? []);
+        if ($negated === []) {
+            $triage = is_array($assessment['triage'] ?? null) ? $assessment['triage'] : [];
+            $negated = self::stringList($triage['negated_concepts'] ?? []);
+        }
+        $negList = self::stringList($facts['negative_symptoms'] ?? []);
+        foreach ($negated as $neg) {
+            $neg = strtolower(trim($neg));
+            if ($neg !== '' && !in_array($neg, $negList, true)) {
+                $negList[] = $neg;
+            }
+        }
+        $facts['negative_symptoms'] = $negList;
+
+        $symptoms = self::stringList($facts['symptoms'] ?? []);
+        foreach (self::stringList($assessment['detected_symptoms'] ?? []) as $name) {
+            $drop = false;
+            foreach ($negList as $neg) {
+                if (self::symptomMatchesConcept($name, $neg)) {
+                    $drop = true;
+                    break;
+                }
+            }
+            if (!$drop && !in_array($name, $symptoms, true)) {
+                $symptoms[] = $name;
+            }
+        }
+        $facts['symptoms'] = array_values(array_filter(
+            $symptoms,
+            static function (string $name) use ($negList): bool {
+                foreach ($negList as $neg) {
+                    if (self::symptomMatchesConcept($name, $neg)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        ));
+
+        $flags = self::redFlagNames($assessment);
+        $facts['red_flags'] = array_values(array_unique(array_merge(
+            self::stringList($facts['red_flags'] ?? []),
+            $flags
+        )));
+        $context['facts'] = $facts;
+        $context['red_flags'] = $facts['red_flags'];
+
+        return $context;
+    }
+
+    private static function symptomMatchesConcept(string $symptom, string $concept): bool
+    {
+        $symptom = strtolower(trim($symptom));
+        $concept = strtolower(trim($concept));
+        if ($symptom === '' || $concept === '') {
+            return false;
+        }
+        if ($symptom === $concept || str_contains($symptom, $concept) || str_contains($concept, $symptom)) {
+            return true;
+        }
+        $aliases = [
+            ['cough', 'ubo'],
+            ['fever', 'lagnat', 'hilanat'],
+            ['vomiting', 'suka', 'nausea'],
+            ['diarrhea', 'diarrhoea', 'libang', 'galupot', 'kalibanga'],
+            ['headache', 'sakit ulo'],
+            ['difficulty breathing', 'shortness of breath', 'dyspnea', 'ginhawa'],
+            ['chest pain', 'dughan', 'dibdib'],
+            ['dizziness', 'dizzy', 'lipong', 'hilo'],
+        ];
+        foreach ($aliases as $words) {
+            $inConcept = false;
+            $inSymptom = false;
+            foreach ($words as $w) {
+                if ($concept === $w || str_contains($concept, $w)) {
+                    $inConcept = true;
+                }
+                if ($symptom === $w || str_contains($symptom, $w)) {
+                    $inSymptom = true;
+                }
+            }
+            if ($inConcept && $inSymptom) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
@@ -527,13 +735,23 @@ final class ClinicalInterviewEngine
             self::transcript($context),
         ], static fn ($v): bool => trim((string) $v) !== '')));
 
-        $onset = ClinicalFeatureExtractors::extractOnset($combined);
-        if ($onset !== '' && $facts['onset'] === '') {
-            $facts['onset'] = $onset;
+        $onsetFromTurn = ClinicalFeatureExtractors::extractOnset($turn);
+        if ($onsetFromTurn !== '') {
+            $facts['onset'] = $onsetFromTurn;
+        } else {
+            $onset = ClinicalFeatureExtractors::extractOnset($combined);
+            if ($onset !== '' && ($facts['onset'] === '' || $facts['onset'] === 'uncertain')) {
+                $facts['onset'] = $onset;
+            }
         }
-        $duration = ClinicalFeatureExtractors::extractDuration($combined);
-        if (($duration['label'] ?? '') !== '' && $facts['duration_label'] === '') {
-            $facts['duration_label'] = (string) $duration['label'];
+        $durationFromTurn = ClinicalFeatureExtractors::extractDuration($turn);
+        if (($durationFromTurn['label'] ?? '') !== '') {
+            $facts['duration_label'] = (string) $durationFromTurn['label'];
+        } else {
+            $duration = ClinicalFeatureExtractors::extractDuration($combined);
+            if (($duration['label'] ?? '') !== '' && $facts['duration_label'] === '') {
+                $facts['duration_label'] = (string) $duration['label'];
+            }
         }
         // Soft timing phrases ("ligad pa") count as known onset — do not re-ask ONSET.
         if ($facts['onset'] === '' && $facts['duration_label'] !== '') {
@@ -569,16 +787,16 @@ final class ClinicalInterviewEngine
             }
         }
         $pain = ClinicalFeatureExtractors::extractPainScale($turn);
-        if ($pain['score'] !== null && $facts['pain_score'] === null) {
+        if ($pain['score'] !== null) {
             $facts['pain_score'] = (int) $pain['score'];
-        } elseif ($facts['pain_score'] === null && ($awaiting === 'PAIN_SEVERITY' || $awaiting === '')) {
+        } elseif ($awaiting === 'PAIN_SEVERITY' || $awaiting === '') {
             $standalone = ClinicalFeatureExtractors::extractStandalonePainScore($turn, $awaiting === 'PAIN_SEVERITY');
             if ($standalone !== null) {
                 $facts['pain_score'] = $standalone;
             }
         }
         $qualifier = ClinicalFeatureExtractors::extractPainQualifier($turn);
-        if ($qualifier !== '' && $facts['pain_qualifier'] === '') {
+        if ($qualifier !== '') {
             $facts['pain_qualifier'] = $qualifier;
         }
         foreach (ClinicalFeatureExtractors::extractBodyLocations($combined) as $loc) {
@@ -608,7 +826,7 @@ final class ClinicalInterviewEngine
                 'FEVER_CONFIRM' => 'fever_confirmed',
                 'VISION_CHANGE' => 'vision_change',
             ];
-            if (isset($map[$awaiting]) && $facts[$map[$awaiting]] === null) {
+            if (isset($map[$awaiting])) {
                 $facts[$map[$awaiting]] = $yesNo;
             }
             // Negative reply to associated/yes-no clinical probes is stored as a denial.
@@ -628,7 +846,75 @@ final class ClinicalInterviewEngine
             }
         }
 
+        if (class_exists('NegationDetector')) {
+            try {
+                $negated = NegationDetector::detectNegatedConcepts($combined);
+                $negList = self::stringList($facts['negative_symptoms'] ?? []);
+                foreach ($negated as $neg) {
+                    $neg = strtolower(trim((string) $neg));
+                    if ($neg === '' || in_array($neg, $negList, true)) {
+                        continue;
+                    }
+                    $negList[] = $neg;
+                    $facts['symptoms'] = array_values(array_filter(
+                        self::stringList($facts['symptoms'] ?? []),
+                        static fn (string $s): bool => !self::symptomMatchesConcept($s, $neg)
+                    ));
+                    if (self::symptomMatchesConcept('cough', $neg) || $neg === 'ubo') {
+                        // Keep cough off the positive list; do not invent a cough fact.
+                    }
+                    if (self::symptomMatchesConcept('difficulty breathing', $neg)
+                        || str_contains($neg, 'breath')
+                        || str_contains($neg, 'ginhawa')
+                    ) {
+                        $facts['breathing_difficulty'] = false;
+                    }
+                }
+                $facts['negative_symptoms'] = $negList;
+            } catch (Throwable) {
+                // keep extractor-only facts
+            }
+        }
+
         $facts = self::absorbImplicitRedFlags($facts, $low);
+
+        // Free-text follow-ups can introduce new clinical facts (e.g. "Ga suka ko"
+        // while awaiting ONSET). Accumulate them into the case without replacing prior facts.
+        if ($turn !== '' && class_exists('SymptomKnowledgeBase')) {
+            try {
+                $turnMatches = SymptomKnowledgeBase::matchSymptoms($turn, $turn);
+                $assoc = self::stringList($facts['associated_symptoms'] ?? []);
+                $symptoms = self::stringList($facts['symptoms'] ?? []);
+                $negList = self::stringList($facts['negative_symptoms'] ?? []);
+                foreach ($turnMatches as $row) {
+                    $name = trim((string) ($row['symptom_name'] ?? ''));
+                    if ($name === '') {
+                        continue;
+                    }
+                    $denied = false;
+                    foreach ($negList as $neg) {
+                        if (self::symptomMatchesConcept($name, $neg)) {
+                            $denied = true;
+                            break;
+                        }
+                    }
+                    if ($denied) {
+                        continue;
+                    }
+                    if (!in_array($name, $symptoms, true)) {
+                        $symptoms[] = $name;
+                    }
+                    if ($awaiting !== '' && !in_array($name, $assoc, true)) {
+                        $assoc[] = $name;
+                    }
+                }
+                $facts['symptoms'] = $symptoms;
+                $facts['associated_symptoms'] = $assoc;
+            } catch (Throwable) {
+                // keep extractor-only facts
+            }
+        }
+
         $context['facts'] = $facts;
 
         return $context;
@@ -694,21 +980,21 @@ final class ClinicalInterviewEngine
                 'FEVER_CONFIRM' => 'fever_confirmed',
                 'VISION_CHANGE' => 'vision_change',
             ];
-            if ($yn !== null && isset($map[$awaiting]) && ($facts[$map[$awaiting]] ?? null) === null) {
+            if ($yn !== null && isset($map[$awaiting])) {
                 $facts[$map[$awaiting]] = $yn;
             }
         }
 
-        if (($extracted['pain_severity'] ?? null) !== null && ($facts['pain_score'] ?? null) === null) {
+        if (($extracted['pain_severity'] ?? null) !== null) {
             $facts['pain_score'] = (int) $extracted['pain_severity'];
         }
-        if (trim((string) ($extracted['pain_qualifier'] ?? '')) !== '' && ($facts['pain_qualifier'] ?? '') === '') {
+        if (trim((string) ($extracted['pain_qualifier'] ?? '')) !== '') {
             $facts['pain_qualifier'] = (string) $extracted['pain_qualifier'];
         }
-        if (trim((string) ($extracted['duration'] ?? '')) !== '' && ($facts['duration_label'] ?? '') === '') {
+        if (trim((string) ($extracted['duration'] ?? '')) !== '') {
             $facts['duration_label'] = (string) $extracted['duration'];
         }
-        if (trim((string) ($extracted['onset'] ?? '')) !== '' && ($facts['onset'] ?? '') === '') {
+        if (trim((string) ($extracted['onset'] ?? '')) !== '') {
             $facts['onset'] = (string) $extracted['onset'];
         }
         if (!empty($extracted['body_locations']) && is_array($extracted['body_locations'])) {
@@ -729,8 +1015,8 @@ final class ClinicalInterviewEngine
             'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
             'blood_in_stool',
         ] as $key) {
-            if (array_key_exists($key, $extracted) && ($facts[$key] ?? null) === null) {
-                $facts[$key] = (bool) $extracted[$key];
+            if (array_key_exists($key, $extracted) && $extracted[$key] !== null && $extracted[$key] !== '') {
+                $facts[$key] = is_bool($extracted[$key]) ? (bool) $extracted[$key] : $extracted[$key];
             }
         }
 
@@ -747,6 +1033,15 @@ final class ClinicalInterviewEngine
      */
     private static function absorbImplicitRedFlags(array $facts, string $low): array
     {
+        $negatedBreathing = (bool) preg_match(
+            '/\b(no|not|without|denies|wala(?:\s+(?:ko|ako|akong|sang|man))?|walang|walay|hindi(?:\s+ako)?|indi)\s+'
+            . '(difficulty breathing|shortness of breath|dyspnea|budlay(?:\s+gid)?(?:\s+mag)?ginhawa)\b/u',
+            $low
+        );
+        if ($negatedBreathing) {
+            $facts['breathing_difficulty'] = false;
+        }
+
         if (preg_match('/\b(no|wala|hindi|indi|without)\s+(weakness|numbness|pamamanhid|numb)\b/u', $low)) {
             $facts['weakness'] = false;
         } elseif (preg_match('/nangaluya|kaluya|one[- ]sided|wala nga kamot|left arm|weakness in one|pamamanhid|naga\s*numb|\bnumbness\b/u', $low)
@@ -760,10 +1055,15 @@ final class ClinicalInterviewEngine
         if (preg_match('/nabulag|vision loss|double vision|nawala panulok/u', $low)) {
             $facts['vision_change'] = true;
         }
-        if (preg_match('/makahinga|makaginhawa|cannot breathe|can\'t breathe|difficulty breathing|budlay.{0,12}ginhawa|hirap huminga/u', $low)) {
+        if (!$negatedBreathing && preg_match(
+            '/(?<!no )(?<!not )(?<!wala ko )(?<!wala )(cannot breathe|can\'t breathe|indi ko makaginhawa|indi ko kaginhawa|budlay.{0,12}ginhawa|hirap huminga)\b/u',
+            $low
+        )) {
             $facts['breathing_difficulty'] = true;
         }
-        if (preg_match('/\b(malipong|nalipong|dizzy|nahihilo|nahilo|punaw|faint)\b/u', $low)) {
+        if (preg_match('/\b(malipong|nalipong|dizzy|nahihilo|nahilo|punaw|faint)\b/u', $low)
+            && !preg_match('/\b(no|wala|hindi|indi|without)\s+(malipong|dizzy|hilo)\b/u', $low)
+        ) {
             $facts['dizziness'] = true;
         }
         if (preg_match('/grabe.{0,20}dugo|indi.{0,12}(untat|mapunggan)|uncontrolled bleeding|heavy bleeding/u', $low)) {
@@ -781,15 +1081,36 @@ final class ClinicalInterviewEngine
     private static function mergeFacts(array $left, array $right): array
     {
         $out = $left;
+        $listKeys = [
+            'body_locations', 'symptoms', 'associated_symptoms', 'negative_symptoms',
+            'vital_signs', 'risk_factors', 'red_flags', 'medical_history',
+        ];
+        $replaceKeys = [
+            'pain_score', 'pain_qualifier', 'onset', 'duration_label', 'progression',
+            'weakness', 'speech_difficulty', 'vision_change', 'breathing_difficulty',
+            'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+            'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
+            'blood_in_stool', 'pregnancy',
+        ];
         foreach ($right as $key => $value) {
-            if ($key === 'body_locations' && is_array($value)) {
-                $out['body_locations'] = array_values(array_unique(array_merge(
-                    self::stringList($out['body_locations'] ?? []),
+            if (in_array($key, $listKeys, true) && is_array($value)) {
+                $out[$key] = array_values(array_unique(array_merge(
+                    self::stringList($out[$key] ?? []),
                     self::stringList($value)
                 )));
                 continue;
             }
             if ($value === null || $value === '' || $value === []) {
+                continue;
+            }
+            if (in_array($key, $replaceKeys, true)) {
+                // Later validated follow-up answers may correct an earlier fact
+                // (e.g. pain 5 → 8) without wiping unrelated slots.
+                $out[$key] = $value;
+                continue;
+            }
+            if ($key === 'patient_uncertain' || $key === 'patient_conditional' || $key === 'denied_associated') {
+                $out[$key] = !empty($out[$key]) || !empty($value);
                 continue;
             }
             if (($out[$key] ?? null) === null || $out[$key] === '' || $out[$key] === []) {

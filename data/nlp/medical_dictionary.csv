@@ -14151,3 +14151,17 @@ dictionary_id,local_term,english_term,category
 ,dilaw ang panit,yellowish skin,symptom
 ,nagadilaw panit,yellowish skin,symptom
 ,dial panit,yellowish skin,symptom
+,"ga suka",vomiting,symptom
+,"ga suka ko",vomiting,symptom
+,"gasuka ko",vomiting,symptom
+,galupot,diarrhea,symptom
+,"galupot tiyan",diarrhea,symptom
+,"permi galupot",diarrhea,symptom
+,"masakit gid ulo ko","severe headache",symptom
+,"nag gulpi","sudden onset",symptom
+,"nagsugod gulpi","sudden onset",symptom
+,"grabe ang pagsugod","sudden severe onset",symptom
+,ambot,uncertain,response
+,"di ko sure",uncertain,response
+,"indi ko sure",uncertain,response
+,"wala ko sure",uncertain,response

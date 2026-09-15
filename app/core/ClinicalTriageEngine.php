@@ -71,7 +71,7 @@ final class ClinicalTriageEngine
             $entities = MedicalEntityExtractor::extractEntities($original);
         }
 
-        [$entitySymptoms, $conditions, $bodyParts] = self::collectFromEntities($entities);
+        [$entitySymptoms, $conditions, $bodyParts, $entityMatchBoosts] = self::collectFromEntities($entities);
         foreach ($validatedTerms as $term) {
             $t = trim($term);
             if ($t !== '' && !self::listHasCaseInsensitive($entitySymptoms, $t) && !self::listHasCaseInsensitive($conditions, $t)) {
@@ -84,7 +84,7 @@ final class ClinicalTriageEngine
         $kbSymptoms = SymptomKnowledgeBase::matchSymptoms(
             $original,
             $english,
-            array_merge($entitySymptoms, $validatedTerms)
+            array_merge($entitySymptoms, $entityMatchBoosts, $validatedTerms)
         );
         // Negation: never keep denied/negated symptoms
         $kbSymptoms = NegationDetector::filterSymptoms($kbSymptoms, $original, $english);
@@ -132,9 +132,15 @@ final class ClinicalTriageEngine
             $original,
             $english
         );
-        $redFlags = array_merge($redFlags, self::scanBreathingEmergencyPatterns($original, $english));
-        $redFlags = array_merge($redFlags, self::scanNeuroEmergencyPatterns($original, $english));
-        $redFlags = array_merge($redFlags, self::scanTraumaEmergencyPatterns($original, $english, $normalizedBase));
+        $scannedFlags = array_merge(
+            self::scanBreathingEmergencyPatterns($original, $english),
+            self::scanNeuroEmergencyPatterns($original, $english),
+            self::scanTraumaEmergencyPatterns($original, $english, $normalizedBase)
+        );
+        $redFlags = array_merge(
+            $redFlags,
+            NegationDetector::filterRedFlags($scannedFlags, $original, $english)
+        );
         $redFlags = ClinicalContextReasoningEngine::filterContextGatedRedFlags($redFlags, $original, $english, $kbSymptoms);
 
         NlpPipelineDebug::step('entity_extraction', [
@@ -169,7 +175,8 @@ final class ClinicalTriageEngine
         $hadConfirmedRedFlags = $redFlags !== [];
         $whoMatch = WhoIittTriageRulesLoader::evaluate(
             trim($rawInput . ' ' . $original),
-            $english
+            $english,
+            $negatedConcepts
         );
         if ($whoMatch !== null) {
             $whoDisplay = (string) ($whoMatch['triage_level'] ?? 'NON-URGENT');
@@ -478,22 +485,30 @@ final class ClinicalTriageEngine
     private static function collectFromEntities(array $entities): array
     {
         $symptoms = [];
+        $matchBoosts = [];
         $conditions = [];
         $bodyParts = [];
         foreach ($entities as $e) {
+            $local = trim((string) ($e['hiligaynon_term'] ?? $e['local_term'] ?? ''));
             $eng = trim((string) ($e['english_term'] ?? ''));
-            if ($eng === '') {
+            if ($local === '' && $eng === '') {
                 continue;
             }
             $sym = trim((string) ($e['symptom'] ?? ''));
             $cond = trim((string) ($e['condition'] ?? ''));
             $bp = trim((string) ($e['body_part'] ?? ''));
-            if ($sym !== '' && $sym !== 'symptom') {
+            // Local wording boosts matching but is not dumped as a display symptom label.
+            if ($local !== '') {
+                $matchBoosts[] = $local;
+            }
+            if ($sym !== '' && $sym !== 'symptom' && $sym !== 'pain') {
                 $symptoms[] = str_replace('_', ' ', $sym);
             }
             if ($cond !== '' || str_contains(strtolower($eng), 'infection') || ($e['type'] ?? '') === 'condition') {
-                $conditions[] = $eng;
-            } else {
+                if ($eng !== '') {
+                    $conditions[] = $eng;
+                }
+            } elseif ($eng !== '' && !in_array(strtolower($eng), ['pain', 'symptom', 'symptoms'], true)) {
                 $symptoms[] = $eng;
             }
             if ($bp !== '') {
@@ -505,6 +520,7 @@ final class ClinicalTriageEngine
             array_values(array_unique($symptoms)),
             array_values(array_unique($conditions)),
             array_values(array_unique($bodyParts)),
+            array_values(array_unique($matchBoosts)),
         ];
     }
 
@@ -696,39 +712,74 @@ final class ClinicalTriageEngine
 
         $matched = [];
         foreach ($patterns as $pattern => $label) {
-            if (str_contains($hay, $pattern)) {
-                $matched[] = [
-                    'flag_id'            => 'BREATH_' . strtoupper(substr(md5($pattern), 0, 8)),
-                    'flag_name'          => $label,
-                    'category'           => 'respiratory',
-                    'auto_triage'        => 'EMERGENCY',
-                    'severity_points'    => 15,
-                    'clinical_rationale' => 'Respiratory distress requires immediate emergency evaluation.',
-                    'matched_on'         => $pattern,
-                    'matched_pattern'    => $pattern,
-                    'english_pattern'    => $pattern,
-                    'source'             => 'breathing_pattern_scan',
-                ];
-                break;
+            if (!str_contains($hay, $pattern)) {
+                continue;
             }
-        }
-
-        if ($matched === [] && preg_match('/\b(indi|dili|wala|hindi).{0,25}(kaginhawa|makaginhawa|makahinga|ginhawa|hinga)\b/u', $hay)) {
+            if (self::isFindingNegated($hay, $pattern)) {
+                continue;
+            }
             $matched[] = [
-                'flag_id'            => 'BREATH_CONTEXT',
-                'flag_name'          => 'Respiratory distress (contextual)',
+                'flag_id'            => 'BREATH_' . strtoupper(substr(md5($pattern), 0, 8)),
+                'flag_name'          => $label,
                 'category'           => 'respiratory',
                 'auto_triage'        => 'EMERGENCY',
                 'severity_points'    => 15,
-                'clinical_rationale' => 'Negated breathing capacity in local language indicates emergency respiratory distress.',
-                'matched_on'         => $hay,
-                'matched_pattern'    => '(indi|dili|wala|hindi) + breathing',
-                'english_pattern'    => 'cannot breathe',
+                'clinical_rationale' => 'Respiratory distress requires immediate emergency evaluation.',
+                'matched_on'         => $pattern,
+                'matched_pattern'    => $pattern,
+                'english_pattern'    => $pattern,
                 'source'             => 'breathing_pattern_scan',
             ];
+            break;
+        }
+
+        if ($matched === [] && preg_match('/\b(indi|dili|hindi)\s+(ko\s+)?(kaginhawa|makaginhawa|makahinga)\b/u', $hay)) {
+            if (!self::isFindingNegated($hay, 'difficulty breathing')) {
+                $matched[] = [
+                    'flag_id'            => 'BREATH_CONTEXT',
+                    'flag_name'          => 'Respiratory distress (contextual)',
+                    'category'           => 'respiratory',
+                    'auto_triage'        => 'EMERGENCY',
+                    'severity_points'    => 15,
+                    'clinical_rationale' => 'Negated breathing capacity in local language indicates emergency respiratory distress.',
+                    'matched_on'         => $hay,
+                    'matched_pattern'    => '(indi|dili|hindi) + breathing',
+                    'english_pattern'    => 'cannot breathe',
+                    'source'             => 'breathing_pattern_scan',
+                ];
+            }
         }
 
         return $matched;
+    }
+
+    private static function isFindingNegated(string $hay, string $finding): bool
+    {
+        $finding = strtolower(trim($finding));
+        if ($finding === '' || $hay === '') {
+            return false;
+        }
+        if (class_exists('NegationDetector')) {
+            try {
+                foreach (NegationDetector::detectNegatedConcepts($hay) as $neg) {
+                    $neg = strtolower(trim((string) $neg));
+                    if ($neg === '') {
+                        continue;
+                    }
+                    if ($neg === $finding || str_contains($finding, $neg) || str_contains($neg, $finding)) {
+                        return true;
+                    }
+                }
+            } catch (Throwable) {
+                // fall through to prefix check
+            }
+        }
+        $quoted = preg_quote($finding, '/');
+
+        return (bool) preg_match(
+            '/\b(no|not|without|denies|wala(?:\s+(?:ko|ako|akong|sang|man))?|walang|walay|hindi(?:\s+ako)?)\s+' . $quoted . '\b/u',
+            $hay
+        );
     }
 
     /** @return list<array<string, mixed>> */

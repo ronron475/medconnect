@@ -166,7 +166,50 @@ final class SymptomEvidenceGate
             return 'symptom_name:' . strtolower($name);
         }
 
+        // Entity/English matched_term may not appear verbatim in Hiligaynon patient text.
+        // Keep the symptom only when local clinical anchors are present in the same case.
+        if ($name !== '' && self::localClinicalAnchorEvidence($name, $hay)) {
+            return 'local_anchor:' . strtolower($name);
+        }
+
         return null;
+    }
+
+    /**
+     * Local Hiligaynon/Filipino anchors for common CDS symptoms when English labels
+     * were introduced via entity translation rather than patient wording.
+     */
+    private static function localClinicalAnchorEvidence(string $name, string $hay): bool
+    {
+        $plain = strtolower(trim($name));
+        $key = str_replace(' ', '_', $plain);
+        if (isset(self::BODY_REQUIREMENTS[$key]) && !preg_match(self::BODY_REQUIREMENTS[$key], $hay)) {
+            return false;
+        }
+        if (isset(self::BODY_REQUIREMENTS[$plain]) && !preg_match(self::BODY_REQUIREMENTS[$plain], $hay)) {
+            return false;
+        }
+
+        $anchors = [
+            'headache' => '/\b(sakit|masakit|hapdi|kasakit|gasakit|headache|pain).{0,24}\b(ulo|head)\b|\b(ulo|head).{0,24}\b(sakit|masakit|hapdi|pain)\b/u',
+            'vomiting' => '/\b(suka|gasuka|ga\s*suka|ginasuka|nagsuka|nagasuka|vomit|vomiting|pagsuka)\b/u',
+            'nausea' => '/\b(suka|gasuka|ga\s*suka|ginasuka|kasukaon|nausea|queasy)\b/u',
+            'diarrhea' => '/\b(libang|kalibanga|galupot|tae|diarrhea|diarrhoea|dudul-om|ginadudul-om)\b/u',
+            'cough' => '/\b(ubo|ginaubo|ga\s*ubo|cough)\b/u',
+            'fever' => '/\b(hilanat|lagnat|ginahilanat|fever)\b/u',
+            'abdominal pain' => '/\b(sakit|masakit|hapdi|gasakit).{0,24}\b(tiyan|abdomen|stomach)\b|\b(tiyan|abdomen|stomach).{0,24}\b(sakit|masakit|pain)\b/u',
+            'chest pain' => '/\b(sakit|masakit|hapdi).{0,24}\b(dughan|dibdib|chest)\b|\b(dughan|dibdib|chest).{0,24}\b(sakit|masakit|pain)\b/u',
+            'difficulty breathing' => '/\b(budlay|lisod|kapos|dula).{0,16}\b(ginhawa|hinga)|difficulty breathing|shortness of breath|cannot breathe\b/u',
+            'shortness of breath' => '/\b(budlay|lisod|kapos|dula).{0,16}\b(ginhawa|hinga)|difficulty breathing|shortness of breath\b/u',
+        ];
+
+        foreach ($anchors as $label => $pattern) {
+            if ($plain === $label || str_contains($plain, $label) || str_contains($label, $plain)) {
+                return (bool) preg_match($pattern, $hay);
+            }
+        }
+
+        return false;
     }
 
   /**
