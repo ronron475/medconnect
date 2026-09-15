@@ -1022,6 +1022,14 @@ function patient_submit_symptoms_for_review(
                 $triageId,
                 $patientId
             );
+        } else {
+            NotificationEvents::aiReviewAssignmentInbox(
+                $pdo,
+                $patientId,
+                $patientName,
+                $triageId,
+                $patientId
+            );
         }
 
         $waitingForSlot = $assignedId <= 0;

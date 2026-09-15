@@ -345,16 +345,16 @@ function portal_nav_admin_counts(PDO $pdo, string $role, int $userId = 0): array
     } catch (Throwable $e) {
     }
     try {
-        require_once __DIR__ . '/triage_assessment_schema.php';
-        triage_assessment_ensure_schema($pdo);
-        if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
-            $aiReviewPending = (int) $pdo->query("
-                SELECT COUNT(*)
-                FROM triage_results
-                WHERE recommendation_status = 'pending_approval'
-                  AND assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                  AND TRIM(COALESCE(chief_complaint, '')) <> ''
-            ")->fetchColumn();
+        require_once __DIR__ . '/notification_events.php';
+        require_once __DIR__ . '/../core/NotificationManager.php';
+        // Sidebar badge = per-user unread AI review inbox items (not pending/total cases).
+        if ($userId > 0) {
+            NotificationEvents::ensureAiReviewInboxForUser($pdo, $userId);
+            $aiReviewPending = NotificationManager::countUnreadRelated(
+                $pdo,
+                $userId,
+                NotificationManager::RELATED_AI_REVIEW_ASSIGNMENTS
+            );
         }
     } catch (Throwable $e) {
     }

@@ -1,5 +1,5 @@
 /**
- * MedConnect Admin — AI Review Assignments
+ * MedConnect Admin / SuperAdmin — AI Review Assignments (inbox / monitoring)
  */
 (function () {
   'use strict';
@@ -9,8 +9,8 @@
 
   var apiUrl = root.dataset.api || '';
   var csrf = document.body.dataset.csrf || '';
-  var providers = [];
   var allRows = [];
+  var unreadCount = 0;
 
   var filterEl = document.getElementById('aiReviewFilter');
   var searchEl = document.getElementById('aiReviewSearch');
@@ -48,32 +48,42 @@
     }
   }
 
-  function providerOptions(selectedId) {
-    var html = '';
-    providers.forEach(function (p) {
-      var sel = Number(p.id) === Number(selectedId) ? ' selected' : '';
-      html += '<option value="' + esc(p.id) + '"' + sel + '>' + esc(p.name) + '</option>';
+  function providerDisplay(row) {
+    var name = String(row.assigned_provider_name || row.reviewer_name || '').trim();
+    if (!name || !row.assigned_provider_id) {
+      return '<span class="staff-apps-meta staff-apps-meta--muted air-review-reviewer is-unassigned">No assigned doctor</span>';
+    }
+    return '<span class="staff-apps-meta">' + esc(name) + '</span>';
+  }
+
+  function refreshNavBadge(unread) {
+    var n = Math.max(0, parseInt(unread, 10) || 0);
+    unreadCount = n;
+    var text = n <= 0 ? '' : (n > 9 ? '9+' : String(n));
+    document.querySelectorAll('[data-nav-badge="ai_review_pending"]').forEach(function (badge) {
+      badge.textContent = text;
+      badge.hidden = n <= 0;
+      badge.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
-    return html;
   }
 
   function updateStats(rows) {
     var pending = 0;
     var approved = 0;
-    var unassigned = 0;
+    var unread = 0;
     rows.forEach(function (row) {
       if (row.recommendation_status === 'pending_approval') pending += 1;
       if (row.recommendation_status === 'approved') approved += 1;
-      if (!row.assigned_provider_id) unassigned += 1;
+      if (row.is_unread) unread += 1;
     });
     var totalEl = document.getElementById('airStatTotal');
     var pendingEl = document.getElementById('airStatPending');
     var approvedEl = document.getElementById('airStatApproved');
-    var unassignedEl = document.getElementById('airStatUnassigned');
+    var unreadEl = document.getElementById('airStatUnread');
     if (totalEl) totalEl.textContent = String(rows.length);
     if (pendingEl) pendingEl.textContent = String(pending);
     if (approvedEl) approvedEl.textContent = String(approved);
-    if (unassignedEl) unassignedEl.textContent = String(unassigned);
+    if (unreadEl) unreadEl.textContent = String(typeof unreadCount === 'number' ? unreadCount : unread);
   }
 
   function filteredRows() {
@@ -83,7 +93,7 @@
       var hay = [
         row.patient_name,
         row.chief_complaint,
-        row.reviewer_name,
+        row.assigned_provider_name || row.reviewer_name,
         row.recommendation_status,
       ].join(' ').toLowerCase();
       return hay.indexOf(q) !== -1;
@@ -120,31 +130,31 @@
       var badge = status === 'pending_approval'
         ? '<span class="staff-app-status staff-app-status--pending">Pending</span>'
         : '<span class="staff-app-status staff-app-status--active">Approved</span>';
-      var assignId = row.assigned_provider_id || '';
-      var reviewer = row.reviewer_name || '';
-      var reviewerHtml = reviewer
-        ? '<span class="staff-apps-meta">' + esc(reviewer) + '</span>'
-        : '<span class="staff-apps-meta staff-apps-meta--muted air-review-reviewer is-unassigned">Unassigned</span>';
+      var unread = !!row.is_unread;
+      var actionLabel = unread ? 'Mark as Read' : 'Mark as Unread';
+      var actionClass = unread ? 'mc-btn--primary' : 'mc-btn--outline';
+      var unreadBadge = unread
+        ? ' <span class="air-review-unread-pill">Unread</span>'
+        : '';
 
-      return '<tr data-triage-id="' + esc(row.id) + '">' +
+      return '<tr data-triage-id="' + esc(row.id) + '"' + (unread ? ' class="is-unread"' : '') + '>' +
         '<td class="staff-apps-td--applicant" data-label="">' +
           '<div class="staff-apps-applicant">' +
             '<div class="staff-apps-avatar" aria-hidden="true">' + esc(initials(row.patient_name)) + '</div>' +
-            '<div class="staff-apps-applicant__name">' + esc(row.patient_name) + '</div>' +
+            '<div class="staff-apps-applicant__name">' + esc(row.patient_name) + unreadBadge + '</div>' +
           '</div>' +
         '</td>' +
         '<td data-label="Concern">' +
           '<div class="air-review-concern" title="' + esc(row.chief_complaint || '') + '">' + esc(row.chief_complaint || '—') + '</div>' +
         '</td>' +
         '<td data-label="Status">' + badge + '</td>' +
-        '<td data-label="Assigned reviewer">' + reviewerHtml + '</td>' +
+        '<td data-label="Assigned Provider">' + providerDisplay(row) + '</td>' +
         '<td data-label="Submitted"><span class="staff-apps-meta staff-apps-meta--muted">' + esc(formatSubmitted(row.assessed_at)) + '</span></td>' +
         '<td class="staff-apps-td--actions" data-label="Actions">' +
           '<div class="air-review-actions">' +
-            '<select class="staff-apps-filter air-review-actions__select ai-review-provider-select" data-triage="' + esc(row.id) + '" aria-label="Reviewer for ' + esc(row.patient_name) + '">' +
-              providerOptions(assignId) +
-            '</select>' +
-            '<button type="button" class="mc-btn mc-btn--primary mc-btn--sm air-review-actions__save ai-review-save" data-triage="' + esc(row.id) + '">Save</button>' +
+            '<button type="button" class="mc-btn ' + actionClass + ' mc-btn--sm air-review-actions__toggle ai-review-read-toggle" data-triage="' + esc(row.id) + '" data-unread="' + (unread ? '1' : '0') + '">' +
+              actionLabel +
+            '</button>' +
           '</div>' +
         '</td>' +
       '</tr>';
@@ -160,7 +170,7 @@
   function notify(message, success) {
     if (window.McModal && typeof window.McModal.alert === 'function') {
       window.McModal.alert({
-        title: success ? 'Saved' : 'Could not save',
+        title: success ? 'Updated' : 'Could not update',
         message: message,
         variant: success ? 'success' : 'error',
         icon: success ? 'success' : 'error',
@@ -185,8 +195,10 @@
         tbody.innerHTML = emptyStateHtml();
         return;
       }
-      providers = data.providers || [];
       allRows = data.rows || [];
+      if (typeof data.unread_count === 'number') {
+        refreshNavBadge(data.unread_count);
+      }
       renderRows(filteredRows());
       setStatus('Updated ' + new Date().toLocaleTimeString(), false);
     } catch (e) {
@@ -196,33 +208,43 @@
   }
 
   tbody.addEventListener('click', async function (ev) {
-    var btn = ev.target.closest('.ai-review-save');
+    var btn = ev.target.closest('.ai-review-read-toggle');
     if (!btn) return;
     var triageId = btn.getAttribute('data-triage');
-    var row = btn.closest('tr');
-    var sel = row ? row.querySelector('.ai-review-provider-select') : null;
-    if (!triageId || !sel || !sel.value) return;
+    if (!triageId) return;
+
+    var currentlyUnread = btn.getAttribute('data-unread') === '1';
+    var action = currentlyUnread ? 'mark_read' : 'mark_unread';
 
     btn.disabled = true;
     btn.classList.add('is-saving');
     var prevLabel = btn.textContent;
-    btn.textContent = 'Saving…';
+    btn.textContent = currentlyUnread ? 'Marking…' : 'Updating…';
     try {
       var fd = new FormData();
-      fd.append('action', 'reassign');
+      fd.append('action', action);
       fd.append('triage_id', triageId);
-      fd.append('provider_id', sel.value);
       fd.append('csrf_token', csrf);
       var res = await fetch(apiUrl, { method: 'POST', body: fd, credentials: 'same-origin' });
       var data = await res.json();
-      notify(data.message || (data.success ? 'Reviewer assignment saved.' : 'Could not reassign.'), !!data.success);
-      if (data.success) load();
+      if (!data.success) {
+        notify(data.message || 'Could not update read state.', false);
+        return;
+      }
+      if (typeof data.unread_count === 'number') {
+        refreshNavBadge(data.unread_count);
+      }
+      var row = allRows.find(function (r) { return String(r.id) === String(triageId); });
+      if (row) {
+        row.is_unread = !!data.is_unread;
+      }
+      renderRows(filteredRows());
     } catch (e) {
-      notify('Could not reassign. Please try again.', false);
+      notify('Could not update read state. Please try again.', false);
+      btn.textContent = prevLabel;
     } finally {
       btn.disabled = false;
       btn.classList.remove('is-saving');
-      btn.textContent = prevLabel || 'Save';
     }
   });
 
