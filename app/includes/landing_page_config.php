@@ -63,8 +63,39 @@ final class LandingPageConfig
 
     public static function flag(PDO $pdo, string $key): bool
     {
-        $raw = strtolower(trim(self::get($pdo, $key, '0')));
-        return $raw === '1' || $raw === 'true' || $raw === 'yes' || $raw === 'on';
+        return self::isEnabledValue(self::get($pdo, $key, '0'));
+    }
+
+    public static function isEnabledValue(mixed $raw): bool
+    {
+        $value = strtolower(trim((string) $raw));
+        return $value === '1' || $value === 'true' || $value === 'yes' || $value === 'on';
+    }
+
+    /**
+     * Keep MAINTENANCE_MODE mirrored to Website Dashboard banner,
+     * and clear any stale "on" flags left after Maintenance Mode nav removal.
+     */
+    public static function reconcileMaintenanceFlags(PDO $pdo, ?int $userId = null): void
+    {
+        require_once __DIR__ . '/system_settings.php';
+
+        $repairKey = 'LANDING_MAINT_STALE_CLEAR_V1';
+        if (system_settings_get($pdo, $repairKey, '0') !== '1') {
+            // One-time: hide stuck public banner caused by stale MAINTENANCE_MODE
+            // and/or LANDING_MAINTENANCE_BANNER still left "on".
+            system_settings_set($pdo, 'LANDING_MAINTENANCE_BANNER', '0', $userId);
+            system_settings_set($pdo, 'MAINTENANCE_MODE', '0', $userId);
+            system_settings_set($pdo, $repairKey, '1', $userId);
+            return;
+        }
+
+        $banner = self::flag($pdo, 'LANDING_MAINTENANCE_BANNER') ? '1' : '0';
+        $modeRaw = system_settings_get($pdo, 'MAINTENANCE_MODE', '0') ?? '0';
+        $mode = self::isEnabledValue($modeRaw) ? '1' : '0';
+        if ($mode !== $banner) {
+            system_settings_set($pdo, 'MAINTENANCE_MODE', $banner, $userId);
+        }
     }
 
     /**
@@ -75,6 +106,8 @@ final class LandingPageConfig
      */
     public static function maintenance(PDO $pdo): array
     {
+        self::reconcileMaintenanceFlags($pdo);
+
         $enabled = self::flag($pdo, 'LANDING_MAINTENANCE_BANNER');
         $message = trim(self::get($pdo, 'LANDING_MAINTENANCE_MESSAGE', ''));
         if ($message === '') {

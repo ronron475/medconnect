@@ -15,11 +15,13 @@ $userId = (int) ($_SESSION['user_id'] ?? 0);
 try {
     switch ($action) {
         case 'stats':
+            LandingPageConfig::reconcileMaintenanceFlags($pdo, $userId > 0 ? $userId : null);
             echo json_encode([
                 'success' => true,
                 'config' => LandingPageConfig::all($pdo),
                 'hero' => LandingPageConfig::hero($pdo),
                 'sections' => LandingPageConfig::sections($pdo),
+                'maintenance' => LandingPageConfig::maintenance($pdo),
                 'stats' => LandingPageConfig::dashboardStats($pdo),
                 'recent' => LandingPageConfig::recentAnnouncements($pdo, 8),
             ]);
@@ -58,7 +60,8 @@ try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 throw new RuntimeException('Method not allowed.');
             }
-            $bannerOn = !empty($_POST['maintenance_banner']) ? '1' : '0';
+            $bannerRaw = $_POST['maintenance_banner'] ?? '0';
+            $bannerOn = LandingPageConfig::isEnabledValue($bannerRaw) ? '1' : '0';
             $pairs = [
                 'LANDING_SECTION_ANNOUNCEMENTS' => !empty($_POST['section_announcements']) ? '1' : '0',
                 'LANDING_SECTION_SERVICES' => !empty($_POST['section_services']) ? '1' : '0',
@@ -73,12 +76,19 @@ try {
             LandingPageConfig::save($pdo, $pairs, $userId);
             // Keep Super Admin Maintenance Mode in sync with the landing banner toggle.
             system_settings_set($pdo, 'MAINTENANCE_MODE', $bannerOn, $userId);
+            // Mark stale-clear repair done so a future intentional enable is preserved.
+            system_settings_set($pdo, 'LANDING_MAINT_STALE_CLEAR_V1', '1', $userId);
             audit_log($pdo, [
                 'patient_id' => $userId,
                 'action_type' => 'landing_page_updated',
                 'description' => 'Updated landing page visibility settings.',
             ]);
-            echo json_encode(['success' => true, 'message' => 'Landing page settings saved.', 'sections' => LandingPageConfig::sections($pdo)]);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Landing page settings saved.',
+                'sections' => LandingPageConfig::sections($pdo),
+                'maintenance' => LandingPageConfig::maintenance($pdo),
+            ]);
             break;
 
         default:

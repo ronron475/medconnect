@@ -86,9 +86,9 @@ $asset = ASSET_BASE;
 
 <?php mc_render_loader_boot(['status' => 'Loading medConnect…']); ?>
 
-<?php if (!empty($landing_maintenance['enabled'])): ?>
+<?php if (($landing_maintenance['enabled'] ?? false) === true): ?>
 <div class="landing-maintenance-banner" role="status">
-  <?= htmlspecialchars($landing_maintenance['message']) ?>
+  <?= htmlspecialchars((string) ($landing_maintenance['message'] ?? '')) ?>
 </div>
 <?php endif; ?>
 

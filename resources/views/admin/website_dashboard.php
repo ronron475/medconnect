@@ -247,6 +247,6 @@ document.body.dataset.lpApi = <?= json_encode($apiBase) ?>;
 document.body.dataset.publicLanding = <?= json_encode($publicLanding) ?>;
 document.body.dataset.assetBase = <?= json_encode(ASSET_BASE) ?>;
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-landing-page.js?v=2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-landing-page.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/admin-landing-page.js') ?>"></script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>
