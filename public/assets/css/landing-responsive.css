@@ -979,14 +979,6 @@ body.landing-page .fcb {
     --fab-size: var(--landing-fab-size-m);
   }
 
-  .landing-page .landing-theme-fab {
-    right: var(--landing-fab-edge-x);
-    --ltf-fab-bottom: var(--landing-fab-edge-y);
-    --ltf-fab-size: var(--landing-fab-size-m);
-    --ltf-stack-gap: var(--landing-fab-stack-gap-m);
-    bottom: calc(var(--ltf-fab-bottom) + var(--ltf-fab-size) + var(--ltf-stack-gap) + var(--ltf-menu-lift, 0px));
-  }
-
   body.landing-page .fcb {
     left: max(20px, env(safe-area-inset-left, 0px));
     bottom: max(20px, env(safe-area-inset-bottom, 0px));
@@ -1116,14 +1108,10 @@ body.landing-page .fcb {
 }
 
 /* Hide bottom FABs while mobile nav or search drawer is open */
-body.landing-page.landing-nav-open .landing-theme-fab,
 body.landing-page.landing-nav-open .landing-fab,
 body.landing-page.landing-nav-open #landing-fab,
-body.landing-page.nav-search-open .landing-theme-fab,
 body.landing-page.nav-search-open .landing-fab,
-body.landing-page.nav-search-open #landing-fab,
-body.landing-page.landing-fab-open .landing-theme-fab,
-body.landing-page.fcb-open .landing-theme-fab {
+body.landing-page.nav-search-open #landing-fab {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;

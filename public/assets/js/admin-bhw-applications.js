@@ -31,6 +31,21 @@
   let currentApp = null;
   let allRows = [];
 
+  /**
+   * Pending Approval count must match the pending_approval filter only.
+   * Internal statuses (invited / onboarding / requires_documents) remain in "All".
+   */
+  function computeBhwStats(rows) {
+    const stats = { total: rows.length, draft: 0, pending: 0, active: 0 };
+    rows.forEach(function (r) {
+      const s = r.status;
+      if (s === 'draft') stats.draft += 1;
+      else if (s === 'pending_approval') stats.pending += 1;
+      else if (s === 'active' || s === 'approved') stats.active += 1;
+    });
+    return stats;
+  }
+
   function setBarangayStatus(kind, message) {
     if (!barangayStatus) return;
     barangayStatus.textContent = message || '';
@@ -120,7 +135,7 @@
       }
       fillBarangays();
       allRows = json.data.applications || [];
-      utils.updateStats(statsEl, utils.computeStats(allRows));
+      utils.updateStats(statsEl, computeBhwStats(allRows));
       applyFilters();
       if (!barangaysLoaded) {
         ensureBarangays(true);

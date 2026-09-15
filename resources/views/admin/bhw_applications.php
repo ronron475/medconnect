@@ -179,12 +179,9 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
         <select id="bhwAppStatusFilter" class="staff-apps-filter" aria-label="Filter by status">
             <option value="all">All statuses</option>
             <option value="draft">Draft</option>
-            <option value="invited">Invited</option>
-            <option value="onboarding">Onboarding</option>
             <option value="pending_approval">Pending Approval</option>
-            <option value="requires_documents">Requires Documents</option>
-            <option value="rejected">Rejected</option>
             <option value="active">Active</option>
+            <option value="rejected">Rejected</option>
         </select>
         <span class="staff-apps-card__count" id="bhwAppCount"></span>
     </div>
@@ -348,7 +345,7 @@ window.MC_BHW_APP = {
     barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.4"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.5"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
