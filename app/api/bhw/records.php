@@ -2,6 +2,7 @@
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_workflows.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_nav_inbox.php';
 
 function bhw_residency_doc_columns(PDO $pdo): array
 {
@@ -100,7 +101,14 @@ try {
         $s->execute([$patientId]);
         $records['prescriptions'] = $s->fetchAll(PDO::FETCH_ASSOC);
         bhw_audit($pdo, $patientId, 'bhw_records_viewed', 'BHW viewed patient records.');
-        Api::success(['records' => $records]);
+        $bhwId = (int) ($_SESSION['user_id'] ?? 0);
+        if ($bhwId > 0) {
+            bhw_nav_mark_records_read($pdo, $bhwId, $patientId);
+        }
+        Api::success([
+            'records' => $records,
+            'bhw_records' => bhw_nav_records_unread_count($pdo, $bhwId, $ctx),
+        ]);
     } elseif ($action === 'upload_stats') {
         Api::success(['stats' => bhw_residency_upload_stats($pdo, $ctx)]);
     } elseif ($action === 'upload') {

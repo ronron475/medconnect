@@ -247,6 +247,7 @@ function portal_nav_patient_booking_actions_count(PDO $pdo, int $patientId): int
 function portal_nav_bhw_counts(PDO $pdo, int $bhwId): array
 {
     require_once __DIR__ . '/bhw_workflows.php';
+    require_once __DIR__ . '/bhw_nav_inbox.php';
     require_once VIEWS_PATH . '/bhw/partials/bhw_context.php';
 
     $counts = [
@@ -275,8 +276,9 @@ function portal_nav_bhw_counts(PDO $pdo, int $bhwId): array
         );
         $counts['bhw_consultations'] = max(0, (int) ($metrics['upcoming_consultations'] ?? 0));
         $counts['bhw_referrals'] = max(0, (int) ($metrics['referrals'] ?? 0));
-        $counts['bhw_records'] = max(0, (int) ($metrics['pending_triage'] ?? 0));
-        $counts['bhw_followups'] = max(0, (int) ($metrics['followups'] ?? 0));
+        // Records / Follow-ups badges = per-user unread inbox items (not dashboard totals).
+        $counts['bhw_records'] = max(0, bhw_nav_records_unread_count($pdo, $bhwId, $ctx));
+        $counts['bhw_followups'] = max(0, bhw_nav_followups_unread_count($pdo, $bhwId, $ctx));
         $counts['bhw_patients_pending'] = max(0, (int) ($metrics['pending_registrations'] ?? 0));
     } catch (Throwable $e) {
         // keep zeros

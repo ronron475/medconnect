@@ -609,13 +609,14 @@ final class BhwWorkflows
     {
         bhw_clinical_ensure_schema($pdo);
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+        $join = bhw_pr_user_join('pr', 'p');
         $sql = "
             SELECT f.*, CONCAT(p.first_name,' ',p.last_name) AS patient_name,
                    (SELECT COUNT(*) FROM bhw_home_visits hv WHERE hv.followup_id = f.id) AS home_visit_count,
                    (SELECT MAX(hv.visit_date) FROM bhw_home_visits hv WHERE hv.followup_id = f.id) AS last_home_visit
             FROM followups f
             JOIN users p ON p.id = f.patient_id
-            JOIN patient_registrations pr ON pr.email = p.email
+            JOIN patient_registrations pr ON {$join}
             WHERE {$clause}
         ";
         if ($status === 'upcoming') {
@@ -921,7 +922,7 @@ final class BhwWorkflows
         $fq = $pdo->prepare("
             SELECT COUNT(*) FROM followups f
             JOIN users u ON u.id = f.patient_id
-            JOIN patient_registrations pr ON pr.email = u.email
+            JOIN patient_registrations pr ON " . bhw_pr_user_join('pr', 'u') . "
             WHERE {$clause} AND f.status = 'scheduled'
         ");
         $fq->execute($params);

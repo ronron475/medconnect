@@ -98,6 +98,7 @@
       var rec = r.records || {};
       outDocs.innerHTML = renderDocuments(rec.documents || []);
       outRx.innerHTML = renderPrescriptions(rec.prescriptions || []);
+      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
     });
   }
 
