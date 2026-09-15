@@ -6,14 +6,22 @@
  * call window.open(), or block Android multi-window.
  *
  * Normal full-screen mobile and desktop stay unchanged.
+ *
+ * IMPORTANT: apply() must be a no-op when state is unchanged. Never emit synthetic
+ * resize events on every sync — that freezes all authenticated portals after login.
  */
 (function (global) {
   'use strict';
+
+  if (global.MedConnectOsFloat) return;
 
   var CLASS = 'mc-os-float';
   var MIN_W = 320;
   var MAX_W = 600;
   var resizeTimer = null;
+  var syncing = false;
+  var lastActive = null;
+  var lastVideoBusy = null;
 
   function isVideoBusy() {
     var body = document.body;
@@ -37,7 +45,6 @@
     if (global.matchMedia('(min-width: 1025px)').matches) return false;
 
     // Resized desktop/laptop windows must not get the OS-float shell.
-    // Android phones use coarse pointer; keep the shell for those.
     if (
       global.matchMedia('(hover: hover) and (pointer: fine)').matches &&
       !global.matchMedia('(pointer: coarse)').matches
@@ -56,7 +63,6 @@
     var ow = global.outerWidth || iw;
     var oh = global.outerHeight || ih;
 
-    // Clamp odd UA values
     ow = Math.min(Math.max(ow, iw), sw);
     oh = Math.min(Math.max(oh, ih), sh);
 
@@ -64,12 +70,9 @@
     var hRatio = oh / sh;
     var areaRatio = (ow * oh) / (sw * sh);
 
-    // Floating / pop-up: clearly smaller than the device display
     if (areaRatio <= 0.68) return true;
     if (wRatio <= 0.88 && hRatio <= 0.90) return true;
     if (hRatio <= 0.72 && iw <= MAX_W) return true;
-
-    // Very short narrow viewport (CSS fallback companion)
     if (iw <= MAX_W && ih <= 540) return true;
 
     return false;
@@ -83,6 +86,11 @@
     // Manual ⛶ floating view already owns the same shell — avoid double chrome.
     if (isManualFloating()) active = false;
 
+    // Critical: skip when unchanged — prevents resize ↔ sync infinite loops.
+    if (lastActive === active) return;
+    var wasActive = lastActive === true;
+    lastActive = active;
+
     root.classList.toggle(CLASS, active);
     if (body) body.classList.toggle(CLASS, active);
 
@@ -91,7 +99,10 @@
         root.style.setProperty('--mc-header-offset', '0px');
       } else if (!isManualFloating()) {
         root.style.removeProperty('--mc-header-offset');
-        global.dispatchEvent(new Event('resize'));
+        // Only notify layout when we actually left OS-float mode (not first paint).
+        if (wasActive) {
+          global.dispatchEvent(new Event('resize'));
+        }
       }
     } catch (_) { /* ignore */ }
 
@@ -101,7 +112,13 @@
   }
 
   function sync() {
-    apply(isLikelyOsFloating());
+    if (syncing) return;
+    syncing = true;
+    try {
+      apply(isLikelyOsFloating());
+    } finally {
+      syncing = false;
+    }
   }
 
   function onResize() {
@@ -109,7 +126,22 @@
     resizeTimer = global.setTimeout(sync, 120);
   }
 
+  function onBodyClassMutation() {
+    var busy = isVideoBusy();
+    // Only react when video fullscreen/busy class state changes — not every
+    // unrelated body class toggle (nav, theme, notifications, etc.).
+    if (busy === lastVideoBusy) return;
+    lastVideoBusy = busy;
+
+    if (busy && document.documentElement.classList.contains(CLASS)) {
+      apply(false);
+      return;
+    }
+    if (!busy) sync();
+  }
+
   function init() {
+    lastVideoBusy = isVideoBusy();
     sync();
 
     global.addEventListener('resize', onResize, { passive: true });
@@ -124,20 +156,14 @@
       else if (mq.addListener) mq.addListener(sync);
     }
 
-    // Exit OS-float shell if a video consultation takes over.
     if (document.body) {
-      var observer = new MutationObserver(function () {
-        if (document.documentElement.classList.contains(CLASS) && isVideoBusy()) {
-          apply(false);
-        } else if (!isVideoBusy()) {
-          sync();
-        }
-      });
+      var observer = new MutationObserver(onBodyClassMutation);
       observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
 
-    // Re-check after manual floating view toggles.
     global.addEventListener('medconnect:floating-view', function () {
+      // Force re-evaluate after manual floating toggles.
+      lastActive = null;
       sync();
     });
 
