@@ -30,14 +30,14 @@ require_once __DIR__ . '/partials/layout_open.php';
 $lpConfig = $config = LandingPageConfig::all($pdo);
 ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=3">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-landing-page.css?v=4">
 
 <div class="lp-mgmt" id="lpMgmt">
 
   <div class="lp-mgmt__hero-banner">
     <div>
-      <h2 class="text-h2" style="margin:0 0 6px;">Website Dashboard</h2>
-      <p class="text-muted" style="margin:0;">Manage the public landing page — hero content, announcements, media, and section visibility.</p>
+      <h2 class="text-h2">Website Dashboard</h2>
+      <p class="text-muted">Manage the public landing page — hero content, announcements, media, and section visibility.</p>
     </div>
     <span class="mc-badge">Landing Page CMS</span>
   </div>
@@ -108,7 +108,7 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
             <label>Background image path
               <input type="text" name="hero_bg_image" id="heroBgImage" placeholder="assets/img/cho-hero-bg.jpg" required>
             </label>
-            <label style="display:flex;align-items:center;gap:8px;font-weight:600;">
+            <label class="lp-mgmt__form-check">
               <input type="checkbox" name="hero_animation" id="heroAnimation" value="1">
               Enable hero animations
             </label>
@@ -126,14 +126,14 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
             <a href="<?= htmlspecialchars($portalBase) ?>/announcements.php" class="mc-btn mc-btn--primary">Manage Announcements</a>
             <a href="<?= htmlspecialchars($portalBase) ?>/announcements.php" class="mc-btn mc-btn--outline">Create Announcement</a>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
-            <div class="mc-card" style="padding:12px;text-align:center;">
-              <div style="font-size:22px;font-weight:800;color:#069396;" id="statPublishedCard"><?= (int) $stats['announcements_published'] ?></div>
-              <div class="text-xs text-muted">Published</div>
+          <div class="lp-mgmt__ann-mini">
+            <div class="lp-mgmt__ann-mini-card">
+              <div class="lp-mgmt__ann-mini-value" id="statPublishedCard"><?= (int) $stats['announcements_published'] ?></div>
+              <div class="lp-mgmt__ann-mini-label">Published</div>
             </div>
-            <div class="mc-card" style="padding:12px;text-align:center;">
-              <div style="font-size:22px;font-weight:800;" id="statDraftsCard"><?= (int) $stats['announcements_drafts'] ?></div>
-              <div class="text-xs text-muted">Drafts</div>
+            <div class="lp-mgmt__ann-mini-card">
+              <div class="lp-mgmt__ann-mini-value lp-mgmt__ann-mini-value--muted" id="statDraftsCard"><?= (int) $stats['announcements_drafts'] ?></div>
+              <div class="lp-mgmt__ann-mini-label">Drafts</div>
             </div>
           </div>
         </div>
@@ -177,20 +177,20 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
               <span>Enable maintenance banner</span>
               <input type="checkbox" name="maintenance_banner" id="maintenanceBanner" value="1">
             </div>
-            <label style="display:grid;gap:6px;margin-top:12px;font-size:12px;font-weight:600;">
+            <label class="lp-mgmt__settings-msg">
               Maintenance message
               <textarea name="maintenance_message" id="maintenanceMessage" rows="2"></textarea>
             </label>
-            <button type="submit" class="mc-btn mc-btn--primary" style="margin-top:14px;">Save Settings</button>
+            <button type="submit" class="mc-btn mc-btn--primary" style="margin-top:10px;">Save Settings</button>
           </form>
         </div>
 
       </div>
 
-      <div class="mc-card lp-mgmt__activity" style="padding:0;overflow:hidden;margin-top:20px;">
-        <div style="padding:18px 20px;border-bottom:1px solid var(--border-color, #e2edf1);">
-          <h3 class="text-h2" style="margin:0;font-size:17px;">Recent Activity</h3>
-          <p class="text-muted" style="margin:4px 0 0;font-size:13px;">Recently modified announcements</p>
+      <div class="mc-card lp-mgmt__activity">
+        <div class="lp-mgmt__activity-head">
+          <h3>Recent Activity</h3>
+          <p>Recently modified announcements</p>
         </div>
         <div style="overflow-x:auto;">
           <table class="mc-table">

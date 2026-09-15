@@ -63,17 +63,7 @@ $asset = ASSET_BASE;
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=11" />
-  <style id="landing-theme-fab-removed">
-    /* Public floating light/dark toggle removed — keep quick-menu FAB + chatbot */
-    .landing-theme-fab,
-    #landing-theme-fab,
-    #landing-theme-toggle {
-      display: none !important;
-      visibility: hidden !important;
-      pointer-events: none !important;
-    }
-  </style>
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=12" />
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-download-app.css?v=<?= $landingDownloadCssVer ?>" />
 
@@ -838,7 +828,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/login-lockout.js?v=2"></script>
 <?php $sessionSyncJsVer = (int) @filemtime(ASSETS_PATH . '/js/session-sync.js'); ?>
 <script src="<?= $asset ?>/assets/js/session-sync.js?v=<?= $sessionSyncJsVer ?>"></script>
-<script src="<?= $asset ?>/assets/js/script.js?v=20260815b"></script>
+<script src="<?= $asset ?>/assets/js/script.js?v=20260915a"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 
 <script>
