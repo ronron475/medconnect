@@ -138,6 +138,23 @@ final class ClinicalFollowUpAnswerValidator
                     $polarity = $polarity ?: 'uncertain';
                 }
 
+                // Guard: Gemini must not treat bare yes/no as a timing or named-symptom answer.
+                if (($kind === 'SYMPTOM_DURATION' || $kind === 'ASSOCIATED_DETAIL' || $kind === 'PAIN_SEVERITY')
+                    && self::looksYesNo(mb_strtolower($use !== '' ? $use : $corrected))
+                    && !self::hasExpectedFieldEvidence($kind, mb_strtolower($use !== '' ? $use : $corrected), $use !== '' ? $use : $corrected)
+                    && empty($extracted['patient_uncertain'])
+                ) {
+                    return self::reject(
+                        $qid,
+                        $kind,
+                        $corrected,
+                        false,
+                        'gemini_yes_no_wrong_field',
+                        self::retryMessage($lang),
+                        'UNRELATED'
+                    );
+                }
+
                 return self::accept(
                     $qid,
                     $kind,
@@ -173,6 +190,24 @@ final class ClinicalFollowUpAnswerValidator
                 $classMeta['answer_class'],
                 $classMeta['polarity']
             );
+        }
+
+        // Never fail-open bare yes/no into timing or named-symptom detail slots.
+        if (($kind === 'SYMPTOM_DURATION' || $kind === 'ASSOCIATED_DETAIL' || $kind === 'PAIN_SEVERITY')
+            && self::looksYesNo($low)
+            && !self::hasExpectedFieldEvidence($kind, $low, $corrected)
+        ) {
+            return self::reject($qid, $kind, $corrected, false, 'yes_no_wrong_field', self::retryMessage($lang), 'UNRELATED');
+        }
+
+        // Timing / severity questions need field evidence — do not fail-open unrelated clinical phrases.
+        if ($kind === 'SYMPTOM_DURATION' || $kind === 'PAIN_SEVERITY') {
+            return self::reject($qid, $kind, $corrected, false, 'field_evidence_required', self::retryMessage($lang), 'UNRELATED');
+        }
+
+        // Associated detail needs a named/descriptive symptom — not an unrelated medical history note.
+        if ($kind === 'ASSOCIATED_DETAIL' && !self::hasNamedSymptomEvidence($corrected) && !self::looksAssociated($low)) {
+            return self::reject($qid, $kind, $corrected, false, 'named_symptom_required', self::retryMessage($lang), 'UNRELATED');
         }
 
         // Plausible short clinical reply that local rules didn't classify — do not reject.
@@ -250,6 +285,10 @@ final class ClinicalFollowUpAnswerValidator
         ) {
             return 'PAIN_LOCATION';
         }
+        // Named-symptom follow-up after the patient confirmed other symptoms exist.
+        if ($qid === 'ASSOCIATED_DETAIL') {
+            return 'ASSOCIATED_DETAIL';
+        }
         if (str_contains($qid, 'ASSOCIATED') || str_contains($qid, 'NEURO') || str_contains($qid, 'BLEEDING')
             || str_contains($qid, 'FEVER_CONFIRM') || str_contains($qid, 'BREATHING')
             || str_contains($qid, 'CHEST') || str_contains($qid, 'TYPE') || str_contains($qid, 'DETAIL')
@@ -289,6 +328,10 @@ final class ClinicalFollowUpAnswerValidator
         }
 
         if ($kind === 'SYMPTOM_DURATION') {
+            // Bare yes/no ("oo"/"indi") never answers when/how-long questions.
+            if (self::looksYesNo($low) && !$extracts && !self::looksTiming($low) && !self::looksOnsetStyle($low)) {
+                return 'reject';
+            }
             if ($extracts || $local || self::looksTiming($low) || self::looksOnsetStyle($low)) {
                 return 'accept';
             }
@@ -304,6 +347,21 @@ final class ClinicalFollowUpAnswerValidator
                 return 'accept';
             }
             if ($wrongField || $offTopic) {
+                return 'reject';
+            }
+
+            return 'uncertain';
+        }
+
+        if ($kind === 'ASSOCIATED_DETAIL') {
+            // Confirmation alone is not enough — patient must name/describe the symptom.
+            if (self::looksYesNo($low) && !self::looksAssociated($low) && !$extracts && !$local) {
+                return 'reject';
+            }
+            if ($extracts || $local || self::looksAssociated($low) || self::hasNamedSymptomEvidence($corrected)) {
+                return 'accept';
+            }
+            if ($offTopic || $wrongField) {
                 return 'reject';
             }
 
@@ -349,9 +407,12 @@ final class ClinicalFollowUpAnswerValidator
                     || ClinicalFeatureExtractors::extractOnset($text) !== ''
                 ),
                 'PAIN_LOCATION' => ClinicalFeatureExtractors::extractBodyLocations($text) !== [],
+                'ASSOCIATED_DETAIL' => self::hasNamedSymptomEvidence($text)
+                    || ClinicalFeatureExtractors::deniedAssociatedSymptoms($text),
                 'ASSOCIATED_SYMPTOMS' => (
                     ClinicalFeatureExtractors::deniedAssociatedSymptoms($text)
                     || ClinicalFeatureExtractors::extractYesNo($text) !== null
+                    || self::hasNamedSymptomEvidence($text)
                 ),
                 default => ClinicalFeatureExtractors::extractYesNo($text) !== null,
             };
@@ -388,7 +449,10 @@ final class ClinicalFollowUpAnswerValidator
         if ($kind === 'PAIN_LOCATION' && self::looksLocation($low)) {
             return true;
         }
-        if ($kind === 'ASSOCIATED_SYMPTOMS' && (self::looksAssociated($low) || self::looksYesNo($low))) {
+        if ($kind === 'ASSOCIATED_SYMPTOMS' && (self::looksAssociated($low) || self::looksYesNo($low) || self::hasNamedSymptomEvidence($text))) {
+            return true;
+        }
+        if ($kind === 'ASSOCIATED_DETAIL' && (self::looksAssociated($low) || self::hasNamedSymptomEvidence($text))) {
             return true;
         }
 
@@ -454,7 +518,9 @@ final class ClinicalFollowUpAnswerValidator
             return self::looksLocation($low) && !self::looksPainSeverity($low);
         }
         if ($kind === 'SYMPTOM_DURATION') {
-            return self::looksPainSeverity($low) && !self::looksTiming($low);
+            return (self::looksPainSeverity($low) || self::looksAssociated($low) || self::hasNamedSymptomEvidence($low))
+                && !self::looksTiming($low)
+                && !self::looksOnsetStyle($low);
         }
 
         return false;
@@ -466,7 +532,8 @@ final class ClinicalFollowUpAnswerValidator
             'PAIN_SEVERITY' => self::looksPainSeverity($low) || self::extractorUnderstands($kind, $corrected),
             'SYMPTOM_DURATION' => self::looksTiming($low) || self::looksOnsetStyle($low) || self::extractorUnderstands($kind, $corrected),
             'PAIN_LOCATION' => self::looksLocation($low) || self::extractorUnderstands($kind, $corrected),
-            'ASSOCIATED_SYMPTOMS' => self::looksYesNo($low) || self::looksAssociated($low) || self::extractorUnderstands($kind, $corrected),
+            'ASSOCIATED_DETAIL' => self::hasNamedSymptomEvidence($corrected) || self::looksAssociated($low),
+            'ASSOCIATED_SYMPTOMS' => self::looksYesNo($low) || self::looksAssociated($low) || self::extractorUnderstands($kind, $corrected) || self::hasNamedSymptomEvidence($corrected),
             default => self::looksYesNo($low) || self::extractorUnderstands($kind, $corrected),
         };
     }
@@ -504,6 +571,27 @@ final class ClinicalFollowUpAnswerValidator
             if ($kind === 'ASSOCIATED_SYMPTOMS' && ClinicalFeatureExtractors::deniedAssociatedSymptoms($text)) {
                 $payload['denied_associated'] = true;
                 $payload['has_other_symptoms'] = false;
+            }
+            if (($kind === 'ASSOCIATED_DETAIL' || $kind === 'ASSOCIATED_SYMPTOMS')
+                && !(isset($payload['yes_no']) && !self::hasNamedSymptomEvidence($text))
+            ) {
+                $named = [];
+                if (class_exists('SymptomKnowledgeBase')) {
+                    try {
+                        foreach (SymptomKnowledgeBase::matchSymptoms($text, $text) as $row) {
+                            $name = trim((string) ($row['symptom_name'] ?? ''));
+                            if ($name !== '' && !in_array($name, $named, true)) {
+                                $named[] = $name;
+                            }
+                        }
+                    } catch (Throwable) {
+                        // ignore
+                    }
+                }
+                if ($named !== []) {
+                    $payload['named_symptoms'] = $named;
+                    $payload['associated_symptoms'] = $named;
+                }
             }
         } catch (Throwable) {
             return $payload;
@@ -681,9 +769,57 @@ final class ClinicalFollowUpAnswerValidator
         return (bool) preg_match(
             '/\b(hilo|dizzy|dizziness|suka|vomit|nausea|fever|hilanat|lagnat|ubo|cough|rash|'
             . 'weak|weakness|diarrhea|lbm|libun|chills|sipon|runny|none|nothing|no other|'
-            . 'wala na|walay iban|walang iba|only|lang|dry cough|productive)\b/u',
+            . 'wala na|walay iban|walang iba|only|lang|dry cough|productive|'
+            . 'kasakit|sakit|pain|hapdi|hubag|gahabok|swelling|kati|itch)\b/u',
             $low
-        ) || self::looksYesNo($low);
+        );
+    }
+
+    /**
+     * True when the answer names/describes a clinical symptom (not bare yes/no).
+     */
+    private static function hasNamedSymptomEvidence(string $text): bool
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return false;
+        }
+        $low = mb_strtolower($text);
+        if (self::looksYesNo($low) && !self::looksAssociated($low) && !self::looksPainSeverity($low) && !self::looksLocation($low)) {
+            return false;
+        }
+        if (self::looksAssociated($low) || self::looksPainSeverity($low)) {
+            return true;
+        }
+        if (class_exists('SymptomKnowledgeBase')) {
+            try {
+                $matches = SymptomKnowledgeBase::matchSymptoms($text, $text);
+                if (is_array($matches) && $matches !== []) {
+                    return true;
+                }
+            } catch (Throwable) {
+                // fall through
+            }
+        }
+        if (class_exists('ClinicalFeatureExtractors')) {
+            try {
+                $score = ClinicalFeatureExtractors::extractPainScale($text)['score'] ?? null;
+                if ($score !== null) {
+                    return true;
+                }
+                if (ClinicalFeatureExtractors::extractBodyLocations($text) !== []) {
+                    return true;
+                }
+            } catch (Throwable) {
+                // fall through
+            }
+        }
+
+        // Short descriptive replies like "may kasakit" / "may ubo" / "ginahilo".
+        return (bool) preg_match(
+            '/\b(may|mayroon|naa|gina|naga|ga)\s+\w{3,}\b/u',
+            $low
+        ) || (bool) preg_match('/\b(kasakit|sakit|pain|hapdi|hubag|gahabok|suka|ubo|hilo)\b/u', $low);
     }
 
     private static function looksOffTopic(string $low): bool

@@ -251,6 +251,16 @@
       "english": "Do you have any other symptoms besides what you already described?",
       "tagalog": "May iba pa ba kayong sintomas maliban sa naisabi na?",
       "hiligaynon": "May iban pa bala nga sintomas luwas sa imo nagsiling?"
+    },
+    {
+      "question_id": "ASSOCIATED_DETAIL",
+      "clinical_purpose": "Name the additional symptom after the patient confirmed other symptoms exist",
+      "required_when": [],
+      "priority": 35,
+      "red_flag_related": false,
+      "english": "What other symptom are you having? Please describe it.",
+      "tagalog": "Ano pang sintomas ang nararamdaman mo? Pakilarawan.",
+      "hiligaynon": "Ano pa nga sintomas ang imo nabatyagan? Palihog isaysay."
     }
   ]
 }

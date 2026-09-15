@@ -85,7 +85,7 @@
       "family_key": "skin",
       "symptom_name_contains": ["rash", "itch", "skin"],
       "symptom_ids": ["rash", "pruritus"],
-      "text_regex": ["\\brash\\b", "\\bitch(?:y|ing)?\\b", "\\bkati\\b", "\\bkatal\\b", "\\bpamaga\\b", "\\bswelling\\b", "\\blesion\\b", "\\bhives\\b", "\\burticaria\\b", "\\bskin\\b", "\\bpanit\\b", "\\bnasunog\\b", "\\bburn(?:s|ed)?\\b", "\\bpaso\\b"]
+      "text_regex": ["\\brash\\b", "\\bitch(?:y|ing)?\\b", "\\bkati\\b", "\\bkatal\\b", "\\bpamaga\\b", "\\bswelling\\b", "\\bhubag\\b", "\\bgahabok\\b", "\\bgahubag\\b", "\\bpamamaga\\b", "\\blesion\\b", "\\bhives\\b", "\\burticaria\\b", "\\bskin\\b", "\\bpanit\\b", "\\bnasunog\\b", "\\bburn(?:s|ed)?\\b", "\\bpaso\\b"]
     },
     {
       "complaint_id": "URINARY",

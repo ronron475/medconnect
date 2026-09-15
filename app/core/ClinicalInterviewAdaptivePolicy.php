@@ -39,7 +39,15 @@ final class ClinicalInterviewAdaptivePolicy
                 continue;
             }
             $qid = strtoupper(trim((string) ($question['question_id'] ?? '')));
-            if ($qid === '' || in_array($qid, $asked, true)) {
+            if ($qid === '') {
+                continue;
+            }
+            // Keep re-asking associated detail until a named symptom is captured.
+            $askedBlock = in_array($qid, $asked, true);
+            if ($askedBlock && !($qid === 'ASSOCIATED_DETAIL' && (
+                !empty($facts['needs_associated_detail'])
+                || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === [])
+            ))) {
                 continue;
             }
             $when = array_map('strtolower', (array) ($question['required_when'] ?? []));
@@ -93,11 +101,18 @@ final class ClinicalInterviewAdaptivePolicy
         $sev = $facts['pain_score'] ?? null;
         $sev = $sev !== null ? (int) $sev : null;
         $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
-        $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
-            || !empty($facts['denied_associated']);
+        $assocDone = self::associatedSymptomsResolved($facts);
         $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
         $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
         $painLike = array_intersect($concepts, ['pain', 'headache', 'chest_pain', 'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'pain_unspecified']) !== [];
+
+        if (!empty($facts['needs_associated_detail'])
+            || (($facts['has_other_symptoms'] ?? null) === true
+                && self::associatedSymptomNames($facts) === []
+                && empty($facts['denied_associated']))
+        ) {
+            return false;
+        }
 
         if (array_intersect($concepts, ['chest_pain', 'breathing', 'cough', 'respiratory']) !== []) {
             if (($facts['breathing_difficulty'] ?? null) === null && empty($facts['denied_associated'])) {
@@ -174,8 +189,8 @@ final class ClinicalInterviewAdaptivePolicy
             $concepts[] = 'eye';
             $concepts[] = 'needs_laterality';
         }
-        // Burns / thermal injury: ask site (+ associated) so WHO red vs yellow can be distinguished.
-        if ((bool) preg_match('/\b(burn|burns|nasunog|paso|scald|quemadura)\b/u', $low)) {
+        // Burns / thermal injury / swelling: ask site (+ associated) so WHO red vs yellow can be distinguished.
+        if ((bool) preg_match('/\b(burn|burns|nasunog|paso|scald|quemadura|hubag|gahabok|gahubag|swelling|swollen|pamamaga)\b/u', $low)) {
             $concepts[] = 'skin';
         }
         if (in_array('abdomen', $locs, true) || in_array('chest', $locs, true)) {
@@ -201,8 +216,7 @@ final class ClinicalInterviewAdaptivePolicy
         $onset = mb_strtolower(trim((string) ($facts['onset'] ?? '')));
         $sudden = (bool) preg_match('/\b(sudden|gulpi|bigla|abrupt)\b/u', $onset . ' ' . mb_strtolower($transcript));
         $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
-        $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
-            || !empty($facts['denied_associated']);
+        $assocDone = self::associatedSymptomsResolved($facts);
         $locs = self::bodyLocations($facts);
         if ($locs === []) {
             $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
@@ -223,6 +237,10 @@ final class ClinicalInterviewAdaptivePolicy
             'PAIN_LOCATION', 'UNWELL_WHAT' => (
                 array_intersect($concepts, ['pain_unspecified', 'pain_no_location', 'general_unwell']) !== []
                 && $locs === []
+            ) ? 3 : null,
+            'ASSOCIATED_DETAIL' => (
+                !empty($facts['needs_associated_detail'])
+                || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === [])
             ) ? 3 : null,
             'ONSET', 'DURATION' => !$hasTiming ? 5 : null,
             'SPECIFIC_LOCATION' => in_array('needs_specific_location', $concepts, true)
@@ -320,8 +338,9 @@ final class ClinicalInterviewAdaptivePolicy
         $hasTiming = ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts);
         // Numeric 0–10 only — language intensifiers must not complete this clinical slot.
         $hasSeverity = ($facts['pain_score'] ?? null) !== null;
-        $assocDone = ($facts['has_other_symptoms'] ?? null) !== null
-            || !empty($facts['denied_associated']);
+        $assocDone = self::associatedSymptomsResolved($facts);
+        $assocYesPendingDetail = !empty($facts['needs_associated_detail'])
+            || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === []);
         $locs = self::bodyLocations($facts);
         if ($locs === []) {
             $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
@@ -346,7 +365,12 @@ final class ClinicalInterviewAdaptivePolicy
             'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
             'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
             'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null || $assocDone,
-            'ASSOCIATED_SYMPTOMS' => $assocDone || ($facts['weakness'] ?? null) !== null || ($facts['breathing_difficulty'] ?? null) !== null,
+            // Yes/no associated question is done once polarity is known; detail is a separate slot.
+            'ASSOCIATED_SYMPTOMS' => ($facts['has_other_symptoms'] ?? null) !== null
+                || !empty($facts['denied_associated'])
+                || ($facts['weakness'] ?? null) !== null
+                || ($facts['breathing_difficulty'] ?? null) !== null,
+            'ASSOCIATED_DETAIL' => !$assocYesPendingDetail,
             'EYE_LATERALITY' => (bool) preg_match('/\b(left|right|tuo|wala|both|duha|kaliwa|kanan)\b/u', $low) || $locs !== [],
             'SPECIFIC_LOCATION' => (bool) preg_match('/\b(upper|lower|tuo|wala|left|right|pusod|center|tunga)\b/u', $low),
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
@@ -356,6 +380,42 @@ final class ClinicalInterviewAdaptivePolicy
             'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat)\b/u', $low),
             default => false,
         };
+    }
+
+    /**
+     * Associated slot is complete only after denial OR a named associated symptom.
+     * Bare "oo" must not count as complete.
+     *
+     * @param array<string, mixed> $facts
+     */
+    private static function associatedSymptomsResolved(array $facts): bool
+    {
+        if (!empty($facts['denied_associated']) || ($facts['has_other_symptoms'] ?? null) === false) {
+            return true;
+        }
+        if (!empty($facts['needs_associated_detail'])) {
+            return false;
+        }
+        if (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) !== []) {
+            return true;
+        }
+
+        return ($facts['has_other_symptoms'] ?? null) !== null
+            && self::associatedSymptomNames($facts) !== [];
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return list<string>
+     */
+    private static function associatedSymptomNames(array $facts): array
+    {
+        $names = is_array($facts['associated_symptoms'] ?? null) ? $facts['associated_symptoms'] : [];
+
+        return array_values(array_filter(array_map(
+            static fn ($v): string => trim((string) $v),
+            $names
+        ), static fn (string $v): bool => $v !== ''));
     }
 
     /**
