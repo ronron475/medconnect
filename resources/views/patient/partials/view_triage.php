@@ -133,7 +133,7 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
 <h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
 <?php if ($urgent_open_choice && $registration_chief_complaint !== ''): ?>
 <p class="text-sm text-muted patient-triage-lead">
-  URGENT consultation — choose any eligible doctor with an open slot today. The earliest available option is recommended.
+  URGENT consultation — each doctor shows only their earliest open slot today. The earliest overall option is recommended; you may choose another eligible doctor.
 </p>
 <?php elseif (($is_provider_locked || $consultation_already_assigned) && $assigned_display_name !== ''): ?>
 <p class="text-sm text-muted patient-triage-lead">
@@ -327,7 +327,7 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
     <?php if ($urgent_open_choice && empty($emergency_blocks_booking)): ?>
     <div class="form-group mc-urgent-choice" id="urgentDoctorChoiceWrap">
       <p class="mc-urgent-choice__kicker">URGENT CONSULTATION</p>
-      <p class="text-sm" style="margin:0 0 10px;">Choose a doctor with an open slot today. The earliest available option is recommended — you may book another eligible doctor.</p>
+      <p class="text-sm" style="margin:0 0 10px;">Each doctor shows only their earliest available slot today. The earliest overall option is recommended — you may select another eligible doctor.</p>
       <div id="urgentDoctorChoice" class="mc-urgent-choice__list" role="list"></div>
       <p id="urgentDoctorChoiceStatus" class="text-xs text-muted" role="status">Loading doctors with open slots today…</p>
     </div>
@@ -384,7 +384,7 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
     </div>
     <?php endif; ?>
 
-    <div class="form-group">
+    <div class="form-group<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>" id="bookingDateGroup"<?= !empty($urgent_open_choice) ? ' hidden' : '' ?>>
       <label class="form-label" for="booking_date_display">Appointment date (today only)</label>
       <div
         id="booking_date_display"
@@ -402,14 +402,14 @@ $show_start_new_consultation_btn = empty($force_new_concern) && (
       </p>
     </div>
 
-    <div class="form-group">
-      <label class="form-label">Available time slots (today)</label>
+    <div class="form-group<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>" id="bookingSlotsGroup">
+      <label class="form-label" for="bookingSlotsWrap"><?= !empty($urgent_open_choice) ? 'Selected earliest slot' : 'Available time slots (today)' ?></label>
       <div id="bookingSlotsWrap" class="booking-slots-wrap">
         <p class="text-xs text-muted"><?php
           if (!empty($emergency_blocks_booking)) {
               echo 'Video slots are not available for emergency cases.';
           } elseif ($urgent_open_choice) {
-              echo 'Select a doctor above, then pick any of that doctor’s open times today.';
+              echo 'Select a doctor above to book their earliest available time today. Later times are not shown.';
           } elseif ($is_provider_locked) {
               echo 'Available times for your assigned doctor today.';
           } else {

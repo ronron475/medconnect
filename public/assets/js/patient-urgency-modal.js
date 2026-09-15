@@ -58,7 +58,7 @@
     step_urg_triage_1: 'Your AI preliminary assessment is shown below',
     step_urg_triage_2: 'Please click "Submit patient complaint" again to continue',
     step_urg_triage_3: 'Seek ER care if symptoms suddenly worsen',
-    step_urg_book_1: 'Choose from all doctors with an open slot today',
+    step_urg_book_1: 'Choose a doctor — only their earliest open slot today is shown',
     step_urg_book_2: 'The earliest doctor is recommended — you may book another available doctor',
     step_urg_book_3: 'Seek ER care if symptoms suddenly worsen',
     step_em_1: 'Call local emergency services if needed',
@@ -321,7 +321,7 @@
 
       var sub = document.createElement('span');
       sub.className = 'mc-urgency-slot-card__sub';
-      sub.textContent = i18n('slots_today_video', { range: opt.range_label || '' });
+      sub.textContent = i18n('slots_earliest', { time: opt.time_label || opt.range_label || '' });
 
       meta.appendChild(name);
       meta.appendChild(time);
