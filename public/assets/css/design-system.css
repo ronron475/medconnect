@@ -35,14 +35,19 @@
     --mc-space-lg: 22px;
     --mc-space-xl: 36px;
 
-    /* --- Typography --- */
-    --mc-font: 'Inter', system-ui, -apple-system, sans-serif;
-    --mc-fs-h1: 1.625rem;
-    --mc-fs-h2: 1.3rem;
-    --mc-fs-h3: 1.1rem;
-    --mc-fs-body: 0.875rem;
-    --mc-fs-sm: 0.8125rem;
-    --mc-fs-xs: 0.72rem;
+    /* --- Typography (shared scale — all roles) --- */
+    --mc-font: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mc-fs-display: 1.375rem;   /* ~22px welcome / hero titles */
+    --mc-fs-h1: 1.375rem;        /* ~22px page titles */
+    --mc-fs-h2: 1.125rem;        /* ~18px section titles */
+    --mc-fs-h3: 1rem;            /* ~16px card / subsection titles */
+    --mc-fs-body: 0.875rem;      /* ~14px body */
+    --mc-fs-sm: 0.8125rem;       /* ~13px secondary */
+    --mc-fs-xs: 0.75rem;         /* ~12px labels / meta */
+    --mc-fs-stat: 1.5rem;        /* ~24px metric numbers */
+    --mc-fs-nav: 0.8125rem;      /* ~13px sidebar / nav */
+    --mc-lh-tight: 1.25;
+    --mc-lh-body: 1.45;
 
     /* --- Shadows --- */
     --mc-shadow-micro: 0 1px 4px rgba(13,33,55,0.07);
@@ -111,7 +116,7 @@ body {
     font-family: var(--mc-font);
     background-color: var(--mc-bg);
     color: var(--mc-navy-dark);
-    line-height: 1.4; /* Compact line height */
+    line-height: var(--mc-lh-body, 1.45);
     -webkit-font-smoothing: antialiased;
     font-size: var(--mc-fs-body);
     overflow-x: auto;
@@ -120,9 +125,9 @@ body {
 }
 
 /* --- Content Headers --- */
-.text-h1 { font-size: var(--mc-fs-h1); font-weight: 800; color: var(--mc-navy-dark); letter-spacing: -0.01em; }
-.text-h2 { font-size: var(--mc-fs-h2); font-weight: 700; color: var(--mc-navy-dark); }
-.text-h3 { font-size: var(--mc-fs-h3); font-weight: 600; color: var(--mc-navy-dark); }
+.text-h1 { font-size: var(--mc-fs-h1); font-weight: 800; color: var(--mc-navy-dark); letter-spacing: -0.01em; line-height: var(--mc-lh-tight, 1.25); }
+.text-h2 { font-size: var(--mc-fs-h2); font-weight: 700; color: var(--mc-navy-dark); line-height: var(--mc-lh-tight, 1.25); }
+.text-h3 { font-size: var(--mc-fs-h3); font-weight: 600; color: var(--mc-navy-dark); line-height: var(--mc-lh-tight, 1.25); }
 .text-muted { color: var(--mc-slate-muted); font-size: var(--mc-fs-sm); }
 
 /* --- Unified Card --- */

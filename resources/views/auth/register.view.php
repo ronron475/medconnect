@@ -26,6 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/style.css?v=20260702a" />
   <link rel="stylesheet" href="<?= $b ?>/assets/css/responsive.css?v=20260808r" />
+  <link rel="stylesheet" href="<?= $b ?>/assets/css/medconnect-typography.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/medconnect-typography.css') ?>" />
   <?php $regCssVer = (int) @filemtime(ASSETS_PATH . '/css/register.css'); ?>
   <link rel="stylesheet" href="<?= $b ?>/assets/css/register.css?v=<?= $regCssVer ?>" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>

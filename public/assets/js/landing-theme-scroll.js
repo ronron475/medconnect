@@ -8,8 +8,8 @@
 
   const wrap = document.getElementById('landing-theme-fab');
   const btn = document.getElementById('landing-theme-toggle');
-  const signinBtn = document.getElementById('signin-theme-toggle');
-  if (!btn && !signinBtn) return;
+  // Sign In panel intentionally has no theme toggle — landing FAB only.
+  if (!btn) return;
 
   const services = document.getElementById('services-section');
   const sentinel = document.getElementById('hero-theme-sentinel');
@@ -30,11 +30,6 @@
       btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
       btn.setAttribute('aria-label', label);
       btn.setAttribute('title', label);
-    }
-    if (signinBtn) {
-      signinBtn.setAttribute('aria-pressed', dark ? 'true' : 'false');
-      signinBtn.setAttribute('aria-label', label);
-      signinBtn.setAttribute('title', label);
     }
   }
 
@@ -76,7 +71,6 @@
   }
 
   if (btn) btn.addEventListener('click', onToggle);
-  if (signinBtn) signinBtn.addEventListener('click', onToggle);
 
   syncLandingBgClass();
 

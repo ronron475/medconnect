@@ -1583,3 +1583,132 @@ video {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Narrow viewport (≈320–600px) — floating-window + small phones
+   Content reflow only. Dark centered shell is in floating-view.css
+   and applies only for OS float / manual floating — not desktop.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 320px) and (max-width: 600px) {
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+
+  .portal-shell,
+  .root-wrapper,
+  .provider-shell,
+  .portal-main,
+  .provider-main,
+  .portal-page-body,
+  .provider-page-body {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Header: prevent icon/text overlap & clipping */
+  .topbar,
+  .pd-header,
+  header.topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .topbar-left,
+  .topbar-right,
+  .pd-header-title,
+  .pd-header-right {
+    min-width: 0;
+  }
+
+  .topbar-title,
+  .pd-header-page,
+  .topbar-eyebrow {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .topbar-title {
+    white-space: nowrap;
+  }
+
+  .topbar-right,
+  .pd-header-right {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .topbar-right .mc-fullscreen-btn,
+  .topbar-right .mc-nav-toggle,
+  .pd-header-right .mc-fullscreen-btn,
+  .pd-hamburger {
+    flex-shrink: 0;
+  }
+
+  /* Cards / grids reflow */
+  .adm-metrics,
+  .stat-grid,
+  .prov-dash-stats,
+  .bhw-profile-metrics {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mc-card,
+  .adm-card,
+  .bhw-metric-card,
+  .greeting-banner {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .mc-btn,
+  .h-btn,
+  .pd-btn,
+  .adm-btn,
+  .session-btn {
+    max-width: 100%;
+  }
+
+  /* Tables / charts: no horizontal page bleed */
+  .mc-table-wrap,
+  .table-responsive,
+  .adm-table-wrap,
+  .pd-table-wrap,
+  .chart-container,
+  .chart-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Modals / dropdowns stay inside the narrow viewport */
+  .mc-modal__dialog,
+  .mc-modal,
+  .modal-dialog,
+  .reg-req-modal__dialog,
+  .dropdown-menu,
+  .profile-menu,
+  .mc-profile-menu {
+    max-width: min(100vw - 16px, 100%) !important;
+    box-sizing: border-box;
+  }
+
+  .mc-modal__dialog,
+  .modal-dialog {
+    max-height: min(90dvh, 100%);
+    overflow: auto;
+  }
+}
+

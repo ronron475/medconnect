@@ -27,9 +27,13 @@
     const header = getHeaderEl();
     if (!header) return;
 
-    // Floating view puts the header in normal flow — do not push content down.
-    if (document.documentElement.classList.contains('mc-floating-view')
-      || (document.body && document.body.classList.contains('mc-floating-view'))) {
+    // Floating / OS-float shells put the header in normal flow — do not push content down.
+    var root = document.documentElement;
+    var body = document.body;
+    if (root.classList.contains('mc-floating-view')
+      || root.classList.contains('mc-os-float')
+      || (body && body.classList.contains('mc-floating-view'))
+      || (body && body.classList.contains('mc-os-float'))) {
       setOffsetPx(0);
       return;
     }

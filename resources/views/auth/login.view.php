@@ -18,7 +18,11 @@
     $asset = ASSET_BASE;
   ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/login.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/medconnect-typography.css?v=<?= (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/css/medconnect-typography.css' : '') ?>" />
   <?php require_once dirname(__DIR__) . '/components/loader.php'; mc_loader_assets(); ?>
 </head>
 <body class="login-page">
