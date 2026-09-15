@@ -418,6 +418,15 @@ final class NotificationEvents
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
+        NotificationManager::notifySuperadmins($pdo, [
+            'sender_id'     => $senderId,
+            'type'          => NotificationManager::TYPE_REFERRAL,
+            'title'         => 'Referral Issued',
+            'message'       => 'A doctor has issued a patient referral. Open Referral Center to monitor the record.',
+            'action_url'    => '/views/admin/facility_management.php?tab=referral',
+            'related_table' => 'digital_referrals',
+            'related_id'    => $referralId,
+        ]);
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_REFERRAL,

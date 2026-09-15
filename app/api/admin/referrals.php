@@ -1,15 +1,18 @@
 <?php
 /**
- * Digital referrals — list only (Admin + Super Admin).
- * Monitoring/viewing only: status updates are not allowed from this portal.
+ * Digital referrals — list + mark-read (Admin + Super Admin).
+ * Monitoring/viewing only: clinical status updates are not allowed.
+ * Read/unread uses per-user notifications (related_table = digital_referrals).
  */
 header('Content-Type: application/json; charset=utf-8');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/api/admin/_auth.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/core/NotificationManager.php';
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$userId = (int) ($_SESSION['user_id'] ?? 0);
 
 if ($method === 'GET') {
     $status = trim($_GET['status'] ?? 'all');
@@ -22,7 +25,12 @@ if ($method === 'GET') {
 
     try {
         if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
-            echo json_encode(['success' => true, 'rows' => []]);
+            echo json_encode([
+                'success' => true,
+                'rows' => [],
+                'unread_count' => 0,
+                'total_count' => 0,
+            ]);
             exit;
         }
         $cols = $pdo->query('SHOW COLUMNS FROM digital_referrals')->fetchAll(PDO::FETCH_COLUMN);
@@ -51,10 +59,91 @@ if ($method === 'GET') {
         ");
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(['success' => true, 'rows' => $rows, 'timestamp' => date('c')]);
+
+        $unreadIds = [];
+        if ($userId > 0 && $pdo->query("SHOW TABLES LIKE 'notifications'")->rowCount()) {
+            NotificationManager::ensureSchema($pdo);
+            $uStmt = $pdo->prepare("
+                SELECT DISTINCT related_id
+                FROM notifications
+                WHERE user_id = ?
+                  AND related_table = 'digital_referrals'
+                  AND related_id IS NOT NULL
+                  AND related_id > 0
+                  AND is_read = 0
+                  AND status = 'active'
+                  AND (expires_at IS NULL OR expires_at > NOW())
+            ");
+            $uStmt->execute([$userId]);
+            $unreadIds = array_map('intval', $uStmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
+        }
+        $unreadSet = array_fill_keys($unreadIds, true);
+        foreach ($rows as &$row) {
+            $rid = (int) ($row['id'] ?? 0);
+            $row['is_unread'] = isset($unreadSet[$rid]);
+        }
+        unset($row);
+
+        $totalCount = (int) $pdo->query('SELECT COUNT(*) FROM digital_referrals')->fetchColumn();
+        $unreadCount = NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
+
+        echo json_encode([
+            'success' => true,
+            'rows' => $rows,
+            'unread_count' => $unreadCount,
+            'total_count' => $totalCount,
+            'timestamp' => date('c'),
+        ]);
     } catch (Throwable $e) {
         echo json_encode(['success' => false, 'message' => 'Could not load referrals.']);
     }
+    exit;
+}
+
+if ($method === 'POST') {
+    if (!auth_csrf_validate($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? null)) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Invalid CSRF token.']);
+        exit;
+    }
+
+    $action = trim((string) ($_POST['action'] ?? ''));
+    $referralId = (int) ($_POST['referral_id'] ?? 0);
+
+    if ($action === 'mark_read' && $referralId > 0 && $userId > 0) {
+        try {
+            if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
+                echo json_encode(['success' => false, 'message' => 'Referral not found.']);
+                exit;
+            }
+            $exists = $pdo->prepare('SELECT id FROM digital_referrals WHERE id = ? LIMIT 1');
+            $exists->execute([$referralId]);
+            if (!(int) $exists->fetchColumn()) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Referral not found.']);
+                exit;
+            }
+
+            // Marks this user's notification only — does not change referral clinical status/data.
+            NotificationManager::markRelatedRead($pdo, $userId, 'digital_referrals', $referralId);
+            $unreadCount = NotificationManager::countUnreadRelated($pdo, $userId, 'digital_referrals');
+
+            echo json_encode([
+                'success' => true,
+                'referral_id' => $referralId,
+                'is_unread' => false,
+                'unread_count' => $unreadCount,
+                'message' => 'Referral marked as read.',
+            ]);
+        } catch (Throwable $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Could not mark referral as read.']);
+        }
+        exit;
+    }
+
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Invalid action.']);
     exit;
 }
 
