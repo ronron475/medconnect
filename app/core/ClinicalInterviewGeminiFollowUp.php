@@ -85,13 +85,19 @@ final class ClinicalInterviewGeminiFollowUp
         }
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
         $known = [];
+        if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+            $summary = ClinicalInterviewAdaptivePolicy::fullCaseHaystack($context, $transcript, $facts);
+            if ($summary !== '') {
+                $known[] = 'case=' . mb_substr($summary, 0, 900);
+            }
+        }
         foreach ($facts['body_locations'] ?? [] as $loc) {
             if (is_string($loc) && $loc !== '') {
                 $known[] = 'location=' . $loc;
             }
         }
         if (($facts['pain_score'] ?? null) !== null && $facts['pain_score'] !== '') {
-            $known[] = 'pain_score=' . (int) $facts['pain_score'];
+            $known[] = 'pain_score=' . (int) $facts['pain_score'] . ' (scale 1-10)';
         }
         if (($facts['onset'] ?? '') !== '') {
             $known[] = 'onset=' . (string) $facts['onset'];
@@ -102,16 +108,39 @@ final class ClinicalInterviewGeminiFollowUp
         if (!empty($facts['denied_associated'])) {
             $known[] = 'patient_denied_other_symptoms=true';
         }
+        foreach ((array) ($facts['associated_symptoms'] ?? []) as $sym) {
+            $s = trim((string) $sym);
+            if ($s !== '') {
+                $known[] = 'associated=' . $s;
+            }
+        }
         $asked = array_values(array_filter(array_map('strval', (array) ($context['questions_asked'] ?? []))));
+        $answered = [];
+        foreach ((array) ($context['questions_answered'] ?? []) as $qa) {
+            if (!is_array($qa)) {
+                continue;
+            }
+            $qid = trim((string) ($qa['question_id'] ?? ''));
+            $a = trim((string) ($qa['answer'] ?? $qa['patient_answer'] ?? ''));
+            if ($qid !== '' || $a !== '') {
+                $answered[] = trim($qid . '=' . $a);
+            }
+        }
         $bankTemplate = trim($bankTemplate);
+        $qid = strtoupper(trim((string) ($slot['question_id'] ?? '')));
+        $painRule = $qid === 'PAIN_SEVERITY'
+            ? "If asking pain intensity, ALWAYS use a 1 to 10 scale (1=very mild, 10=worst). Never use 0–10.\n"
+            : '';
 
         return "Write one follow-up question a nurse would say out loud.\n"
             . "Language: {$langLine} only.\n"
             . 'Clinical purpose: ' . trim((string) ($slot['clinical_purpose'] ?? 'clarify the complaint')) . "\n"
+            . $painRule
             . ($bankTemplate !== '' ? "Keep the same meaning as this template: {$bankTemplate}\n" : '')
             . 'Detected complaints: ' . ($complaints !== [] ? implode(', ', $complaints) : '(unspecified)') . "\n"
-            . 'Already known (do not ask again): ' . ($known !== [] ? implode('; ', $known) : '(none)') . "\n"
-            . 'Already asked: ' . ($asked !== [] ? implode(', ', $asked) : '(none)') . "\n"
+            . 'Already known from the COMPLETE case (do not ask again): ' . ($known !== [] ? implode('; ', $known) : '(none)') . "\n"
+            . 'Prior answers: ' . ($answered !== [] ? implode(' | ', $answered) : '(none)') . "\n"
+            . 'Already asked slots: ' . ($asked !== [] ? implode(', ', $asked) : '(none)') . "\n"
             . "Patient said: " . mb_substr(trim($transcript), 0, 800) . "\n"
             . "Reply with the question only. No preamble.";
     }
@@ -246,9 +275,10 @@ final class ClinicalInterviewGeminiFollowUp
         return <<<'PROMPT'
 You write ONE follow-up question for medConnect preliminary triage.
 
-Existing NLP already analyzed the complaint and decided that a follow-up is required because the information is insufficient, ambiguous, unclear, invalid, contradictory, or missing clinically relevant context.
+Existing NLP already analyzed the COMPLETE accumulated clinical case and decided that a follow-up is required because important applicable information is still missing.
 You do NOT classify urgency. You do NOT diagnose. You do NOT invent symptoms, pain scores, vitals, or history.
-Do NOT ask follow-up questions when the complaint already contains sufficient information for triage.
+Do NOT ask for information already present in the case (primary complaint, prior answers, or extracted facts).
+Do NOT ask a generic fixed questionnaire. Ask only what is still unknown and clinically useful for THIS case.
 
 Rules:
 - Ask exactly one simple spoken question that collects the required clinical purpose.
@@ -256,6 +286,7 @@ Rules:
 - Do not switch languages.
 - Do not use medical jargon.
 - Do not repeat facts the patient already provided.
+- For pain intensity, always use a 1–10 scale (1=very mild, 10=worst). Never use 0–10.
 - Do not mention datasets, JSON, NLP, Gemini, or triage colors.
 - Output only the spoken question.
 PROMPT;

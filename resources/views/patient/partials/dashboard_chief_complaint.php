@@ -77,7 +77,7 @@ if ($preliminary_complaint_triage && empty($chief_complaint_locked)) {
 $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSON_UNESCAPED_UNICODE) : '';
 $followup_q_text = (string) ($preliminary_payload['followup_question'] ?? '');
 $followup_is_pain_scale = (bool) preg_match(
-    '/0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*0|0\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe/iu',
+    '/1\s*(tubtob|to|hanggang|-|–|—)\s*10|0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*[01]|[01]\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe|gaano\s+kasakit/iu',
     $followup_q_text
 );
 $interview_complaint_locked = $chief_complaint_locked
@@ -190,15 +190,15 @@ $placeholder = $interview_complaint_locked
       <div class="pdash-followup__panel">
         <p id="pdashFollowupQuestion" class="pdash-followup__question"><?= htmlspecialchars((string) ($preliminary_payload['followup_question'] ?? '')) ?></p>
         <div id="pdashFollowupScale" class="pdash-followup__scale"<?= $followup_is_pain_scale ? '' : ' hidden' ?>>
-          <span class="pdash-followup__scale-label">0 = no pain</span>
-          <div class="pdash-followup__scale-track" role="group" aria-label="Pain scale 0 to 10">
-            <?php for ($i = 0; $i <= 10; $i++): ?>
+          <span class="pdash-followup__scale-label">1 = very mild</span>
+          <div class="pdash-followup__scale-track" role="group" aria-label="Pain scale 1 to 10">
+            <?php for ($i = 1; $i <= 10; $i++): ?>
             <button type="button" class="pdash-followup__scale-btn" data-score="<?= $i ?>"><?= $i ?></button>
             <?php endfor; ?>
           </div>
           <span class="pdash-followup__scale-label pdash-followup__scale-label--end">10 = worst pain</span>
         </div>
-        <p id="pdashFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
+        <p id="pdashFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
       </div>
       <div class="pdash-followup__answer">
         <label class="form-label pdash-care-form__label" for="pdashFollowupAnswer">Your answer</label>

@@ -120,7 +120,7 @@ $show_ai_result_box = ($preliminary_payload && empty($preliminary_payload['asses
     || ($consultation_already_assigned && $portal_triage_urgency !== '');
 $followup_q_text = (string) ($preliminary_payload['followup_question'] ?? '');
 $followup_is_pain_scale = (bool) preg_match(
-    '/0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*0|0\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe/iu',
+    '/1\s*(tubtob|to|hanggang|-|–|—)\s*10|0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*[01]|[01]\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe|gaano\s+kasakit/iu',
     $followup_q_text
 );
 $interview_complaint_locked = $chief_complaint_locked
@@ -263,15 +263,15 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
       <div class="pdash-followup__panel">
         <p id="triageFollowupQuestion" class="pdash-followup__question"><?= htmlspecialchars((string) ($preliminary_payload['followup_question'] ?? '')) ?></p>
         <div id="triageFollowupScale" class="pdash-followup__scale"<?= $followup_is_pain_scale ? '' : ' hidden' ?>>
-          <span class="pdash-followup__scale-label">0 = no pain</span>
-          <div class="pdash-followup__scale-track" role="group" aria-label="Pain scale 0 to 10">
-            <?php for ($i = 0; $i <= 10; $i++): ?>
+          <span class="pdash-followup__scale-label">1 = very mild</span>
+          <div class="pdash-followup__scale-track" role="group" aria-label="Pain scale 1 to 10">
+            <?php for ($i = 1; $i <= 10; $i++): ?>
             <button type="button" class="pdash-followup__scale-btn" data-score="<?= $i ?>"><?= $i ?></button>
             <?php endfor; ?>
           </div>
           <span class="pdash-followup__scale-label pdash-followup__scale-label--end">10 = worst pain</span>
         </div>
-        <p id="triageFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
+        <p id="triageFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
       </div>
       <div class="pdash-followup__answer">
         <label class="form-label" for="triage_followup_answer">Your answer</label>

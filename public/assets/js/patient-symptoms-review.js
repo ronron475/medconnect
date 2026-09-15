@@ -122,9 +122,11 @@
 
   function isPainScaleQuestion(text) {
     var q = String(text || '');
-    return /0\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
-      || /scale\s*(of|nga)?\s*0/i.test(q)
-      || /0\s*(out of|\/)\s*10/i.test(q)
+    return /1\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
+      || /0\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
+      || /scale\s*(of|nga)?\s*[01]/i.test(q)
+      || /[01]\s*(out of|\/)\s*10/i.test(q)
+      || /gaano\s+kasakit/i.test(q)
       || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
   }
 
@@ -139,7 +141,7 @@
     if (followupHelperEl) {
       if (showScale) {
         followupHelperEl.hidden = false;
-        followupHelperEl.textContent = 'Tap a number below, or type your answer (for example: 5, 7/10, or “grabe”).';
+        followupHelperEl.textContent = 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).';
       } else {
         followupHelperEl.hidden = true;
         followupHelperEl.textContent = '';

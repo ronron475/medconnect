@@ -1048,6 +1048,7 @@ final class NlpStep3DemoClinicalState
             'PAIN_SEVERITY' => $painLike && $sev === null ? 2 : null,
             'PAIN_LOCATION', 'UNWELL_WHAT' => (
                 array_intersect($concepts, ['pain_unspecified', 'pain_no_location', 'general_unwell']) !== []
+                && array_intersect($concepts, ['urinary', 'cough', 'fever', 'skin', 'bleeding', 'dizziness', 'respiratory', 'breathing']) === []
                 && self::normalizedLocations($state) === []
             ) ? 3 : null,
             'ONSET', 'DURATION' => !$hasTiming ? 5 : null,
@@ -1246,7 +1247,10 @@ final class NlpStep3DemoClinicalState
 
         // Only attach generic pain tags when the complaint is pain-centered (or unknown).
         // Do not force PAIN_LOCATION onto cough/skin/urinary/fever pathways.
-        if ($hasPainSignal) {
+        $systemImplied = array_intersect($specific, [
+            'urinary', 'cough', 'fever', 'skin', 'bleeding', 'dizziness', 'respiratory', 'breathing',
+        ]) !== [];
+        if ($hasPainSignal && !$systemImplied) {
             if ($specific === []) {
                 $locs = self::normalizedLocations($state);
                 $concepts[] = $locs === [] ? 'pain_unspecified' : 'pain';
@@ -1256,6 +1260,13 @@ final class NlpStep3DemoClinicalState
             } elseif (array_intersect($specific, $painLike) !== []) {
                 $concepts[] = 'pain';
             }
+        }
+        // Drop inherited unspecified-location tags when a system complaint already locates the problem.
+        if ($systemImplied) {
+            $concepts = array_values(array_filter(
+                $concepts,
+                static fn (string $c): bool => !in_array($c, ['pain_no_location', 'pain_unspecified'], true)
+            ));
         }
 
         return array_values(array_unique($concepts));
