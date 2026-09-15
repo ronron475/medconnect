@@ -46,7 +46,7 @@
 .ann-mgmt__table {
   table-layout: fixed;
   width: 100%;
-  min-width: 960px;
+  min-width: 1180px;
   border-collapse: collapse;
 }
 
@@ -56,13 +56,24 @@
   box-sizing: border-box;
 }
 
-.ann-mgmt__table .ann-col-title { width: 22%; }
-.ann-mgmt__table .ann-col-category { width: 12%; }
-.ann-mgmt__table .ann-col-audience { width: 14%; }
-.ann-mgmt__table .ann-col-status { width: 10%; }
-.ann-mgmt__table .ann-col-publish { width: 12%; }
-.ann-mgmt__table .ann-col-views { width: 7%; }
-.ann-mgmt__table .ann-col-actions { width: 23%; }
+.ann-mgmt__table .ann-col-title { width: 18%; }
+.ann-mgmt__table .ann-col-category { width: 11%; }
+.ann-mgmt__table .ann-col-audience { width: 12%; }
+.ann-mgmt__table .ann-col-status { width: 9%; }
+.ann-mgmt__table .ann-col-publish { width: 11%; }
+.ann-mgmt__table .ann-col-views { width: 6%; }
+.ann-mgmt__table .ann-col-actions {
+  width: 340px;
+  min-width: 320px;
+  max-width: 360px;
+}
+
+.ann-mgmt__table th.ann-col-actions,
+.ann-mgmt__table td.ann-col-actions {
+  vertical-align: top;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
 
 .ann-mgmt__table .ann-col-title .ann-title-text {
   display: block;
@@ -88,17 +99,36 @@
 .ann-mgmt__table .mc-badge.is-archived,
 .ann-mgmt__table .mc-badge.is-expired { background: #f1f5f9; color: #475569; }
 
+/* Compact, predictable action button grid — wraps only inside ACTIONS */
 .ann-actions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
-  align-items: center;
+  align-items: stretch;
+  justify-items: stretch;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ann-actions .mc-btn {
-  flex: 0 0 auto;
-  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  border-radius: 8px;
+  box-sizing: border-box;
+  flex: none;
 }
 
 .ann-pin {
@@ -282,12 +312,42 @@
   .ann-mgmt__header { flex-direction: column; }
   .ann-modal__foot { justify-content: stretch; }
   .ann-modal__foot .mc-btn { flex: 1 1 auto; }
+
+  /* Keep table columns readable; scroll horizontally instead of squeezing */
+  body.admin-body table.ann-mgmt__table,
+  body.superadmin-body table.ann-mgmt__table,
   .ann-mgmt__table {
-    min-width: 880px;
+    width: 1180px;
+    min-width: 1180px;
+    max-width: none;
   }
+
+  .ann-mgmt__table .ann-col-actions {
+    width: 340px;
+    min-width: 320px;
+  }
+
+  .ann-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
   .ann-actions .mc-btn {
-    min-height: 32px;
-    padding: 6px 10px;
+    min-height: 30px;
+    height: 30px;
+    padding: 0 8px;
+    font-size: 0.6875rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .ann-mgmt__table {
+    min-width: 100%;
+  }
+
+  .ann-mgmt__table .ann-col-actions {
+    width: 360px;
+    min-width: 340px;
   }
 }
 
