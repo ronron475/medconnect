@@ -148,7 +148,7 @@ $placeholder = $interview_complaint_locked
       id="pdashSymptomsComplaint"
       name="chief_complaint"
       class="form-control pdash-care-form__input<?= $interview_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
-      rows="3"
+      rows="<?= $interview_complaint_locked ? 1 : 2 ?>"
       maxlength="500"
       placeholder="<?= htmlspecialchars($placeholder) ?>"
       <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
@@ -206,7 +206,7 @@ $placeholder = $interview_complaint_locked
           id="pdashFollowupAnswer"
           name="followup_answer"
           class="form-control pdash-care-form__input pdash-followup__input"
-          rows="3"
+          rows="2"
           maxlength="500"
           placeholder="Type your answer here…"
           autocomplete="off"

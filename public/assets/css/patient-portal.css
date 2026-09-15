@@ -257,8 +257,41 @@ body.patient-portal {
 
 /* ── Triage form ── */
 .patient-triage-form {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   scroll-margin-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 12px);
+}
+
+.patient-triage-form > .text-h3 {
+  margin-bottom: 8px;
+}
+
+.patient-triage-form .form-group {
+  margin-bottom: 10px;
+}
+
+.patient-triage-form .form-group > .text-xs.text-muted {
+  margin-top: 4px !important;
+  line-height: 1.4;
+}
+
+.patient-triage-form #chief_complaint {
+  min-height: 56px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.patient-triage-form.is-followup-active #chief_complaint,
+.patient-triage-form #chief_complaint.pdash-care-form__input--locked {
+  min-height: 44px;
+}
+
+.patient-triage-form .patient-triage-submit {
+  margin-top: 4px;
+}
+
+.patient-triage-form .patient-triage-submit-hint {
+  margin-top: 6px;
+  margin-bottom: 10px;
 }
 
 .patient-triage-form .symptom-grid {
@@ -290,11 +323,12 @@ body.patient-portal {
 
 .patient-triage-alert {
   display: none;
-  padding: 12px 14px;
+  padding: 8px 12px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  line-height: 1.4;
 }
 
 .patient-triage-alert.is-visible {
@@ -1612,12 +1646,12 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup {
-  margin: 14px 0 16px;
+  margin: 8px 0 10px;
   padding: 0;
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid #99f6e4;
   background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 42%);
-  box-shadow: 0 10px 28px rgba(15, 118, 110, 0.08);
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.06);
   overflow: hidden;
 }
 
@@ -1628,8 +1662,8 @@ body.mc-tips-ready-modal-open {
 .pdash-followup__head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
+  gap: 8px;
+  padding: 8px 12px;
   border-bottom: 1px solid #ccfbf1;
   background: rgba(240, 253, 250, 0.9);
 }
@@ -1660,22 +1694,22 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__panel {
-  padding: 14px 16px 10px;
+  padding: 8px 12px 4px;
 }
 
 .pdash-followup__question {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #0f172a;
-  line-height: 1.55;
+  line-height: 1.4;
   letter-spacing: -0.01em;
 }
 
 .pdash-followup__helper {
-  margin: 10px 0 0;
-  font-size: 0.84rem;
-  line-height: 1.45;
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
   color: #475569;
 }
 
@@ -1686,9 +1720,9 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__scale {
-  margin-top: 14px;
+  margin-top: 8px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .pdash-followup__scale-label {
@@ -1739,25 +1773,29 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__notice {
-  margin: 10px 0 0;
-  padding: 12px 14px;
+  margin: 6px 0 0;
+  padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #fca5a5;
   background: #fef2f2;
   color: #dc2626;
   font-size: 13px;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.4;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .pdash-followup__answer {
-  padding: 4px 16px 16px;
+  padding: 2px 12px 10px;
+}
+
+.pdash-followup__answer .form-label {
+  margin-bottom: 4px;
 }
 
 .pdash-followup__input {
-  min-height: 88px;
+  min-height: 52px;
   resize: vertical;
 }
 
@@ -1775,14 +1813,14 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__hint {
-  margin: 8px 0 0;
-  font-size: 0.75rem;
+  margin: 4px 0 0;
+  font-size: 0.72rem;
   color: #64748b;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .pdash-followup__answer:has(.pdash-followup__notice:not([hidden])) .pdash-followup__hint {
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
@@ -1796,7 +1834,7 @@ body.mc-tips-ready-modal-open {
 }
 
 #startNewConsultationWrap {
-  margin-top: 10px;
+  margin-top: 6px;
   position: relative;
   z-index: 6;
   pointer-events: auto !important;
@@ -2035,7 +2073,7 @@ html[data-theme-resolved='dark'] .booking-today-date {
 }
 
 .patient-triage-new-consult {
-  margin: 8px 0 2px;
+  margin: 6px 0 0;
 }
 
 .patient-triage-alt-btn {
@@ -2438,18 +2476,34 @@ html[data-theme-resolved='dark'] .booking-today-date {
   }
 
   .patient-triage-page .patient-triage-form {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     overflow: visible;
-    padding-bottom: 18px !important;
+    padding-bottom: 14px !important;
   }
 
   .patient-triage-page .patient-triage-form .text-h3 {
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     font-size: 1.05rem;
   }
 
   .patient-triage-page .form-group {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+  }
+
+  .patient-triage-page .pdash-followup {
+    margin: 6px 0 8px;
+  }
+
+  .patient-triage-page .pdash-followup__input {
+    min-height: 48px;
+  }
+
+  .patient-triage-page #chief_complaint {
+    min-height: 48px;
+  }
+
+  .patient-triage-page .patient-triage-form.is-followup-active #chief_complaint {
+    min-height: 40px;
   }
 
   .patient-triage-page .pdash-care-ai-result {

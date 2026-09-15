@@ -924,7 +924,7 @@
   }
 
   .pdash-care-form__input {
-    min-height: 84px;
+    min-height: 56px;
   }
 
   .pdash-care-form__hint {
@@ -1373,13 +1373,20 @@
 .pdash-care-form__input,
 #chief_complaint,
 #pdashSymptomsComplaint {
-  min-height: 96px;
+  min-height: 64px;
   border-radius: 10px;
   border-color: #cbd5e1;
   color: #0f172a;
   -webkit-text-fill-color: #0f172a;
   caret-color: #0f172a;
   opacity: 1;
+}
+
+#chief_complaint.pdash-care-form__input--locked,
+#pdashSymptomsComplaint.pdash-care-form__input--locked,
+.pdash-review-form.is-followup-active #pdashSymptomsComplaint,
+.patient-triage-form.is-followup-active #chief_complaint {
+  min-height: 48px;
 }
 
 .pdash-care-form__input::placeholder,
@@ -1411,13 +1418,14 @@
 }
 
 .pdash-care-form__hint {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   font-size: 0.75rem;
   color: #94a3b8;
+  line-height: 1.4;
 }
 
 .pdash-care-form__new-consult {
-  margin: 8px 0 2px;
+  margin: 6px 0 0;
   position: relative;
   z-index: 6;
   pointer-events: auto !important;
@@ -1431,7 +1439,7 @@
 }
 
 .pdash-care-form__submit {
-  margin-top: 10px;
+  margin-top: 8px;
   width: 100%;
   max-width: 320px;
 }
@@ -1541,7 +1549,7 @@
 }
 
 .pdash-review-form textarea.form-control {
-  min-height: 88px;
+  min-height: 56px;
 }
 
 .pdash-care__status-chip--wait {
