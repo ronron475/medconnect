@@ -83,6 +83,7 @@ $followup_is_pain_scale = (bool) preg_match(
 $interview_complaint_locked = $chief_complaint_locked
     || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
 $show_start_new_consultation_btn = !$chief_complaint_locked;
+$show_start_new_consultation_wrap = $preliminary_payload !== null;
 $placeholder = $interview_complaint_locked
     ? 'Your submitted primary complaint…'
     : 'Describe your primary complaint...';
@@ -164,7 +165,7 @@ $placeholder = $interview_complaint_locked
       <?php endif; ?>
     </p>
     <?php if ($show_start_new_consultation_btn): ?>
-    <div class="pdash-care-form__new-consult" id="startNewConsultationWrap"<?= $preliminary_payload ? '' : ' hidden' ?>>
+    <div class="pdash-care-form__new-consult" id="startNewConsultationWrap"<?= !empty($show_start_new_consultation_wrap) ? '' : ' hidden' ?>>
       <button
         type="button"
         class="pdash-btn pdash-btn--outline"

@@ -1550,12 +1550,50 @@
     }
   }
 
+  function ensurePatientUiInteractive() {
+    document.body.classList.remove(
+      'mc-urgency-modal-open',
+      'mc-modal-open',
+      'mc-nav-closing',
+      'patient-booking-overlay-open'
+    );
+    const urg = document.getElementById('mcPatientUrgencyModal');
+    if (urg && urg.hasAttribute('hidden')) {
+      urg.hidden = true;
+    }
+    document.querySelectorAll('.mc-modal-overlay').forEach((el) => {
+      if (!el.classList.contains('is-open')) {
+        el.classList.remove('is-closing');
+        el.hidden = true;
+        el.setAttribute('aria-hidden', 'true');
+      }
+    });
+  }
+
   function setStartNewConsultationVisible(visible, triageId) {
     const wrap = document.getElementById('startNewConsultationWrap');
     const btn = document.getElementById('btnStartNewConsultation');
-    if (wrap) wrap.hidden = !visible;
-    if (btn && triageId != null && Number(triageId) > 0) {
-      btn.setAttribute('data-triage-id', String(triageId));
+    if (wrap) {
+      wrap.hidden = !visible;
+      if (visible) {
+        wrap.removeAttribute('hidden');
+        wrap.style.pointerEvents = 'auto';
+        wrap.style.position = 'relative';
+        wrap.style.zIndex = '6';
+      }
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('aria-disabled');
+      btn.style.pointerEvents = 'auto';
+      btn.style.position = 'relative';
+      btn.style.zIndex = '7';
+      if (triageId != null && Number(triageId) > 0) {
+        btn.setAttribute('data-triage-id', String(triageId));
+      }
+    }
+    if (visible) {
+      ensurePatientUiInteractive();
     }
   }
 
@@ -1600,28 +1638,44 @@
     return true;
   }
 
-  function bindStartNewConsultation() {
-    const btn = document.getElementById('btnStartNewConsultation');
-    if (!btn || btn.dataset.boundStartNew === '1') return;
-    btn.dataset.boundStartNew = '1';
-    btn.addEventListener('click', async function () {
-      const confirmed = await confirmStartNewConsultation();
-      if (!confirmed) return;
-      btn.disabled = true;
-      try {
-        const triageId = parseInt(String(btn.getAttribute('data-triage-id') || '0'), 10) || 0;
-        const ok = await cancelActiveTriageSession(triageId);
-        if (!ok) return;
-        const onDashboard = !!document.getElementById('pdashSymptomsReviewForm');
-        if (onDashboard) {
-          window.location.href = APP_BASE + '/views/patient/dashboard.php?new_concern=1';
-        } else {
-          window.location.href = APP_BASE + '/views/patient/triage.php?new_concern=1';
-        }
-      } finally {
-        btn.disabled = false;
+  async function handleStartNewConsultationClick(btn) {
+    if (!btn || btn.dataset.startNewBusy === '1') return;
+    ensurePatientUiInteractive();
+    if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.close === 'function') {
+      try { window.mcPatientUrgencyModal.close(); } catch (_) { /* ignore */ }
+    }
+    const confirmed = await confirmStartNewConsultation();
+    if (!confirmed) return;
+    btn.dataset.startNewBusy = '1';
+    btn.disabled = true;
+    try {
+      const triageId = parseInt(String(btn.getAttribute('data-triage-id') || '0'), 10) || 0;
+      const ok = await cancelActiveTriageSession(triageId);
+      if (!ok) return;
+      const onDashboard = !!document.getElementById('pdashSymptomsReviewForm');
+      if (onDashboard) {
+        window.location.href = APP_BASE + '/views/patient/dashboard.php?new_concern=1';
+      } else {
+        window.location.href = APP_BASE + '/views/patient/triage.php?new_concern=1';
       }
-    });
+    } finally {
+      btn.dataset.startNewBusy = '0';
+      btn.disabled = false;
+    }
+  }
+
+  function bindStartNewConsultation() {
+    if (document.documentElement.dataset.boundStartNewDelegated === '1') return;
+    document.documentElement.dataset.boundStartNewDelegated = '1';
+    document.addEventListener('click', function (ev) {
+      const btn = ev.target && ev.target.closest
+        ? ev.target.closest('#btnStartNewConsultation')
+        : null;
+      if (!btn) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      handleStartNewConsultationClick(btn);
+    }, true);
   }
 
   window.mcPatientTriageSession = {
@@ -1719,6 +1773,18 @@
       }
 
       const level = urgencyToLevel(data.triage_level || data.classification_label);
+      if (level === 'emergency') {
+        twoStep.level = 'emergency';
+        twoStep.awaitingSecond = false;
+        twoStep.interviewInProgress = false;
+        hideBookingFollowupUi();
+        showBookingContinueUi('emergency', data.classification_label || 'EMERGENCY');
+        const continueHint = document.getElementById('triageContinueHint');
+        if (continueHint) {
+          continueHint.textContent = 'Emergency care is recommended. You can start a new complaint if this was submitted in error.';
+        }
+        return;
+      }
       if (level !== 'non_urgent' && level !== 'urgent') return;
       twoStep.level = level;
       twoStep.awaitingSecond = twoStep.triageId > 0;
@@ -1916,6 +1982,18 @@
             if (payload.emergency || level === 'emergency') {
               twoStep.interviewInProgress = false;
               hideBookingFollowupUi();
+              twoStep.triageId = parseInt(payload.triage_id, 10) || twoStep.triageId;
+              twoStep.complaint = complaint;
+              twoStep.level = 'emergency';
+              twoStep.awaitingSecond = false;
+              if (triageIdInput && twoStep.triageId > 0) {
+                triageIdInput.value = String(twoStep.triageId);
+              }
+              showBookingContinueUi('emergency', payload.classification_label || 'EMERGENCY');
+              const continueHint = document.getElementById('triageContinueHint');
+              if (continueHint) {
+                continueHint.textContent = 'Emergency care is recommended. You can start a new complaint if this was submitted in error.';
+              }
               showTriageAlert(alertEl, 'error', json.message || 'Emergency symptoms detected. Seek emergency care.');
               if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showEmergency === 'function') {
                 window.mcPatientUrgencyModal.showEmergency(json.message || '', {

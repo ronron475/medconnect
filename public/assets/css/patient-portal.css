@@ -1797,10 +1797,30 @@ body.mc-tips-ready-modal-open {
 
 #startNewConsultationWrap {
   margin-top: 10px;
+  position: relative;
+  z-index: 6;
+  pointer-events: auto !important;
 }
 
 #btnStartNewConsultation {
   font-weight: 600;
+  position: relative;
+  z-index: 7;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+#btnStartNewConsultation:disabled {
+  opacity: 0.7;
+  cursor: wait !important;
+  pointer-events: auto !important;
+}
+
+.patient-triage-new-consult,
+.pdash-care-form__new-consult {
+  position: relative;
+  z-index: 6;
+  pointer-events: auto !important;
 }
 
 @media (max-width: 640px) {
