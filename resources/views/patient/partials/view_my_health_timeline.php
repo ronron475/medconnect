@@ -487,6 +487,12 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
               <p><?= htmlspecialchars((string) $entry['reason']) ?></p>
             </section>
             <?php endif; ?>
+            <?php if (!empty($entry['notes'])): ?>
+            <section class="pmh-visit__block pmh-visit__block--full">
+              <h4 class="pmh-visit__label">Doctor’s notes</h4>
+              <p><?= htmlspecialchars((string) $entry['notes']) ?></p>
+            </section>
+            <?php endif; ?>
             <?php if ($who !== ''): ?>
             <section class="pmh-visit__block pmh-visit__block--full">
               <h4 class="pmh-visit__label">Issued by</h4>

@@ -16,13 +16,8 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $userId = (int) ($_SESSION['user_id'] ?? 0);
 
 if ($method === 'GET') {
-    $status = trim($_GET['status'] ?? 'all');
     $where = '1=1';
     $params = [];
-    if ($status !== '' && $status !== 'all') {
-        $where = 'dr.status = ?';
-        $params[] = $status;
-    }
 
     try {
         if (!$pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
@@ -47,9 +42,12 @@ if ($method === 'GET') {
         } else {
             $destExpr = '""';
         }
+        $hasNotes = in_array('provider_notes', $cols, true);
+        $notesExpr = $hasNotes ? 'COALESCE(dr.provider_notes, "")' : '""';
         $stmt = $pdo->prepare("
-            SELECT dr.id, dr.referral_type, dr.reason, dr.status, dr.created_at,
+            SELECT dr.id, dr.referral_type, dr.reason, dr.created_at,
                    {$destExpr} AS facility_name,
+                   {$notesExpr} AS provider_notes,
                    TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))) AS patient_name,
                    TRIM(CONCAT(COALESCE(pr.first_name, ''), ' ', COALESCE(pr.last_name, ''))) AS provider_name
             FROM digital_referrals dr

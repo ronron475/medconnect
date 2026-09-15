@@ -116,6 +116,22 @@ $locked_provider_id = (int) ($review_booking_ctx['provider_id'] ?? 0);
 $locked_provider_name = trim((string) ($review_booking_ctx['provider_name'] ?? ''));
 $locked_assigned_has_slots = !empty($review_booking_slots['assigned_has_slots_today']);
 $locked_alternate_available = !empty($review_booking_slots['alternate_available']);
+$urgent_open_choice = triage_patient_is_urgent_choice_context($review_booking_ctx);
+if ($urgent_open_choice && $active_chief_complaint_triage_id <= 0) {
+    $active_chief_complaint_triage_id = (int) ($review_booking_ctx['triage_id'] ?? 0);
+}
+if ($urgent_open_choice) {
+    if ($registration_chief_complaint === '' && $active_chief_complaint_triage_id > 0) {
+        try {
+            $ccStmt = $pdo->prepare('SELECT chief_complaint FROM triage_results WHERE id = ? AND patient_id = ? LIMIT 1');
+            $ccStmt->execute([$active_chief_complaint_triage_id, (int) $uid]);
+            $registration_chief_complaint = trim((string) ($ccStmt->fetchColumn() ?: ''));
+        } catch (Throwable $e) {
+            // keep empty
+        }
+    }
+    $chief_complaint_locked = $registration_chief_complaint !== '';
+}
 if ($locked_provider_id > 0 && $locked_provider_name === '') {
     $locked_provider_name = triage_provider_display_name($pdo, $locked_provider_id);
 }
@@ -240,7 +256,8 @@ $patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $u
   <script>window.BOOKING_LOCKED_PROVIDER_NAME = <?= json_encode($locked_provider_name) ?>;</script>
   <script>window.BOOKING_ASSIGNED_HAS_SLOTS = <?= json_encode($locked_assigned_has_slots) ?>;</script>
   <script>window.BOOKING_ALTERNATE_AVAILABLE = <?= json_encode($locked_alternate_available) ?>;</script>
-  <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(empty($review_booking_ctx['locked'])) ?>;</script>
+  <script>window.BOOKING_URGENT_CHOICE = <?= json_encode(!empty($urgent_open_choice)) ?>;</script>
+  <script>window.TRIAGE_REVIEW_FIRST_ALLOWED = <?= json_encode(empty($review_booking_ctx['locked']) && empty($urgent_open_choice)) ?>;</script>
   <script>window.ACTIVE_CHIEF_COMPLAINT_TRIAGE_ID = <?= json_encode($active_chief_complaint_triage_id > 0 ? $active_chief_complaint_triage_id : null) ?>;</script>
   <script>window.REGISTRATION_COMPLAINT_REFERENCE = <?= json_encode($registration_chief_complaint) ?>;</script>
   <?php if ($portal_triage_urgency === 'EMERGENCY'): ?>

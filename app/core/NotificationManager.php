@@ -683,7 +683,7 @@ final class NotificationManager
                 $s->execute([$userId]);
                 $widgets['upcoming_consultations'] = (int) $s->fetchColumn();
                 if ($pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
-                    $s = $pdo->prepare("SELECT COUNT(*) FROM digital_referrals WHERE patient_id = ? AND status = 'pending'");
+                    $s = $pdo->prepare("SELECT COUNT(*) FROM digital_referrals WHERE patient_id = ?");
                     $s->execute([$userId]);
                     $widgets['pending_referrals'] = (int) $s->fetchColumn();
                 }
@@ -691,7 +691,7 @@ final class NotificationManager
                 $s = $pdo->prepare("SELECT COUNT(*) FROM consultations c JOIN users u ON u.id = c.patient_id WHERE c.consult_date = CURDATE() AND c.status NOT IN ('cancelled','completed')");
                 $s->execute();
                 $widgets['today_appointments'] = (int) $s->fetchColumn();
-                $s = $pdo->query("SELECT COUNT(*) FROM digital_referrals WHERE status = 'pending'");
+                $s = $pdo->query("SELECT COUNT(*) FROM digital_referrals");
                 $widgets['pending_referrals'] = (int) $s->fetchColumn();
             } elseif ($role === 'admin' || $role === 'superadmin') {
                 // Monitoring-only: count all doctor-issued referrals, not pending follow-up status.

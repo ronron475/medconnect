@@ -3432,6 +3432,8 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
                     <input type="text" id="referralFacilityOther" class="pd-input" style="width:100%;margin-top:6px;display:none;" placeholder="Facility / service destination" maxlength="255" autocomplete="off">
                     <label class="pd-label" for="referralReason" style="margin-top:8px;">Reason for referral</label>
                     <textarea id="referralReason" class="pd-input" rows="3" style="width:100%;resize:vertical;" placeholder="Document why this patient needs in-person care, examination, or specialty services…"></textarea>
+                    <label class="pd-label" for="referralNotes" style="margin-top:8px;">Doctor’s notes (optional)</label>
+                    <textarea id="referralNotes" class="pd-input" rows="2" style="width:100%;resize:vertical;" placeholder="Additional clinical notes the patient may read with this referral…"></textarea>
                     <button type="button" class="session-btn primary" style="width: 100%; margin-top:8px;" onclick="issueReferral()">Issue Referral</button>
                     <p class="text-xs text-muted" style="margin:6px 0 0;">Issuing a referral does not change consultation completion. Finalize the SOAP note separately when the visit is done.</p>
 
@@ -5530,8 +5532,10 @@ async function issueReferral() {
     const facilityEl = document.getElementById('referralFacility');
     const facilityOtherEl = document.getElementById('referralFacilityOther');
     const reasonEl = document.getElementById('referralReason');
+    const notesEl = document.getElementById('referralNotes');
     const type = typeEl ? String(typeEl.value || '').trim() : '';
     const reason = reasonEl ? String(reasonEl.value || '').trim() : '';
+    const notes = notesEl ? String(notesEl.value || '').trim() : '';
     if (!type) return alert('Select a referral type / service.');
     if (!reason || reason.length < 5) return alert('Enter a clear reason for referral (clinical note).');
 
@@ -5560,6 +5564,7 @@ async function issueReferral() {
         fd.append('reason', reason);
         if (facilityId > 0) fd.append('facility_id', String(facilityId));
         if (facilityName) fd.append('facility_name', facilityName);
+        if (notes) fd.append('provider_notes', notes);
         fd.append('csrf_token', sessionCsrf);
         const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/create_referral.php', { method: 'POST', body: fd, credentials: 'same-origin' });
         const data = await res.json();
@@ -5572,6 +5577,7 @@ async function issueReferral() {
                 facilityOtherEl.style.display = 'none';
             }
             if (reasonEl) reasonEl.value = '';
+            if (notesEl) notesEl.value = '';
         }
     } catch (e) {
         showSessionChatAlert('Network error creating referral.', 'error');

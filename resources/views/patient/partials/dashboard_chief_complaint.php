@@ -104,6 +104,14 @@ $placeholder = $interview_complaint_locked
     </div>
   </div>
 
+  <?php if (!empty($symptoms_review_booking['urgent_choice'])): ?>
+  <div class="patient-triage-alert patient-triage-alert--warning is-visible" role="status" style="margin:0 0 16px;">
+    <p class="patient-triage-alert__line"><strong>URGENT CONSULTATION</strong></p>
+    <p class="text-sm" style="margin:6px 0 10px;">Doctors with open slots today are ready. The earliest available option is recommended — you may choose another eligible doctor.</p>
+    <a class="mc-btn mc-btn--primary" href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php') ?>">Choose a doctor and book</a>
+  </div>
+  <?php endif; ?>
+
   <?php if ($show_care_tips_context): ?>
   <ol class="pdash-care-steps pdash-care-steps--idle" aria-label="Care tips progress">
     <li class="pdash-care-steps__item is-current" aria-current="step">

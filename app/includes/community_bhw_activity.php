@@ -412,9 +412,12 @@ function community_bhw_activity_referrals(PDO $pdo, int $patientId, string $bara
         $destCol = $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch()
             ? 'facility_name'
             : 'destination_facility';
+        $hasNotes = (bool) $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'provider_notes'")->fetch();
+        $notesExpr = $hasNotes ? 'COALESCE(dr.provider_notes, \'\')' : '\'\'';
         $stmt = $pdo->prepare("
-            SELECT dr.id, dr.referral_type, dr.reason, dr.status, dr.created_at, dr.provider_id,
+            SELECT dr.id, dr.referral_type, dr.reason, dr.created_at, dr.provider_id,
                    COALESCE(dr.{$destCol}, '') AS facility_display,
+                   {$notesExpr} AS provider_notes,
                    TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS provider_name
             FROM digital_referrals dr
             LEFT JOIN users u ON u.id = dr.provider_id
@@ -456,14 +459,8 @@ function community_bhw_activity_referrals(PDO $pdo, int $patientId, string $bara
             'type'       => trim((string) ($row['referral_type'] ?? '')) ?: 'Referral',
             'reason'     => trim((string) ($row['reason'] ?? '')),
             'facility'   => trim((string) ($row['facility_display'] ?? '')),
-            'status'     => match (strtolower(trim((string) ($row['status'] ?? 'pending')))) {
-                'pending' => 'Issued / Open',
-                'accepted' => 'In progress',
-                'completed' => 'Completed',
-                'cancelled', 'rejected' => 'Cancelled',
-                'expired' => 'Expired',
-                default => ucfirst(trim((string) ($row['status'] ?? 'pending'))),
-            },
+            'notes'      => trim((string) ($row['provider_notes'] ?? '')),
+            'status'     => 'Issued',
             'date_label' => $attr['date_label'],
             'bhw_name'   => $role === 'bhw' && $attr['added_by'] !== 'Unknown' ? $attr['added_by'] : '',
             'time_label' => $attr['time_label'],

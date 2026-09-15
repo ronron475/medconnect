@@ -163,6 +163,8 @@ try {
     $destCol = $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch()
         ? 'facility_name'
         : 'destination_facility';
+    $hasNotes = (bool) $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'provider_notes'")->fetch();
+    $notesExpr = $hasNotes ? 'COALESCE(dr.provider_notes, \'\')' : '\'\'';
     $s = $pdo->prepare("
         SELECT
             CONCAT(dr.referral_type, ' Referral') AS name,
@@ -172,10 +174,10 @@ try {
             dr.referral_type                       AS referral_type,
             dr.reason                              AS referral_reason,
             COALESCE(dr.{$destCol}, '')            AS referral_facility,
-            dr.status                              AS referral_status,
+            {$notesExpr}                           AS referral_notes,
             dr.reason                              AS frequency,
             COALESCE(dr.{$destCol}, '')            AS duration,
-            dr.status                              AS detail
+            {$notesExpr}                           AS detail
         FROM digital_referrals dr
         JOIN users u ON u.id = dr.provider_id
         WHERE dr.patient_id = ?

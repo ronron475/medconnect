@@ -688,20 +688,29 @@ function patient_submit_symptoms_for_review(
                     ],
                 ];
             }
+            if ($ownedLevel === TriageLevelService::URGENT || $ownedOutcome === 'urgent_booking') {
+                return [
+                    'ok' => true,
+                    'message' => 'Your symptoms may need prompt medical attention. Please book an urgent consultation.',
+                    'payload' => [
+                        'urgent' => true,
+                        'triage_id' => (int) ($owned['id'] ?? 0),
+                        'assigned_provider_id' => 0,
+                        'book_url' => (defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php',
+                    ],
+                ];
+            }
             if ($ownedAssigned > 0 || $ownedOutcome === 'waiting_for_slot' || $ownedOutcome === 'awaiting_provider_review') {
-                $isUrgent = $ownedLevel === TriageLevelService::URGENT;
                 $waitOutcome = $ownedOutcome === 'waiting_for_slot' || $ownedAssigned <= 0;
 
                 return [
                     'ok' => true,
-                    'message' => $isUrgent
-                        ? 'Your symptoms may need prompt medical attention. Please book an urgent consultation with your assigned doctor.'
-                        : ($waitOutcome
-                            ? 'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
-                            : 'Your case is currently being reviewed by a healthcare provider. Please wait while your guidance is being prepared.'),
+                    'message' => $waitOutcome
+                        ? 'No suitable doctor schedule is currently available. You are in the waiting queue and will be notified by email when a consultation slot becomes available.'
+                        : 'Your case is currently being reviewed by a healthcare provider. Please wait while your guidance is being prepared.',
                     'payload' => [
-                        'urgent' => $isUrgent,
-                        'awaiting_provider_review' => !$isUrgent && !$waitOutcome,
+                        'urgent' => false,
+                        'awaiting_provider_review' => !$waitOutcome,
                         'waiting_for_slot' => $waitOutcome,
                         'triage_id' => (int) ($owned['id'] ?? 0),
                         'assigned_provider_id' => $ownedAssigned,
@@ -965,23 +974,44 @@ function patient_submit_symptoms_for_review(
         }
 
         if ($triageLevel === TriageLevelService::URGENT) {
-            $assignedId = triage_select_provider_for_level($pdo, $patientId, TriageLevelService::URGENT);
-            if ($assignedId > 0) {
-                triage_bind_assigned_provider($pdo, $triageId, $assignedId);
+            try {
+                $pdo->prepare("UPDATE triage_results SET assigned_provider_id = NULL, assigned_at = NULL, outcome = 'urgent_booking' WHERE id = ?")
+                    ->execute([$triageId]);
+            } catch (PDOException $e) {
+                try {
+                    $pdo->prepare('UPDATE triage_results SET assigned_provider_id = NULL, assigned_at = NULL WHERE id = ?')
+                        ->execute([$triageId]);
+                } catch (PDOException $e2) {
+                    // optional columns
+                }
             }
             $pdo->commit();
 
+            try {
+                require_once __DIR__ . '/patient_chief_complaints.php';
+                patient_chief_complaint_record(
+                    $pdo,
+                    $patientId,
+                    $persistComplaint !== '' ? $persistComplaint : $complaint,
+                    'urgent_triage',
+                    $triageId,
+                    null,
+                    null,
+                    null
+                );
+            } catch (Throwable $e) {
+                error_log('urgent triage chief complaint: ' . $e->getMessage());
+            }
+
             return [
                 'ok' => true,
-                'message' => $assignedId > 0
-                    ? 'Your symptoms may need prompt medical attention. Please book an urgent consultation with your assigned doctor.'
-                    : 'Your symptoms may need prompt medical attention. Please book an urgent consultation.',
-                'payload' => array_merge([
+                'message' => 'Your symptoms may need prompt medical attention. Please book an urgent consultation.',
+                'payload' => [
                     'urgent' => true,
                     'triage_id' => $triageId,
-                    'assigned_provider_id' => $assignedId,
+                    'assigned_provider_id' => 0,
                     'book_url' => (defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php',
-                ], patient_symptoms_review_assignment_meta($pdo, $assignedId)),
+                ],
             ];
         }
 
