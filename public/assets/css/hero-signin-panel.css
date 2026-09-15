@@ -126,21 +126,36 @@ body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinn
 }
 
 /* Lock landing-page scroll while Sign In is open (panel keeps its own overflow) */
+html.signin-scroll-locked,
 html:has(body.landing-page.signin-scroll-locked) {
-  overflow: hidden;
-  overscroll-behavior: none;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none;
 }
 
 body.landing-page.signin-scroll-locked {
-  overflow: hidden;
-  overscroll-behavior: none;
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: none;
+}
+
+/* Allow interaction + independent scroll inside Sign In / request drawer only */
+body.landing-page.signin-scroll-locked #signin-modal,
+body.landing-page.signin-scroll-locked #signin-modal *,
+body.landing-page.signin-scroll-locked #signin-req-drawer-panel,
+body.landing-page.signin-scroll-locked #signin-req-drawer-panel * {
+  touch-action: auto;
 }
 
 /* Hero-inline: constrain height so panel content scrolls instead of the page */
 body.landing-page.signin-scroll-locked .hero-signin-panel.is-open:not(.is-viewport-pinned),
 body.landing-page.signin-scroll-locked .hero-signin-panel.is-closing:not(.is-viewport-pinned) {
   max-height: calc(100dvh - var(--hero-signin-nav-offset) - (var(--hero-signin-gap) * 2) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 body.landing-page.signin-scroll-locked #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-wrap,
@@ -148,7 +163,7 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-open:not(.is-viewpo
   flex: 1 1 auto;
   min-height: 0;
   max-height: 100%;
-  overflow: hidden;
+  overflow: hidden !important;
   display: flex;
   flex-direction: column;
 }
@@ -158,8 +173,8 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-open:not(.is-viewpo
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -176,8 +191,8 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-viewport-pinned.is-
   flex: 1 1 auto;
   min-height: 0;
   max-height: 100%;
-  overflow: hidden;
-  display: flex;
+  overflow: hidden !important;
+  display: flex !important;
   flex-direction: column;
 }
 
@@ -185,8 +200,8 @@ body.landing-page.signin-scroll-locked #signin-modal.hero-signin-panel.is-viewpo
 body.landing-page.signin-scroll-locked .hero-signin-panel.is-viewport-pinned.is-open .signin-modal-inner {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -209,8 +224,8 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-viewport-pinned.is-
   overflow: visible;
 }
 
-body.landing-page.signin-active #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-wrap,
-body.landing-page.signin-active .hero-signin-panel.is-open:not(.is-viewport-pinned) .signin-modal-wrap {
+body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-wrap,
+body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is-open:not(.is-viewport-pinned) .signin-modal-wrap {
   flex: 0 1 auto;
   min-height: 0;
   max-height: none;
@@ -219,16 +234,16 @@ body.landing-page.signin-active .hero-signin-panel.is-open:not(.is-viewport-pinn
   flex-direction: column;
 }
 
-body.landing-page.signin-active #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-inner,
-body.landing-page.signin-active .hero-signin-panel.is-open:not(.is-viewport-pinned) .signin-modal-inner {
+body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-inner,
+body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is-open:not(.is-viewport-pinned) .signin-modal-inner {
   flex: 0 1 auto;
   min-height: 0;
   max-height: none;
   overflow: visible;
 }
 
-body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned .signin-modal-wrap,
-body.landing-page.signin-active .hero-signin-panel.is-viewport-pinned.is-open .signin-modal-wrap {
+body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel.is-viewport-pinned .signin-modal-wrap,
+body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is-viewport-pinned.is-open .signin-modal-wrap {
   flex: 0 1 auto;
   min-height: 0;
   max-height: none;
@@ -236,8 +251,8 @@ body.landing-page.signin-active .hero-signin-panel.is-viewport-pinned.is-open .s
   display: block;
 }
 
-body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned .signin-modal-inner,
-body.landing-page.signin-active .hero-signin-panel.is-viewport-pinned.is-open .signin-modal-inner {
+body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel.is-viewport-pinned .signin-modal-inner,
+body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is-viewport-pinned.is-open .signin-modal-inner {
   flex: 0 1 auto;
   min-height: 0;
   max-height: none;
@@ -830,14 +845,18 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 
 /* Tablet & mobile — viewport-anchored panel (avoids hero overflow clipping) */
 @media (max-width: 960px) {
+  html.signin-scroll-locked,
   html:has(body.landing-page.signin-scroll-locked) {
-    overflow: hidden;
-    overscroll-behavior: none;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none;
   }
 
   body.landing-page.signin-scroll-locked {
-    overflow: hidden;
-    overscroll-behavior: none;
+    position: fixed !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    touch-action: none;
   }
 
   body.landing-page.signin-active::before {
@@ -1208,14 +1227,18 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
 
 /* ── Mobile sign-in: below-header scrollable panel (no cut-off) ── */
 @media (max-width: 768px) {
+  html.signin-scroll-locked,
   html:has(body.landing-page.signin-scroll-locked) {
     overflow: hidden !important;
-    overscroll-behavior: none;
+    overscroll-behavior: none !important;
+    touch-action: none;
   }
 
   body.landing-page.signin-scroll-locked {
+    position: fixed !important;
     overflow: hidden !important;
-    overscroll-behavior: none;
+    overscroll-behavior: none !important;
+    touch-action: none;
   }
 
   body.landing-page.signin-active::before {

@@ -49,12 +49,17 @@ if (!isLandingPage) {
   let scrollLocked = false;
   let preventTouchMove = null;
   let preventWheel = null;
+  let preventKeyScroll = null;
+  let preventScrollGuard = null;
   let signinHomeParent = null;
   let scrollToHeroPending = false;
   let signinOpenedAt = 0;
   const CLOSE_MS = isInlineHero ? 420 : 300;
   const HERO_ZONE_BUFFER = 72;
   const SCROLL_CLOSE_GRACE_MS = 650;
+  const SCROLL_LOCK_KEYS = new Set([
+    'ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' ', 'Spacebar',
+  ]);
 
   function getNavHeight() {
     return document.getElementById('navbar')?.offsetHeight || 84;
@@ -139,8 +144,13 @@ if (!isLandingPage) {
   function isScrollableEl(el) {
     if (!el || !(el instanceof Element)) return false;
     if (el.scrollHeight <= el.clientHeight + 1) return false;
-    const oy = window.getComputedStyle(el).overflowY;
-    return oy === 'auto' || oy === 'scroll' || oy === 'overlay';
+    const style = window.getComputedStyle(el);
+    const oy = style.overflowY;
+    const ox = style.overflowX;
+    return (
+      oy === 'auto' || oy === 'scroll' || oy === 'overlay' ||
+      ox === 'auto' || ox === 'scroll' || ox === 'overlay'
+    );
   }
 
   function findLockedScrollTarget(target) {
@@ -164,12 +174,41 @@ if (!isLandingPage) {
     return null;
   }
 
+  function isEditableTarget(target) {
+    if (!target || !(target instanceof Element)) return false;
+    const tag = target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    return target.isContentEditable;
+  }
+
+  function clearScrollLockListeners() {
+    if (preventWheel) {
+      document.removeEventListener('wheel', preventWheel, { capture: true });
+      preventWheel = null;
+    }
+    if (preventTouchMove) {
+      document.removeEventListener('touchmove', preventTouchMove, { capture: true });
+      preventTouchMove = null;
+    }
+    if (preventKeyScroll) {
+      document.removeEventListener('keydown', preventKeyScroll, { capture: true });
+      preventKeyScroll = null;
+    }
+    if (preventScrollGuard) {
+      window.removeEventListener('scroll', preventScrollGuard, { capture: true });
+      preventScrollGuard = null;
+    }
+  }
+
   function lockScroll() {
     if (scrollLocked) return;
 
     scrollLocked = true;
-    savedScroll = window.scrollY || window.pageYOffset || 0;
+    savedScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+
+    document.documentElement.classList.add('signin-scroll-locked');
     document.body.classList.add('signin-scroll-locked');
+
     document.body.style.top = `-${savedScroll}px`;
     document.body.style.position = 'fixed';
     document.body.style.left = '0';
@@ -177,55 +216,78 @@ if (!isLandingPage) {
     document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.touchAction = 'none';
 
     preventWheel = (e) => {
       const scrollable = findLockedScrollTarget(e.target);
       if (scrollable) {
+        const delta = e.deltaY;
         const atTop = scrollable.scrollTop <= 0;
         const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
-        if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom)) {
+        if ((delta < 0 && !atTop) || (delta > 0 && !atBottom)) {
           return;
         }
       }
       e.preventDefault();
     };
-    document.addEventListener('wheel', preventWheel, { passive: false });
+    document.addEventListener('wheel', preventWheel, { passive: false, capture: true });
 
     preventTouchMove = (e) => {
       if (findLockedScrollTarget(e.target)) return;
-      if (overlay.contains(e.target)) return;
-      const drawerPanel = document.getElementById('signin-req-drawer-panel');
-      if (drawerPanel && drawerPanel.contains(e.target)) return;
       e.preventDefault();
     };
-    document.addEventListener('touchmove', preventTouchMove, { passive: false });
+    document.addEventListener('touchmove', preventTouchMove, { passive: false, capture: true });
+
+    preventKeyScroll = (e) => {
+      if (!SCROLL_LOCK_KEYS.has(e.key)) return;
+      if (isEditableTarget(e.target) && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'Spacebar')) {
+        return;
+      }
+      if (findLockedScrollTarget(e.target)) {
+        const scrollable = findLockedScrollTarget(e.target);
+        if (!scrollable) {
+          e.preventDefault();
+          return;
+        }
+        const atTop = scrollable.scrollTop <= 0;
+        const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+        const goingUp = e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Home';
+        const goingDown = e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === 'End' || e.key === ' ' || e.key === 'Spacebar';
+        if ((goingUp && !atTop) || (goingDown && !atBottom)) return;
+      }
+      e.preventDefault();
+    };
+    document.addEventListener('keydown', preventKeyScroll, { capture: true });
+
+    /* Safety net: keep window scroll pinned while body is fixed. */
+    preventScrollGuard = () => {
+      if (!scrollLocked) return;
+      if (window.scrollY !== 0) window.scrollTo(0, 0);
+    };
+    window.addEventListener('scroll', preventScrollGuard, { passive: true, capture: true });
   }
 
   function unlockScroll() {
-    if (preventWheel) {
-      document.removeEventListener('wheel', preventWheel);
-      preventWheel = null;
-    }
+    clearScrollLockListeners();
 
-    if (preventTouchMove) {
-      document.removeEventListener('touchmove', preventTouchMove);
-      preventTouchMove = null;
-    }
+    document.documentElement.classList.remove('signin-scroll-locked');
+    document.body.classList.remove('signin-scroll-locked');
 
-    if (!scrollLocked) {
-      document.body.classList.remove('signin-scroll-locked');
-      return;
-    }
+    if (!scrollLocked) return;
 
     scrollLocked = false;
-    document.body.classList.remove('signin-scroll-locked');
     document.body.style.position = '';
     document.body.style.top = '';
     document.body.style.left = '';
     document.body.style.right = '';
     document.body.style.width = '';
     document.body.style.overflow = '';
+    document.body.style.overscrollBehavior = '';
+    document.body.style.touchAction = '';
     document.documentElement.style.overflow = '';
+    document.documentElement.style.overscrollBehavior = '';
     window.scrollTo(0, savedScroll);
   }
 
@@ -308,26 +370,7 @@ if (!isLandingPage) {
   function openModal() {
     if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) return;
 
-    /* Phones: always a locked overlay modal, never a page section. */
-    if (isMobileSigninModal()) {
-      openModalPinned();
-      return;
-    }
-
-    if (isInlineHero) {
-      if (!isInHeroZone()) {
-        if (scrollToHeroPending) return;
-        scrollToHeroPending = true;
-        scrollToHeroTop(() => {
-          scrollToHeroPending = false;
-          if (!overlay.classList.contains('is-open')) openModalAtHero();
-        });
-        return;
-      }
-      openModalAtHero();
-      return;
-    }
-
+    /* Always use a fixed viewport overlay so the landing page can be fully scroll-locked. */
     openModalPinned();
   }
 
@@ -337,7 +380,7 @@ if (!isLandingPage) {
     overlay.classList.remove('is-open');
     overlay.classList.add('is-closing');
     if (heroSection && isInlineHero) heroSection.classList.remove('is-signin-open');
-    document.body.classList.remove('signin-active', 'signin-scroll-locked');
+    document.body.classList.remove('signin-active');
     setTriggerExpanded(false);
     unlockScroll();
     document.removeEventListener('keydown', trapFocus);
@@ -359,14 +402,7 @@ if (!isLandingPage) {
     clearTimeout(closeTimer);
     closeTimer = null;
 
-    if (preventWheel) {
-      document.removeEventListener('wheel', preventWheel);
-      preventWheel = null;
-    }
-    if (preventTouchMove) {
-      document.removeEventListener('touchmove', preventTouchMove);
-      preventTouchMove = null;
-    }
+    clearScrollLockListeners();
 
     document.documentElement.classList.add('signin-skip-motion');
 
@@ -375,13 +411,14 @@ if (!isLandingPage) {
     overlay.setAttribute('aria-hidden', 'true');
 
     if (heroSection && isInlineHero) heroSection.classList.remove('is-signin-open');
-    document.body.classList.remove('signin-active', 'signin-scroll-locked');
+    document.body.classList.remove('signin-active');
     setTriggerExpanded(false);
     document.removeEventListener('keydown', trapFocus);
 
     if (scrollLocked) {
       const y = savedScroll;
       scrollLocked = false;
+      document.documentElement.classList.remove('signin-scroll-locked');
       document.body.classList.remove('signin-scroll-locked');
       document.body.style.position = '';
       document.body.style.top = '';
@@ -389,9 +426,13 @@ if (!isLandingPage) {
       document.body.style.right = '';
       document.body.style.width = '';
       document.body.style.overflow = '';
+      document.body.style.overscrollBehavior = '';
+      document.body.style.touchAction = '';
       document.documentElement.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
       requestAnimationFrame(() => window.scrollTo(0, y));
     } else {
+      document.documentElement.classList.remove('signin-scroll-locked');
       document.body.classList.remove('signin-scroll-locked');
     }
 
