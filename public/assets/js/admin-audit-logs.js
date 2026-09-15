@@ -9,10 +9,85 @@
     window.MCStaffForm.enhanceModalSelectsIn(page);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAuditLogFilters);
-  } else {
+  function initAutoApplyFilters() {
+    var form = document.getElementById('auditLogsFilterForm')
+      || document.querySelector('.audit-logs-toolbar form[method="get"]');
+    if (!form || form.dataset.autoFilterBound === '1') return;
+    form.dataset.autoFilterBound = '1';
+
+    var searchInput = form.querySelector('input[name="q"]');
+    var actionSelect = form.querySelector('select[name="action"]');
+    var roleSelect = form.querySelector('select[name="role"]');
+    var limitSelect = form.querySelector('select[name="limit"]');
+    var debounceTimer = null;
+    var submitting = false;
+
+    function readState() {
+      return {
+        q: searchInput ? String(searchInput.value || '').trim() : '',
+        action: actionSelect ? String(actionSelect.value || 'all') : 'all',
+        role: roleSelect ? String(roleSelect.value || 'all') : 'all',
+        limit: limitSelect ? String(limitSelect.value || '100') : '100'
+      };
+    }
+
+    var lastApplied = readState();
+
+    function applyFilters() {
+      var next = readState();
+      if (
+        next.q === lastApplied.q
+        && next.action === lastApplied.action
+        && next.role === lastApplied.role
+        && next.limit === lastApplied.limit
+      ) {
+        return;
+      }
+      if (submitting) return;
+      submitting = true;
+      lastApplied = next;
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
+    }
+
+    function applyFiltersDebounced() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(applyFilters, 400);
+    }
+
+    function applyFiltersNow() {
+      clearTimeout(debounceTimer);
+      applyFilters();
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', applyFiltersDebounced);
+      searchInput.addEventListener('search', applyFiltersNow);
+    }
+
+    [actionSelect, roleSelect, limitSelect].forEach(function (sel) {
+      if (!sel) return;
+      sel.addEventListener('change', applyFiltersNow);
+    });
+
+    form.addEventListener('submit', function () {
+      clearTimeout(debounceTimer);
+      submitting = true;
+    });
+  }
+
+  function boot() {
     initAuditLogFilters();
+    initAutoApplyFilters();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
   }
 
   const modal = document.getElementById('auditLogDetailModal');
