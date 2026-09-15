@@ -197,7 +197,7 @@ final class SymptomKnowledgeBase
             }
             foreach ($symptom['_match_terms'] as $term) {
                 if ($term === '' || (strlen($term) < 5 && !str_contains($term, ' '))) {
-                    $allowShort = ['ubo', 'sipon', 'lagnat', 'hilo', 'tae', 'dugo', 'hapdi', 'kapoy', 'luya', 'ulon', 'mata', 'dughan'];
+        $allowShort = ['ubo', 'sipon', 'lagnat', 'hilo', 'tae', 'dugo', 'hapdi', 'kapoy', 'luya', 'ulon', 'mata', 'dughan', 'suka', 'ulo'];
                     if (!in_array($term, $allowShort, true)) {
                         continue;
                     }

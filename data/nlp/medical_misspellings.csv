@@ -11025,3 +11025,12 @@ makakain,makakaon,patient_typing,active
 "sakit mata","kasakit mata",expression_variant,active
 "sakit mata","mata ko masakit",expression_variant,active
 "sakit mata","sakit sa mata",expression_variant,active
+gasuka,"ga suka",symptom_root,active
+galupot,galopot,symptom_root,active
+galupot,galuput,symptom_root,active
+galupot,"ga lupot",symptom_root,active
+gulpi,gulpy,onset,active
+gulpi,golpi,onset,active
+kagapong,kagapon,duration,active
+"difficulty breathing","difficuty breathing",clinical,active
+"ga suka ko","ga sukako",protect_variant,active

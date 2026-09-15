@@ -540,3 +540,9 @@ DURX9038,"gahapon pa",1_to_2_days,1,hiligaynon,active
 DURX9039,"kahapon pa",1_to_2_days,1,filipino,active
 DURX9040,"since last week",chronic_weeks,7,english,active
 DURX9041,"since last month",chronic_months,30,english,active
+DURX9101,"nag gulpi",acute_hours,0,hiligaynon,active
+DURX9102,"nagsugod gulpi",acute_hours,0,hiligaynon,active
+DURX9103,"gulpi ang pagsugod",acute_hours,0,hiligaynon,active
+DURX9104,"grabe ang pagsugod",acute_hours,0,hiligaynon,active
+DURX9105,"bigla lang",acute_hours,0,filipino,active
+DURX9106,"all of a sudden",acute_hours,0,english,active

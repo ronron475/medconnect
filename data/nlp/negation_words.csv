@@ -521,3 +521,14 @@ NEGX8029,"wala iban","associated symptoms",hiligaynon,active
 NEGX8030,"wala sang iban","associated symptoms",hiligaynon,active
 NEGX8031,"no other symptoms","associated symptoms",english,active
 NEGX8032,"walang ibang sintomas","associated symptoms",filipino,active
+NEGX9001,"wala ko difficulty breathing","difficulty breathing",mixed,active
+NEGX9002,"wala ko budlay ginhawa","difficulty breathing",hiligaynon,active
+NEGX9003,"wala budlay ginhawa","difficulty breathing",hiligaynon,active
+NEGX9004,"indi ko budlay ginhawa","difficulty breathing",hiligaynon,active
+NEGX9005,"wala ko hirap huminga","difficulty breathing",filipino,active
+NEGX9006,"walang hirap huminga","difficulty breathing",filipino,active
+NEGX9007,"no difficulty breathing","difficulty breathing",english,active
+NEGX9008,"wala ga suka",vomiting,hiligaynon,active
+NEGX9009,"wala gasuka",vomiting,hiligaynon,active
+NEGX9010,"wala ko ga suka",vomiting,hiligaynon,active
+NEGX9011,"wala ko galupot",diarrhea,hiligaynon,active

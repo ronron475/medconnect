@@ -50,7 +50,6 @@ final class TriageSelfValidationEngine
         '/\b(difficulty breathing|cannot breathe|shortness of breath|unconscious|seizure|stroke|vomiting blood|coughing blood|severe bleeding|anaphylaxis|poisoning)\b/u',
         '/\b(arm (suddenly )?(became )?weak|cannot speak|slurred speech|one[- ]sided weakness|facial droop)\b/u',
         '/\b(budlay ginhawa|indi makaginhawa|indi ko kaginhawa|indi ko makaginhawa|may dugo sa suka|naguyam|nadulaan malay)\b/u',
-        '/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa|ginhawa)\b/u',
         '/\b(i can\'?t breathe|cannot breathe|unable to breathe)\b/u',
         '/\b(hirap huminga|hirap akong huminga|nagsusuka ng dugo|nawalan ng malay)\b/u',
         '/\b(swollen tongue|throat swelling|lip swelling|cannot swallow|airway)\b/u',
@@ -94,6 +93,16 @@ final class TriageSelfValidationEngine
         $factors = is_array($result['assessment_factors'] ?? null) ? $result['assessment_factors'] : [];
 
         $hay = strtolower($original . ' ' . $corrected . ' ' . $english);
+        if ($negated === [] && class_exists('NegationDetector')) {
+            try {
+                $negated = NegationDetector::detectNegatedConcepts($hay);
+            } catch (Throwable) {
+                $negated = [];
+            }
+        }
+        // Threat / winning-rule checks must ignore clearly negated findings
+        // (e.g. "wala ko difficulty breathing" must not force EMERGENCY).
+        $hayThreat = self::hayWithoutNegatedFindings($hay, $negated);
 
         $checks = [
             'language_detected'           => $language !== '' && $language !== 'unknown',
@@ -119,9 +128,9 @@ final class TriageSelfValidationEngine
         ];
 
         // Conflict resolution / consistency
-        $winningRule = self::selectWinningRule($hay, $redFlags, $symptoms, $risks, $factors, $duration, $temp, $pain);
-        $expectedByPriority = self::classificationFromWinningRule($winningRule, $display, $redFlags, $hay);
-        $consistent = self::isConsistent($hay, $display, $redFlags, $symptoms);
+        $winningRule = self::selectWinningRule($hayThreat, $redFlags, $symptoms, $risks, $factors, $duration, $temp, $pain);
+        $expectedByPriority = self::classificationFromWinningRule($winningRule, $display, $redFlags, $hayThreat);
+        $consistent = self::isConsistent($hayThreat, $display, $redFlags, $symptoms);
         $checks['classification_consistent'] = $consistent;
         $checks['highest_priority_selected'] = ($expectedByPriority === $display) || ($redFlags !== [] && $display === 'EMERGENCY');
 
@@ -134,7 +143,7 @@ final class TriageSelfValidationEngine
 
         $correctedClass = null;
         if (!$consistent || !$checks['highest_priority_selected']) {
-            $correctedClass = self::enforceConsistency($hay, $display, $redFlags, $symptoms, $expectedByPriority);
+            $correctedClass = self::enforceConsistency($hayThreat, $display, $redFlags, $symptoms, $expectedByPriority);
         }
 
         // Confidence gate message
@@ -228,8 +237,8 @@ final class TriageSelfValidationEngine
         if (preg_match('/\b(choking|airway|cannot breathe|indi makaginhawa|indi ko kaginhawa|indi ko makaginhawa)\b/u', $hay)) {
             return 'airway';
         }
-        if (preg_match('/\b(difficulty breathing|shortness of breath|budlay ginhawa|hirap huminga|unable to breathe)\b/u', $hay)
-            || preg_match('/\b(indi|dili|wala).{0,25}(kaginhawa|makaginhawa|ginhawa)\b/u', $hay)) {
+        // Positive breathing distress only — negated phrases are stripped upstream.
+        if (preg_match('/\b(difficulty breathing|shortness of breath|budlay ginhawa|hirap huminga|unable to breathe|indi makaginhawa|lisod magginhawa)\b/u', $hay)) {
             return 'breathing';
         }
         if (preg_match('/\b((chest pain|masakit dughan|masakit dibdib).{0,80}(breath|sweat|dizzy|radiat|collapse|severe|grabe))\b/u', $hay)) {
@@ -508,6 +517,65 @@ final class TriageSelfValidationEngine
         }
 
         return false;
+    }
+
+    /**
+     * Remove negated clinical findings from the haystack used for life-threat /
+     * winning-rule escalation so "wala ko difficulty breathing" cannot force EMERGENCY.
+     *
+     * @param list<string> $negated
+     */
+    private static function hayWithoutNegatedFindings(string $hay, array $negated): string
+    {
+        $clean = $hay;
+        $phrases = [
+            'difficulty breathing',
+            'shortness of breath',
+            'budlay ginhawa',
+            'budlay magginhawa',
+            'hirap huminga',
+            'cannot breathe',
+            'unable to breathe',
+            'chest pain',
+            'masakit dughan',
+            'masakit dibdib',
+            'severe bleeding',
+            'cough',
+            'ubo',
+            'vomiting',
+            'suka',
+            'fever',
+            'hilanat',
+            'lagnat',
+        ];
+        foreach ($negated as $neg) {
+            $neg = strtolower(trim((string) $neg));
+            if ($neg === '' || mb_strlen($neg) < 3) {
+                continue;
+            }
+            $phrases[] = $neg;
+        }
+        $phrases = array_values(array_unique($phrases));
+        usort($phrases, static fn (string $a, string $b): int => mb_strlen($b) <=> mb_strlen($a));
+
+        foreach ($phrases as $phrase) {
+            $quoted = preg_quote($phrase, '/');
+            // Drop the whole negated clause, including optional person markers.
+            $clean = preg_replace(
+                '/\b(no|not|without|denies|wala(?:\s+(?:ko|ako|akong|sang|man))?|walang|walay|indi(?:\s+ko)?|hindi(?:\s+ako)?)\s+' . $quoted . '\b/u',
+                ' ',
+                $clean
+            ) ?? $clean;
+            foreach ($negated as $neg) {
+                $neg = strtolower(trim((string) $neg));
+                if ($neg === '' || ($neg !== $phrase && !str_contains($phrase, $neg) && !str_contains($neg, $phrase))) {
+                    continue;
+                }
+                $clean = preg_replace('/\b' . $quoted . '\b/u', ' ', $clean) ?? $clean;
+            }
+        }
+
+        return trim(preg_replace('/\s+/u', ' ', $clean) ?? $clean);
     }
 
     private static function looksHiligaynon(string $hay): bool
