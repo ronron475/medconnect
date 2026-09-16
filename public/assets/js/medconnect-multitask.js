@@ -365,6 +365,24 @@
   function hydratePersistedTasks() {
     const bag = readJson(TASKS_KEY);
     if (!bag || !Array.isArray(bag.items)) return;
+
+    // Tasks are per browser tab session — never leak a doctor/patient
+    // consultation chip into Admin / Super Admin after role switch.
+    const role = portalRole();
+    if (bag.role && role && bag.role !== role) {
+      writeJson(TASKS_KEY, { role: role, items: [], at: Date.now() });
+      return;
+    }
+    if (role === 'admin' || role === 'superadmin') {
+      const kept = bag.items.filter(function (item) {
+        return item && item.type && item.type !== 'consultation' && item.type !== 'webrtc';
+      });
+      if (kept.length !== bag.items.length) {
+        writeJson(TASKS_KEY, { role: role, items: kept, at: Date.now() });
+      }
+      bag.items = kept;
+    }
+
     bag.items.forEach((item) => {
       if (!item || !item.id) return;
       if (item.type === 'webrtc') return; // restored by video shell
