@@ -701,8 +701,7 @@ html.landing-scroll {
   --carousel-gap: clamp(24px, 2.5vw, 32px);
   --carousel-card-width: clamp(260px, 28vw, 300px);
   --carousel-duration: 25s;
-  --carousel-inset: clamp(80px, 9vw, 120px);
-  --carousel-fade: clamp(24px, 3vw, 40px);
+  --carousel-inset: clamp(48px, 6vw, 96px);
   position: relative;
   width: 100vw;
   max-width: 100vw;
@@ -715,20 +714,8 @@ html.landing-scroll {
 .landing-page .landing-carousel__viewport {
   overflow: hidden;
   padding-inline: var(--carousel-inset);
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 var(--carousel-fade),
-    #000 calc(100% - var(--carousel-fade)),
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    transparent 0,
-    #000 var(--carousel-fade),
-    #000 calc(100% - var(--carousel-fade)),
-    transparent 100%
-  );
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .landing-page .landing-carousel__track {
@@ -820,8 +807,7 @@ html.landing-scroll {
   .landing-page .landing-carousel {
     --carousel-card-width: min(78vw, 280px);
     --carousel-duration: 28s;
-    --carousel-inset: clamp(20px, 5vw, 48px);
-    --carousel-fade: clamp(16px, 4vw, 28px);
+    --carousel-inset: clamp(16px, 4vw, 40px);
   }
 }
 
@@ -1091,7 +1077,8 @@ html.landing-scroll {
 
 .landing-page .services-section {
   margin-top: 0;
-  padding-top: clamp(64px, 9vw, 88px);
+  padding-top: var(--landing-section-pad-y, clamp(64px, 9vw, 88px));
+  padding-bottom: var(--landing-section-pad-y, clamp(64px, 9vw, 88px));
 }
 
 .landing-page .services-section::before,

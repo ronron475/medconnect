@@ -241,7 +241,18 @@
 }
 
 .landing-page .ann-slideshow__footer {
-  padding: 8px 0 12px;
+  padding: 20px 0 28px;
+}
+
+.landing-page .ann-slideshow__bottom-transition {
+  margin-top: clamp(-12px, -1.5vw, -4px);
+}
+
+.landing-page .hero--cinematic + .services-section,
+.landing-page .services-section + .services-section,
+.landing-page .services-section + .download-app-section,
+.landing-page .about-team-section + .download-app-section {
+  margin-top: 0;
 }
 
 .landing-page .ann-slideshow__panel--empty {
