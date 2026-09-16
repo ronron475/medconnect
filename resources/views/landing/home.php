@@ -820,7 +820,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 <script src="<?= $asset ?>/assets/js/landing-about-project-milestone.js?v=2" defer></script>
   <script src="<?= $asset ?>/assets/js/landing-scroll-animations.js?v=9" defer></script>
-<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=12" defer></script>
+<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=13" defer></script>
 <script src="<?= $asset ?>/assets/js/landing-fab.js" defer></script>
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>
@@ -828,7 +828,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/login-lockout.js?v=2"></script>
 <?php $sessionSyncJsVer = (int) @filemtime(ASSETS_PATH . '/js/session-sync.js'); ?>
 <script src="<?= $asset ?>/assets/js/session-sync.js?v=<?= $sessionSyncJsVer ?>"></script>
-<script src="<?= $asset ?>/assets/js/script.js?v=20260916d"></script>
+<script src="<?= $asset ?>/assets/js/script.js?v=20260916e"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 
 <script>
