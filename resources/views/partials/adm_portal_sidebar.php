@@ -144,7 +144,6 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
     <?php endforeach; endforeach; ?>
   </nav>
 
-  <?php if ($adm_sidebar_portal !== 'admin'): ?>
   <a href="<?= htmlspecialchars($config['profile_href']) ?>"
      class="adm-profile <?= $is_profile_page ? 'is-active' : '' ?>"
      title="<?= htmlspecialchars($config['profile_title']) ?>">
@@ -157,6 +156,7 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
     </div>
   </a>
 
+  <?php if ($adm_sidebar_portal !== 'admin'): ?>
   <button type="button" class="adm-logout" data-logout-trigger>
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
