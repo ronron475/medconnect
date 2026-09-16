@@ -657,6 +657,38 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__soap-summary {
   border-color: transparent !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-field,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-file-card .pt-assess-stack__row,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-rx-grid,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-signed--box {
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-field--chief,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-file-card .pt-assess-stack__row--final {
+  background: rgba(45, 212, 191, 0.08) !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-files__filter[aria-pressed="true"] {
+  background: #028090 !important;
+  border-color: #028090 !important;
+  color: #fff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-field__label,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-rx-grid__label,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-rx-notes__label {
+  color: #94a3b8 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pmh-soap-field__value,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-rx-grid__value,
+html[data-theme-resolved='dark'] body.patient-portal .pmh-rx-notes__text {
+  color: #e2e8f0 !important;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .pmh-visit__soap-details {
   background: #0D1E30 !important;
   border-color: #243347 !important;
