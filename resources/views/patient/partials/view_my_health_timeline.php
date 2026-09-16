@@ -1,9 +1,9 @@
 <?php
 /**
- * My Health — Care timeline tab.
- * Expects: $care_timeline (unified), $history (legacy fallback),
+ * My Health — Care timeline tab (vertical rail + paired cards).
+ * Expects: $care_timeline, $history (legacy fallback),
  *          $rx_by_consult, $notes_by_consult, $outcomes_by_consult,
- *          $care_tips_history (optional), $bhw_activity (optional)
+ *          $care_tips_history (optional), $pdo, $uid (optional for chief complaint)
  */
 $rx_by_consult = $rx_by_consult ?? [];
 $notes_by_consult = $notes_by_consult ?? [];
@@ -13,7 +13,6 @@ $care_tips_history = $care_tips_history ?? [];
 $bhwAttrClass = 'pmh-event-meta';
 
 if ($care_timeline === [] && !empty($history)) {
-    // Backward-compatible fallback if builder was not run.
     foreach ($history as $h) {
         $care_timeline[] = ['type' => 'consultation', 'sort_at' => '', 'data' => $h];
     }
@@ -40,11 +39,6 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
 }
 }
 
-/**
- * Whether a recorded field is the patient chief complaint.
- *
- * @param array<string, mixed> $field
- */
 if (!function_exists('pmh_is_chief_complaint_field')) {
 function pmh_is_chief_complaint_field(array $field): bool {
     $key = strtolower(trim((string) ($field['key'] ?? '')));
@@ -53,13 +47,6 @@ function pmh_is_chief_complaint_field(array $field): bool {
 }
 }
 
-/**
- * Split chief complaint from other recorded fields for clearer hierarchy.
- * Only the patient-reported chief complaint is treated as primary (highlighted).
- *
- * @param list<array<string, mixed>> $fields
- * @return array{0: ?array<string, mixed>, 1: list<array<string, mixed>>}
- */
 if (!function_exists('pmh_split_primary_field')) {
 function pmh_split_primary_field(array $fields): array {
     $primary = null;
@@ -76,10 +63,6 @@ function pmh_split_primary_field(array $fields): array {
 }
 
 if (!function_exists('pmh_when_parts')) {
-/**
- * @param array<string, mixed> $entry
- * @return list<string>
- */
 function pmh_when_parts(array $entry, bool $includeCategory = false): array {
     $parts = [];
     if ($includeCategory) {
@@ -95,6 +78,71 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         $parts[] = (string) $entry['time_label'];
     }
     return $parts;
+}
+}
+
+if (!function_exists('pmh_tl_format_when')) {
+/**
+ * @return array{date: string, time: string, combined: string}
+ */
+function pmh_tl_format_when(?string $sortAt, ?string $dateOnly = null, ?string $timeOnly = null): array {
+    $date = '—';
+    $time = '';
+    $ts = 0;
+    if ($sortAt !== null && trim($sortAt) !== '') {
+        $ts = strtotime(trim($sortAt)) ?: 0;
+    }
+    if ($ts <= 0 && $dateOnly) {
+        $combo = trim($dateOnly) . ($timeOnly ? ' ' . trim($timeOnly) : '');
+        $ts = strtotime($combo) ?: 0;
+    }
+    if ($ts > 0) {
+        $date = date('M j, Y', $ts);
+        $time = date('g:i A', $ts);
+    } elseif ($dateOnly) {
+        $parsed = strtotime((string) $dateOnly);
+        $date = $parsed ? date('M j, Y', $parsed) : (string) $dateOnly;
+        if ($timeOnly) {
+            $tp = explode(':', (string) $timeOnly);
+            $th = (int) ($tp[0] ?? 0);
+            $tm = str_pad((string) ($tp[1] ?? '00'), 2, '0', STR_PAD_LEFT);
+            $time = (($th + 11) % 12 + 1) . ':' . $tm . ' ' . ($th >= 12 ? 'PM' : 'AM');
+        }
+    }
+    $combined = $date . ($time !== '' ? ' · ' . $time : '');
+    return ['date' => $date, 'time' => $time, 'combined' => $combined];
+}
+}
+
+if (!function_exists('pmh_tl_vitals_from_fields')) {
+/**
+ * @param list<array<string, mixed>> $fields
+ * @return list<array{key: string, label: string, value: string}>
+ */
+function pmh_tl_vitals_from_fields(array $fields): array {
+    $want = [
+        'blood_pressure' => 'Blood Pressure',
+        'pulse_bpm' => 'Heart Rate',
+        'temperature_c' => 'Temperature',
+    ];
+    $byKey = [];
+    foreach ($fields as $field) {
+        $key = (string) ($field['key'] ?? '');
+        if ($key !== '' && isset($want[$key])) {
+            $byKey[$key] = [
+                'key' => $key,
+                'label' => $want[$key],
+                'value' => (string) ($field['value'] ?? ''),
+            ];
+        }
+    }
+    $out = [];
+    foreach ($want as $key => $_label) {
+        if (isset($byKey[$key]) && trim($byKey[$key]['value']) !== '') {
+            $out[] = $byKey[$key];
+        }
+    }
+    return $out;
 }
 }
 ?>
@@ -116,440 +164,391 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
     <?php endif; ?>
   </div>
 <?php else: ?>
-  <div class="pmh-feed pmh-feed--timeline grid w-full max-w-none grid-cols-1 items-start gap-3 md:grid-cols-2">
-    <?php foreach ($care_timeline as $item):
-      $type = (string) ($item['type'] ?? '');
-      $row = $item['data'] ?? [];
-      if (!is_array($row)) {
-          continue;
-      }
+  <div class="pmh-tl-wrap">
+    <header class="pmh-tl-head">
+      <div class="pmh-tl-head__brand">
+        <span class="pmh-tl-head__icon" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </span>
+        <div>
+          <h3 class="pmh-tl-head__title">Care Timeline</h3>
+          <p class="pmh-tl-head__desc">Consultations, assessments, and recorded health activity.</p>
+        </div>
+      </div>
+      <label class="pmh-tl-filter">
+        <span class="sr-only">Filter records</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <select id="pmh-tl-filter" data-pmh-tl-filter>
+          <option value="all">All Records</option>
+          <option value="consultation">Consultations</option>
+          <option value="assessment">Assessments</option>
+          <option value="health_entry">Health records</option>
+          <option value="referral">Referrals</option>
+        </select>
+      </label>
+    </header>
 
-      if ($type === 'consultation'):
-      $h = $row;
-      $cid = (int) ($h['id'] ?? 0);
-      $p_list = $rx_by_consult[$cid] ?? [];
-      $note = $notes_by_consult[$cid] ?? null;
-      $outcome = $outcomes_by_consult[$cid] ?? null;
-      $status = (string) ($h['status'] ?? 'pending');
-      $statusLabel = ucwords(str_replace('_', ' ', $status));
-      $isCompleted = strtolower($status) === 'completed';
-      $hasFinalizedNote = $isCompleted && !empty($note);
-      $chiefComplaint = trim((string) ($h['consult_type'] ?? ''));
-      if ($chiefComplaint === '' || strcasecmp($chiefComplaint, 'General consultation') === 0) {
-          $chiefComplaint = '';
-      }
-      $diagnosis = $hasFinalizedNote
-          ? pmh_note_text($note['diagnosis'] ?? '', pmh_note_text($h['diagnosis'] ?? '', 'No diagnosis recorded.'))
-          : ($isCompleted ? pmh_note_text($h['diagnosis'] ?? '', 'No diagnosis recorded.') : '');
-      $recommendation = $hasFinalizedNote
-          ? pmh_note_text($note['treatment_plan'] ?? '', pmh_note_text($note['plan'] ?? '', pmh_note_text($h['recommendation'] ?? '', 'No recommendations recorded.')))
-          : '';
-      $timeLabel = '';
-      if (!empty($h['consult_time'])) {
-          $tp = explode(':', (string) $h['consult_time']);
-          $th = (int) ($tp[0] ?? 0);
-          $tm = str_pad((string) ($tp[1] ?? '00'), 2, '0', STR_PAD_LEFT);
-          $timeLabel = (($th + 11) % 12 + 1) . ':' . $tm . ' ' . ($th >= 12 ? 'PM' : 'AM');
-      }
-      $providerName = trim(($h['first_name'] ?? '') . ' ' . ($h['last_name'] ?? ''));
-      $dateDisplay = !empty($h['consult_date']) ? date('M j, Y', strtotime($h['consult_date'])) : '—';
-      $isPendingDoc = in_array(strtolower($status), ['in_consultation', 'scheduled', 'pending'], true);
-    ?>
-    <article class="pmh-visit pmh-visit--consultation">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <p class="pmh-visit__eyebrow">Consultation</p>
-            <h3 class="pmh-visit__title">Dr. <?= htmlspecialchars($providerName) ?></h3>
-            <p class="pmh-visit__meta">
-              <time datetime="<?= htmlspecialchars($h['consult_date'] ?? '') ?>"><?= htmlspecialchars($dateDisplay) ?></time>
-              <?php if ($timeLabel): ?> · <?= htmlspecialchars($timeLabel) ?><?php endif; ?>
+    <ol class="pmh-tl" id="pmh-tl-list">
+      <?php foreach ($care_timeline as $item):
+        $type = (string) ($item['type'] ?? '');
+        $row = $item['data'] ?? [];
+        if (!is_array($row)) {
+            continue;
+        }
+        $sortAt = (string) ($item['sort_at'] ?? '');
+        $filterType = in_array($type, ['external_visit', 'home_visit', 'document'], true) ? 'health_entry' : $type;
+      ?>
+
+      <?php if ($type === 'consultation'):
+        $h = $row;
+        $cid = (int) ($h['id'] ?? 0);
+        $note = $notes_by_consult[$cid] ?? null;
+        $status = (string) ($h['status'] ?? 'pending');
+        $statusLabel = ucwords(str_replace('_', ' ', $status));
+        $isCompleted = strtolower($status) === 'completed';
+        $hasFinalizedNote = $isCompleted && !empty($note);
+        $providerName = trim(($h['first_name'] ?? '') . ' ' . ($h['last_name'] ?? ''));
+        $when = pmh_tl_format_when($sortAt, $h['consult_date'] ?? null, $h['consult_time'] ?? null);
+        $specialty = trim((string) ($h['consult_type'] ?? ''));
+        if ($specialty === '' || strcasecmp($specialty, 'General Consultation') === 0) {
+            $specialty = 'General Practitioner';
+        }
+        $chiefComplaint = '';
+        if (isset($pdo) && isset($uid) && function_exists('patient_session_chief_complaint')) {
+            $chiefComplaint = patient_session_chief_complaint($pdo, (int) $uid, $h);
+        }
+        if ($chiefComplaint === '') {
+            $ct = trim((string) ($h['consult_type'] ?? ''));
+            if ($ct !== '' && strcasecmp($ct, 'General Consultation') !== 0 && strcasecmp($ct, 'General Practitioner') !== 0) {
+                $chiefComplaint = $ct;
+            }
+        }
+      ?>
+      <li class="pmh-tl__item pmh-tl__item--consultation" data-tl-type="consultation">
+        <div class="pmh-tl__when">
+          <span class="pmh-tl__date"><?= htmlspecialchars($when['date']) ?></span>
+          <?php if ($when['time'] !== ''): ?><span class="pmh-tl__time"><?= htmlspecialchars($when['time']) ?></span><?php endif; ?>
+        </div>
+        <div class="pmh-tl__rail" aria-hidden="true">
+          <span class="pmh-tl__node">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.8 2.3A.25.25 0 0 0 5 2.25h1.5a.25.25 0 0 1 .25.25v1.5a.25.25 0 0 0 .25.25h1.5a.25.25 0 0 1 .25.25V6"/><path d="M20 15.5V7a2 2 0 0 0-2-2h-3"/><path d="M14 3v4h4"/><circle cx="10" cy="16" r="6"/><path d="M10 13v6"/><path d="M7 16h6"/></svg>
+          </span>
+        </div>
+        <div class="pmh-tl__cards">
+          <article class="pmh-tl-card pmh-tl-card--summary">
+            <div class="pmh-tl-card__top">
+              <span class="pmh-tl-badge pmh-tl-badge--consult">Consultation</span>
+              <span class="pmh-status <?= pmh_status_class($status) ?>"><?= htmlspecialchars($statusLabel) ?></span>
+            </div>
+            <h4 class="pmh-tl-card__title">Dr. <?= htmlspecialchars($providerName !== '' ? $providerName : 'Provider') ?></h4>
+            <p class="pmh-tl-card__sub"><?= htmlspecialchars($specialty) ?></p>
+            <p class="pmh-tl-card__meta">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              <?= htmlspecialchars($when['combined']) ?>
             </p>
-          </div>
-          <span class="pmh-status <?= pmh_status_class($status) ?>" data-consult-status="<?= (int) $cid ?>"><?= htmlspecialchars($statusLabel) ?></span>
-        </header>
-
-        <?php if (!empty($outcome['final_case_level'])): ?>
-        <?php
-          if (!function_exists('mc_render_consultation_outcome_stack')) {
-              require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
-          }
-          mc_render_consultation_outcome_stack($outcome, $cid);
-        ?>
-        <?php endif; ?>
-
-        <?php if ($hasFinalizedNote): ?>
-        <div class="pmh-visit__main">
-          <?php if ($chiefComplaint !== ''): ?>
-          <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief Complaint</h4>
-            <p class="pmh-visit__highlight-value"><?= htmlspecialchars($chiefComplaint) ?></p>
-          </section>
-          <?php endif; ?>
-
-          <div class="pmh-visit__grid">
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Subjective</h4>
-              <p><?= nl2br(htmlspecialchars(pmh_note_text($note['subjective'] ?? '', '—'))) ?></p>
-            </section>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Objective</h4>
-              <p><?= nl2br(htmlspecialchars(pmh_note_text($note['objective'] ?? '', '—'))) ?></p>
-            </section>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Assessment</h4>
-              <p><?= nl2br(htmlspecialchars(pmh_note_text($note['assessment'] ?? '', '—'))) ?></p>
-            </section>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Plan</h4>
-              <p><?= nl2br(htmlspecialchars(pmh_note_text($note['plan'] ?? '', $recommendation))) ?></p>
-            </section>
-            <?php
-              $signedBy = function_exists('clinical_note_signed_by_label')
-                ? clinical_note_signed_by_label($note, $providerName)
-                : '';
-              $signedAt = function_exists('clinical_note_signed_at_label')
-                ? clinical_note_signed_at_label($note)
-                : '';
-            ?>
-            <?php if ($signedBy !== '' || $signedAt !== ''): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <p class="pmh-soap-signed">
-                <?php if ($signedBy !== ''): ?><?= htmlspecialchars($signedBy) ?><?php endif; ?>
-                <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
-              </p>
-            </section>
-            <?php endif; ?>
-            <?php if (pmh_note_text($note['diagnosis'] ?? '', '') !== '' || $diagnosis !== 'No diagnosis recorded.'): ?>
-            <section class="pmh-visit__block">
-              <h4 class="pmh-visit__label">Diagnosis</h4>
-              <p><?= htmlspecialchars($diagnosis) ?></p>
-            </section>
-            <?php endif; ?>
-          </div>
-        </div>
-
-        <?php if (!empty($p_list)): ?>
-        <section class="pmh-visit__rx">
-          <h4 class="pmh-visit__label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><line x1="8.5" y1="8.5" x2="15.5" y2="15.5"/></svg>
-            Prescribed medications
-          </h4>
-          <ul class="pmh-rx-list">
-            <?php foreach ($p_list as $med): ?>
-            <li>
-              <strong><?= htmlspecialchars($med['medication_name']) ?></strong>
-              <span><?= htmlspecialchars($med['dosage']) ?> · <?= htmlspecialchars($med['frequency']) ?></span>
-            </li>
-            <?php endforeach; ?>
-          </ul>
-        </section>
-        <?php endif; ?>
-
-        <p class="pmh-visit__actions">
-          <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files#health-file-<?= (int) $cid ?>" class="pmh-btn pmh-btn--primary pmh-btn--sm">View Health File</a>
-          <a href="<?= ASSET_BASE ?>/views/patient/consultation_detail.php?id=<?= (int) $cid ?>" class="pmh-btn pmh-btn--outline pmh-btn--sm">Consultation details</a>
-        </p>
-        <?php else: ?>
-        <div class="pmh-visit__main">
-          <?php if ($chiefComplaint !== ''): ?>
-          <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief Complaint</h4>
-            <p class="pmh-visit__highlight-value"><?= htmlspecialchars($chiefComplaint) ?></p>
-          </section>
-          <?php endif; ?>
-
-          <?php if ($isPendingDoc): ?>
-          <section class="pmh-visit__status-block">
-            <h4 class="pmh-visit__label">Consultation status</h4>
-            <p>Your consultation is still being documented by your provider.</p>
-          </section>
-          <?php elseif ($isCompleted): ?>
-          <section class="pmh-visit__status-block">
-            <h4 class="pmh-visit__label">Consultation status</h4>
-            <p>Your consultation is complete. Your medical record will appear here once your provider finalizes documentation.</p>
-          </section>
-          <?php endif; ?>
-        </div>
-        <?php endif; ?>
-      </div>
-    </article>
-
-    <?php elseif ($type === 'health_entry'):
-      $entry = $row;
-      $who = trim((string) ($entry['added_by'] ?? ''));
-      $roleKey = strtolower((string) ($entry['role'] ?? 'patient'));
-      $eventTitle = $roleKey === 'bhw'
-          ? ($who !== '' && $who !== 'Unknown' ? $who : 'Barangay Health Worker')
-          : 'Patient health record';
-      $statusLabel = trim((string) ($entry['status_label'] ?? 'On record'));
-      $fields = $entry['fields'] ?? [];
-      if (!is_array($fields)) {
-          $fields = [];
-      }
-      [$primaryField, $otherFields] = pmh_split_primary_field($fields);
-      $whenParts = pmh_when_parts($entry, true);
-    ?>
-    <article class="pmh-visit pmh-visit--record">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <?php if ($roleKey === 'bhw'): ?>
-            <p class="pmh-visit__eyebrow">Patient health record</p>
-            <h3 class="pmh-visit__title"><?= htmlspecialchars($eventTitle) ?></h3>
+          </article>
+          <article class="pmh-tl-card pmh-tl-card--detail">
+            <div class="pmh-tl-card__top">
+              <h4 class="pmh-tl-card__heading">Patient health record</h4>
+              <span class="pmh-status pmh-status--default"><?= $hasFinalizedNote ? 'On record' : ($isCompleted ? 'Completed' : 'Pending') ?></span>
+            </div>
+            <p class="pmh-tl-card__sub">Health measurements · <?= htmlspecialchars($when['combined']) ?></p>
+            <?php if ($chiefComplaint !== ''): ?>
+            <div class="pmh-tl-highlight">
+              <span class="pmh-tl-highlight__icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+              </span>
+              <div>
+                <span class="pmh-tl-highlight__label">Chief Complaint</span>
+                <p class="pmh-tl-highlight__value"><?= htmlspecialchars($chiefComplaint) ?></p>
+              </div>
+            </div>
+            <?php elseif ($hasFinalizedNote): ?>
+            <p class="pmh-tl-card__copy">Finalized consultation documentation is available in Health Files.</p>
+            <?php elseif ($isCompleted): ?>
+            <p class="pmh-tl-card__copy">Your consultation is complete. Documentation will appear once your provider finalizes the record.</p>
             <?php else: ?>
-            <h3 class="pmh-visit__title pmh-visit__title--event">Patient health record</h3>
+            <p class="pmh-tl-card__copy">Your consultation is still being documented by your provider.</p>
             <?php endif; ?>
-            <?php if ($whenParts !== []): ?>
-            <p class="pmh-visit__meta"><?= htmlspecialchars(implode(' · ', $whenParts)) ?></p>
+            <?php if ($cid > 0): ?>
+            <p class="pmh-tl-card__actions">
+              <?php if ($hasFinalizedNote): ?>
+              <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files#health-file-<?= (int) $cid ?>" class="pmh-tl-link">View Health File →</a>
+              <?php endif; ?>
+              <a href="<?= ASSET_BASE ?>/views/patient/consultation_detail.php?id=<?= (int) $cid ?>" class="pmh-tl-link">Consultation details →</a>
+            </p>
             <?php endif; ?>
-          </div>
-          <span class="pmh-status pmh-status--default"><?= htmlspecialchars($statusLabel) ?></span>
-        </header>
-
-        <div class="pmh-visit__main">
-          <?php if ($primaryField !== null): ?>
-          <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief Complaint</h4>
-            <p class="pmh-visit__highlight-value"><?= htmlspecialchars((string) ($primaryField['value'] ?? '')) ?></p>
-          </section>
-          <?php endif; ?>
-
-          <?php if ($otherFields !== []): ?>
-          <div class="pmh-visit__grid">
-            <?php foreach ($otherFields as $field): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></h4>
-              <p><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></p>
-            </section>
-            <?php endforeach; ?>
-          </div>
-          <?php endif; ?>
+          </article>
         </div>
+      </li>
 
-        <section class="pmh-visit__details">
-          <h4 class="pmh-visit__label">Record details</h4>
-          <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
-        </section>
-      </div>
-    </article>
-
-    <?php elseif ($type === 'external_visit'):
-      $entry = $row;
-      $who = trim((string) ($entry['added_by'] ?? ''));
-      $title = $who !== '' && $who !== 'Unknown' ? $who : 'External healthcare visit';
-      $fields = $entry['fields'] ?? [];
-      if (!is_array($fields)) {
-          $fields = [];
-      }
-      [$primaryField, $otherFields] = pmh_split_primary_field($fields);
-      $whenParts = pmh_when_parts($entry);
-    ?>
-    <article class="pmh-visit pmh-visit--record">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <p class="pmh-visit__eyebrow">External healthcare visit</p>
-            <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
-            <?php if ($whenParts !== []): ?>
-            <p class="pmh-visit__meta"><?= htmlspecialchars(implode(' · ', $whenParts)) ?></p>
-            <?php endif; ?>
-          </div>
-          <span class="pmh-status pmh-status--default">On record</span>
-        </header>
-
-        <div class="pmh-visit__main">
-          <?php if ($primaryField !== null): ?>
-          <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief Complaint</h4>
-            <p class="pmh-visit__highlight-value"><?= htmlspecialchars((string) ($primaryField['value'] ?? '')) ?></p>
-          </section>
-          <?php endif; ?>
-          <?php if ($otherFields !== []): ?>
-          <div class="pmh-visit__grid">
-            <?php foreach ($otherFields as $field): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></h4>
-              <p><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></p>
-            </section>
-            <?php endforeach; ?>
-          </div>
-          <?php endif; ?>
+      <?php elseif ($type === 'assessment'):
+        $assess = $row;
+        $complaint = trim((string) ($assess['chief_complaint'] ?? ''));
+        $when = pmh_tl_format_when($sortAt, null, null);
+        if ($when['date'] === '—' && !empty($assess['assessed_at'])) {
+            $when = pmh_tl_format_when((string) $assess['assessed_at']);
+        }
+      ?>
+      <li class="pmh-tl__item pmh-tl__item--assessment" data-tl-type="assessment">
+        <div class="pmh-tl__when">
+          <span class="pmh-tl__date"><?= htmlspecialchars($when['date']) ?></span>
+          <?php if ($when['time'] !== ''): ?><span class="pmh-tl__time"><?= htmlspecialchars($when['time']) ?></span><?php endif; ?>
         </div>
-
-        <section class="pmh-visit__details">
-          <h4 class="pmh-visit__label">Record details</h4>
-          <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
-        </section>
-      </div>
-    </article>
-
-    <?php elseif ($type === 'home_visit'):
-      $entry = $row;
-      $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
-      $title = $who !== '' && $who !== 'Unknown' ? $who : 'Barangay Health Worker';
-      $whenParts = [];
-      if (!empty($entry['type_label'])) {
-          $whenParts[] = (string) $entry['type_label'];
-      }
-      if (!empty($entry['date_label']) && $entry['date_label'] !== '—') {
-          $whenParts[] = (string) $entry['date_label'];
-      }
-    ?>
-    <article class="pmh-visit pmh-visit--record">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <p class="pmh-visit__eyebrow">Home visit</p>
-            <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
-            <?php if ($whenParts !== []): ?>
-            <p class="pmh-visit__meta"><?= htmlspecialchars(implode(' · ', $whenParts)) ?></p>
-            <?php endif; ?>
-          </div>
-          <span class="pmh-status pmh-status--default"><?= htmlspecialchars((string) ($entry['status'] ?? 'Logged')) ?></span>
-        </header>
-        <?php if (!empty($entry['notes'])): ?>
-        <div class="pmh-visit__main">
-          <section class="pmh-visit__block pmh-visit__block--full">
-            <h4 class="pmh-visit__label">Notes</h4>
-            <p><?= htmlspecialchars((string) $entry['notes']) ?></p>
-          </section>
+        <div class="pmh-tl__rail" aria-hidden="true">
+          <span class="pmh-tl__node">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h6"/></svg>
+          </span>
         </div>
-        <?php endif; ?>
-        <section class="pmh-visit__details">
-          <h4 class="pmh-visit__label">Record details</h4>
-          <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
-        </section>
-      </div>
-    </article>
-
-    <?php elseif ($type === 'document'):
-      $entry = $row;
-      $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
-      $title = trim((string) ($entry['title'] ?? 'Document'));
-      $whenParts = [];
-      if (!empty($entry['type'])) {
-          $whenParts[] = (string) $entry['type'];
-      }
-      if (!empty($entry['date_label']) && $entry['date_label'] !== '—') {
-          $whenParts[] = (string) $entry['date_label'];
-      }
-    ?>
-    <article class="pmh-visit pmh-visit--record">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <p class="pmh-visit__eyebrow">Document</p>
-            <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
-            <?php if ($whenParts !== []): ?>
-            <p class="pmh-visit__meta"><?= htmlspecialchars(implode(' · ', $whenParts)) ?></p>
+        <div class="pmh-tl__cards">
+          <article class="pmh-tl-card pmh-tl-card--summary">
+            <div class="pmh-tl-card__top">
+              <span class="pmh-tl-badge pmh-tl-badge--assess">Triage Assessment</span>
+              <span class="pmh-status pmh-status--scheduled">Assessment</span>
+            </div>
+            <h4 class="pmh-tl-card__title">Preliminary assessment</h4>
+            <?php if ($complaint !== ''): ?>
+            <p class="pmh-tl-card__sub"><?= htmlspecialchars($complaint) ?></p>
             <?php endif; ?>
-          </div>
-          <span class="pmh-status pmh-status--default">On file</span>
-        </header>
-        <?php if (!empty($entry['description'])): ?>
-        <div class="pmh-visit__main">
-          <section class="pmh-visit__status-block">
-            <p><?= htmlspecialchars((string) $entry['description']) ?></p>
-          </section>
+            <p class="pmh-tl-card__meta">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              <?= htmlspecialchars($when['combined']) ?>
+            </p>
+          </article>
+          <article class="pmh-tl-card pmh-tl-card--detail">
+            <div class="pmh-tl-card__top">
+              <h4 class="pmh-tl-card__heading">Triage Assessment</h4>
+            </div>
+            <p class="pmh-tl-card__copy">Preliminary assessment details are in your Health Summary overview.</p>
+            <p class="pmh-tl-card__actions">
+              <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-tl-link pmh-tl-link--accent">Open Health Summary →</a>
+            </p>
+          </article>
         </div>
-        <?php endif; ?>
-        <section class="pmh-visit__details">
-          <h4 class="pmh-visit__label">Record details</h4>
-          <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
-        </section>
-      </div>
-    </article>
+      </li>
 
-    <?php elseif ($type === 'referral'):
-      $entry = $row;
-      $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
-      $title = trim((string) ($entry['type'] ?? 'Referral'));
-    ?>
-    <article class="pmh-visit pmh-visit--record pmh-visit--referral">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <p class="pmh-visit__eyebrow">Referral</p>
-            <h3 class="pmh-visit__title"><?= htmlspecialchars($title !== '' ? $title : 'Referral') ?></h3>
-            <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
-            <p class="pmh-visit__meta"><?= htmlspecialchars((string) $entry['date_label']) ?></p>
+      <?php elseif ($type === 'health_entry'):
+        $entry = $row;
+        $who = trim((string) ($entry['added_by'] ?? ''));
+        $roleKey = strtolower((string) ($entry['role'] ?? 'patient'));
+        $eventTitle = $roleKey === 'bhw'
+            ? ($who !== '' && $who !== 'Unknown' ? $who : 'Barangay Health Worker')
+            : 'Health measurements';
+        $statusLabel = trim((string) ($entry['status_label'] ?? 'On record'));
+        $fields = is_array($entry['fields'] ?? null) ? $entry['fields'] : [];
+        [$primaryField, $otherFields] = pmh_split_primary_field($fields);
+        $vitals = pmh_tl_vitals_from_fields($fields);
+        $when = pmh_tl_format_when($sortAt);
+        if ($when['date'] === '—') {
+            $whenParts = pmh_when_parts($entry);
+            $when['combined'] = $whenParts !== [] ? implode(' · ', $whenParts) : '—';
+            $when['date'] = (string) ($entry['date_label'] ?? '—');
+            $when['time'] = (string) ($entry['time_label'] ?? '');
+        }
+      ?>
+      <li class="pmh-tl__item pmh-tl__item--record" data-tl-type="health_entry">
+        <div class="pmh-tl__when">
+          <span class="pmh-tl__date"><?= htmlspecialchars($when['date']) ?></span>
+          <?php if ($when['time'] !== ''): ?><span class="pmh-tl__time"><?= htmlspecialchars($when['time']) ?></span><?php endif; ?>
+        </div>
+        <div class="pmh-tl__rail" aria-hidden="true">
+          <span class="pmh-tl__node">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </span>
+        </div>
+        <div class="pmh-tl__cards">
+          <article class="pmh-tl-card pmh-tl-card--summary">
+            <div class="pmh-tl-card__top">
+              <span class="pmh-tl-badge pmh-tl-badge--record">Patient Health Record</span>
+              <span class="pmh-status pmh-status--default"><?= htmlspecialchars($statusLabel) ?></span>
+            </div>
+            <h4 class="pmh-tl-card__title"><?= htmlspecialchars($eventTitle) ?></h4>
+            <p class="pmh-tl-card__meta">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              <?= htmlspecialchars($when['combined']) ?>
+            </p>
+          </article>
+          <article class="pmh-tl-card pmh-tl-card--detail">
+            <div class="pmh-tl-card__top">
+              <h4 class="pmh-tl-card__heading">Patient health record</h4>
+              <span class="pmh-status pmh-status--default">On record</span>
+            </div>
+            <p class="pmh-tl-card__copy">Health measurements recorded by your provider.</p>
+            <?php if ($primaryField !== null): ?>
+            <div class="pmh-tl-highlight">
+              <span class="pmh-tl-highlight__icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+              </span>
+              <div>
+                <span class="pmh-tl-highlight__label">Chief Complaint</span>
+                <p class="pmh-tl-highlight__value"><?= htmlspecialchars((string) ($primaryField['value'] ?? '')) ?></p>
+              </div>
+            </div>
             <?php endif; ?>
-          </div>
-          <span class="pmh-status pmh-status--default">Referral</span>
-        </header>
-        <div class="pmh-visit__main">
-          <div class="pmh-visit__grid">
+            <?php if ($vitals !== []): ?>
+            <div class="pmh-tl-vitals" role="list">
+              <?php foreach ($vitals as $vital): ?>
+              <div class="pmh-tl-vital" role="listitem" data-vital="<?= htmlspecialchars($vital['key']) ?>">
+                <span class="pmh-tl-vital__icon" aria-hidden="true">
+                  <?php if ($vital['key'] === 'blood_pressure'): ?>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                  <?php elseif ($vital['key'] === 'pulse_bpm'): ?>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                  <?php else: ?>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                  <?php endif; ?>
+                </span>
+                <?php
+                  $vitalVal = (string) $vital['value'];
+                  if ($vital['key'] === 'blood_pressure' && $vitalVal !== '' && stripos($vitalVal, 'mmhg') === false) {
+                      $vitalVal .= ' mmHg';
+                  }
+                ?>
+                <span class="pmh-tl-vital__text"><strong><?= htmlspecialchars($vital['label']) ?>:</strong> <?= htmlspecialchars($vitalVal) ?></span>
+              </div>
+              <?php endforeach; ?>
+            </div>
+            <?php elseif ($otherFields !== []): ?>
+            <div class="pmh-tl-field-list">
+              <?php foreach (array_slice($otherFields, 0, 4) as $field): ?>
+              <div class="pmh-tl-field">
+                <span class="pmh-tl-field__label"><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></span>
+                <span class="pmh-tl-field__value"><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></span>
+              </div>
+              <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+          </article>
+        </div>
+      </li>
+
+      <?php elseif ($type === 'referral'):
+        $entry = $row;
+        $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
+        $title = trim((string) ($entry['type'] ?? 'Referral'));
+        $when = pmh_tl_format_when($sortAt);
+        if ($when['date'] === '—' && !empty($entry['date_label'])) {
+            $when['date'] = (string) $entry['date_label'];
+            $when['combined'] = $when['date'];
+        }
+      ?>
+      <li class="pmh-tl__item pmh-tl__item--referral" data-tl-type="referral">
+        <div class="pmh-tl__when">
+          <span class="pmh-tl__date"><?= htmlspecialchars($when['date']) ?></span>
+          <?php if ($when['time'] !== ''): ?><span class="pmh-tl__time"><?= htmlspecialchars($when['time']) ?></span><?php endif; ?>
+        </div>
+        <div class="pmh-tl__rail" aria-hidden="true">
+          <span class="pmh-tl__node">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="m10 14 11-11"/></svg>
+          </span>
+        </div>
+        <div class="pmh-tl__cards">
+          <article class="pmh-tl-card pmh-tl-card--summary">
+            <div class="pmh-tl-card__top">
+              <span class="pmh-tl-badge pmh-tl-badge--referral">Referral</span>
+              <span class="pmh-status pmh-status--default">Referral</span>
+            </div>
+            <h4 class="pmh-tl-card__title"><?= htmlspecialchars($title !== '' ? $title : 'Referral') ?></h4>
+            <?php if ($who !== ''): ?><p class="pmh-tl-card__sub">Issued by <?= htmlspecialchars($who) ?></p><?php endif; ?>
+            <p class="pmh-tl-card__meta"><?= htmlspecialchars($when['combined']) ?></p>
+          </article>
+          <article class="pmh-tl-card pmh-tl-card--detail">
+            <div class="pmh-tl-card__top">
+              <h4 class="pmh-tl-card__heading">Referral details</h4>
+            </div>
             <?php if (!empty($entry['facility'])): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Facility / service</h4>
-              <p><?= htmlspecialchars((string) $entry['facility']) ?></p>
-            </section>
+            <p class="pmh-tl-card__copy"><strong>Facility:</strong> <?= htmlspecialchars((string) $entry['facility']) ?></p>
             <?php endif; ?>
             <?php if (!empty($entry['reason'])): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Reason for referral</h4>
-              <p><?= htmlspecialchars((string) $entry['reason']) ?></p>
-            </section>
+            <p class="pmh-tl-card__copy"><strong>Reason:</strong> <?= htmlspecialchars((string) $entry['reason']) ?></p>
             <?php endif; ?>
             <?php if (!empty($entry['notes'])): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Doctor’s notes</h4>
-              <p><?= htmlspecialchars((string) $entry['notes']) ?></p>
-            </section>
+            <p class="pmh-tl-card__copy"><?= htmlspecialchars((string) $entry['notes']) ?></p>
             <?php endif; ?>
-            <?php if ($who !== ''): ?>
-            <section class="pmh-visit__block pmh-visit__block--full">
-              <h4 class="pmh-visit__label">Issued by</h4>
-              <p><?= htmlspecialchars($who) ?></p>
-            </section>
-            <?php endif; ?>
-          </div>
+          </article>
         </div>
-        <section class="pmh-visit__details">
-          <h4 class="pmh-visit__label">Record details</h4>
-          <?php require VIEWS_PATH . '/partials/bhw_activity_attribution.php'; ?>
-        </section>
-      </div>
-    </article>
+      </li>
 
-    <?php elseif ($type === 'assessment'):
-      $assess = $row;
-      $complaint = trim((string) ($assess['chief_complaint'] ?? ''));
-      $when = !empty($assess['assessed_at']) ? date('M j, Y · g:i A', strtotime((string) $assess['assessed_at'])) : '—';
-    ?>
-    <article class="pmh-visit pmh-visit--record pmh-visit--assessment">
-      <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot pmh-visit__dot--assess"></span></div>
-      <div class="pmh-visit__body">
-        <header class="pmh-visit__head">
-          <div class="pmh-visit__identity">
-            <p class="pmh-visit__eyebrow">Triage assessment</p>
-            <h3 class="pmh-visit__title">Preliminary assessment</h3>
-            <p class="pmh-visit__meta"><?= htmlspecialchars($when) ?></p>
-          </div>
-          <span class="pmh-status pmh-status--scheduled">Assessment</span>
-        </header>
-        <?php if ($complaint !== ''): ?>
-        <div class="pmh-visit__main">
-          <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief Complaint</h4>
-            <p class="pmh-visit__highlight-value"><?= htmlspecialchars($complaint) ?></p>
-          </section>
+      <?php elseif (in_array($type, ['external_visit', 'home_visit', 'document'], true)):
+        $entry = $row;
+        $when = pmh_tl_format_when($sortAt);
+        if ($type === 'external_visit') {
+            $who = trim((string) ($entry['added_by'] ?? ''));
+            $title = $who !== '' && $who !== 'Unknown' ? $who : 'External healthcare visit';
+            $eyebrow = 'External Visit';
+            $fields = is_array($entry['fields'] ?? null) ? $entry['fields'] : [];
+            [$primaryField, $otherFields] = pmh_split_primary_field($fields);
+        } elseif ($type === 'home_visit') {
+            $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
+            $title = $who !== '' && $who !== 'Unknown' ? $who : 'Barangay Health Worker';
+            $eyebrow = 'Home Visit';
+            $primaryField = null;
+            $otherFields = !empty($entry['notes']) ? [['label' => 'Notes', 'value' => $entry['notes']]] : [];
+        } else {
+            $title = trim((string) ($entry['title'] ?? 'Document'));
+            $eyebrow = 'Document';
+            $primaryField = null;
+            $otherFields = !empty($entry['description']) ? [['label' => 'Details', 'value' => $entry['description']]] : [];
+        }
+        if ($when['date'] === '—' && !empty($entry['date_label'])) {
+            $when['date'] = (string) $entry['date_label'];
+            $when['combined'] = $when['date'];
+        }
+      ?>
+      <li class="pmh-tl__item pmh-tl__item--record" data-tl-type="health_entry">
+        <div class="pmh-tl__when">
+          <span class="pmh-tl__date"><?= htmlspecialchars($when['date']) ?></span>
+          <?php if ($when['time'] !== ''): ?><span class="pmh-tl__time"><?= htmlspecialchars($when['time']) ?></span><?php endif; ?>
         </div>
-        <?php endif; ?>
-        <div class="pmh-visit__note">
-          <p>Full assessment details are in your Health Summary overview.</p>
-          <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-visit__note-link">Open Health Summary →</a>
+        <div class="pmh-tl__rail" aria-hidden="true">
+          <span class="pmh-tl__node">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          </span>
         </div>
-      </div>
-    </article>
-    <?php endif; ?>
-    <?php endforeach; ?>
+        <div class="pmh-tl__cards">
+          <article class="pmh-tl-card pmh-tl-card--summary">
+            <div class="pmh-tl-card__top">
+              <span class="pmh-tl-badge pmh-tl-badge--record"><?= htmlspecialchars($eyebrow) ?></span>
+              <span class="pmh-status pmh-status--default">On record</span>
+            </div>
+            <h4 class="pmh-tl-card__title"><?= htmlspecialchars($title) ?></h4>
+            <p class="pmh-tl-card__meta"><?= htmlspecialchars($when['combined']) ?></p>
+          </article>
+          <article class="pmh-tl-card pmh-tl-card--detail">
+            <?php if ($primaryField !== null): ?>
+            <div class="pmh-tl-highlight">
+              <span class="pmh-tl-highlight__icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+              </span>
+              <div>
+                <span class="pmh-tl-highlight__label">Chief Complaint</span>
+                <p class="pmh-tl-highlight__value"><?= htmlspecialchars((string) ($primaryField['value'] ?? '')) ?></p>
+              </div>
+            </div>
+            <?php endif; ?>
+            <?php foreach (array_slice($otherFields, 0, 3) as $field): ?>
+            <p class="pmh-tl-card__copy"><strong><?= htmlspecialchars((string) ($field['label'] ?? '')) ?>:</strong> <?= htmlspecialchars((string) ($field['value'] ?? '')) ?></p>
+            <?php endforeach; ?>
+            <?php if ($primaryField === null && $otherFields === []): ?>
+            <p class="pmh-tl-card__copy">Recorded activity on your care timeline.</p>
+            <?php endif; ?>
+          </article>
+        </div>
+      </li>
+      <?php endif; ?>
+      <?php endforeach; ?>
+    </ol>
   </div>
+  <script>
+  (function () {
+    var sel = document.querySelector('[data-pmh-tl-filter]');
+    if (!sel) return;
+    sel.addEventListener('change', function () {
+      var type = sel.value;
+      document.querySelectorAll('#pmh-tl-list > .pmh-tl__item').forEach(function (item) {
+        item.hidden = !(type === 'all' || item.getAttribute('data-tl-type') === type);
+      });
+    });
+  })();
+  </script>
 <?php endif; ?>
