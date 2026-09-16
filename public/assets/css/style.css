@@ -379,6 +379,9 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
 }
 
 .hero--cinematic .hero-ctas {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
   align-items: stretch !important;
   justify-content: flex-start !important;
   gap: 16px !important;
