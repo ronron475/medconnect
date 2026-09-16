@@ -44,8 +44,6 @@ $renderNavLinks = static function (string $class = '') use ($navLinkItems): void
           <img src="<?= htmlspecialchars($asset) ?>/assets/img/medcon_logo.png" alt="" class="nav-logo__icon" width="40" height="40" />
           <span class="logo-text"><span class="logo-brand-med">med</span><span class="logo-accent">Connect</span></span>
         </span>
-        <span class="nav-logo__divider" aria-hidden="true"></span>
-        <img src="<?= htmlspecialchars($asset) ?>/assets/img/bcclogo.png" alt="Bago City College" class="nav-logo__partner nav-logo__partner--bcc" width="36" height="36" decoding="async" />
       </a>
     </div>
 
