@@ -135,18 +135,27 @@ body.admin-body {
   display: flex;
   flex-direction: column;
   gap: 0;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+/* Slight separation after Dashboard only — not between collapsed titles */
+.adm-nav[data-adm-nav-accordion] > .adm-nav-group:first-of-type {
+  margin-top: 4px;
 }
 
 .adm-nav[data-adm-nav-accordion] button.adm-nav-section {
   display: block;
   width: 100%;
+  box-sizing: border-box;
   margin: 0;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
   font-family: inherit;
-  line-height: inherit;
+  line-height: 1.2;
   appearance: none;
   -webkit-appearance: none;
 }
@@ -162,11 +171,19 @@ body.admin-body {
   grid-template-rows: 0fr;
   transition: grid-template-rows 0.22s ease;
   pointer-events: none;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
 }
 
 .adm-nav[data-adm-nav-accordion] .adm-nav-group.is-open .adm-nav-group__panel {
   grid-template-rows: 1fr;
   pointer-events: auto;
+}
+
+.adm-nav[data-adm-nav-accordion] .adm-nav-group:not(.is-open) .adm-nav-group__panel {
+  /* Collapsed: take no layout space beyond the title */
+  overflow: hidden;
 }
 
 .adm-nav[data-adm-nav-accordion] .adm-nav-group__panel-inner {
