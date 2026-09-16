@@ -107,11 +107,40 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
     <div class="adm-logo-text">med<span>Connect</span><em><?= htmlspecialchars($config['logo_em']) ?></em></div>
   </a>
 
-  <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
-    <?php foreach ($nav_sections as $section):
-      if (!empty($section['section'])): ?>
+  <?php $adm_nav_accordion = ($adm_sidebar_portal === 'admin'); ?>
+  <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>"<?= $adm_nav_accordion ? ' data-adm-nav-accordion' : '' ?> aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
+    <?php foreach ($nav_sections as $sectionIndex => $section):
+      $sectionLabel = !empty($section['section']) ? (string) $section['section'] : '';
+      $isAccordionSection = $adm_nav_accordion && $sectionLabel !== '';
+      $sectionHasActive = false;
+      if ($isAccordionSection) {
+          foreach ($section['items'] as $probeItem) {
+              $probeFile = $probeItem[0] ?? '';
+              $probeQuery = $probeItem[3] ?? null;
+              $probeGroup = $probeItem[4] ?? null;
+              if (portal_nav_is_active($probeFile, $current, $current_query, $probeQuery, $probeGroup)) {
+                  $sectionHasActive = true;
+                  break;
+              }
+          }
+      }
+      if ($isAccordionSection):
+        $panelId = 'adm-nav-panel-' . $sectionIndex;
+    ?>
+    <div class="adm-nav-group<?= $sectionHasActive ? ' is-open' : '' ?>" data-adm-nav-group>
+      <button type="button"
+              class="adm-nav-section"
+              style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);"
+              data-adm-nav-toggle
+              aria-expanded="<?= $sectionHasActive ? 'true' : 'false' ?>"
+              aria-controls="<?= htmlspecialchars($panelId) ?>">
+        <?= htmlspecialchars($sectionLabel) ?>
+      </button>
+      <div class="adm-nav-group__panel" id="<?= htmlspecialchars($panelId) ?>" data-adm-nav-panel>
+        <div class="adm-nav-group__panel-inner">
+    <?php elseif ($sectionLabel !== ''): ?>
     <div class="adm-nav-section" style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);">
-      <?= htmlspecialchars($section['section']) ?>
+      <?= htmlspecialchars($sectionLabel) ?>
     </div>
     <?php endif;
       foreach ($section['items'] as $item):
@@ -141,7 +170,13 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
           require VIEWS_PATH . '/partials/portal_nav_badge.php';
       endif; ?>
     </a>
-    <?php endforeach; endforeach; ?>
+    <?php endforeach;
+      if ($isAccordionSection): ?>
+        </div>
+      </div>
+    </div>
+    <?php endif;
+    endforeach; ?>
   </nav>
 
   <a href="<?= htmlspecialchars($config['profile_href']) ?>"
