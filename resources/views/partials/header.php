@@ -45,6 +45,9 @@ $today = date('F j, Y');
 $now   = date('h:i A');
 $header_date_caps = strtoupper(date('l, M j, Y'));
 $is_bhw_portal = $user_role === 'bhw';
+$compact_topbar = ($user_role === 'admin')
+    || ($user_role === 'superadmin')
+    || !empty($mc_dashboard_topbar);
 
 $profile_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/profile.php';
 $settings_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/settings.php';
@@ -63,7 +66,7 @@ if ($is_bhw_portal) {
 
   <!-- ── Left: Date + page title (patient) or breadcrumb + title ── -->
   <div class="topbar-left">
-    <?php if (!$is_bhw_portal && $user_role !== 'admin'): ?>
+    <?php if (!$is_bhw_portal && !$compact_topbar): ?>
     <a class="topbar-brand" href="<?= ASSET_BASE ?>/views/<?= htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient'))) ?>/dashboard.php" aria-label="Home">
       <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="" class="topbar-brand__img"/>
     </a>
@@ -75,7 +78,7 @@ if ($is_bhw_portal) {
     </div>
     <?php else: ?>
     <div class="topbar-title-block">
-      <?php if ($user_role !== 'admin'): ?>
+      <?php if (!$compact_topbar): ?>
       <div class="topbar-eyebrow">
         <?php if ($is_bhw_portal): ?>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
