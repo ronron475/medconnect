@@ -63,8 +63,8 @@ if ($is_bhw_portal) {
 
   <!-- ── Left: Date + page title (patient) or breadcrumb + title ── -->
   <div class="topbar-left">
-    <?php if (!$is_bhw_portal): ?>
-    <a class="topbar-brand" href="<?= ASSET_BASE ?>/views/<?= htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient'))) ) ?>/dashboard.php" aria-label="Home">
+    <?php if (!$is_bhw_portal && $user_role !== 'admin'): ?>
+    <a class="topbar-brand" href="<?= ASSET_BASE ?>/views/<?= htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient'))) ) ?>/dashboard.php" aria-label="Home">
       <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="" class="topbar-brand__img"/>
     </a>
     <?php endif; ?>
@@ -75,6 +75,7 @@ if ($is_bhw_portal) {
     </div>
     <?php else: ?>
     <div class="topbar-title-block">
+      <?php if ($user_role !== 'admin'): ?>
       <div class="topbar-eyebrow">
         <?php if ($is_bhw_portal): ?>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -84,6 +85,7 @@ if ($is_bhw_portal) {
         <?php endif; ?>
         <?= htmlspecialchars($breadcrumb) ?>
       </div>
+      <?php endif; ?>
       <h1 class="topbar-title"><?= htmlspecialchars($page_title) ?></h1>
     </div>
     <?php endif; ?>

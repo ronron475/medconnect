@@ -16,13 +16,9 @@ require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
 doctor_application_ensure_schema($pdo);
 bhw_application_ensure_schema($pdo);
 
-$page_title = 'System Overview';
+$page_title = 'Dashboard';
 
 $admin_id = (int) ($_SESSION['user_id'] ?? 0);
-$admin_stmt = $pdo->prepare('SELECT first_name, last_name FROM users WHERE id = ? LIMIT 1');
-$admin_stmt->execute([$admin_id]);
-$admin_row = $admin_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-$admin_display = trim(($admin_row['first_name'] ?? 'Administrator') . ' ' . ($admin_row['last_name'] ?? ''));
 
 // Platform metrics
 $total_users     = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
@@ -77,21 +73,14 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 
 <div data-live-dashboard="admin">
 
-<!-- Welcome -->
-<section class="adm-banner" aria-label="Welcome">
-    <div class="adm-banner-inner">
-        <div class="adm-banner-eyebrow">System Overview</div>
-        <h1 class="adm-banner-title">Welcome back, <?= htmlspecialchars($admin_row['first_name'] ?? 'Administrator') ?></h1>
-        <p class="adm-banner-sub">Monitor platform activity, manage healthcare operations, and submit account applications for Super Administrator approval.</p>
-    </div>
-    <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
-</section>
-
 <!-- Live operations (notification-driven) -->
 <section aria-label="Live operations">
-    <div class="adm-section-head">
-        <h2 class="adm-section-title">Live Operations</h2>
-        <p class="adm-section-sub">Real-time counts from consultations, referrals, and alerts</p>
+    <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+        <div>
+            <h2 class="adm-section-title">Live Operations</h2>
+            <p class="adm-section-sub">Real-time counts from consultations, referrals, and alerts</p>
+        </div>
+        <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
     </div>
     <?php $notif_widget_mode = 'strip'; require VIEWS_PATH . '/partials/notification_widgets.php'; ?>
 </section>
