@@ -176,7 +176,7 @@
 }
 
 .pmh-panel > .pmh-tabs--segment {
-  margin: 0 0 4px;
+  margin: 0 0 2px;
 }
 
 /* ── Content surface (inner, borderless under tabs) ── */
@@ -340,7 +340,7 @@
   scrollbar-width: none;
   gap: 2px;
   padding: 3px;
-  margin-bottom: 4px;
+  margin-bottom: 0;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 11px;
@@ -387,10 +387,9 @@
 }
 
 .pmh-page--timeline .pmh-surface {
-  max-width: 48rem; /* Tailwind max-w-3xl */
+  max-width: none;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0;
   box-sizing: border-box;
 }
 
@@ -399,22 +398,33 @@
   max-width: 100%;
 }
 
-.pmh-page--timeline .pmh-surface__head {
+.pmh-page--timeline .pmh-tabs--segment,
+.pmh-page--timeline .pmh-panel > .pmh-tabs--segment {
+  margin-bottom: 0;
+}
+
+.pmh-page--timeline .pmh-surface__head,
+.pmh-page--timeline .pmh-surface__head--compact,
+.pmh-page--timeline .pmh-surface__head--timeline {
   max-width: none;
-  margin: 0 0 6px;
+  margin: 2px 0 8px;
   padding: 0;
   border-bottom: 0;
 }
 
-.pmh-page--timeline .pmh-surface__head--compact {
-  margin-bottom: 6px;
-  padding-bottom: 0;
+.pmh-page--timeline .pmh-surface__title {
+  margin: 0 0 1px;
+  font-size: 0.92rem;
+}
+
+.pmh-page--timeline .pmh-surface__desc {
+  font-size: 0.78rem;
+  line-height: 1.35;
 }
 
 .pmh-page--timeline .pmh-feed--timeline {
-  margin-top: 0;
-  margin-bottom: 0;
-  padding-bottom: 0;
+  margin: 0;
+  padding: 0;
 }
 
 /* Empty state */
@@ -538,33 +548,27 @@
   box-shadow: 0 4px 14px rgba(2, 128, 144, 0.08);
 }
 
-/* Timeline — capped width; lg+ 2-col stretched card grid */
+/* Timeline — full panel width; md+ dense 2-col card grid */
 .pmh-feed--timeline {
   background: transparent;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 1rem; /* gap-4 */
-  max-width: 48rem; /* max-w-3xl */
+  gap: 0.75rem;
+  max-width: none;
   width: 100%;
-  margin: 0 auto;
-  padding-bottom: 0;
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
   align-items: stretch;
 }
 
-@media (min-width: 1024px) {
-  .pmh-page--timeline .pmh-surface {
-    max-width: 56rem; /* max-w-4xl — room for 2-col timeline */
-  }
-
+@media (min-width: 768px) {
   .pmh-feed--timeline {
-    max-width: 56rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr)); /* grid-cols-2 */
-    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
     align-items: stretch;
   }
 
-  /* Hide vertical rail in multi-column so cards read as a card grid */
   .pmh-feed--timeline .pmh-visit__rail {
     display: none;
   }
@@ -572,6 +576,12 @@
   .pmh-feed--timeline .pmh-visit {
     grid-template-columns: minmax(0, 1fr);
     height: 100%;
+  }
+}
+
+@media (min-width: 1280px) {
+  .pmh-feed--timeline {
+    gap: 0.875rem;
   }
 }
 
@@ -583,9 +593,10 @@
 
 .pmh-feed--timeline .pmh-visit {
   padding: 0;
-  gap: 0 12px;
+  gap: 0 10px;
   width: 100%;
   height: 100%;
+  min-width: 0;
   align-items: stretch;
   margin: 0;
 }
@@ -602,14 +613,14 @@
 body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  margin-bottom: 0 !important; /* kill ui-system card gap under grid cards */
+  margin-bottom: 0 !important;
   box-shadow: none;
-  padding: 1rem; /* p-4 */
+  padding: 12px;
   background: #fff;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 6px;
   box-sizing: border-box;
 }
 
@@ -620,68 +631,141 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 }
 
 .pmh-feed--timeline .pmh-visit:not(:last-child) .pmh-visit__rail::after {
-  bottom: -12px;
+  bottom: -10px;
 }
 
 /* Compact internal rhythm inside timeline cards */
 .pmh-feed--timeline .pmh-visit__head {
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   margin-bottom: 0;
+  gap: 8px;
+}
+
+.pmh-feed--timeline .pmh-visit__eyebrow {
+  margin: 0 0 1px;
+  font-size: 0.64rem;
+  letter-spacing: 0.04em;
+}
+
+.pmh-feed--timeline .pmh-visit__title {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.25;
+}
+
+.pmh-feed--timeline .pmh-visit__meta {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 
 .pmh-feed--timeline .pmh-visit__main {
   margin-top: 0;
-  gap: 6px;
+  gap: 4px;
 }
 
 .pmh-feed--timeline .pmh-visit__highlight {
   margin: 0;
 }
 
+.pmh-feed--timeline .pmh-visit__highlight-value {
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.pmh-feed--timeline .pmh-visit__label {
+  margin: 0 0 1px;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+
 .pmh-feed--timeline .pmh-visit__highlight .pmh-visit__label,
 .pmh-feed--timeline .pmh-visit__status-block .pmh-visit__label,
 .pmh-feed--timeline .pmh-visit__details > .pmh-visit__label {
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .pmh-feed--timeline .pmh-visit__status-block {
-  padding: 8px 10px;
+  padding: 6px 8px;
   margin: 0;
 }
 
+.pmh-feed--timeline .pmh-visit__status-block p {
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .pmh-feed--timeline .pmh-visit__details {
-  margin-top: 6px;
-  padding-top: 6px;
+  margin-top: 4px;
+  padding-top: 4px;
 }
 
 .pmh-feed--timeline .pmh-visit__grid {
-  gap: 6px;
+  gap: 4px;
 }
 
 .pmh-feed--timeline .pmh-visit__block {
-  padding: 6px 8px;
+  padding: 5px 7px;
+}
+
+.pmh-feed--timeline .pmh-visit__block p {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.pmh-feed--timeline .pmh-event-meta {
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+}
+
+.pmh-feed--timeline .pmh-event-meta > div {
+  gap: 2px 8px;
 }
 
 .pmh-feed--timeline .pmh-visit__note,
 .pmh-feed--timeline .pmh-visit__rx,
 .pmh-feed--timeline .pmh-visit__soap,
 .pmh-feed--timeline .pmh-visit__pending {
-  margin-top: 6px;
+  margin-top: 4px;
+  padding: 6px 8px;
 }
 
 .pmh-feed--timeline .pmh-visit__actions {
-  margin: auto 0 0;
-  padding-top: 4px;
+  margin: 4px 0 0;
+  padding-top: 2px;
+  gap: 6px;
+}
+
+.pmh-feed--timeline .pmh-visit__actions .pmh-btn--sm {
+  padding: 6px 10px;
+  font-size: 0.75rem;
 }
 
 .pmh-feed--timeline .pt-assess-stack {
   margin: 0;
-  padding: 8px 10px;
-  gap: 4px;
+  padding: 6px 8px;
+  gap: 2px;
 }
 
 .pmh-feed--timeline .pt-assess-stack__row {
-  padding: 4px 0;
+  padding: 2px 0;
+}
+
+/* Use more of the main column on wide desktops */
+@media (min-width: 1100px) {
+  body.patient-portal:has(.pmh-page) .portal-page-body {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .pmh-page {
+    gap: 6px;
+  }
+
+  .pmh-panel {
+    padding: 8px 10px 10px;
+  }
 }
 
 .pmh-visit__soap-details {
