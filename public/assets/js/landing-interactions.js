@@ -20,6 +20,13 @@
 
   let scrollAnimId = null;
 
+  window.__mcCancelLandingScroll = function cancelLandingScroll() {
+    if (scrollAnimId) {
+      cancelAnimationFrame(scrollAnimId);
+      scrollAnimId = null;
+    }
+  };
+
   const CAROUSEL_SECTION_IDS = ['services-section', 'how-it-works'];
   const HEADER_REVEAL_SECTION_IDS = ['services-section', 'how-it-works', 'about-section', 'download-app'];
   const revealedSectionHeaders = new Set();

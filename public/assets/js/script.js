@@ -98,15 +98,25 @@ if (!isLandingPage) {
     document.body.scrollTop = 0;
   }
 
-  /** Resolve only after the window is actually at the absolute top. */
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  /** Keep forcing until the window scroll position is actually 0. */
   function waitUntilPageAtTop(done) {
     let frames = 0;
-    const maxFrames = 30;
 
     function tick() {
       forcePageTop();
       frames += 1;
-      if (getScrollY() <= 1 || frames >= maxFrames) {
+      const y = getScrollY();
+      if (y <= 1) {
+        forcePageTop();
+        if (typeof done === 'function') done();
+        return;
+      }
+      /* Keep trying — never open while still mid-page. */
+      if (frames > 120) {
         forcePageTop();
         if (typeof done === 'function') done();
         return;
@@ -117,34 +127,65 @@ if (!isLandingPage) {
     requestAnimationFrame(tick);
   }
 
+  /**
+   * Animate the main window scroll to the absolute top, then call done.
+   * Uses rAF easing (same approach as landing nav) so it works even when
+   * html.landing-scroll sets scroll-behavior: auto.
+   */
   function scrollToHeroTop(done) {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const complete = () => waitUntilPageAtTop(done);
+    if (typeof window.__mcCancelLandingScroll === 'function') {
+      window.__mcCancelLandingScroll();
+    }
 
-    if (getScrollY() <= 12 || prefersReduced) {
-      complete();
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const startY = getScrollY();
+    let settled = false;
+
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      document.body.classList.remove('signin-scrolling-home');
+      waitUntilPageAtTop(done);
+    };
+
+    if (startY <= 1) {
+      finish();
       return;
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    const deadline = Date.now() + 3200;
-
-    function poll() {
-      const y = getScrollY();
-      /* Only finish when we have actually reached the top — never on a stalled mid-page scroll. */
-      if (y <= 12) {
-        complete();
-        return;
-      }
-      if (Date.now() > deadline) {
-        complete();
-        return;
-      }
-      requestAnimationFrame(poll);
+    if (prefersReduced) {
+      forcePageTop();
+      finish();
+      return;
     }
 
-    requestAnimationFrame(poll);
+    document.body.classList.add('signin-scrolling-home');
+
+    const duration = Math.min(1100, Math.max(500, startY * 0.42));
+    const started = performance.now();
+    let rafId = 0;
+
+    function step(now) {
+      if (settled) return;
+      const t = Math.min(1, (now - started) / duration);
+      const nextY = Math.round(startY * (1 - easeInOutCubic(t)));
+      window.scrollTo(0, nextY);
+      document.documentElement.scrollTop = nextY;
+      if (t < 1 && getScrollY() > 1) {
+        rafId = requestAnimationFrame(step);
+        return;
+      }
+      finish();
+    }
+
+    rafId = requestAnimationFrame(step);
+
+    window.setTimeout(() => {
+      if (settled) return;
+      if (rafId) cancelAnimationFrame(rafId);
+      forcePageTop();
+      finish();
+    }, duration + 900);
   }
 
   function portalSigninToBody() {
@@ -401,6 +442,7 @@ if (!isLandingPage) {
   }
 
   let openingSignIn = false;
+  let scrollOpenToken = 0;
 
   function openSignInAtHomePosition() {
     if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) {
@@ -418,17 +460,20 @@ if (!isLandingPage) {
   }
 
   function openModal() {
-    if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing') || openingSignIn) {
+    if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) {
       return;
     }
 
-    /* 1) Smooth-scroll to absolute top  2) wait until there  3) only then open modal */
+    /* Always scroll the landing page to Home first; never open mid-page. */
+    const token = ++scrollOpenToken;
     openingSignIn = true;
+    document.body.classList.add('signin-scrolling-home');
+
     scrollToHeroTop(() => {
+      if (token !== scrollOpenToken) return;
       openingSignIn = false;
-      if (getScrollY() > 2) {
-        forcePageTop();
-      }
+      document.body.classList.remove('signin-scrolling-home');
+      forcePageTop();
       openSignInAtHomePosition();
     });
   }
@@ -518,14 +563,23 @@ if (!isLandingPage) {
       el.setAttribute('aria-controls', 'signin-modal');
       el.setAttribute('aria-haspopup', 'dialog');
     }
-    el.addEventListener('click', () => {
-      const nm = document.getElementById('nav-menu');
-      const nt = document.getElementById('nav-toggle');
-      if (nm) nm.classList.remove('open');
-      if (nt) nt.setAttribute('aria-expanded', 'false');
-      openModal();
-    });
   });
+
+  /* Capture-phase so Sign In always scrolls Home first, even if other handlers run. */
+  document.addEventListener('click', (e) => {
+    const trigger = e.target && e.target.closest
+      ? e.target.closest('#open-signin-modal, #open-signin-modal-drawer, #open-book-cta')
+      : null;
+    if (!trigger) return;
+
+    const nm = document.getElementById('nav-menu');
+    const nt = document.getElementById('nav-toggle');
+    if (nm) nm.classList.remove('open');
+    if (nt) nt.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('landing-nav-open');
+
+    openModal();
+  }, true);
 
   const closeBtn = document.getElementById('close-signin-modal');
   if (closeBtn) closeBtn.addEventListener('click', closeModal);
