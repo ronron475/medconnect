@@ -138,6 +138,12 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
   URGENT consultation — each doctor shows only their earliest open slot today. The earliest overall option is recommended; you may choose another eligible doctor.
 </p>
 <?php elseif (($is_provider_locked || $consultation_already_assigned) && $assigned_display_name !== ''): ?>
+<?php
+  // Yellow alert below already names the reviewing doctor — skip duplicate lead.
+  $yellowDoctorBanner = !empty($review_booking_ctx['locked'])
+      && ($review_booking_ctx['source'] ?? '') !== 'active_consultation';
+?>
+<?php if (!$yellowDoctorBanner): ?>
 <p class="text-sm text-muted patient-triage-lead">
   Your care tips doctor is <strong>Dr. <?= htmlspecialchars($assigned_display_name) ?></strong>.
   <?php if (!empty($active_consultation)): ?>
@@ -146,6 +152,7 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
   Choose an available time below to book your video visit.
   <?php endif; ?>
 </p>
+<?php endif; ?>
 <?php else: ?>
 <p class="text-sm text-muted patient-triage-lead">
   Share your primary complaint. Urgent cases show every doctor with an open slot today. Non-urgent cases may be assigned a reviewing doctor for care tips.
@@ -228,9 +235,6 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
       <p class="text-xs text-muted" style="margin-top:4px;">
         <?php if ($chief_complaint_locked): ?>
         This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
-        <?php if (empty($active_consultation) && empty($force_new_concern)): ?>
-        If this is a different primary complaint, <a href="<?= htmlspecialchars((defined('ASSET_BASE') ? ASSET_BASE : '') . '/views/patient/triage.php?new_concern=1') ?>">start a new case</a>.
-        <?php endif; ?>
         <?php elseif ($preliminary_payload !== null): ?>
         This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
         <?php else: ?>

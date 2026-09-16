@@ -321,21 +321,6 @@ foreach ($upcoming_list as $c) {
 
     <aside class="pdash-side">
 
-      <details class="pdash-flow" open>
-        <summary class="pdash-flow__summary">
-          <span class="pdash-flow__summary-icon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-          </span>
-          How it works
-        </summary>
-        <ol class="pdash-flow__steps">
-          <li><span class="pdash-flow__num">1</span><span><strong>Register</strong> — verify your identity and share your health concern.</span></li>
-          <li><span class="pdash-flow__num">2</span><span><strong>Review</strong> — for non-urgent cases, request doctor-approved self-care tips (optional).</span></li>
-          <li><span class="pdash-flow__num">3</span><span><strong>Book</strong> — for urgent cases, choose from doctors with open slots today; for approved care tips, book with your reviewing doctor.</span></li>
-          <li><span class="pdash-flow__num">4</span><span><strong>Join</strong> — enter the secure video room when your session opens.</span></li>
-        </ol>
-      </details>
-
       <section class="pdash-card" data-notif-widgets aria-label="Attention items">
         <div class="pdash-card__head">
           <h2 class="pdash-card__title">
