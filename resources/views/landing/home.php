@@ -63,7 +63,7 @@ $asset = ASSET_BASE;
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=13" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=14" />
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-download-app.css?v=<?= $landingDownloadCssVer ?>" />
 
