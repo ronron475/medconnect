@@ -615,13 +615,14 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   border-radius: 12px;
   margin-bottom: 0 !important;
   box-shadow: none;
-  padding: 12px;
+  padding: 14px 16px;
   background: #fff;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   box-sizing: border-box;
+  text-align: left;
 }
 
 .pmh-feed--timeline .pmh-visit__body:hover {
@@ -634,122 +635,315 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   bottom: -10px;
 }
 
-/* Compact internal rhythm inside timeline cards */
+/* ── Timeline typography hierarchy ──
+   Title > value > meta > label
+   Labels stay secondary; clinical content is larger/darker. */
 .pmh-feed--timeline .pmh-visit__head {
-  padding-bottom: 6px;
-  margin-bottom: 0;
-  gap: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 12px;
+  padding: 0 0 10px;
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.pmh-feed--timeline .pmh-visit__identity {
+  min-width: 0;
+  flex: 1 1 auto;
+  text-align: left;
 }
 
 .pmh-feed--timeline .pmh-visit__eyebrow {
-  margin: 0 0 1px;
-  font-size: 0.64rem;
-  letter-spacing: 0.04em;
-}
-
-.pmh-feed--timeline .pmh-visit__title {
-  margin: 0;
-  font-size: 0.92rem;
+  margin: 0 0 3px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f766e;
   line-height: 1.25;
 }
 
-.pmh-feed--timeline .pmh-visit__meta {
-  margin: 2px 0 0;
-  font-size: 0.75rem;
+.pmh-feed--timeline .pmh-visit__title,
+.pmh-feed--timeline .pmh-visit__title--event {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-transform: none;
+  color: #0f172a;
   line-height: 1.3;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.pmh-feed--timeline .pmh-visit__meta {
+  margin: 3px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.pmh-feed--timeline .pmh-status {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 5px 9px;
+  letter-spacing: 0.03em;
 }
 
 .pmh-feed--timeline .pmh-visit__main {
-  margin-top: 0;
-  gap: 4px;
-}
-
-.pmh-feed--timeline .pmh-visit__highlight {
   margin: 0;
-}
-
-.pmh-feed--timeline .pmh-visit__highlight-value {
-  font-size: 0.86rem;
-  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
 }
 
 .pmh-feed--timeline .pmh-visit__label {
-  margin: 0 0 1px;
-  font-size: 0.62rem;
-  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 0 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  line-height: 1.25;
 }
 
-.pmh-feed--timeline .pmh-visit__highlight .pmh-visit__label,
-.pmh-feed--timeline .pmh-visit__status-block .pmh-visit__label,
-.pmh-feed--timeline .pmh-visit__details > .pmh-visit__label {
-  margin-bottom: 1px;
-}
-
-.pmh-feed--timeline .pmh-visit__status-block {
-  padding: 6px 8px;
+/* Primary clinical highlight (chief complaint, etc.) */
+.pmh-feed--timeline .pmh-visit__highlight {
   margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  box-sizing: border-box;
 }
 
-.pmh-feed--timeline .pmh-visit__status-block p {
-  font-size: 0.8rem;
-  line-height: 1.4;
+.pmh-feed--timeline .pmh-visit__highlight .pmh-visit__label {
+  margin-bottom: 4px;
+  color: #0f766e;
 }
 
-.pmh-feed--timeline .pmh-visit__details {
-  margin-top: 4px;
-  padding-top: 4px;
+.pmh-feed--timeline .pmh-visit__highlight-value {
+  margin: 0;
+  font-size: 0.975rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
+/* SOAP / field panels */
 .pmh-feed--timeline .pmh-visit__grid {
-  gap: 4px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  min-width: 0;
 }
 
 .pmh-feed--timeline .pmh-visit__block {
-  padding: 5px 7px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.pmh-feed--timeline .pmh-visit__block p {
-  font-size: 0.82rem;
+.pmh-feed--timeline .pmh-visit__block p,
+.pmh-feed--timeline .pmh-visit__block .pmh-soap-signed {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.pmh-feed--timeline .pmh-soap-signed {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f766e;
   line-height: 1.4;
 }
 
+/* Status / notice panels */
+.pmh-feed--timeline .pmh-visit__status-block {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.pmh-feed--timeline .pmh-visit__status-block .pmh-visit__label {
+  margin-bottom: 4px;
+  color: #64748b;
+}
+
+.pmh-feed--timeline .pmh-visit__status-block p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  line-height: 1.45;
+}
+
+/* Record details — separated group */
+.pmh-feed--timeline .pmh-visit__details {
+  margin: 0;
+  padding: 10px 12px;
+  border-top: 0;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.pmh-feed--timeline .pmh-visit__details > .pmh-visit__label {
+  margin-bottom: 6px;
+  color: #64748b;
+}
+
 .pmh-feed--timeline .pmh-event-meta {
-  gap: 2px;
+  display: grid;
+  gap: 4px;
   padding: 0;
   margin: 0;
 }
 
 .pmh-feed--timeline .pmh-event-meta > div {
-  gap: 2px 8px;
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 7rem) minmax(0, 1fr);
+  gap: 4px 10px;
+  align-items: baseline;
 }
 
-.pmh-feed--timeline .pmh-visit__note,
+.pmh-feed--timeline .pmh-event-meta dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.pmh-feed--timeline .pmh-event-meta dd {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+/* Medications */
 .pmh-feed--timeline .pmh-visit__rx,
 .pmh-feed--timeline .pmh-visit__soap,
 .pmh-feed--timeline .pmh-visit__pending {
-  margin-top: 4px;
-  padding: 6px 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
 }
 
-.pmh-feed--timeline .pmh-visit__actions {
-  margin: 4px 0 0;
-  padding-top: 2px;
+.pmh-feed--timeline .pmh-visit__rx .pmh-visit__label {
+  margin-bottom: 6px;
+  color: #0f766e;
+}
+
+.pmh-feed--timeline .pmh-rx-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
   gap: 6px;
 }
 
+.pmh-feed--timeline .pmh-rx-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #1e293b;
+}
+
+.pmh-feed--timeline .pmh-rx-list strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pmh-feed--timeline .pmh-rx-list span {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Assessment note / CTA strip */
+.pmh-feed--timeline .pmh-visit__note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+
+.pmh-feed--timeline .pmh-visit__note p {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  line-height: 1.45;
+}
+
+.pmh-feed--timeline .pmh-visit__note-link {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #028090;
+}
+
+.pmh-feed--timeline .pmh-visit__actions {
+  margin: 2px 0 0;
+  padding-top: 2px;
+  gap: 8px;
+}
+
 .pmh-feed--timeline .pmh-visit__actions .pmh-btn--sm {
-  padding: 6px 10px;
-  font-size: 0.75rem;
+  padding: 7px 12px;
+  font-size: 0.8rem;
 }
 
 .pmh-feed--timeline .pt-assess-stack {
   margin: 0;
-  padding: 6px 8px;
-  gap: 2px;
+  padding: 10px 12px;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
 }
 
 .pmh-feed--timeline .pt-assess-stack__row {
   padding: 2px 0;
+}
+
+.pmh-feed--timeline .pt-assess-stack__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
 }
 
 /* Use more of the main column on wide desktops */
@@ -765,6 +959,14 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 
   .pmh-panel {
     padding: 8px 10px 10px;
+  }
+
+  .pmh-feed--timeline .pmh-visit__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pmh-feed--timeline .pmh-visit__block--full {
+    grid-column: 1 / -1;
   }
 }
 
@@ -907,25 +1109,26 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 
 .pmh-visit__title {
   margin: 0 0 2px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
   color: #0f172a;
   line-height: 1.3;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .pmh-visit__title--event {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: #0f766e;
-  margin-bottom: 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  text-transform: none;
+  color: #0f172a;
+  margin-bottom: 2px;
 }
 
 .pmh-visit__meta {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   color: #64748b;
   line-height: 1.35;
 }
@@ -938,24 +1141,24 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 }
 
 .pmh-visit__highlight {
-  padding: 0;
-  border-radius: 0;
-  background: transparent;
-  border: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0fdfa;
+  border: 1px solid #ccfbf1;
 }
 
 .pmh-visit__highlight .pmh-visit__label {
-  margin-bottom: 3px;
-  color: #64748b;
+  margin-bottom: 4px;
+  color: #0f766e;
 }
 
 .pmh-visit__highlight-value {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.975rem;
   font-weight: 600;
   color: #0f172a;
   line-height: 1.45;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .pmh-visit__status-block {
@@ -1020,12 +1223,12 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 }
 
 .pmh-status {
-  font-size: 0.62rem;
+  font-size: 0.6875rem;
   font-weight: 700;
-  padding: 4px 8px;
+  padding: 5px 9px;
   border-radius: 999px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   flex-shrink: 0;
   align-self: flex-start;
@@ -1058,11 +1261,12 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   align-items: center;
   gap: 6px;
   margin: 0 0 4px;
-  font-size: 0.66rem;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: #64748b;
   font-weight: 700;
+  line-height: 1.25;
 }
 
 .pmh-visit__label svg {
@@ -1071,10 +1275,11 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 
 .pmh-visit__block p {
   margin: 0;
-  font-size: 0.86rem;
-  color: #334155;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  overflow-wrap: break-word;
 }
 
 /* Compact attribution / source metadata panel */
@@ -2309,11 +2514,24 @@ body.pmh-care-modal-open .pt-remedy__fab {
   }
 
   .pmh-visit__highlight-value {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .pmh-visit__title {
-    font-size: 0.9rem;
+    font-size: 1rem;
+  }
+
+  .pmh-feed--timeline .pmh-visit__title,
+  .pmh-feed--timeline .pmh-visit__title--event {
+    font-size: 1rem;
+  }
+
+  .pmh-feed--timeline .pmh-visit__highlight-value {
+    font-size: 0.95rem;
+  }
+
+  .pmh-feed--timeline .pmh-visit__block p {
+    font-size: 0.875rem;
   }
 
   .pmh-visit__actions {
