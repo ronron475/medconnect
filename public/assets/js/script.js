@@ -397,7 +397,7 @@ if (!isLandingPage) {
     }, CLOSE_MS);
   }
 
-  /** Instant close for post-login transition — no slide/fade animation or scroll jump. */
+  /** Instant close for post-login transition — dismiss UI and reset scroll to top. */
   function closeModalInstant() {
     clearTimeout(closeTimer);
     closeTimer = null;
@@ -414,10 +414,11 @@ if (!isLandingPage) {
     document.body.classList.remove('signin-active');
     setTriggerExpanded(false);
     document.removeEventListener('keydown', trapFocus);
+    document.dispatchEvent(new CustomEvent('medconnect:signin', { detail: { open: false } }));
 
     if (scrollLocked) {
-      const y = savedScroll;
       scrollLocked = false;
+      savedScroll = 0;
       document.documentElement.classList.remove('signin-scroll-locked');
       document.body.classList.remove('signin-scroll-locked');
       document.body.style.position = '';
@@ -430,7 +431,6 @@ if (!isLandingPage) {
       document.body.style.touchAction = '';
       document.documentElement.style.overflow = '';
       document.documentElement.style.overscrollBehavior = '';
-      requestAnimationFrame(() => window.scrollTo(0, y));
     } else {
       document.documentElement.classList.remove('signin-scroll-locked');
       document.body.classList.remove('signin-scroll-locked');
@@ -438,7 +438,17 @@ if (!isLandingPage) {
 
     restoreSigninPlacement();
 
+    // Always land at the top after successful sign-in — never restore prior scroll.
+    try {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+    } catch (_) { /* ignore */ }
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
     requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
       document.documentElement.classList.remove('signin-skip-motion');
     });
   }
