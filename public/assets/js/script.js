@@ -367,11 +367,22 @@ if (!isLandingPage) {
     return window.matchMedia('(max-width: 768px)').matches;
   }
 
-  function openModal() {
-    if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) return;
+  let openingSignIn = false;
 
-    /* Always use a fixed viewport overlay so the landing page can be fully scroll-locked. */
-    openModalPinned();
+  function openModal() {
+    if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing') || openingSignIn) {
+      return;
+    }
+
+    /* Always return to Home/top first, then open the Sign In modal. */
+    openingSignIn = true;
+    scrollToHeroTop(() => {
+      openingSignIn = false;
+      if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) {
+        return;
+      }
+      openModalPinned();
+    });
   }
 
   function closeModal() {
