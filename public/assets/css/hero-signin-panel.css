@@ -316,7 +316,7 @@ body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is
   justify-self: end;
   width: auto;
   height: auto;
-  margin: 16px 16px 0 0;
+  margin: 10px 16px 0 0;
   padding: 0;
   pointer-events: none;
   transform: none;
@@ -1008,7 +1008,7 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   }
 
   .landing-page .hero-signin-panel .signin-modal-toolbar {
-    margin: 16px 16px 0 0;
+    margin: 10px 16px 0 0;
   }
 
   .landing-page .hero-signin-panel .signin-modal-close {
