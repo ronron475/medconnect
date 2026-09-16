@@ -526,10 +526,11 @@
 
 .pmh-feed--files {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+  gap: 14px;
   border: none;
   background: transparent;
+  align-items: start;
 }
 
 .pmh-feed--files .pmh-file-card {
@@ -927,7 +928,7 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 
 .pmh-feed--timeline .pt-assess-stack {
   margin: 0;
-  padding: 10px 12px;
+  padding: 8px;
   gap: 6px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
@@ -935,15 +936,21 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 }
 
 .pmh-feed--timeline .pt-assess-stack__row {
-  padding: 2px 0;
+  padding: 8px 10px;
 }
 
 .pmh-feed--timeline .pt-assess-stack__label {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: #64748b;
+}
+
+.pmh-feed--timeline .pt-assess-chip {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 /* Use more of the main column on wide desktops */
@@ -1335,30 +1342,36 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 }
 
 .pmh-soap-list div {
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: #f8fafc;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .pmh-soap-list dt {
-  font-size: 0.68rem;
-  font-weight: 800;
+  font-size: 0.6875rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   color: #64748b;
-  margin-bottom: 3px;
+  margin: 0 0 4px;
+  line-height: 1.25;
 }
 
 .pmh-soap-list dd {
   margin: 0;
-  font-size: 0.84rem;
-  color: #334155;
-  line-height: 1.45;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .pmh-file-card__soap-list {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .pmh-file-card__link {
@@ -1366,18 +1379,20 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 }
 
 .pmh-file-card__soap {
-  margin: 6px 0 0;
-  font-size: 0.8rem;
+  margin: 8px 0 0;
+  font-size: 0.875rem;
   color: #475569;
-  line-height: 1.4;
+  line-height: 1.45;
+  overflow-wrap: break-word;
 }
 
 .pmh-soap-signed {
   margin: 10px 0 0;
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   color: #0f766e;
   font-weight: 600;
   line-height: 1.45;
+  overflow-wrap: break-word;
 }
 
 .pmh-rx-list {
@@ -1477,7 +1492,7 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 
 .pmh-files__list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: 14px;
 }
 
@@ -1489,6 +1504,9 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   border-left: 4px solid var(--pmh-accent, #028090);
   box-shadow: 0 1px 3px rgba(2, 128, 144, 0.05);
   transition: box-shadow 0.15s, transform 0.1s;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .pmh-file-card:hover {
@@ -1506,21 +1524,25 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 8px;
+  min-width: 0;
 }
 
 .pmh-file-card__type time {
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   color: #64748b;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pmh-file-card__badge {
-  font-size: 0.68rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   padding: 4px 8px;
   border-radius: 6px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .pmh-file-card__badge--prescription { background: #dbeafe; color: #1d4ed8; }
@@ -1530,30 +1552,50 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
 
 .pmh-file-card__title {
   margin: 0 0 8px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 800;
   color: #0f172a;
   line-height: 1.35;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 .pmh-file-card__provider {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 6px;
-  font-size: 0.8rem;
-  color: #64748b;
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #475569;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.pmh-file-card__provider svg {
+  flex-shrink: 0;
 }
 
 .pmh-file-card__detail {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #475569;
-  line-height: 1.4;
+  line-height: 1.45;
+  overflow-wrap: break-word;
 }
 
 .pmh-file-card__meta {
   margin: 6px 0 0;
+  overflow-wrap: break-word;
+}
+
+/* Assessment stack inside Health File cards */
+.pmh-file-card .pt-assess-stack {
+  margin: 0 0 4px;
+}
+
+.pmh-file-card .pt-assess-chip {
+  max-width: min(100%, 12rem);
 }
 
 /* Care tips — hero & layout */

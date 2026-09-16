@@ -2226,14 +2226,18 @@ html[data-theme-resolved='dark'] .booking-today-date {
 }
 
 .pt-assess-stack {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin-top: 2px;
   padding: 10px;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   background: #f8fafc;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .pt-assess-stack--emergency {
@@ -2243,7 +2247,7 @@ html[data-theme-resolved='dark'] .booking-today-date {
 
 .pt-assess-stack__title,
 .pt-assess-emergency-note {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 
 .pt-assess-stack__title {
@@ -2257,12 +2261,12 @@ html[data-theme-resolved='dark'] .booking-today-date {
 
 .pt-assess-stack__row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
   min-width: 0;
-  padding: 8px;
+  padding: 8px 10px;
   border-radius: 10px;
   background: #fff;
   border: 1px solid #e2e8f0;
@@ -2279,24 +2283,32 @@ html[data-theme-resolved='dark'] .booking-today-date {
 }
 
 .pt-assess-stack__label {
-  font-size: 0.68rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.75rem;
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.35;
   color: #64748b;
 }
 
 .pt-assess-chip {
   display: inline-flex;
   align-items: center;
-  max-width: 100%;
-  padding: 4px 9px;
+  flex: 0 1 auto;
+  max-width: min(100%, 14rem);
+  padding: 5px 10px;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   background: #e2e8f0;
   color: #334155;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+  word-break: normal;
+  line-height: 1.25;
 }
 
 .pt-assess-chip--ai {
@@ -2328,46 +2340,33 @@ html[data-theme-resolved='dark'] .booking-today-date {
 
 @media (min-width: 1025px) {
   .pt-assess-stack {
-    gap: 10px;
+    gap: 8px;
     padding: 12px;
   }
 
   .pt-assess-stack__row {
-    padding: 10px;
+    padding: 10px 12px;
   }
 
   .pt-assess-stack__label {
-    font-size: 0.72rem;
+    font-size: 0.78rem;
   }
 
   .pt-assess-chip {
-    font-size: 0.75rem;
-    padding: 5px 10px;
+    font-size: 0.78rem;
+    padding: 5px 11px;
+    max-width: min(100%, 16rem);
   }
 }
 
-@media (max-width: 900px) {
-  .pt-assess-stack {
-    grid-template-columns: 1fr;
-    gap: 6px;
-    padding: 8px;
-  }
-
+@media (max-width: 420px) {
   .pt-assess-stack__row {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px 12px;
-    padding: 8px 10px;
-  }
-
-  .pt-assess-stack__label {
-    flex: 1 1 auto;
-    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .pt-assess-chip {
-    flex: 0 0 auto;
+    max-width: 100%;
   }
 }
 
