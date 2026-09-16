@@ -229,7 +229,7 @@ window.MC_DOCTOR_APP = {
     checkerMode: <?= $is_superadmin_portal ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.4"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.5"></script>
 <?php if ($is_superadmin_portal): ?>
 <script>
 window.MC_DOCTOR_APPROVAL = {
