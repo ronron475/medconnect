@@ -101,7 +101,7 @@ $info_sub = !empty($is_patient)
         has ended successfully.
       </p>
     </div>
-    <section class="mc-vc-postcall__summary" aria-label="Consultation summary">
+      <section class="mc-vc-postcall__summary" aria-label="Consultation summary">
       <h2>Consultation Summary</h2>
       <dl class="mc-vc-postcall__meta">
         <div id="mcVcPostCallDateRow"<?= $postcallDate === '' ? ' hidden' : '' ?>>
@@ -118,19 +118,40 @@ $info_sub = !empty($is_patient)
           </dt>
           <dd id="mcVcPostCallProvider"><?= htmlspecialchars($postcallProvider !== '' ? $postcallProvider : 'your doctor') ?></dd>
         </div>
+        <div id="mcVcPostCallScheduledRow" hidden>
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+            Scheduled duration
+          </dt>
+          <dd id="mcVcPostCallScheduled">—</dd>
+        </div>
+        <div id="mcVcPostCallStartedRow" hidden>
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+            Started
+          </dt>
+          <dd id="mcVcPostCallStarted">—</dd>
+        </div>
+        <div id="mcVcPostCallEndedRow" hidden>
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+            Ended
+          </dt>
+          <dd id="mcVcPostCallEnded">—</dd>
+        </div>
+        <div id="mcVcPostCallDurationRow">
+          <dt>
+            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+            Actual duration
+          </dt>
+          <dd id="mcVcPostCallDuration">—</dd>
+        </div>
         <div>
           <dt>
             <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
             Status
           </dt>
-          <dd>Completed</dd>
-        </div>
-        <div id="mcVcPostCallDurationRow">
-          <dt>
-            <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-            Duration
-          </dt>
-          <dd id="mcVcPostCallDuration">—</dd>
+          <dd id="mcVcPostCallStatus">Completed</dd>
         </div>
       </dl>
     </section>

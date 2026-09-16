@@ -213,7 +213,8 @@ $video_history = consultation_video_history_summary(
     consultation_video_session_row($pdo, $consultation_id),
     isset($c['completed_at']) ? (string) $c['completed_at'] : null,
     $video_doctor_name,
-    trim((string) ($c['first_name'] ?? '') . ' ' . (string) ($c['last_name'] ?? ''))
+    trim((string) ($c['first_name'] ?? '') . ' ' . (string) ($c['last_name'] ?? '')),
+    consultation_scheduled_duration_seconds_for_id($pdo, $consultation_id)
 );
 $show_video_demo_tip = function_exists('medconnect_is_local_dev_host') && medconnect_is_local_dev_host();
 $localhost_app_url = 'http://localhost' . (ASSET_BASE !== '' ? ASSET_BASE : '');
@@ -2506,41 +2507,147 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     display: none;
     align-items: center;
     justify-content: center;
-    padding: 20px;
-    background: rgba(2, 6, 23, 0.55);
+    padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    background: rgba(2, 6, 23, 0.62);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-sizing: border-box;
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 .final-assessment-required-modal.is-open {
     display: flex;
 }
 .final-assessment-required-modal__dialog {
-    width: min(460px, 100%);
+    width: min(540px, 100%);
+    max-height: min(90dvh, 640px);
+    display: flex;
+    flex-direction: column;
     background: #fff;
-    border-radius: 14px;
+    border-radius: 16px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
+    box-shadow: 0 28px 64px rgba(2, 6, 23, 0.32);
     overflow: hidden;
+    box-sizing: border-box;
+    margin: auto;
 }
 .final-assessment-required-modal__body {
-    padding: 22px 20px 8px;
+    flex: 1 1 auto;
+    padding: 26px 24px 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
 }
 .final-assessment-required-modal__title {
-    margin: 0 0 8px;
-    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+    font-size: 1.2rem;
     font-weight: 800;
+    line-height: 1.3;
     color: #0f172a;
+    letter-spacing: -0.01em;
+}
+.final-assessment-required-modal__badge {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    color: #92400e;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1;
+}
+.final-assessment-required-modal__title-text {
+    min-width: 0;
 }
 .final-assessment-required-modal__text {
-    margin: 0 0 10px;
-    font-size: 14px;
+    margin: 0 0 12px;
+    font-size: 14.5px;
     line-height: 1.55;
     color: #334155;
 }
+.final-assessment-required-modal__text:last-child {
+    margin-bottom: 0;
+}
+.final-assessment-required-modal__callout {
+    margin: 4px 0 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    color: #78350f;
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+.final-assessment-required-modal__callout strong {
+    color: #92400e;
+}
 .final-assessment-required-modal__footer {
+    flex-shrink: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-    padding: 12px 16px 16px;
+    gap: 10px;
+    justify-content: stretch;
+    padding: 16px 24px 22px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+.final-assessment-required-modal__footer .session-btn.primary {
+    width: 100%;
+    min-height: 48px;
+    justify-content: center;
+    font-weight: 800;
+}
+body.final-assessment-modal-open {
+    overflow: hidden;
+}
+@media (min-width: 640px) {
+    .final-assessment-required-modal__body {
+        padding: 28px 28px 14px;
+    }
+    .final-assessment-required-modal__footer {
+        padding: 16px 28px 24px;
+    }
+    .final-assessment-required-modal__footer .session-btn.primary {
+        width: auto;
+        min-width: 260px;
+        margin-left: auto;
+    }
+}
+@media (max-width: 480px) {
+    .final-assessment-required-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .final-assessment-required-modal__dialog {
+        width: 100%;
+        max-height: min(92dvh, 100%);
+        border-radius: 16px 16px 0 0;
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
+    }
+    .final-assessment-required-modal__body {
+        padding: 20px 18px 10px;
+    }
+    .final-assessment-required-modal__footer {
+        padding: 14px 18px max(18px, env(safe-area-inset-bottom, 0px));
+    }
+    .final-assessment-required-modal__title {
+        font-size: 1.1rem;
+        flex-wrap: wrap;
+    }
 }
 #soapDocumentation.is-highlight-final {
     outline: 2px solid #f59e0b;
@@ -2649,19 +2756,17 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
             </div>
             <div class="session-card-body">
                 <?php if (!empty($video_history['show_completed_details'])): ?>
-                <div class="info-row"><span class="info-key">Status</span><span class="info-val"><?= htmlspecialchars(
-                    $consultation_completed
-                        ? 'Completed'
-                        : (string) ($video_history['video_status_label'] ?? 'Ended')
-                ) ?></span></div>
                 <div class="info-row"><span class="info-key">Date</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['date_label'] ?? '—')) ?></span></div>
+                <?php if (!empty($video_history['scheduled_duration_label'])): ?>
+                <div class="info-row"><span class="info-key">Scheduled duration</span><span class="info-val"><?= htmlspecialchars((string) $video_history['scheduled_duration_label']) ?></span></div>
+                <?php endif; ?>
                 <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? '—')) ?></span></div>
                 <div class="info-row"><span class="info-key">Ended</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? '—')) ?></span></div>
-                <div class="info-row"><span class="info-key">Duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['duration_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">Actual duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['actual_duration_label'] ?: ($video_history['duration_label'] ?? '—'))) ?></span></div>
                 <?php if (!empty($video_history['participants_label'])): ?>
                 <div class="info-row"><span class="info-key">Participants</span><span class="info-val"><?= htmlspecialchars((string) $video_history['participants_label']) ?></span></div>
                 <?php endif; ?>
-                <div class="info-row"><span class="info-key">Session status</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['session_outcome_label'] ?? ($consultation_completed ? 'Successfully completed' : 'Final Assessment required'))) ?></span></div>
+                <div class="info-row"><span class="info-key">Status</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['status_label'] ?: ($video_history['session_outcome_label'] ?? ($consultation_completed ? 'Completed' : 'Final Assessment required')))) ?></span></div>
                 <?php if (!empty($video_history['timeline']) && is_array($video_history['timeline'])): ?>
                 <div style="margin-top:12px;">
                     <strong style="font-size:12px;color:#0f766e;">Timeline</strong>
@@ -3528,19 +3633,22 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
 </div>
 
 <div id="finalAssessmentRequiredModal" class="final-assessment-required-modal" aria-hidden="true">
-  <div class="final-assessment-required-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="finalAssessmentRequiredTitle">
+  <div class="final-assessment-required-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="finalAssessmentRequiredTitle" aria-describedby="finalAssessmentRequiredDesc finalAssessmentRequiredCallout">
     <div class="final-assessment-required-modal__body">
-      <h2 id="finalAssessmentRequiredTitle" class="final-assessment-required-modal__title">Final Assessment required</h2>
-      <p class="final-assessment-required-modal__text">
-        The video consultation has ended. Complete and submit the patient’s <strong>Final Assessment</strong>
-        (SOAP documentation and final case urgency) before this visit is marked completed.
+      <h2 id="finalAssessmentRequiredTitle" class="final-assessment-required-modal__title">
+        <span class="final-assessment-required-modal__badge">Required</span>
+        <span class="final-assessment-required-modal__title-text">Final Assessment required</span>
+      </h2>
+      <p id="finalAssessmentRequiredDesc" class="final-assessment-required-modal__text">
+        The video consultation has ended. Submit the patient’s <strong>Final Assessment</strong>
+        (SOAP documentation and final case urgency) to complete this visit.
       </p>
-      <p class="final-assessment-required-modal__text">
-        The AI result remains preliminary only. The patient will not see a doctor final assessment until you submit it.
+      <p id="finalAssessmentRequiredCallout" class="final-assessment-required-modal__callout">
+        <strong>AI result is preliminary only.</strong>
+        The patient will not see a doctor final assessment until you complete and submit it.
       </p>
     </div>
     <div class="final-assessment-required-modal__footer">
-      <button type="button" class="session-btn" id="finalAssessmentLaterBtn">Continue later</button>
       <button type="button" class="session-btn primary" id="finalAssessmentNowBtn">Complete Final Assessment</button>
     </div>
   </div>
@@ -3832,6 +3940,7 @@ function openFinalAssessmentRequiredModal() {
     }
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('final-assessment-modal-open');
     const nowBtn = document.getElementById('finalAssessmentNowBtn');
     if (nowBtn && typeof nowBtn.focus === 'function') {
         window.setTimeout(function () { nowBtn.focus(); }, 40);
@@ -3843,6 +3952,7 @@ function closeFinalAssessmentRequiredModal() {
     if (!modal) return;
     modal.classList.remove('is-open');
     modal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('final-assessment-modal-open');
 }
 
 function promptFinalAssessmentRequired() {
@@ -4281,14 +4391,20 @@ document.addEventListener('DOMContentLoaded', () => {
             scrollToFinalAssessment();
         });
     }
-    const laterFinalBtn = document.getElementById('finalAssessmentLaterBtn');
-    if (laterFinalBtn) {
-        laterFinalBtn.addEventListener('click', closeFinalAssessmentRequiredModal);
-    }
     const finalModal = document.getElementById('finalAssessmentRequiredModal');
     if (finalModal) {
+        // Required gate: do not dismiss via backdrop click or Escape.
         finalModal.addEventListener('click', function (e) {
-            if (e.target === finalModal) closeFinalAssessmentRequiredModal();
+            if (e.target === finalModal) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key !== 'Escape') return;
+            if (!finalModal.classList.contains('is-open')) return;
+            e.preventDefault();
+            e.stopPropagation();
         });
     }
 });

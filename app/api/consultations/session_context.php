@@ -188,6 +188,22 @@ $finalizedBy = $hasDoctorFinal
     )
     : '';
 
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_duration.php';
+$scheduledSeconds = consultation_scheduled_duration_seconds(
+    $slotStart !== '' ? $slotStart : null,
+    $slotEnd !== '' ? $slotEnd : null,
+    null
+);
+if ($scheduledSeconds <= 0) {
+    $scheduledSeconds = consultation_scheduled_duration_seconds_for_id($pdo, $consultId);
+}
+$durationSnap = consultation_duration_snapshot(
+    isset($row['started_at']) ? (string) $row['started_at'] : null,
+    isset($row['ended_at']) ? (string) $row['ended_at'] : null,
+    $scheduledSeconds,
+    (string) ($row['consult_status'] ?? '')
+);
+
 $patientPanel = [
     'doctor_name'       => $waiting['doctor_name'],
     'specialization'    => trim((string) ($row['provider_specialty'] ?? 'General Medicine')) ?: 'General Medicine',
@@ -201,6 +217,11 @@ $patientPanel = [
     'show_final_triage' => $patientSeesFinal,
     'finalized_by'      => $patientSeesFinal ? $finalizedBy : '',
     'consultation_id'   => $consultId,
+    'scheduled_duration_label' => (string) ($durationSnap['scheduled_duration_label'] ?? ''),
+    'started_label'     => (string) ($durationSnap['started_label'] ?? ''),
+    'ended_label'       => (string) ($durationSnap['ended_label'] ?? ''),
+    'actual_duration_label' => (string) ($durationSnap['actual_duration_label'] ?? ''),
+    'status_label'      => (string) ($durationSnap['status_label'] ?? ''),
 ];
 
 $providerPanel = [
@@ -223,6 +244,11 @@ $providerPanel = [
     'medications'          => $health['medications'] ?? [],
     'blood_type'           => (string) ($health['blood_type'] ?? '—'),
     'possible_conditions'  => $clinical['possible_conditions'] ?? [],
+    'scheduled_duration_label' => (string) ($durationSnap['scheduled_duration_label'] ?? ''),
+    'started_label'        => (string) ($durationSnap['started_label'] ?? ''),
+    'ended_label'          => (string) ($durationSnap['ended_label'] ?? ''),
+    'actual_duration_label'=> (string) ($durationSnap['actual_duration_label'] ?? ''),
+    'status_label'         => (string) ($durationSnap['status_label'] ?? ''),
 ];
 
 $recordedData = [

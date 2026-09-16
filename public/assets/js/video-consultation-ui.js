@@ -48,6 +48,22 @@
     let networkInterval = null;
     let speakerOn = true;
     let facingMode = 'user';
+    let durationStartedAtMs = 0;
+    let scheduledDurationSeconds = 0;
+
+    const meta = (typeof window !== 'undefined' && window.__mcVideoRoomMeta) ? window.__mcVideoRoomMeta : {};
+    if (meta.scheduledDurationSeconds) {
+      scheduledDurationSeconds = Math.max(0, parseInt(meta.scheduledDurationSeconds, 10) || 0);
+    }
+    if (meta.elapsedSeconds != null) {
+      durationSeconds = Math.max(0, parseInt(meta.elapsedSeconds, 10) || 0);
+    }
+    if (meta.videoStartedAt) {
+      const parsed = Date.parse(String(meta.videoStartedAt).replace(' ', 'T'));
+      if (!isNaN(parsed)) {
+        durationStartedAtMs = parsed;
+      }
+    }
 
     const els = {};
 
@@ -523,12 +539,52 @@
       return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     }
 
+    function syncDurationFromServerClock() {
+      if (!durationStartedAtMs) return;
+      let elapsed = Math.floor((Date.now() - durationStartedAtMs) / 1000);
+      if (elapsed < 0) elapsed = 0;
+      if (scheduledDurationSeconds > 0 && elapsed > scheduledDurationSeconds) {
+        elapsed = scheduledDurationSeconds;
+      }
+      durationSeconds = elapsed;
+      if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
+    }
+
     function startDurationTimer() {
       if (durationInterval) return;
+      if (!durationStartedAtMs && meta.videoStartedAt) {
+        const parsed = Date.parse(String(meta.videoStartedAt).replace(' ', 'T'));
+        if (!isNaN(parsed)) durationStartedAtMs = parsed;
+      }
+      if (!durationStartedAtMs) {
+        durationStartedAtMs = Date.now() - (durationSeconds * 1000);
+      }
+      syncDurationFromServerClock();
       durationInterval = setInterval(() => {
-        durationSeconds++;
-        if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
+        syncDurationFromServerClock();
+        if (scheduledDurationSeconds > 0 && durationSeconds >= scheduledDurationSeconds) {
+          // Hold at configured limit — do not invent time beyond scheduled duration.
+          durationSeconds = scheduledDurationSeconds;
+          if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
+        }
       }, 1000);
+    }
+
+    function setDurationFromServer(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      if (typeof payload.scheduled_duration_seconds === 'number' && payload.scheduled_duration_seconds > 0) {
+        scheduledDurationSeconds = payload.scheduled_duration_seconds;
+      }
+      if (payload.started_at) {
+        const parsed = Date.parse(String(payload.started_at).replace(' ', 'T'));
+        if (!isNaN(parsed)) durationStartedAtMs = parsed;
+      }
+      if (typeof payload.elapsed_seconds === 'number') {
+        durationSeconds = Math.max(0, payload.elapsed_seconds);
+        if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
+      } else {
+        syncDurationFromServerClock();
+      }
     }
 
     function stopMonitors() {
@@ -764,25 +820,46 @@
         const rect = btn.getBoundingClientRect();
         const vw = window.innerWidth || document.documentElement.clientWidth || 0;
         const vh = window.innerHeight || document.documentElement.clientHeight || 0;
-        const pad = 8;
+        const pad = 10;
+        const gap = 12;
         menu.classList.add('is-ported');
         menu.hidden = false;
-        const mw = Math.max(menu.offsetWidth || 0, 188);
-        const mh = Math.max(menu.offsetHeight || 0, 48);
-        let left = rect.right - mw;
-        let top = rect.top - mh - 10;
-        if (left < pad) left = pad;
-        if (left + mw > vw - pad) left = Math.max(pad, vw - mw - pad);
-        if (top < pad) {
-          top = rect.bottom + 10;
-          if (top + mh > vh - pad) top = Math.max(pad, vh - mh - pad);
-        }
         menu.style.position = 'fixed';
-        menu.style.left = Math.round(left) + 'px';
-        menu.style.top = Math.round(top) + 'px';
+        menu.style.visibility = 'hidden';
+        menu.style.left = '0px';
+        menu.style.top = '0px';
         menu.style.right = 'auto';
         menu.style.bottom = 'auto';
+        menu.style.maxWidth = Math.max(160, vw - pad * 2) + 'px';
+
+        const mw = Math.min(Math.max(menu.offsetWidth || 200, 200), vw - pad * 2);
+        const mh = Math.max(menu.offsetHeight || 48, 48);
+
+        // Prefer aligning to the 3-dot button, opening above (clears bottom controls).
+        let left = rect.right - mw;
+        let top = rect.top - mh - gap;
+
+        if (left < pad) left = pad;
+        if (left + mw > vw - pad) left = Math.max(pad, vw - mw - pad);
+
+        const roomAbove = rect.top - pad;
+        const roomBelow = vh - rect.bottom - pad;
+        if (top < pad || mh + gap > roomAbove) {
+          if (roomBelow >= Math.min(mh, roomAbove) || roomBelow >= mh) {
+            top = rect.bottom + gap;
+          } else {
+            top = Math.max(pad, Math.min(rect.top - mh - gap, vh - mh - pad));
+          }
+        }
+        if (top + mh > vh - pad) {
+          top = Math.max(pad, vh - mh - pad);
+        }
+        if (top < pad) top = pad;
+
+        menu.style.left = Math.round(left) + 'px';
+        menu.style.top = Math.round(top) + 'px';
         menu.style.zIndex = '100200';
+        menu.style.visibility = '';
       }
 
       function setOpen(open) {
@@ -803,6 +880,8 @@
           menu.style.bottom = '';
           menu.style.position = '';
           menu.style.zIndex = '';
+          menu.style.maxWidth = '';
+          menu.style.visibility = '';
           if (home && menu.parentElement !== home) {
             home.appendChild(menu);
           }
@@ -885,7 +964,9 @@
       watchCallStatus();
       startNetworkMonitor();
 
-      if (els.durationEl) els.durationEl.textContent = '00:00';
+      if (els.durationEl) {
+        els.durationEl.textContent = formatDuration(durationSeconds);
+      }
 
       // Provider header shows patient info; patient sees provider
       const remoteParticipant = q('mcVcRemoteParticipant');
@@ -927,6 +1008,7 @@
       setConnectionFailed,
       setRetryVisible,
       startDurationTimer,
+      setDurationFromServer,
       stopMonitors,
       closeMoreMenu: () => { if (typeof els.closeMoreMenu === 'function') els.closeMoreMenu(); },
       getIsFloating: () => isFloating,

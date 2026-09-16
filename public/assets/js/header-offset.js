@@ -9,7 +9,10 @@
   const CSS_VAR = "--mc-header-offset";
 
   function getHeaderEl() {
-    // Portal header (patient/admin/bhw/superadmin)
+    // Patient compact header
+    const pt = document.querySelector("header.pt-header");
+    if (pt) return pt;
+    // Portal header (admin/bhw/superadmin)
     const topbar = document.querySelector("header.topbar");
     if (topbar) return topbar;
     // Provider header

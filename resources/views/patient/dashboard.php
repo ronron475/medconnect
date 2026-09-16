@@ -234,7 +234,7 @@ try {
     // optional column
 }
 
-$page_title = 'Health Dashboard';
+$page_title = 'Patient Dashboard';
 require_once __DIR__ . '/partials/triage_helpers.php';
 
 $video_base = ASSET_BASE . '/views/consultation/video_room.php';

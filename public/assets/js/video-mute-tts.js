@@ -64,13 +64,42 @@
         const utter = new SpeechSynthesisUtterance(String(text));
         utter.lang = options.lang || 'en-PH';
         utter.rate = options.rate || 1;
-        utter.onend = () => resolve(true);
-        utter.onerror = () => resolve(false);
+        if (typeof options.onStart === 'function') {
+          utter.onstart = () => options.onStart(utter);
+        }
+        if (typeof options.onBoundary === 'function') {
+          utter.onboundary = (event) => options.onBoundary(event, utter);
+        }
+        utter.onend = () => {
+          if (typeof options.onEnd === 'function') options.onEnd();
+          resolve(true);
+        };
+        utter.onerror = () => {
+          if (typeof options.onEnd === 'function') options.onEnd();
+          resolve(false);
+        };
+        if (typeof options.onCreate === 'function') {
+          options.onCreate(utter);
+        }
         global.speechSynthesis.speak(utter);
       } catch (e) {
+        if (typeof options.onEnd === 'function') options.onEnd();
         resolve(false);
       }
     });
+  }
+
+  function estimateSpeechSeconds(text, rate) {
+    const words = String(text || '').trim().split(/\s+/).filter(Boolean).length;
+    const wpm = 155 * (Number(rate) || 1);
+    return Math.max(1.2, (words / Math.max(wpm, 60)) * 60);
+  }
+
+  function formatPlayerTime(seconds) {
+    const total = Math.max(0, Math.round(Number(seconds) || 0));
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return m + ':' + String(s).padStart(2, '0');
   }
 
   function playMuteTtsMessage(message, options = {}) {
@@ -123,8 +152,190 @@
     let speaking = false;
     let composerDismissed = false;
     let lastSpokenServerId = 0;
+    let activePlayer = null;
     const roleLabel = userRole === 'provider' ? 'Provider' : 'Patient';
     const otherLabel = userRole === 'provider' ? 'Patient' : 'Provider';
+
+    function stopActivePlayer(resetUi) {
+      if (activePlayer && activePlayer.timer) {
+        window.clearInterval(activePlayer.timer);
+        activePlayer.timer = null;
+      }
+      if (resetUi && activePlayer && activePlayer.setIdle) {
+        activePlayer.setIdle();
+      }
+      activePlayer = null;
+      try {
+        if ('speechSynthesis' in global) global.speechSynthesis.cancel();
+      } catch (e) { /* ignore */ }
+    }
+
+    function buildReplayControl(text) {
+      const wrap = document.createElement('div');
+      wrap.className = 'mute-tts-player';
+      wrap.innerHTML =
+        '<button type="button" class="mute-tts-player__btn" aria-label="Play message audio">' +
+        '<span class="mute-tts-player__icon mute-tts-player__icon--play" aria-hidden="true">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+        '</span>' +
+        '<span class="mute-tts-player__icon mute-tts-player__icon--pause" aria-hidden="true" hidden>' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>' +
+        '</span>' +
+        '</button>' +
+        '<div class="mute-tts-player__track" role="group" aria-label="Playback progress">' +
+        '<div class="mute-tts-player__bar" aria-hidden="true"><span class="mute-tts-player__fill"></span></div>' +
+        '<div class="mute-tts-player__times">' +
+        '<span class="mute-tts-player__elapsed">0:00</span>' +
+        '<span class="mute-tts-player__duration">' + escapeHtml(formatPlayerTime(estimateSpeechSeconds(text, 1))) + '</span>' +
+        '</div></div>';
+
+      const btn = wrap.querySelector('.mute-tts-player__btn');
+      const fill = wrap.querySelector('.mute-tts-player__fill');
+      const elapsedEl = wrap.querySelector('.mute-tts-player__elapsed');
+      const durationEl = wrap.querySelector('.mute-tts-player__duration');
+      const playIcon = wrap.querySelector('.mute-tts-player__icon--play');
+      const pauseIcon = wrap.querySelector('.mute-tts-player__icon--pause');
+      const duration = estimateSpeechSeconds(text, 1);
+      let startedAt = 0;
+      let pausedAt = 0;
+      let elapsedBeforePause = 0;
+      let playing = false;
+      let paused = false;
+
+      function setProgress(elapsedSec) {
+        const ratio = Math.min(1, Math.max(0, elapsedSec / duration));
+        if (fill) fill.style.width = (ratio * 100).toFixed(1) + '%';
+        if (elapsedEl) elapsedEl.textContent = formatPlayerTime(elapsedSec);
+        if (durationEl) durationEl.textContent = formatPlayerTime(duration);
+        wrap.setAttribute('aria-valuenow', String(Math.round(ratio * 100)));
+      }
+
+      function setPlayingUi(isPlaying) {
+        playing = isPlaying;
+        wrap.classList.toggle('is-playing', isPlaying);
+        wrap.classList.toggle('is-paused', !isPlaying && paused);
+        if (playIcon) playIcon.hidden = isPlaying;
+        if (pauseIcon) pauseIcon.hidden = !isPlaying;
+        if (btn) {
+          btn.setAttribute('aria-label', isPlaying ? 'Pause message audio' : 'Play message audio');
+          btn.setAttribute('aria-pressed', isPlaying ? 'true' : 'false');
+        }
+      }
+
+      function setIdle() {
+        paused = false;
+        elapsedBeforePause = 0;
+        pausedAt = 0;
+        if (api && api.timer) {
+          window.clearInterval(api.timer);
+          api.timer = null;
+        }
+        setPlayingUi(false);
+        setProgress(0);
+        wrap.classList.remove('is-paused');
+      }
+
+      function tick() {
+        if (!playing || paused) return;
+        const elapsed = elapsedBeforePause + ((Date.now() - startedAt) / 1000);
+        setProgress(Math.min(elapsed, duration));
+      }
+
+      function startProgress() {
+        startedAt = Date.now();
+        if (activePlayer && activePlayer.timer) window.clearInterval(activePlayer.timer);
+        const timer = window.setInterval(tick, 100);
+        if (activePlayer) activePlayer.timer = timer;
+      }
+
+      function playFromStart() {
+        if (activePlayer && activePlayer !== api) {
+          stopActivePlayer(true);
+        }
+        activePlayer = api;
+        paused = false;
+        elapsedBeforePause = 0;
+        setProgress(0);
+        setPlayingUi(true);
+        speakText(text, {
+          force: true,
+          onStart: () => {
+            startProgress();
+          },
+          onBoundary: (event) => {
+            if (!event || typeof event.charIndex !== 'number') return;
+            const ratio = event.charIndex / Math.max(1, String(text).length);
+            setProgress(ratio * duration);
+            elapsedBeforePause = ratio * duration;
+            startedAt = Date.now();
+          },
+          onEnd: () => {
+            if (activePlayer === api) {
+              if (api.timer) window.clearInterval(api.timer);
+              api.timer = null;
+              activePlayer = null;
+            }
+            setIdle();
+          },
+        });
+      }
+
+      function toggle() {
+        if (!('speechSynthesis' in global)) {
+          showToast('Speech playback is not supported in this browser.', 'warn');
+          return;
+        }
+
+        if (playing && !paused) {
+          try {
+            global.speechSynthesis.pause();
+            if (global.speechSynthesis.paused) {
+              elapsedBeforePause += (Date.now() - startedAt) / 1000;
+              paused = true;
+              setPlayingUi(false);
+              wrap.classList.add('is-paused');
+              return;
+            }
+          } catch (e) { /* fall through to restart model */ }
+          stopActivePlayer(true);
+          return;
+        }
+
+        if (paused && activePlayer === api) {
+          try {
+            global.speechSynthesis.resume();
+            paused = false;
+            startedAt = Date.now();
+            setPlayingUi(true);
+            startProgress();
+            return;
+          } catch (e) {
+            playFromStart();
+            return;
+          }
+        }
+
+        playFromStart();
+      }
+
+      const api = {
+        wrap,
+        setIdle,
+        timer: null,
+        toggle,
+      };
+
+      btn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggle();
+      });
+
+      wrap.setAttribute('role', 'group');
+      wrap.setAttribute('aria-label', 'Message audio player');
+      setProgress(0);
+      return api;
+    }
 
     function setStatus(html, tone) {
       if (!statusEl) return;
@@ -165,26 +376,29 @@
 
     function appendToLog(target, entry) {
       if (!target) return;
-      const item = document.createElement('div');
+      const item = document.createElement('article');
       item.className = 'mute-tts-log-item';
       const text = String(entry.text || '');
       item.innerHTML =
         '<div class="mute-tts-log-meta">' +
-        '<strong>' + escapeHtml(entry.label || roleLabel) + '</strong>' +
-        '<span>' + escapeHtml(entry.time || '') + '</span></div>' +
-        '<div class="mute-tts-log-text">' + escapeHtml(text) + '</div>' +
-        '<div class="mute-tts-log-flags">' + escapeHtml(entry.status || 'Spoken and delivered') + '</div>' +
-        (entry.playable
-          ? '<button type="button" class="mute-tts-replay" data-tts-text="' + escapeHtml(text).replace(/"/g, '&quot;') + '">Play audio</button>'
+        '<strong class="mute-tts-log-name">' + escapeHtml(entry.label || roleLabel) + '</strong>' +
+        '<time class="mute-tts-log-time">' + escapeHtml(entry.time || '') + '</time></div>' +
+        '<p class="mute-tts-log-text">' + escapeHtml(text) + '</p>' +
+        (entry.status
+          ? '<div class="mute-tts-log-flags">' + escapeHtml(entry.status) + '</div>'
           : '');
-      const replay = item.querySelector('.mute-tts-replay');
-      if (replay) {
-        replay.addEventListener('click', () => speakText(text));
-        replay.setAttribute('aria-label', 'Play this message as speech');
+      if (entry.playable) {
+        const player = buildReplayControl(text);
+        item.appendChild(player.wrap);
+        item.classList.add('mute-tts-log-item--playable');
       }
       target.prepend(item);
       while (target.children.length > 12) {
-        target.removeChild(target.lastChild);
+        const last = target.lastChild;
+        if (last && activePlayer && last.contains(activePlayer.wrap)) {
+          stopActivePlayer(true);
+        }
+        target.removeChild(last);
       }
       if (target === receiveLogEl) {
         target.classList.add('has-items');
@@ -490,7 +704,17 @@
     function renderSpeechToggle() {
       if (!speechToggle) return;
       const on = speechEnabled();
-      speechToggle.textContent = on ? '🔊 Read aloud' : '🔇 Read aloud off';
+      const label = speechToggle.querySelector('.mute-tts-speech-toggle__label');
+      const icon = speechToggle.querySelector('.mute-tts-speech-toggle__icon');
+      if (label) {
+        label.textContent = on ? 'Read aloud' : 'Read aloud off';
+      } else {
+        speechToggle.textContent = on ? '🔊 Read aloud' : '🔇 Read aloud off';
+      }
+      if (icon) {
+        icon.textContent = on ? '🔊' : '🔇';
+      }
+      speechToggle.classList.toggle('is-off', !on);
       speechToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
       speechToggle.setAttribute('aria-label', on ? 'Turn read-aloud off' : 'Turn read-aloud on');
     }
@@ -499,7 +723,9 @@
       speechToggle.addEventListener('click', (event) => {
         event.preventDefault();
         event.stopPropagation();
-        setSpeechEnabled(!speechEnabled());
+        const next = !speechEnabled();
+        setSpeechEnabled(next);
+        if (!next) stopActivePlayer(true);
         renderSpeechToggle();
       });
     }

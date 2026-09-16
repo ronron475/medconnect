@@ -129,9 +129,13 @@ function pch_filter_url(string $filter): string
             <?php if ($vhCompleted): ?>
             <div class="pch-video-block__status pch-video-block__status--done">&#10003; Completed</div>
             <div class="pch-consult-card__row"><strong>Video call date:</strong> <?= htmlspecialchars((string) ($vh['date_label'] ?? '-')) ?></div>
+            <?php if (!empty($vh['scheduled_duration_label'])): ?>
+            <div class="pch-consult-card__row"><strong>Scheduled duration:</strong> <?= htmlspecialchars((string) $vh['scheduled_duration_label']) ?></div>
+            <?php endif; ?>
             <div class="pch-consult-card__row"><strong>Started:</strong> <?= htmlspecialchars((string) ($vh['started_label'] ?? '-')) ?></div>
             <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? '-')) ?></div>
-            <div class="pch-consult-card__row"><strong>Duration:</strong> <?= htmlspecialchars((string) ($vh['duration_label'] ?? '-')) ?></div>
+            <div class="pch-consult-card__row"><strong>Actual duration:</strong> <?= htmlspecialchars((string) ($vh['actual_duration_label'] ?: ($vh['duration_label'] ?? '-'))) ?></div>
+            <div class="pch-consult-card__row"><strong>Status:</strong> <?= htmlspecialchars((string) ($vh['status_label'] ?: ($vh['video_status_label'] ?? 'Completed'))) ?></div>
             <?php
               $consultation_id = (int) ($row['id'] ?? 0);
               $recUrl = consultation_video_recording_view_url($consultation_id);

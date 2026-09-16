@@ -2,6 +2,7 @@
 /**
  * Patient/provider read-only session metadata after a video call.
  * Uses the authenticated session identity — never a URL patient_id.
+ * Duration fields use exact started_at / ended_at + configured scheduled duration.
  */
 ob_start();
 
@@ -9,6 +10,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_duration.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Content-Type-Options: nosniff');
@@ -76,7 +78,14 @@ try {
 
     $startedAt = trim((string) ($video['started_at'] ?? ''));
     $endedAt = trim((string) ($video['ended_at'] ?? ''));
-    $duration = patient_format_call_duration($startedAt, $endedAt);
+    $scheduledSeconds = consultation_scheduled_duration_seconds_for_id($pdo, $consultationId);
+    $snap = consultation_duration_snapshot(
+        $startedAt !== '' ? $startedAt : null,
+        $endedAt !== '' ? $endedAt : null,
+        $scheduledSeconds,
+        (string) ($row['status'] ?? '')
+    );
+
     $providerName = patient_provider_display_name((string) ($row['provider_display'] ?? ''));
     $chiefComplaint = $role === 'patient'
         ? patient_session_chief_complaint($pdo, $patientId, $row)
@@ -84,8 +93,6 @@ try {
 
     $consultDate = (string) ($row['consult_date'] ?? '');
     $dateLabel = $consultDate !== '' ? date('F j, Y', strtotime($consultDate)) : '';
-    $startLabel = $startedAt !== '' ? date('g:i A', strtotime($startedAt)) : '';
-    $endLabel = $endedAt !== '' ? date('g:i A', strtotime($endedAt)) : '';
 
     ob_end_clean();
     echo json_encode([
@@ -94,9 +101,17 @@ try {
         'provider_name' => $providerName,
         'consult_date' => $consultDate,
         'date_label' => $dateLabel,
-        'start_label' => $startLabel,
-        'end_label' => $endLabel,
-        'duration_label' => $duration,
+        'started_at' => $startedAt,
+        'ended_at' => $endedAt,
+        'start_label' => (string) ($snap['started_label'] ?? ''),
+        'end_label' => (string) ($snap['ended_label'] ?? ''),
+        'scheduled_duration_seconds' => (int) ($snap['scheduled_duration_seconds'] ?? 0),
+        'scheduled_duration_label' => (string) ($snap['scheduled_duration_label'] ?? ''),
+        'actual_duration_seconds' => $snap['actual_duration_seconds'],
+        'actual_duration_label' => (string) ($snap['actual_duration_label'] ?? ''),
+        'duration_label' => (string) ($snap['actual_duration_label'] ?? ''),
+        'ended_early' => !empty($snap['ended_early']),
+        'status_label' => (string) ($snap['status_label'] ?? 'Completed'),
         'status' => (string) ($row['status'] ?? ''),
         'chief_complaint' => $chiefComplaint,
         'detail_url' => patient_consultation_detail_url($consultationId) . '&from=sessions',
