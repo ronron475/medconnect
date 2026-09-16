@@ -4,6 +4,9 @@ body.landing-page .download-app-section {
   --dap-offset: var(--landing-nav-offset, var(--landing-hero-offset, var(--dap-nav)));
   --dap-phone-width: min(320px, 100%);
   --dap-screen: clamp(460px, 56vh, 540px);
+  /* Device chrome: top pad + notch block + bottom pad */
+  --dap-device-chrome: 50px;
+  --dap-device-height: calc(var(--dap-screen) + var(--dap-device-chrome));
   position: relative;
   z-index: 1;
   isolation: isolate;
@@ -77,7 +80,7 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   display: grid;
   grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   gap: clamp(28px, 4vw, 52px);
-  align-items: stretch;
+  align-items: start;
 }
 
 .download-app__phone-col {
@@ -85,11 +88,11 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 14px;
   min-width: 0;
-  height: 100%;
-  padding: 4px 8px;
+  height: auto;
+  padding: 0 8px;
   overflow: visible;
   box-sizing: border-box;
 }
@@ -97,7 +100,7 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
 .download-app__device {
   width: var(--dap-phone-width);
   max-width: 100%;
-  height: auto;
+  height: var(--dap-device-height);
   padding: 12px 12px 14px;
   border-radius: 36px;
   background: linear-gradient(180deg, #12384a 0%, #0b2233 55%, #071722 100%);
@@ -109,6 +112,8 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   overflow: visible;
   box-sizing: border-box;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .download-app__device-notch {
@@ -119,6 +124,7 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   background: rgba(2, 6, 23, 0.72);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
   position: relative;
+  flex-shrink: 0;
 }
 
 .download-app__device-notch::after {
@@ -136,8 +142,9 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: var(--dap-screen);
-  min-height: 440px;
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
   max-height: none;
   border-radius: 24px;
   background: #f4f8fa;
@@ -880,12 +887,15 @@ html.lsa-ready .landing-page .download-app-section .lsa:not(.lsa-visible) {
   padding: 22px 24px 20px;
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.14);
   min-width: 0;
-  height: 100%;
-  min-height: 100%;
+  height: var(--dap-device-height);
+  min-height: var(--dap-device-height);
+  max-height: var(--dap-device-height);
+  align-self: start;
   display: flex;
   flex-direction: column;
   justify-content: center;
   box-sizing: border-box;
+  overflow: auto;
 }
 
 .download-app__panel-kicker {
@@ -1168,10 +1178,6 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
   .download-app__device {
     width: var(--dap-phone-width);
   }
-
-  .download-app__viewport {
-    min-height: 420px;
-  }
 }
 
 @media (max-width: 900px) {
@@ -1193,7 +1199,7 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
     height: auto;
     width: 100%;
     max-width: 320px;
-    padding-bottom: 4px;
+    padding: 0 8px 4px;
   }
 
   .download-app__panel {
@@ -1201,14 +1207,12 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
     max-width: 560px;
     height: auto;
     min-height: 0;
+    max-height: none;
+    overflow: visible;
   }
 
   .download-app__device {
     width: var(--dap-phone-width);
-  }
-
-  .download-app__viewport {
-    min-height: 400px;
   }
 }
 
@@ -1226,10 +1230,6 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
 
   .download-app__device {
     width: var(--dap-phone-width);
-  }
-
-  .download-app__viewport {
-    min-height: 380px;
   }
 
   .download-app__actions {
@@ -1271,10 +1271,6 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
     width: var(--dap-phone-width);
   }
 
-  .download-app__viewport {
-    min-height: 360px;
-  }
-
   .dap-dash {
     gap: 7px;
     padding: 10px 9px;
@@ -1300,17 +1296,18 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
     padding-right: 12px;
     --dap-phone-width: min(232px, 92vw);
     --dap-screen: clamp(360px, 54svh, 420px);
+    --dap-device-chrome: 42px;
   }
 
   .download-app__device {
     width: var(--dap-phone-width);
+    height: var(--dap-device-height);
     padding: 8px 8px 10px;
     border-radius: 30px;
   }
 
   .download-app__viewport {
     border-radius: 20px;
-    min-height: 340px;
   }
 
   .dap-dash__title,
@@ -1326,10 +1323,6 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
     min-height: 0;
   }
 
-  .download-app__viewport {
-    min-height: 400px;
-  }
-
   .download-app-section .download-app__header {
     margin-bottom: 20px;
   }
@@ -1338,9 +1331,5 @@ html[data-theme-resolved='dark'] .download-app__btn--ghost {
 @media (max-height: 740px) and (min-width: 901px) {
   body.landing-page .download-app-section {
     --dap-screen: clamp(400px, 64vh, 480px);
-  }
-
-  .download-app__viewport {
-    min-height: 380px;
   }
 }
