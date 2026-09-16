@@ -26,9 +26,9 @@ if (!empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'patient'
     }
 }
 ?>
-<div class="root-wrapper portal-shell patient-shell">
+<div class="root-wrapper portal-shell">
   <?php require_once VIEWS_PATH . '/partials/sidebar.php'; ?>
-  <?php require_once VIEWS_PATH . '/patient/partials/header.php'; ?>
+  <?php require_once VIEWS_PATH . '/partials/header.php'; ?>
 
   <main class="main-content portal-main">
     <div class="portal-page-body">

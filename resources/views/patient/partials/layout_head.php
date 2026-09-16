@@ -65,10 +65,5 @@ if (!empty($_SESSION['user_id']) && $pdo instanceof PDO) {
   $patientDarkCssVer = file_exists($patientDarkCss) ? (int) filemtime($patientDarkCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dark-mode.css?v=<?= $patientDarkCssVer ?>"/>
-  <?php
-  $patientShellCss = ASSETS_PATH . '/css/patient_shell.css';
-  $patientShellCssVer = file_exists($patientShellCss) ? (int) filemtime($patientShellCss) : time();
-  ?>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient_shell.css?v=<?= $patientShellCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
