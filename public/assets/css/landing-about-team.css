@@ -1,7 +1,7 @@
 /* ===== About Us · Milestone (BSIS capstone section) ===== */
 
 .landing-page .about-team-section {
-  padding-bottom: var(--landing-section-pad-y, clamp(64px, 8vw, 88px));
+  padding-bottom: var(--landing-section-pad-y, clamp(40px, 5vw, 56px));
 }
 
 .landing-page .about-team-section__kicker {

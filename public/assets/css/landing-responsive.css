@@ -214,13 +214,37 @@ body.landing-page.landing-nav-open {
 }
 
 /* ── Section spacing ── */
-.landing-page .services-section,
-.landing-page .about-team-section.services-section,
 .landing-page .download-app-section {
   padding-top: var(--landing-section-pad-y);
   padding-bottom: var(--landing-section-pad-y);
   padding-left: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
   padding-right: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
+}
+
+/* Our Services / How It Works / About Us — compact, consistent vertical rhythm */
+.landing-page .services-section,
+.landing-page .about-team-section.services-section {
+  --landing-section-pad-y: clamp(40px, 5vw, 56px);
+  padding-top: var(--landing-section-pad-y);
+  padding-bottom: var(--landing-section-pad-y);
+  padding-left: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
+  padding-right: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
+}
+
+/* Avoid stacked top+bottom padding between consecutive navy sections */
+.landing-page .services-section + .services-section {
+  padding-top: clamp(24px, 3vw, 36px);
+}
+
+@media (max-width: 768px) {
+  .landing-page .services-section,
+  .landing-page .about-team-section.services-section {
+    --landing-section-pad-y: clamp(32px, 6vw, 44px);
+  }
+
+  .landing-page .services-section + .services-section {
+    padding-top: clamp(20px, 4vw, 28px);
+  }
 }
 
 .landing-page .contact-section {
