@@ -376,16 +376,23 @@
   color: #0f766e;
 }
 
-.pmh-page--timeline .pmh-surface,
+.pmh-page--timeline .pmh-surface {
+  max-width: 48rem; /* Tailwind max-w-3xl */
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
 .pmh-page--files .pmh-surface,
 .pmh-page--care-tips .pmh-surface {
   max-width: 100%;
 }
 
 .pmh-page--timeline .pmh-surface__head {
-  max-width: 680px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* Empty state */
@@ -509,16 +516,37 @@
   box-shadow: 0 4px 14px rgba(2, 128, 144, 0.08);
 }
 
-/* Timeline */
+/* Timeline — capped width; lg+ uses 2 columns via Tailwind utilities */
 .pmh-feed--timeline {
   background: transparent;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
-  max-width: 680px;
+  max-width: 48rem; /* max-w-3xl */
   width: 100%;
   margin: 0 auto;
   box-sizing: border-box;
+}
+
+@media (min-width: 1024px) {
+  .pmh-page--timeline .pmh-surface {
+    max-width: 56rem; /* max-w-4xl — room for 2-col timeline */
+  }
+
+  .pmh-feed--timeline {
+    max-width: 56rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  /* Hide vertical rail in multi-column so cards read as a card grid */
+  .pmh-feed--timeline .pmh-visit__rail {
+    display: none;
+  }
+
+  .pmh-feed--timeline .pmh-visit {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .pmh-timeline {
@@ -1787,6 +1815,10 @@ body.pmh-care-modal-open .pt-remedy__fab {
   }
 
   .pmh-page--timeline .pmh-surface__head {
+    max-width: 100%;
+  }
+
+  .pmh-page--timeline .pmh-surface {
     max-width: 100%;
   }
 

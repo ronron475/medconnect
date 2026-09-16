@@ -1,7 +1,7 @@
 <?php
 /**
- * SOAP electronic signature helpers — typed name or drawn canvas.
- * Identity always comes from the authenticated provider, never from client IDs.
+ * SOAP electronic signature helpers.
+ * Signature identity always comes from the authenticated provider Full Name.
  */
 
 function clinical_note_signature_schema_ensure(PDO $pdo): void

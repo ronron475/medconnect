@@ -1634,16 +1634,26 @@
 .pdash-wait__badge {
   display: inline-flex;
   align-items: center;
-  margin: 0 0 14px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin: 0;
   padding: 6px 12px;
   border-radius: 999px;
   font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  white-space: nowrap;
+}
+
+.pdash-wait__badge--ready,
+.pdash-wait[data-wait-status="slot_available"] .pdash-wait__badge {
   color: #0f766e;
   background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  border-color: #a7f3d0;
 }
 
 .pdash-wait[data-wait-status="waiting"] .pdash-wait__badge {
@@ -1661,6 +1671,12 @@
 }
 
 @media (max-width: 640px) {
+  .pdash-wait .pdash-care__top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
   .pdash-wait .pdash-care-actions {
     flex-direction: column;
   }

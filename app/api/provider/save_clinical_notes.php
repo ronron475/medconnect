@@ -121,44 +121,20 @@ if ($alreadyFinalized) {
             exit;
         }
 
-        $method = $data['signature_method'];
-        if ($method !== 'typed' && $method !== 'drawn') {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-            ]);
-            exit;
-        }
-
+        // Electronic signature = authenticated provider Full Name only (server-authoritative).
         $identity = clinical_note_provider_identity($pdo, (int) $data['provider_id']);
-        $signatureName = $identity['legal_name'] !== '' ? $identity['legal_name'] : $identity['full_name'];
+        $signatureName = trim((string) ($identity['full_name'] ?? ''));
+        if ($signatureName === '') {
+            $signatureName = trim((string) ($identity['legal_name'] ?? ''));
+        }
         if ($signatureName === '') {
             echo json_encode(['success' => false, 'message' => 'Provider identity could not be verified.']);
             exit;
         }
 
-        if ($method === 'typed') {
-            $typed = trim((string) ($_POST['signature_name'] ?? $data['signature']));
-            if ($typed === '' || !clinical_note_typed_name_matches($typed, $identity)) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'The typed name must match your authenticated provider account.',
-                ]);
-                exit;
-            }
-            $data['signature'] = $typed;
-            $data['signature_name'] = $signatureName;
-        } else {
-            $drawn = clinical_note_drawn_signature_valid((string) $data['signature']);
-            if (!$drawn['ok']) {
-                echo json_encode([
-                    'success' => false,
-                    'message' => $drawn['message'],
-                ]);
-                exit;
-            }
-            $data['signature_name'] = $signatureName;
-        }
+        $data['signature_method'] = 'typed';
+        $data['signature'] = $signatureName;
+        $data['signature_name'] = $signatureName;
 
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
         $finalUrgencyBucket = provider_clinical_support_normalize_bucket((string) ($_POST['final_urgency_bucket'] ?? ''));
