@@ -435,6 +435,15 @@ body.patient-portal .topbar--clinical {
   overflow: visible;
 }
 
+/* Patient header: no logo beside page title (sidebar branding stays). */
+body.patient-portal .topbar--clinical .topbar-brand {
+  display: none !important;
+}
+
+body.patient-portal .topbar--clinical .topbar-left {
+  gap: 0;
+}
+
 body.patient-portal .mc-notif-wrap,
 body.patient-portal .mc-theme-toggle {
   position: relative;

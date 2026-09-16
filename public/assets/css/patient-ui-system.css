@@ -255,15 +255,21 @@ body.patient-portal .psess-metric__label {
    ═══════════════════════════════════════════════════════════════ */
 
 body.patient-portal .pdash-hero {
-  padding: var(--pt-space-lg);
-  gap: var(--pt-space-md);
+  padding: 16px 18px;
+  gap: 12px 16px;
+}
+
+body.patient-portal .pdash-hero--welcome {
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcfc 100%);
+  border-color: #cfe9ed;
 }
 
 body.patient-portal .pdash-hero__title {
-  margin: 0 0 var(--pt-space-xs);
-  font-size: var(--pt-font-page);
+  margin: 0 0 10px;
+  font-size: clamp(1.3rem, 2.4vw, 1.75rem);
   font-weight: 800;
-  line-height: var(--pt-lh-tight);
+  line-height: 1.2;
+  color: #0f172a;
 }
 
 body.patient-portal .pdash-hero__sub {
@@ -272,12 +278,12 @@ body.patient-portal .pdash-hero__sub {
 }
 
 body.patient-portal .pdash-hero__badges {
-  gap: var(--pt-space-sm);
+  gap: 8px;
 }
 
 body.patient-portal .pdash-badge {
-  padding: 4px 10px;
-  font-size: var(--pt-font-caption);
+  padding: 6px 12px;
+  font-size: 0.7rem;
 }
 
 /* ═══════════════════════════════════════════════════════════════
