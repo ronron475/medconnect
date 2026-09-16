@@ -939,8 +939,8 @@ body.landing-page.landing-nav-open {
     border-radius: var(--landing-radius-md);
   }
 
-  .landing-page .ann-carousel__viewport {
-    margin: 0 32px;
+  .landing-page .ann-carousel:not(.ann-carousel--empty) .ann-carousel__viewport {
+    margin: 0 34px;
   }
 
   .landing-page .ann-carousel__control {
