@@ -10,8 +10,8 @@
   --landing-space-md: 32px;
   --landing-space-lg: 48px;
   --landing-space-xl: 64px;
-  --landing-section-pad-y: clamp(64px, 8vw, 88px);
-  --landing-section-header-gap: clamp(28px, 4vw, 48px);
+  --landing-section-pad-y: clamp(40px, 5vw, 56px);
+  --landing-section-header-gap: clamp(24px, 3.5vw, 36px);
   --landing-section-title-mb: 12px;
   --landing-section-desc-max: 60ch;
   --landing-radius-sm: 10px;
@@ -213,7 +213,12 @@ body.landing-page.landing-nav-open {
   font-size: var(--landing-text-label);
 }
 
-/* ── Section spacing ── */
+/* ── Section spacing ──
+   Shared vertical rhythm:
+   Announcements → Our Services → How It Works → About Us → Download App
+*/
+.landing-page .services-section,
+.landing-page .about-team-section.services-section,
 .landing-page .download-app-section {
   padding-top: var(--landing-section-pad-y);
   padding-bottom: var(--landing-section-pad-y);
@@ -221,29 +226,17 @@ body.landing-page.landing-nav-open {
   padding-right: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
 }
 
-/* Our Services / How It Works / About Us — compact, consistent vertical rhythm */
-.landing-page .services-section,
-.landing-page .about-team-section.services-section {
-  --landing-section-pad-y: clamp(40px, 5vw, 56px);
+/* Keep consecutive section gaps equal (avoid double full pads stacking unevenly) */
+.landing-page .services-section + .services-section,
+.landing-page .services-section + .download-app-section,
+.landing-page .about-team-section + .download-app-section {
   padding-top: var(--landing-section-pad-y);
-  padding-bottom: var(--landing-section-pad-y);
-  padding-left: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
-  padding-right: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
-}
-
-/* Avoid stacked top+bottom padding between consecutive navy sections */
-.landing-page .services-section + .services-section {
-  padding-top: clamp(24px, 3vw, 36px);
 }
 
 @media (max-width: 768px) {
-  .landing-page .services-section,
-  .landing-page .about-team-section.services-section {
-    --landing-section-pad-y: clamp(32px, 6vw, 44px);
-  }
-
-  .landing-page .services-section + .services-section {
-    padding-top: clamp(20px, 4vw, 28px);
+  .landing-page {
+    --landing-section-pad-y: clamp(32px, 5.5vw, 44px);
+    --landing-section-header-gap: clamp(20px, 4vw, 28px);
   }
 }
 
