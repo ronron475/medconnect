@@ -170,7 +170,7 @@
         '<div class="mc-notif-meta">' +
           '<span>' + escapeHtml(n.time_ago || n.date_label || '') + '</span>' +
           badge +
-          (!n.is_read ? '<span>Unread</span>' : '') +
+          (n.is_read ? '<span class="mc-notif-read-state">Read</span>' : '<span class="mc-notif-read-state">Unread</span>') +
         '</div>' +
       '</div>'
     );
@@ -259,9 +259,18 @@
     if (!id) return;
     document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]').forEach(function (row) {
       row.classList.remove('is-unread');
-      row.querySelectorAll('.mc-notif-meta span').forEach(function (span) {
-        if ((span.textContent || '').trim() === 'Unread') span.remove();
-      });
+      const meta = row.querySelector('.mc-notif-meta');
+      if (meta) {
+        meta.querySelectorAll('.mc-notif-read-state').forEach(function (span) { span.remove(); });
+        meta.querySelectorAll('span').forEach(function (span) {
+          const t = (span.textContent || '').trim();
+          if (t === 'Unread' || t === 'Read') span.remove();
+        });
+        const readSpan = document.createElement('span');
+        readSpan.className = 'mc-notif-read-state';
+        readSpan.textContent = 'Read';
+        meta.appendChild(readSpan);
+      }
       row.querySelectorAll('[data-action="read"]').forEach(function (btn) {
         btn.dataset.action = 'unread';
         btn.setAttribute('title', 'Mark unread');
@@ -276,6 +285,18 @@
     markedReadIds.delete(id);
     document.querySelectorAll('.mc-notif-item[data-id="' + id + '"]').forEach(function (row) {
       row.classList.add('is-unread');
+      const meta = row.querySelector('.mc-notif-meta');
+      if (meta) {
+        meta.querySelectorAll('.mc-notif-read-state').forEach(function (span) { span.remove(); });
+        meta.querySelectorAll('span').forEach(function (span) {
+          const t = (span.textContent || '').trim();
+          if (t === 'Unread' || t === 'Read') span.remove();
+        });
+        const unreadSpan = document.createElement('span');
+        unreadSpan.className = 'mc-notif-read-state';
+        unreadSpan.textContent = 'Unread';
+        meta.appendChild(unreadSpan);
+      }
       row.querySelectorAll('[data-action="unread"]').forEach(function (btn) {
         btn.dataset.action = 'read';
         btn.setAttribute('title', 'Mark read');
@@ -286,13 +307,33 @@
   }
 
   /**
-   * Authoritative badge sync — never use local badge-- / unreadCount--.
+   * Authoritative badge + dashboard UNREAD widget sync — never go below 0.
    */
   async function syncUnreadBadge() {
     try {
       const data = await fetchJson(API_BASE + 'count.php?_=' + Date.now());
       if (data.success) applyUnreadFromResponse(data);
     } catch (e) { /* silent */ }
+  }
+
+  function currentUnreadCount() {
+    const badge = document.querySelector('[data-notif-badge]');
+    if (badge && badge.dataset.count !== undefined && badge.dataset.count !== '') {
+      return Math.max(0, parseInt(badge.dataset.count, 10) || 0);
+    }
+    const widgetVal = document.querySelector('[data-widget="unread_count"] .mc-notif-widget-value');
+    if (widgetVal) {
+      return Math.max(0, parseInt(widgetVal.textContent, 10) || 0);
+    }
+    return 0;
+  }
+
+  function updateUnreadWidgets(count) {
+    const n = Math.max(0, parseInt(count, 10) || 0);
+    document.querySelectorAll('[data-widget="unread_count"]').forEach(function (el) {
+      const val = el.querySelector('.mc-notif-widget-value');
+      if (val) val.textContent = String(n);
+    });
   }
 
   function updateBadge(count) {
@@ -313,6 +354,7 @@
       el.hidden = n <= 0;
       el.setAttribute('aria-hidden', n <= 0 ? 'true' : 'false');
     });
+    updateUnreadWidgets(n);
     try {
       window.dispatchEvent(new CustomEvent('medconnect:notifications-unread', {
         detail: { unread_count: n, source: 'notifications-ui' },
@@ -521,6 +563,7 @@
         if (markReadInFlight.has(id)) return;
         markReadInFlight.add(id);
         markItemUnreadInDom(id);
+        updateBadge(currentUnreadCount() + 1);
         try {
           fd.append('action', 'unread');
           const res = await fetch(API_BASE + 'mark_read.php', {
@@ -535,7 +578,10 @@
           if (data.success) {
             applyUnreadFromResponse(data);
             refreshSidebarNavBadges();
-          } else await syncUnreadBadge();
+          } else {
+            markItemReadInDom(id);
+            await syncUnreadBadge();
+          }
         } finally {
           markReadInFlight.delete(id);
         }
@@ -607,6 +653,7 @@
     markReadInFlight.add(id);
     markedReadIds.add(id);
     markItemReadInDom(id);
+    updateBadge(Math.max(0, currentUnreadCount() - 1));
 
     try {
       const fd = new FormData();
@@ -626,10 +673,12 @@
         refreshSidebarNavBadges();
       } else {
         markedReadIds.delete(id);
+        markItemUnreadInDom(id);
         await syncUnreadBadge();
       }
     } catch (e) {
       markedReadIds.delete(id);
+      markItemUnreadInDom(id);
       await syncUnreadBadge();
     } finally {
       markReadInFlight.delete(id);
@@ -646,6 +695,7 @@
         markItemReadInDom(id);
       }
     });
+    updateBadge(0);
     try {
       const fd = new FormData();
       fd.append('csrf_token', csrf());
