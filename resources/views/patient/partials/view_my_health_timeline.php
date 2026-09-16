@@ -106,7 +106,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
     <?php endif; ?>
   </div>
 <?php else: ?>
-  <div class="pmh-feed pmh-feed--timeline mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 lg:max-w-4xl lg:grid-cols-2 lg:gap-4">
+  <div class="pmh-feed pmh-feed--timeline mx-auto grid w-full max-w-3xl grid-cols-1 items-stretch gap-4 lg:max-w-4xl lg:grid-cols-2">
     <?php foreach ($care_timeline as $item):
       $type = (string) ($item['type'] ?? '');
       $row = $item['data'] ?? [];

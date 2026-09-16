@@ -176,7 +176,7 @@
 }
 
 .pmh-panel > .pmh-tabs--segment {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
 /* ── Content surface (inner, borderless under tabs) ── */
@@ -340,7 +340,7 @@
   scrollbar-width: none;
   gap: 2px;
   padding: 3px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 11px;
@@ -401,15 +401,20 @@
 
 .pmh-page--timeline .pmh-surface__head {
   max-width: none;
-  margin-left: 0;
-  margin-right: 0;
-  margin-bottom: 4px;
-  padding-bottom: 0;
+  margin: 0 0 6px;
+  padding: 0;
   border-bottom: 0;
+}
+
+.pmh-page--timeline .pmh-surface__head--compact {
+  margin-bottom: 6px;
+  padding-bottom: 0;
 }
 
 .pmh-page--timeline .pmh-feed--timeline {
   margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 /* Empty state */
@@ -533,16 +538,18 @@
   box-shadow: 0 4px 14px rgba(2, 128, 144, 0.08);
 }
 
-/* Timeline — capped width; lg+ uses 2 columns via Tailwind utilities */
+/* Timeline — capped width; lg+ 2-col stretched card grid */
 .pmh-feed--timeline {
   background: transparent;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: 1rem; /* gap-4 */
   max-width: 48rem; /* max-w-3xl */
   width: 100%;
   margin: 0 auto;
+  padding-bottom: 0;
   box-sizing: border-box;
+  align-items: stretch;
 }
 
 @media (min-width: 1024px) {
@@ -552,8 +559,9 @@
 
   .pmh-feed--timeline {
     max-width: 56rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)); /* grid-cols-2 */
+    gap: 1rem;
+    align-items: stretch;
   }
 
   /* Hide vertical rail in multi-column so cards read as a card grid */
@@ -563,6 +571,7 @@
 
   .pmh-feed--timeline .pmh-visit {
     grid-template-columns: minmax(0, 1fr);
+    height: 100%;
   }
 }
 
@@ -576,7 +585,9 @@
   padding: 0;
   gap: 0 12px;
   width: 100%;
+  height: 100%;
   align-items: stretch;
+  margin: 0;
 }
 
 .pmh-feed--timeline .pmh-visit:not(:last-child) .pmh-visit__body {
@@ -587,13 +598,19 @@
   box-shadow: none;
 }
 
-.pmh-feed--timeline .pmh-visit__body {
+.pmh-feed--timeline .pmh-visit__body,
+body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  margin-bottom: 0;
+  margin-bottom: 0 !important; /* kill ui-system card gap under grid cards */
   box-shadow: none;
-  padding: 14px 14px 12px;
+  padding: 1rem; /* p-4 */
   background: #fff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-sizing: border-box;
 }
 
 .pmh-feed--timeline .pmh-visit__body:hover {
@@ -604,6 +621,67 @@
 
 .pmh-feed--timeline .pmh-visit:not(:last-child) .pmh-visit__rail::after {
   bottom: -12px;
+}
+
+/* Compact internal rhythm inside timeline cards */
+.pmh-feed--timeline .pmh-visit__head {
+  padding-bottom: 8px;
+  margin-bottom: 0;
+}
+
+.pmh-feed--timeline .pmh-visit__main {
+  margin-top: 0;
+  gap: 6px;
+}
+
+.pmh-feed--timeline .pmh-visit__highlight {
+  margin: 0;
+}
+
+.pmh-feed--timeline .pmh-visit__highlight .pmh-visit__label,
+.pmh-feed--timeline .pmh-visit__status-block .pmh-visit__label,
+.pmh-feed--timeline .pmh-visit__details > .pmh-visit__label {
+  margin-bottom: 2px;
+}
+
+.pmh-feed--timeline .pmh-visit__status-block {
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.pmh-feed--timeline .pmh-visit__details {
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.pmh-feed--timeline .pmh-visit__grid {
+  gap: 6px;
+}
+
+.pmh-feed--timeline .pmh-visit__block {
+  padding: 6px 8px;
+}
+
+.pmh-feed--timeline .pmh-visit__note,
+.pmh-feed--timeline .pmh-visit__rx,
+.pmh-feed--timeline .pmh-visit__soap,
+.pmh-feed--timeline .pmh-visit__pending {
+  margin-top: 6px;
+}
+
+.pmh-feed--timeline .pmh-visit__actions {
+  margin: auto 0 0;
+  padding-top: 4px;
+}
+
+.pmh-feed--timeline .pt-assess-stack {
+  margin: 0;
+  padding: 8px 10px;
+  gap: 4px;
+}
+
+.pmh-feed--timeline .pt-assess-stack__row {
+  padding: 4px 0;
 }
 
 .pmh-visit__soap-details {
@@ -1840,8 +1918,8 @@ body.pmh-care-modal-open .pt-remedy__fab {
 
   .pmh-page--timeline .pmh-surface__head {
     max-width: 100%;
-    margin-bottom: 4px;
-    padding-bottom: 0;
+    margin: 0 0 4px;
+    padding: 0;
   }
 
   .pmh-page--timeline .pmh-surface {
@@ -1849,12 +1927,12 @@ body.pmh-care-modal-open .pt-remedy__fab {
   }
 
   .pmh-panel {
-    padding: 6px 8px 10px;
+    padding: 6px 8px 8px;
     border-radius: 12px;
   }
 
   .pmh-panel > .pmh-tabs--segment {
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   .pmh-metric-pill {
@@ -2105,12 +2183,19 @@ body.pmh-care-modal-open .pt-remedy__fab {
 
   .pmh-feed--timeline {
     max-width: 100%;
-    gap: 10px;
+    gap: 0.75rem;
     margin: 0;
+    align-items: stretch;
   }
 
   .pmh-feed--timeline .pmh-visit {
     gap: 0 10px;
+    height: auto;
+  }
+
+  body.patient-portal .pmh-feed--timeline .pmh-visit__body {
+    margin-bottom: 0 !important;
+    padding: 0.875rem;
   }
 
   .pmh-visit {
