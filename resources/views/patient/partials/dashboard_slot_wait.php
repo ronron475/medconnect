@@ -35,6 +35,20 @@ $waitingLead = 'There is currently no available provider consultation slot. Your
 $availableLead = $providerName !== ''
     ? ($providerName . ' has an available consultation schedule.')
     : 'A consultation slot is now available.';
+$statusBadge = $isAvailable ? 'NON-URGENT • READY' : 'NON-URGENT • WAITING';
+$statusName = $isAvailable
+    ? ($providerName !== '' ? $providerName : 'A healthcare provider')
+    : 'In waiting queue';
+$metaParts = [];
+if ($waitingSince !== '') {
+    $metaParts[] = 'Waiting since ' . $waitingSince;
+}
+if (!$isAvailable && $queuePosition > 0) {
+    $metaParts[] = 'Queue position ' . $queuePosition . ($waitingCount > 0 ? ' of ' . $waitingCount : '');
+}
+if ($metaParts === [] && !$isAvailable) {
+    $metaParts[] = 'Queued until a provider opens a consultation slot';
+}
 ?>
 <section class="pdash-card pdash-card--review pdash-care pdash-wait" id="pdashSlotWait" aria-labelledby="pdashSlotWaitTitle" data-wait-status="<?= htmlspecialchars($status) ?>">
   <div class="pdash-care__top">
@@ -47,12 +61,8 @@ $availableLead = $providerName !== ''
         <p class="pdash-care__lead" id="pdashSlotWaitLead"><?= htmlspecialchars($isAvailable ? $availableLead : $waitingLead) ?></p>
       </div>
     </div>
-    <span class="pdash-care__status-chip <?= $isAvailable ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--wait' ?>" id="pdashSlotWaitChip">
-      <?= $isAvailable ? 'Consultation Slot Available' : 'Waiting for Doctor Availability' ?>
-    </span>
+    <span class="pdash-wait__badge <?= $isAvailable ? 'pdash-wait__badge--ready' : '' ?>" id="pdashSlotWaitTriageBadge"><?= htmlspecialchars($statusBadge) ?></span>
   </div>
-
-  <div class="pdash-wait__badge" id="pdashSlotWaitTriageBadge">NON-URGENT — <?= $isAvailable ? 'CONSULTATION SLOT AVAILABLE' : 'WAITING FOR DOCTOR AVAILABILITY' ?></div>
 
   <div class="pdash-care-panel" role="status">
     <div class="pdash-care-panel__grid">
@@ -61,22 +71,11 @@ $availableLead = $providerName !== ''
         <p class="pdash-care-concern__text" id="pdashSlotWaitComplaint"><?= $complaint !== '' ? htmlspecialchars($complaint) : 'Your complaint is on file.' ?></p>
       </div>
       <div class="pdash-care-doctor">
-        <span class="pdash-care-doctor__avatar" aria-hidden="true"><?= htmlspecialchars($provider_initials) ?></span>
+        <span class="pdash-care-doctor__avatar" aria-hidden="true" id="pdashSlotWaitInitials"><?= htmlspecialchars($provider_initials) ?></span>
         <div class="pdash-care-doctor__body">
           <span class="pdash-care-doctor__eyebrow" id="pdashSlotWaitProviderEyebrow"><?= $isAvailable ? 'Available provider' : 'Consultation status' ?></span>
-          <strong class="pdash-care-doctor__name" id="pdashSlotWaitProvider"><?= htmlspecialchars($isAvailable
-              ? ($providerName !== '' ? $providerName : 'A healthcare provider')
-              : 'Waiting for Doctor Availability') ?></strong>
-          <p class="pdash-care-doctor__note" id="pdashSlotWaitMeta">
-            <?php if ($waitingSince !== ''): ?>
-              Waiting since <?= htmlspecialchars($waitingSince) ?>
-            <?php else: ?>
-              Waiting for Doctor Availability
-            <?php endif; ?>
-            <?php if (!$isAvailable && $queuePosition > 0): ?>
-              · Queue position <?= (int) $queuePosition ?><?= $waitingCount > 0 ? ' of ' . (int) $waitingCount : '' ?>
-            <?php endif; ?>
-          </p>
+          <strong class="pdash-care-doctor__name" id="pdashSlotWaitProvider"><?= htmlspecialchars($statusName) ?></strong>
+          <p class="pdash-care-doctor__note" id="pdashSlotWaitMeta"><?= htmlspecialchars(implode(' · ', $metaParts)) ?></p>
         </div>
       </div>
     </div>
@@ -97,7 +96,7 @@ $availableLead = $providerName !== ''
     <div class="pdash-care-actions">
       <?php if ($careTipsUrl !== ''): ?>
       <a href="<?= htmlspecialchars($careTipsUrl) ?>" class="pdash-btn pdash-btn--outline pdash-care-actions__btn" id="pdashSlotWaitCareLink">
-        <?= $careApproved ? 'View Care Guidance' : 'Track care tips' ?>
+        <?= $careApproved ? 'View Care Guidance' : 'Track Care Tips' ?>
       </a>
       <?php endif; ?>
       <a href="<?= htmlspecialchars($bookUrl) ?>" class="pdash-btn pdash-btn--primary pdash-care-actions__btn" id="pdashSlotWaitBook" <?= $isAvailable ? '' : 'hidden' ?>>

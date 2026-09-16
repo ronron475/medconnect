@@ -80,11 +80,14 @@
     var careApproved = rec === 'approved';
     var meta = [];
     if (wait.waiting_since_label) meta.push('Waiting since ' + wait.waiting_since_label);
-    else meta.push('Waiting for Doctor Availability');
     if (!available && wait.queue_position > 0) {
       meta.push('Queue position ' + wait.queue_position + (wait.waiting_count ? (' of ' + wait.waiting_count) : ''));
     }
+    if (!meta.length && !available) {
+      meta.push('Queued until a provider opens a consultation slot');
+    }
     var waitingLead = 'There is currently no available provider consultation slot. Your case is safely in the waiting queue. We will notify you when a provider opens an available consultation schedule.';
+    var statusBadge = available ? 'NON-URGENT • READY' : 'NON-URGENT • WAITING';
 
     return ''
       + '<section class="pdash-card pdash-card--review pdash-care pdash-wait" id="pdashSlotWait" aria-labelledby="pdashSlotWaitTitle" data-wait-status="' + esc(wait.status || 'waiting') + '">'
@@ -100,11 +103,8 @@
         : waitingLead) + '</p>'
       + '      </div>'
       + '    </div>'
-      + '    <span class="pdash-care__status-chip ' + (available ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--wait') + '" id="pdashSlotWaitChip">'
-      + (available ? 'Consultation Slot Available' : 'Waiting for Doctor Availability')
-      + '    </span>'
+      + '    <span class="pdash-wait__badge' + (available ? ' pdash-wait__badge--ready' : '') + '" id="pdashSlotWaitTriageBadge">' + esc(statusBadge) + '</span>'
       + '  </div>'
-      + '  <div class="pdash-wait__badge" id="pdashSlotWaitTriageBadge">NON-URGENT — ' + (available ? 'CONSULTATION SLOT AVAILABLE' : 'WAITING FOR DOCTOR AVAILABILITY') + '</div>'
       + '  <div class="pdash-care-panel" role="status">'
       + '    <div class="pdash-care-panel__grid">'
       + '      <div class="pdash-care-concern">'
@@ -115,7 +115,7 @@
       + '        <span class="pdash-care-doctor__avatar" aria-hidden="true" id="pdashSlotWaitInitials">' + esc(initials(provider)) + '</span>'
       + '        <div class="pdash-care-doctor__body">'
       + '          <span class="pdash-care-doctor__eyebrow" id="pdashSlotWaitProviderEyebrow">' + (available ? 'Available provider' : 'Consultation status') + '</span>'
-      + '          <strong class="pdash-care-doctor__name" id="pdashSlotWaitProvider">' + esc(available ? (provider || 'A healthcare provider') : 'Waiting for Doctor Availability') + '</strong>'
+      + '          <strong class="pdash-care-doctor__name" id="pdashSlotWaitProvider">' + esc(available ? (provider || 'A healthcare provider') : 'In waiting queue') + '</strong>'
       + '          <p class="pdash-care-doctor__note" id="pdashSlotWaitMeta">' + esc(meta.join(' · ')) + '</p>'
       + '        </div>'
       + '      </div>'
@@ -123,7 +123,7 @@
       + '    <div class="pdash-wait__care" id="pdashSlotWaitCare">' + careHtml(wait, available) + '</div>'
       + '    <div class="pdash-care-actions">'
       + '      <a href="' + esc(careUrl) + '" class="pdash-btn pdash-btn--outline pdash-care-actions__btn" id="pdashSlotWaitCareLink">'
-      + (careApproved ? 'View Care Guidance' : 'Track care tips')
+      + (careApproved ? 'View Care Guidance' : 'Track Care Tips')
       + '      </a>'
       + '      <a href="' + esc(bookUrl) + '" class="pdash-btn pdash-btn--primary pdash-care-actions__btn" id="pdashSlotWaitBook"' + (available ? '' : ' hidden') + '>Book Consultation</a>'
       + '    </div>'
@@ -172,18 +172,10 @@
       ? (provider ? (provider + ' has an available consultation schedule.') : 'A consultation slot is now available.')
       : 'There is currently no available provider consultation slot. Your case is safely in the waiting queue. We will notify you when a provider opens an available consultation schedule.');
 
-    var chip = document.getElementById('pdashSlotWaitChip');
-    if (chip) {
-      chip.textContent = available ? 'Consultation Slot Available' : 'Waiting for Doctor Availability';
-      chip.classList.toggle('pdash-care__status-chip--ready', available);
-      chip.classList.toggle('pdash-care__status-chip--wait', !available);
-    }
-
     var badge = document.getElementById('pdashSlotWaitTriageBadge');
     if (badge) {
-      badge.textContent = available
-        ? 'NON-URGENT — CONSULTATION SLOT AVAILABLE'
-        : 'NON-URGENT — WAITING FOR DOCTOR AVAILABILITY';
+      badge.textContent = available ? 'NON-URGENT • READY' : 'NON-URGENT • WAITING';
+      badge.classList.toggle('pdash-wait__badge--ready', available);
     }
 
     text(document.getElementById('pdashSlotWaitProviderEyebrow'), available ? 'Available provider' : 'Consultation status');
@@ -192,7 +184,7 @@
     }
     text(document.getElementById('pdashSlotWaitProvider'), available
       ? (provider || 'A healthcare provider')
-      : 'Waiting for Doctor Availability');
+      : 'In waiting queue');
     var avatar = document.getElementById('pdashSlotWaitInitials');
     if (avatar && provider) avatar.textContent = initials(provider);
 
@@ -200,9 +192,11 @@
     if (meta) {
       var parts = [];
       if (wait.waiting_since_label) parts.push('Waiting since ' + wait.waiting_since_label);
-      else parts.push('Waiting for Doctor Availability');
       if (!available && wait.queue_position > 0) {
         parts.push('Queue position ' + wait.queue_position + (wait.waiting_count ? (' of ' + wait.waiting_count) : ''));
+      }
+      if (!parts.length && !available) {
+        parts.push('Queued until a provider opens a consultation slot');
       }
       meta.textContent = parts.join(' · ');
     }
@@ -218,7 +212,7 @@
       if (wait.care_tips_url) careLink.setAttribute('href', wait.care_tips_url);
       careLink.textContent = String(wait.care_tips_status || '') === 'approved'
         ? 'View Care Guidance'
-        : 'Track care tips';
+        : 'Track Care Tips';
     }
 
     var care = document.getElementById('pdashSlotWaitCare');

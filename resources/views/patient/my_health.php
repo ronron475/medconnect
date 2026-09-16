@@ -262,6 +262,12 @@ $patient_page_stylesheets = [
 <html lang="en">
 <head>
 <?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: false },
+    };
+  </script>
 </head>
 <body class="patient-portal">
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
@@ -298,7 +304,7 @@ $patient_page_stylesheets = [
       </a>
     </nav>
 
-    <div class="pmh-surface" role="tabpanel">
+    <div class="pmh-surface<?= $active_tab === 'timeline' ? ' mx-auto w-full max-w-3xl lg:max-w-4xl' : '' ?>" role="tabpanel">
       <?php if ($active_tab === 'timeline'): ?>
         <header class="pmh-surface__head pmh-surface__head--compact">
           <h3 class="pmh-surface__title">Care timeline</h3>

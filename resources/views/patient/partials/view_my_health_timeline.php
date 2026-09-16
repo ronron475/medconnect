@@ -89,7 +89,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
 }
 ?>
 <?php if (!$hasTimeline): ?>
-  <div class="pmh-empty pmh-empty--minimal">
+  <div class="pmh-empty pmh-empty--minimal mx-auto w-full max-w-3xl">
     <?php if ($hasCareTips): ?>
     <h3>No care visits on this timeline yet</h3>
     <p>
@@ -106,7 +106,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
     <?php endif; ?>
   </div>
 <?php else: ?>
-  <div class="pmh-feed pmh-feed--timeline">
+  <div class="pmh-feed pmh-feed--timeline mx-auto grid w-full max-w-3xl grid-cols-1 gap-3 lg:max-w-4xl lg:grid-cols-2 lg:gap-4">
     <?php foreach ($care_timeline as $item):
       $type = (string) ($item['type'] ?? '');
       $row = $item['data'] ?? [];

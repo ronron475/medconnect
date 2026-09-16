@@ -67,6 +67,10 @@ $soap_finalized = patient_consultation_is_finalized(
 $consultation_completed = $soap_finalized;
 $soap_readonly = $soap_finalized;
 $soap_signer = clinical_note_provider_identity($pdo, (int) $_SESSION['user_id']);
+$soap_esign_name = trim((string) ($soap_signer['full_name'] ?? ''));
+if ($soap_esign_name === '') {
+    $soap_esign_name = trim((string) ($soap_signer['legal_name'] ?? ''));
+}
 $soap_signed_by = $clinical_note
     ? clinical_note_signed_by_label($clinical_note, $soap_signer['display_name'])
     : '';
@@ -2861,37 +2865,23 @@ body.final-assessment-modal-open {
                     <?php if (!$consultation_completed): ?>
                     <div class="soap-sign" id="soapSignature">
                         <h3 class="soap-sign__title">Electronic Signature</h3>
-                        <p class="soap-sign__lead">Choose how you want to sign. The signature must belong to your authenticated provider account.</p>
-
-                        <div class="soap-sign__methods" role="radiogroup" aria-label="Signature method">
-                            <label class="soap-sign__method is-active">
-                                <input type="radio" name="signature_method" value="typed" checked>
-                                Type Full Name
-                            </label>
-                            <label class="soap-sign__method">
-                                <input type="radio" name="signature_method" value="drawn">
-                                Draw Signature
-                            </label>
+                        <div class="soap-sign__field">
+                            <label class="pd-label" for="soapProviderName">Provider Full Name</label>
+                            <input
+                                type="text"
+                                id="soapProviderName"
+                                class="pd-input soap-sign__name"
+                                value="<?= htmlspecialchars($soap_esign_name) ?>"
+                                readonly
+                                aria-readonly="true"
+                                tabindex="-1"
+                            >
+                            <p class="soap-sign__hint">Automatically generated from your authenticated provider account. This name is your electronic signature.</p>
                         </div>
 
-                        <div class="soap-sign__panel" id="soapTypedPanel">
-                            <label class="pd-label" for="soapTypedName">Full Name</label>
-                            <input type="text" id="soapTypedName" name="signature_name" class="pd-input" autocomplete="off" inputmode="text" maxlength="120" placeholder="<?= htmlspecialchars($soap_signer['full_name'] !== '' ? $soap_signer['full_name'] : 'Your registered name') ?>" value="">
-                            <p class="soap-sign__hint">Type your registered name (for example <?= htmlspecialchars($soap_signer['full_name'] !== '' ? $soap_signer['full_name'] : 'First Last') ?>). It must match your provider account.</p>
-                        </div>
-
-                        <div class="soap-sign__panel" id="soapDrawnPanel" hidden>
-                            <p class="pd-label">Sign below</p>
-                            <div class="soap-sign__canvas-wrap" id="soapCanvasWrap">
-                                <canvas id="soapSignatureCanvas" class="soap-sign__canvas" width="600" height="180" aria-label="Draw your signature"></canvas>
-                                <span class="soap-sign__placeholder" id="soapCanvasHint">Sign here</span>
-                            </div>
-                            <div class="soap-sign__actions">
-                                <button type="button" class="session-btn soap-sign__clear" id="soapClearSignature">Clear Signature</button>
-                            </div>
-                        </div>
-
-                        <input type="hidden" name="signature_data" id="soapSignatureData" value="">
+                        <input type="hidden" name="signature_method" value="typed">
+                        <input type="hidden" name="signature_name" id="soapSignatureName" value="<?= htmlspecialchars($soap_esign_name) ?>">
+                        <input type="hidden" name="signature_data" id="soapSignatureData" value="<?= htmlspecialchars($soap_esign_name) ?>">
 
                         <label class="soap-sign__confirm">
                             <input type="checkbox" name="soap_confirm" id="soapConfirm" value="1">
@@ -3711,8 +3701,6 @@ body.final-assessment-modal-open {
 </div>
 
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
-<?php $soapSigJsVer = (int) @filemtime(ASSETS_PATH . '/js/soap-signature.js'); ?>
-<script src="<?= ASSET_BASE ?>/assets/js/soap-signature.js?v=<?= $soapSigJsVer ?: time() ?>"></script>
 <script>
 // SESSION TIMER
 let seconds = 0;
@@ -5328,48 +5316,21 @@ async function saveSOAP(finalize = false) {
 }
 
 const soapSignerNames = <?= json_encode([
-    'full' => $soap_signer['full_name'] ?? '',
-    'candidates' => clinical_note_typed_name_candidates($soap_signer),
+    'full' => $soap_esign_name,
 ], JSON_UNESCAPED_UNICODE) ?>;
 
-let soapPad = null;
 let soapUiReady = false;
 
-function soapNormalizeName(value) {
-    return String(value || '')
-        .replace(/^(dr\.?|dra\.?|doctor)\s+/i, '')
-        .replace(/Ã±/gi, 'n')
-        .toLowerCase()
-        .replace(/[^a-z\s]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-}
-
-function soapTypedNameMatches(value) {
-    const typed = soapNormalizeName(value);
-    if (!typed) return false;
-    const candidates = soapSignerNames.candidates || [];
-    if (candidates.indexOf(typed) !== -1) return true;
-    return typed === soapNormalizeName(soapSignerNames.full);
-}
-
-function soapSelectedMethod() {
-    const checked = document.querySelector('#soapForm input[name="signature_method"]:checked');
-    return checked ? checked.value : '';
-}
-
 function syncSoapSignatureFields() {
-    const hidden = document.getElementById('soapSignatureData');
-    const method = soapSelectedMethod();
-    if (!hidden) return;
-    if (method === 'drawn' && soapPad && soapPad.hasInk()) {
-        hidden.value = soapPad.toDataURL();
-    } else if (method === 'typed') {
-        const nameEl = document.getElementById('soapTypedName');
-        hidden.value = nameEl ? String(nameEl.value || '').trim() : '';
-    } else {
-        hidden.value = '';
+    const name = String(soapSignerNames.full || '').trim();
+    const display = document.getElementById('soapProviderName');
+    const hiddenData = document.getElementById('soapSignatureData');
+    const hiddenName = document.getElementById('soapSignatureName');
+    if (display && display.value !== name) {
+        display.value = name;
     }
+    if (hiddenData) hiddenData.value = name;
+    if (hiddenName) hiddenName.value = name;
 }
 
 function soapClientValidationMessage() {
@@ -5382,18 +5343,9 @@ function soapClientValidationMessage() {
             return 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.';
         }
     }
-    const method = soapSelectedMethod();
-    if (method !== 'typed' && method !== 'drawn') {
-        return 'Please provide your electronic signature before finalizing the SOAP note.';
-    }
-    if (method === 'typed') {
-        const nameEl = document.getElementById('soapTypedName');
-        const typed = nameEl ? String(nameEl.value || '').trim() : '';
-        if (!typed || !soapTypedNameMatches(typed)) {
-            return 'The typed name must match your authenticated provider account.';
-        }
-    } else if (!soapPad || !soapPad.hasInk()) {
-        return 'Please provide your electronic signature before finalizing the SOAP note.';
+    syncSoapSignatureFields();
+    if (!String(soapSignerNames.full || '').trim()) {
+        return 'Provider identity could not be verified. Please refresh and try again.';
     }
     const confirmEl = document.getElementById('soapConfirm');
     if (!confirmEl || !confirmEl.checked) {
@@ -5408,21 +5360,6 @@ function updateSoapFinalizeReady() {
     const msg = soapClientValidationMessage();
     if (btn) btn.disabled = msg !== '';
     if (err && msg === '') err.textContent = '';
-}
-
-function setSoapMethod(method) {
-    const typedPanel = document.getElementById('soapTypedPanel');
-    const drawnPanel = document.getElementById('soapDrawnPanel');
-    document.querySelectorAll('.soap-sign__method').forEach(function (label) {
-        const input = label.querySelector('input[name="signature_method"]');
-        label.classList.toggle('is-active', !!(input && input.value === method && input.checked));
-    });
-    if (typedPanel) typedPanel.hidden = method !== 'typed';
-    if (drawnPanel) drawnPanel.hidden = method !== 'drawn';
-    if (method === 'drawn' && soapPad) {
-        requestAnimationFrame(function () { soapPad.fit(); });
-    }
-    updateSoapFinalizeReady();
 }
 
 function openSoapFinalizeModal() {
@@ -5501,23 +5438,8 @@ function closeSoapSuccessModal() {
 function initSoapSignatureUi() {
     if (soapUiReady) return;
     soapUiReady = true;
-    const canvas = document.getElementById('soapSignatureCanvas');
-    if (canvas && window.SoapSignaturePad) {
-        soapPad = new window.SoapSignaturePad(canvas, {
-            wrap: document.getElementById('soapCanvasWrap'),
-            placeholder: document.getElementById('soapCanvasHint'),
-        });
-        soapPad.onChange = updateSoapFinalizeReady;
-    }
 
-    document.querySelectorAll('input[name="signature_method"]').forEach(function (input) {
-        input.addEventListener('change', function () {
-            setSoapMethod(input.value);
-        });
-    });
-
-    const nameEl = document.getElementById('soapTypedName');
-    if (nameEl) nameEl.addEventListener('input', updateSoapFinalizeReady);
+    syncSoapSignatureFields();
 
     const confirmEl = document.getElementById('soapConfirm');
     if (confirmEl) confirmEl.addEventListener('change', updateSoapFinalizeReady);
@@ -5528,17 +5450,9 @@ function initSoapSignatureUi() {
         form.addEventListener('change', updateSoapFinalizeReady);
         form.addEventListener('reset', function () {
             setTimeout(function () {
-                if (soapPad) soapPad.clear();
-                setSoapMethod('typed');
+                syncSoapSignatureFields();
                 updateSoapFinalizeReady();
             }, 0);
-        });
-    }
-
-    const clearBtn = document.getElementById('soapClearSignature');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', function () {
-            if (soapPad) soapPad.clear();
         });
     }
 
@@ -5589,7 +5503,6 @@ function initSoapSignatureUi() {
         });
     }
 
-    setSoapMethod(soapSelectedMethod() || 'typed');
     updateSoapFinalizeReady();
 }
 
