@@ -8,11 +8,6 @@
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_scripts.php'; ?>
 <?php require_once VIEWS_PATH . '/partials/live_sync_assets.php'; ?>
-<?php if (!defined('MC_PORTAL_SHELL') || MC_PORTAL_SHELL !== 'superadmin'):
-  $admNavAccordionJsVer = (int) @filemtime(ASSETS_PATH . '/js/adm-nav-accordion.js');
-?>
-<script src="<?= ASSET_BASE ?>/assets/js/adm-nav-accordion.js?v=<?= $admNavAccordionJsVer ?>" defer></script>
-<?php endif; ?>
 <?php require_once VIEWS_PATH . '/components/medconnect_multitask.php'; ?>
 </body>
 </html>
