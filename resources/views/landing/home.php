@@ -40,7 +40,7 @@ $asset = ASSET_BASE;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260915a" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260916b" />
 
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/medconnect-typography.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/medconnect-typography.css') ?>" />
@@ -51,9 +51,9 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-illustration.css?v=4" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=24" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=13" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=25" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.8" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=14" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-card-polish.css?v=4" />
@@ -63,7 +63,7 @@ $asset = ASSET_BASE;
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=12" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=13" />
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-download-app.css?v=<?= $landingDownloadCssVer ?>" />
 
