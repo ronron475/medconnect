@@ -28,7 +28,7 @@ $notif_widget_render_item = static function (string $widget_key, string $widget_
 
 <?php if ($notif_widget_mode === 'full' || $notif_widget_mode === 'strip'): ?>
 <?php if (!$notif_widget_bare): ?>
-<div class="mc-notif-widgets mc-notif-widgets--dashboard" data-notif-widgets aria-label="Live operations summary">
+<div class="mc-notif-widgets mc-notif-widgets--dashboard" data-notif-widgets aria-label="Operations summary">
 <?php endif; ?>
   <?php foreach ($notif_widget_defs as $widget_key => [$widget_label, $widget_class]):
     if (in_array($widget_key, $notif_widget_exclude, true)) {

@@ -73,8 +73,8 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 
 <div data-live-dashboard="admin">
 
-<!-- Live operations (notification-driven) -->
-<section aria-label="Live operations">
+<!-- Notification-driven metrics -->
+<section aria-label="Operations summary">
     <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
         <div>
             <p class="adm-section-sub">Real-time counts from consultations, referrals, and alerts</p>
