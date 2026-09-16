@@ -79,50 +79,67 @@ if (!isLandingPage) {
     document.documentElement.style.setProperty('--hero-signin-nav-offset', `${navH + maintH}px`);
   }
 
+  function getScrollY() {
+    return window.scrollY
+      || window.pageYOffset
+      || document.documentElement.scrollTop
+      || document.body.scrollTop
+      || 0;
+  }
+
   function forcePageTop() {
+    try {
+      if ('scrollRestoration' in history) {
+        history.scrollRestoration = 'manual';
+      }
+    } catch (_) { /* ignore */ }
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }
 
-  function scrollToHeroTop(done) {
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const finish = () => {
+  /** Resolve only after the window is actually at the absolute top. */
+  function waitUntilPageAtTop(done) {
+    let frames = 0;
+    const maxFrames = 30;
+
+    function tick() {
       forcePageTop();
-      if (typeof done === 'function') done();
-    };
-
-    if (window.scrollY <= 12) {
-      finish();
-      return;
-    }
-
-    window.scrollTo({ top: 0, behavior: prefersReduced ? 'auto' : 'smooth' });
-
-    if (prefersReduced) {
-      finish();
-      return;
-    }
-
-    let lastY = -1;
-    let stillFrames = 0;
-    const deadline = Date.now() + 2400;
-
-    function poll() {
-      const y = window.scrollY;
-      if (y <= 12 || Date.now() > deadline) {
-        finish();
+      frames += 1;
+      if (getScrollY() <= 1 || frames >= maxFrames) {
+        forcePageTop();
+        if (typeof done === 'function') done();
         return;
       }
-      if (y === lastY) {
-        stillFrames += 1;
-        if (stillFrames >= 6) {
-          finish();
-          return;
-        }
-      } else {
-        stillFrames = 0;
-        lastY = y;
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  }
+
+  function scrollToHeroTop(done) {
+    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const complete = () => waitUntilPageAtTop(done);
+
+    if (getScrollY() <= 12 || prefersReduced) {
+      complete();
+      return;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const deadline = Date.now() + 3200;
+
+    function poll() {
+      const y = getScrollY();
+      /* Only finish when we have actually reached the top — never on a stalled mid-page scroll. */
+      if (y <= 12) {
+        complete();
+        return;
+      }
+      if (Date.now() > deadline) {
+        complete();
+        return;
       }
       requestAnimationFrame(poll);
     }
@@ -209,11 +226,18 @@ if (!isLandingPage) {
     }
   }
 
-  function lockScroll() {
+  function lockScroll(options) {
     if (scrollLocked) return;
 
+    const resetToTop = !!(options && options.resetToTop);
+    if (resetToTop) {
+      forcePageTop();
+      savedScroll = 0;
+    } else {
+      savedScroll = getScrollY();
+    }
+
     scrollLocked = true;
-    savedScroll = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
 
     document.documentElement.classList.add('signin-scroll-locked');
     document.body.classList.add('signin-scroll-locked');
@@ -273,7 +297,7 @@ if (!isLandingPage) {
     /* Safety net: keep window scroll pinned while body is fixed. */
     preventScrollGuard = () => {
       if (!scrollLocked) return;
-      if (window.scrollY !== 0) window.scrollTo(0, 0);
+      if (getScrollY() !== 0) window.scrollTo(0, 0);
     };
     window.addEventListener('scroll', preventScrollGuard, { passive: true, capture: true });
   }
@@ -317,7 +341,7 @@ if (!isLandingPage) {
     }
   }
 
-  function openModalPinned() {
+  function openModalPinned(options) {
     clearTimeout(closeTimer);
     overlay.classList.remove('is-closing');
     lastFocus = document.activeElement;
@@ -326,7 +350,7 @@ if (!isLandingPage) {
 
     portalSigninToBody();
     overlay.classList.add('is-viewport-pinned');
-    lockScroll();
+    lockScroll(options);
     overlay.removeAttribute('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('signin-active');
@@ -345,7 +369,7 @@ if (!isLandingPage) {
     document.addEventListener('keydown', trapFocus);
   }
 
-  function openModalAtHero() {
+  function openModalAtHero(options) {
     clearTimeout(closeTimer);
     overlay.classList.remove('is-closing', 'is-viewport-pinned');
     lastFocus = document.activeElement;
@@ -355,7 +379,7 @@ if (!isLandingPage) {
     overlay.removeAttribute('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('signin-active');
-    lockScroll();
+    lockScroll(options);
     if (heroSection) heroSection.classList.add('is-signin-open');
     setTriggerExpanded(true);
     signinOpenedAt = performance.now();
@@ -378,18 +402,18 @@ if (!isLandingPage) {
 
   let openingSignIn = false;
 
-  function openSignInAfterHomeScroll() {
-    forcePageTop();
+  function openSignInAtHomePosition() {
     if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) {
       return;
     }
 
-    /* Desktop: hero-anchored panel (screenshot position). Tablet/mobile: viewport-pinned. */
+    /* Same placement as opening Sign In from Home: hero panel on desktop, pinned on tablet/mobile. */
+    const lockOpts = { resetToTop: true };
     const usePinnedLayout = !isInlineHero || window.matchMedia('(max-width: 960px)').matches;
     if (usePinnedLayout) {
-      openModalPinned();
+      openModalPinned(lockOpts);
     } else {
-      openModalAtHero();
+      openModalAtHero(lockOpts);
     }
   }
 
@@ -398,11 +422,14 @@ if (!isLandingPage) {
       return;
     }
 
-    /* Always return to Home/top first, then open Sign In in the hero position. */
+    /* 1) Smooth-scroll to absolute top  2) wait until there  3) only then open modal */
     openingSignIn = true;
     scrollToHeroTop(() => {
       openingSignIn = false;
-      openSignInAfterHomeScroll();
+      if (getScrollY() > 2) {
+        forcePageTop();
+      }
+      openSignInAtHomePosition();
     });
   }
 
