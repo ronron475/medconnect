@@ -828,7 +828,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/login-lockout.js?v=2"></script>
 <?php $sessionSyncJsVer = (int) @filemtime(ASSETS_PATH . '/js/session-sync.js'); ?>
 <script src="<?= $asset ?>/assets/js/session-sync.js?v=<?= $sessionSyncJsVer ?>"></script>
-<script src="<?= $asset ?>/assets/js/script.js?v=20260916a"></script>
+<script src="<?= $asset ?>/assets/js/script.js?v=20260916b"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 
 <script>
