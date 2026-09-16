@@ -164,8 +164,9 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-open:not(.is-viewpo
   min-height: 0;
   max-height: 100%;
   overflow: hidden !important;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 body.landing-page.signin-scroll-locked #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-inner,
@@ -192,8 +193,9 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-viewport-pinned.is-
   min-height: 0;
   max-height: 100%;
   overflow: hidden !important;
-  display: flex !important;
-  flex-direction: column;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 body.landing-page.signin-scroll-locked #signin-modal.hero-signin-panel.is-viewport-pinned .signin-modal-inner,
@@ -215,13 +217,22 @@ body.landing-page.signin-scroll-locked .hero-signin-panel.is-viewport-pinned.is-
   position: relative;
   width: 100%;
   max-width: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
   min-height: 0;
   min-width: 0;
   max-height: 100%;
   box-sizing: border-box;
   overflow: visible;
+  isolation: isolate;
+}
+
+.landing-page .hero-signin-panel .signin-modal-toolbar,
+.landing-page .hero-signin-panel .signin-modal-inner {
+  grid-area: 1 / 1;
+  min-width: 0;
 }
 
 body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-wrap,
@@ -230,8 +241,9 @@ body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is
   min-height: 0;
   max-height: none;
   overflow: visible;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, auto);
 }
 
 body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel:not(.is-viewport-pinned) .signin-modal-inner,
@@ -248,7 +260,9 @@ body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is
   min-height: 0;
   max-height: none;
   overflow: visible;
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, auto);
 }
 
 body.landing-page.signin-active:not(.signin-scroll-locked) #signin-modal.hero-signin-panel.is-viewport-pinned .signin-modal-inner,
@@ -291,13 +305,21 @@ body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is
 }
 
 .landing-page .hero-signin-panel .signin-modal-toolbar {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 20;
+  position: relative;
+  top: auto;
+  right: auto;
+  z-index: 30;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  justify-content: flex-end;
+  align-self: start;
+  justify-self: end;
+  width: auto;
+  height: auto;
+  margin: 16px 16px 0 0;
+  padding: 0;
+  pointer-events: none;
+  transform: none;
 }
 
 /* Theme toggle removed from Sign In — hide any leftover markup/space */
@@ -306,12 +328,16 @@ body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is
 }
 
 .landing-page .hero-signin-panel .signin-modal-close {
-  position: static;
-  top: auto;
-  right: auto;
-  z-index: 20;
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  bottom: auto !important;
+  inset: auto !important;
+  z-index: 30;
   width: 34px;
   height: 34px;
+  margin: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -323,6 +349,7 @@ body.landing-page.signin-active:not(.signin-scroll-locked) .hero-signin-panel.is
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  pointer-events: auto;
   transition: background 0.2s, color 0.2s, transform 0.15s, border-color 0.2s;
 }
 
@@ -923,7 +950,9 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 
   body.landing-page.signin-active > #signin-modal.hero-signin-panel.is-open .signin-modal-wrap,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-wrap {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto);
     width: 100%;
     max-width: 100%;
     min-height: 0;
@@ -978,9 +1007,11 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
     padding-right: var(--signin-toolbar-clearance, 48px);
   }
 
+  .landing-page .hero-signin-panel .signin-modal-toolbar {
+    margin: 16px 16px 0 0;
+  }
+
   .landing-page .hero-signin-panel .signin-modal-close {
-    top: 16px;
-    right: 16px;
     width: 34px;
     height: 34px;
   }
@@ -1306,7 +1337,9 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-open .signin-modal-wrap,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-viewport-pinned.is-open .signin-modal-wrap,
   body.landing-page.signin-active #signin-modal.hero-signin-panel.is-closing .signin-modal-wrap {
-    display: block;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto);
     width: min(400px, 100%);
     max-width: 100%;
     min-height: 0;
