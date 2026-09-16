@@ -306,7 +306,7 @@ $patient_page_stylesheets = [
 
     <div class="pmh-surface<?= $active_tab === 'timeline' ? ' mx-auto w-full max-w-3xl lg:max-w-4xl' : '' ?>" role="tabpanel">
       <?php if ($active_tab === 'timeline'): ?>
-        <header class="pmh-surface__head pmh-surface__head--compact">
+        <header class="pmh-surface__head pmh-surface__head--compact mt-0 mb-1 pt-0">
           <h3 class="pmh-surface__title">Care timeline</h3>
           <p class="pmh-surface__desc">Consultations, assessments, and recorded health activity.</p>
         </header>
