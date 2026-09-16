@@ -57,9 +57,35 @@ body.landing-page .bg-canvas {
 }
 
 .landing-page .landing-navbar.landing-navbar--premium.nav-on-light {
-  background: rgba(248, 252, 252, 0.96);
-  border-bottom-color: rgba(1, 42, 74, 0.08);
-  box-shadow: 0 2px 14px rgba(1, 42, 74, 0.06);
+  /* Keep dark-blue navbar at all scroll positions */
+  background: #012a4a;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.16);
+}
+
+.landing-page .landing-navbar.nav-on-light .nav-logo .logo-brand-med,
+.landing-page .landing-navbar.nav-on-light .nav-logo .logo-text {
+  color: #fff;
+}
+
+.landing-page .landing-navbar.nav-on-light .nav-logo__divider {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.landing-page .landing-navbar.nav-on-light .nav-links .nav-link {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.landing-page .landing-navbar.nav-on-light .nav-links .nav-link:hover {
+  color: #5eead4;
+}
+
+.landing-page .landing-navbar.nav-on-light .nav-links .nav-link.is-active {
+  color: #fff;
+}
+
+.landing-page .landing-navbar.nav-on-light .nav-toggle span {
+  background: #fff;
 }
 
 /* ── Brand | Navigation | Sign In ── */
@@ -184,11 +210,6 @@ body.landing-page .bg-canvas {
   transition: color 0.28s ease;
 }
 
-.landing-page .landing-navbar.nav-on-light .nav-logo .logo-brand-med,
-.landing-page .landing-navbar.nav-on-light .nav-logo .logo-text {
-  color: var(--navy);
-}
-
 .landing-page .nav-logo .logo-accent {
   color: var(--teal);
 }
@@ -199,10 +220,6 @@ body.landing-page .bg-canvas {
   height: 28px;
   background: rgba(255, 255, 255, 0.22);
   flex-shrink: 0;
-}
-
-.landing-page .landing-navbar.nav-on-light .nav-logo__divider {
-  background: rgba(1, 42, 74, 0.16);
 }
 
 .landing-page .nav-logo__partner {
@@ -256,10 +273,6 @@ body.landing-page .bg-canvas {
   transition: color 0.2s ease;
 }
 
-.landing-page .landing-navbar.nav-on-light .nav-links .nav-link {
-  color: rgba(1, 42, 74, 0.78);
-}
-
 .landing-page .nav-links .nav-link::after {
   content: '';
   position: absolute;
@@ -281,10 +294,6 @@ body.landing-page .bg-canvas {
   transform: none;
 }
 
-.landing-page .landing-navbar.nav-on-light .nav-links .nav-link:hover {
-  color: var(--teal);
-}
-
 .landing-page .nav-links .nav-link:hover::after,
 .landing-page .nav-links .nav-link.is-active::after {
   transform: scaleX(1);
@@ -293,10 +302,6 @@ body.landing-page .bg-canvas {
 .landing-page .nav-links .nav-link.is-active {
   color: #fff;
   background: transparent;
-}
-
-.landing-page .landing-navbar.nav-on-light .nav-links .nav-link.is-active {
-  color: var(--navy);
 }
 
 .landing-page .nav-links .nav-link:focus-visible {
@@ -394,10 +399,6 @@ body.landing-page .bg-canvas {
   background: #fff;
   border-radius: 2px;
   transition: transform 0.28s ease, opacity 0.28s ease, background 0.28s ease;
-}
-
-.landing-page .landing-navbar.nav-on-light .nav-toggle span {
-  background: var(--navy);
 }
 
 .landing-page .nav-toggle:hover {
@@ -521,12 +522,6 @@ html.landing-scroll {
       visibility 0s linear 0s;
   }
 
-  .landing-page .landing-navbar.nav-on-light .nav-menu--drawer {
-    background: rgba(248, 252, 252, 0.98);
-    border-left-color: var(--border);
-    box-shadow: -12px 0 48px rgba(1, 42, 74, 0.12);
-  }
-
   .landing-page .nav-menu--drawer .nav-links--drawer {
     flex-direction: column;
     align-items: stretch;
@@ -552,11 +547,6 @@ html.landing-scroll {
   .landing-page .nav-links--drawer .nav-link.is-active {
     background: rgba(6, 147, 150, 0.16);
     color: #fff;
-  }
-
-  .landing-page .landing-navbar.nav-on-light .nav-links--drawer .nav-link.is-active {
-    background: rgba(6, 147, 150, 0.1);
-    color: var(--navy);
   }
 
   .landing-page .btn-nav-signin--drawer {

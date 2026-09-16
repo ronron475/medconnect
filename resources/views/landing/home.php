@@ -52,7 +52,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=27" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.8" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.9" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=14" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/signin-req-drawer.css?v=11" />
@@ -820,7 +820,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 <script src="<?= $asset ?>/assets/js/landing-about-project-milestone.js?v=2" defer></script>
   <script src="<?= $asset ?>/assets/js/landing-scroll-animations.js?v=9" defer></script>
-<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=11" defer></script>
+<script src="<?= $asset ?>/assets/js/landing-interactions.js?v=12" defer></script>
 <script src="<?= $asset ?>/assets/js/landing-fab.js" defer></script>
 <script src="<?= $asset ?>/assets/js/draggable-fab.js?v=1" defer></script>
 <script src="<?= $asset ?>/assets/js/signin-req-drawer.js?v=4" defer></script>

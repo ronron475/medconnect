@@ -163,22 +163,8 @@
     navbar.classList.toggle('nav-blended', overHero && scrollY < 120);
     navbar.classList.toggle('nav-scrolled', scrollY > 24);
     navbar.classList.toggle('scrolled', scrollY > 24);
-
-    const lightSections = ['services-section', 'how-it-works', 'about-section', 'contact-section'];
-    const probeY = getNavOffset();
-    let onLight = false;
-
-    for (const id of lightSections) {
-      const section = document.getElementById(id);
-      if (!section) continue;
-      const rect = section.getBoundingClientRect();
-      if (rect.top <= probeY && rect.bottom > probeY) {
-        onLight = true;
-        break;
-      }
-    }
-
-    navbar.classList.toggle('nav-on-light', onLight && !overHero);
+    // Always keep the premium dark-blue navbar (no light surface on scroll).
+    navbar.classList.remove('nav-on-light');
   }
 
   function isHeaderRevealSection(section) {
