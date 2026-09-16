@@ -27,18 +27,10 @@
   }
 
   function prefersMiniMode() {
-    // Patient portal is hamburger/drawer-only — never use desktop mini rail.
-    if (document.body.classList.contains('patient-portal')) {
-      return false;
-    }
     return window.matchMedia('(min-width: 768px)').matches;
   }
 
   function isMobileDrawer() {
-    // Patient portal always uses the off-canvas drawer.
-    if (document.body.classList.contains('patient-portal')) {
-      return true;
-    }
     return window.matchMedia('(max-width: 1024px)').matches;
   }
 
