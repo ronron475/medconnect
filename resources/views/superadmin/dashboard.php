@@ -10,7 +10,7 @@ require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
 doctor_application_ensure_schema($pdo);
 bhw_application_ensure_schema($pdo);
 
-$page_title = 'Super Admin Dashboard';
+$page_title = 'Dashboard';
 $stats = superadmin_dashboard_stats($pdo);
 $security = superadmin_get_security_summary($pdo);
 $recentActivities = superadmin_recent_activities($pdo, 8);
@@ -21,37 +21,11 @@ $pending_doctor_approvals = (int) $pdo->query("SELECT COUNT(*) FROM doctor_appli
 $pending_bhw_approvals    = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
 $pending_checker_total    = $pending_doctor_approvals + $pending_bhw_approvals;
 
-$super_stmt = $pdo->prepare('SELECT first_name, last_name FROM users WHERE id = ? LIMIT 1');
-$super_stmt->execute([(int) ($_SESSION['user_id'] ?? 0)]);
-$super_row = $super_stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-
-$healthClass = match ($stats['system_health']) {
-    'critical' => 'critical',
-    'warning'  => 'warning',
-    default    => 'healthy',
-};
-
 require_once __DIR__ . '/partials/layout_open.php';
 $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 ?>
 
 <div data-live-dashboard="superadmin">
-
-<section class="adm-banner" aria-label="Welcome">
-    <div class="adm-banner-inner">
-        <div class="adm-banner-eyebrow">Super Admin Control Center</div>
-        <h1 class="adm-banner-title">Welcome, <?= htmlspecialchars($super_row['first_name'] ?? 'Super Admin') ?></h1>
-        <p class="adm-banner-sub">Enterprise governance, security monitoring, and Maker-Checker approvals for healthcare account provisioning.</p>
-        <div class="superadmin-banner-actions">
-            <span class="mc-badge mc-badge--super">Super Administrator</span>
-            <span class="superadmin-health-pill superadmin-health-pill--<?= htmlspecialchars($healthClass) ?>" data-live-system-health>System <?= htmlspecialchars(strtoupper($stats['system_health'])) ?></span>
-            <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="adm-card-head-action superadmin-urgent-pill" data-live-pending-pill<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
-                <?= $pending_checker_total ?> approval<?= $pending_checker_total === 1 ? '' : 's' ?> pending
-            </a>
-        </div>
-    </div>
-    <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
-</section>
 
 <section class="superadmin-approval-strip" data-live-approval-strip aria-label="Pending approvals"<?= $pending_checker_total > 0 ? '' : ' hidden' ?>>
     <?php if ($pending_doctor_approvals > 0): ?>
@@ -68,10 +42,12 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     <?php endif; ?>
 </section>
 
-<section aria-label="Live operations">
-    <div class="adm-section-head">
-        <h2 class="adm-section-title">Live Operations</h2>
-        <p class="adm-section-sub">Real-time platform activity</p>
+<section aria-label="Operations summary">
+    <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+        <div>
+            <p class="adm-section-sub">Real-time platform activity</p>
+        </div>
+        <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
     </div>
     <?php $notif_widget_mode = 'strip'; require VIEWS_PATH . '/partials/notification_widgets.php'; ?>
 </section>
