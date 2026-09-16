@@ -40,7 +40,7 @@ $asset = ASSET_BASE;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260916b" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260916c" />
 
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css?v=20260808r" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/medconnect-typography.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/medconnect-typography.css') ?>" />
@@ -63,7 +63,7 @@ $asset = ASSET_BASE;
   <?php $landingScrollAnimCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-scroll-animations.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-scroll-animations.css?v=<?= $landingScrollAnimCssVer ?>" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-about-team.css?v=7" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=14" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=15" />
   <?php $landingDownloadCssVer = (int) @filemtime(ASSETS_PATH . '/css/landing-download-app.css'); ?>
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-download-app.css?v=<?= $landingDownloadCssVer ?>" />
 
@@ -170,7 +170,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
           </ul>
 
-          <div class="hero-ctas d-flex flex-sm-row flex-column align-items-stretch align-items-sm-center gap-3">
+          <div class="hero-ctas d-flex flex-column flex-sm-row align-items-stretch gap-3">
 
             <button type="button" class="cta-primary hero-cta" id="open-book-cta">
 
