@@ -79,9 +79,18 @@ if (!isLandingPage) {
     document.documentElement.style.setProperty('--hero-signin-nav-offset', `${navH + maintH}px`);
   }
 
+  function forcePageTop() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }
+
   function scrollToHeroTop(done) {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const finish = typeof done === 'function' ? done : () => {};
+    const finish = () => {
+      forcePageTop();
+      if (typeof done === 'function') done();
+    };
 
     if (window.scrollY <= 12) {
       finish();
@@ -369,19 +378,31 @@ if (!isLandingPage) {
 
   let openingSignIn = false;
 
+  function openSignInAfterHomeScroll() {
+    forcePageTop();
+    if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) {
+      return;
+    }
+
+    /* Desktop: hero-anchored panel (screenshot position). Tablet/mobile: viewport-pinned. */
+    const usePinnedLayout = !isInlineHero || window.matchMedia('(max-width: 960px)').matches;
+    if (usePinnedLayout) {
+      openModalPinned();
+    } else {
+      openModalAtHero();
+    }
+  }
+
   function openModal() {
     if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing') || openingSignIn) {
       return;
     }
 
-    /* Always return to Home/top first, then open the Sign In modal. */
+    /* Always return to Home/top first, then open Sign In in the hero position. */
     openingSignIn = true;
     scrollToHeroTop(() => {
       openingSignIn = false;
-      if (overlay.classList.contains('is-open') || overlay.classList.contains('is-closing')) {
-        return;
-      }
-      openModalPinned();
+      openSignInAfterHomeScroll();
     });
   }
 
