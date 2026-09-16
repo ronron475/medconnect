@@ -1,10 +1,8 @@
 <?php
 /**
- * Unified My Health page header (calm overview).
+ * My Health page toolbar — metrics + quick actions (no greeting block).
  * Expects: $pt, $history, $completed_visits, $counts, $care_tips_active_count, $active_tab, $care_timeline
  */
-$firstName = trim((string) ($pt['first_name'] ?? ''));
-$patientNumber = (string) ($pt['patient_number'] ?? '');
 $scheduled_visits = count(array_filter($history ?? [], static function ($h) {
     $s = strtolower((string) ($h['status'] ?? ''));
     return in_array($s, ['scheduled', 'pending', 'in_consultation'], true);
@@ -50,27 +48,7 @@ if ($activeTips > 0) {
 }
 $showMetrics = $metrics !== [];
 ?>
-<header class="pmh-hero" aria-label="My Health overview">
-  <div class="pmh-hero__top">
-    <div class="pmh-hero__intro">
-      <p class="pmh-hero__eyebrow">My Health</p>
-      <h2 class="pmh-hero__title">
-        <?= $firstName !== '' ? 'Hi, ' . htmlspecialchars($firstName) : 'Your care history' ?>
-      </h2>
-      <p class="pmh-hero__text">
-        <?php if ($patientNumber !== ''): ?>
-          <span class="pmh-hero__id"><?= htmlspecialchars($patientNumber) ?></span>
-          <span class="pmh-hero__sep" aria-hidden="true">·</span>
-        <?php endif; ?>
-        Visits, health files, and care tips in one place.
-      </p>
-    </div>
-    <div class="pmh-hero__actions">
-      <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-btn pmh-btn--outline">Health Summary</a>
-      <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book consultation</a>
-    </div>
-  </div>
-
+<header class="pmh-hero pmh-hero--toolbar" aria-label="My Health actions">
   <?php if ($showMetrics): ?>
   <div class="pmh-hero__metrics" role="list" aria-label="Health overview">
     <?php foreach ($metrics as $metric): ?>
@@ -88,4 +66,8 @@ $showMetrics = $metrics !== [];
     <?php endforeach; ?>
   </div>
   <?php endif; ?>
+  <div class="pmh-hero__actions">
+    <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pmh-btn pmh-btn--outline">Health Summary</a>
+    <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Book consultation</a>
+  </div>
 </header>
