@@ -77,7 +77,6 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 <section aria-label="Live operations">
     <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
         <div>
-            <h2 class="adm-section-title">Live Operations</h2>
             <p class="adm-section-sub">Real-time counts from consultations, referrals, and alerts</p>
         </div>
         <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
