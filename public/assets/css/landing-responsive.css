@@ -10,6 +10,10 @@
   --landing-space-md: 32px;
   --landing-space-lg: 48px;
   --landing-space-xl: 64px;
+  --landing-section-pad-y: clamp(64px, 8vw, 88px);
+  --landing-section-header-gap: clamp(28px, 4vw, 48px);
+  --landing-section-title-mb: 12px;
+  --landing-section-desc-max: 60ch;
   --landing-radius-sm: 10px;
   --landing-radius-md: 14px;
   --landing-radius-lg: 18px;
@@ -210,15 +214,13 @@ body.landing-page.landing-nav-open {
 }
 
 /* ── Section spacing ── */
-.landing-page .services-section {
-  padding: clamp(var(--landing-space-lg), 8vw, var(--landing-space-xl))
-           clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg))
-           clamp(var(--landing-space-md), 7vw, var(--landing-space-xl));
-}
-
+.landing-page .services-section,
+.landing-page .about-team-section.services-section,
 .landing-page .download-app-section {
-  padding-left: clamp(20px, 4vw, 40px);
-  padding-right: clamp(20px, 4vw, 40px);
+  padding-top: var(--landing-section-pad-y);
+  padding-bottom: var(--landing-section-pad-y);
+  padding-left: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
+  padding-right: clamp(var(--landing-space-xs), 4vw, var(--landing-space-lg));
 }
 
 .landing-page .contact-section {
@@ -228,13 +230,46 @@ body.landing-page.landing-nav-open {
 }
 
 .landing-page .services-container,
-.landing-page .contact-container {
+.landing-page .contact-container,
+.landing-page .download-app__container {
   width: var(--landing-container);
   max-width: 1080px;
 }
 
-.landing-page .services-header {
-  margin-bottom: clamp(var(--landing-space-sm), 5vw, var(--landing-space-lg));
+/* Shared section header hierarchy */
+.landing-page .services-header,
+.landing-page .download-app__header,
+.landing-page .about-team-section__header {
+  text-align: center;
+  margin: 0 auto var(--landing-section-header-gap);
+  max-width: 760px;
+}
+
+.landing-page .services-title,
+.landing-page .download-app__header .services-title {
+  margin: 0 0 var(--landing-section-title-mb);
+  font-size: var(--landing-text-section);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.landing-page .services-desc,
+.landing-page .download-app__header .services-desc,
+.landing-page .about-team-section__intro {
+  margin: 0 auto;
+  max-width: var(--landing-section-desc-max);
+  font-size: var(--landing-text-body);
+  line-height: 1.65;
+}
+
+.landing-page .about-team-section__kicker,
+.landing-page .download-app__kicker {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 /* ── Hero ── */
