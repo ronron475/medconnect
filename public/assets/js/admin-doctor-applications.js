@@ -13,6 +13,18 @@
   var statsEl = document.getElementById('doctorAppStats');
   var allRows = [];
 
+  function openCreate() {
+    if (typeof window.openCreateDoctorModal === 'function') {
+      window.openCreateDoctorModal();
+      var title = document.querySelector('#doctorAppCreateModal .admin-modal-title');
+      if (title) title.textContent = 'Create Doctor Application';
+    }
+  }
+
+  // Create button lives in the hero on every tab; bind it even when the
+  // applications list panel is hidden (All / Active / etc.).
+  if (openBtn) openBtn.addEventListener('click', openCreate);
+
   if (cfg.showApplications === false) {
     return;
   }
@@ -160,15 +172,6 @@
       });
   }
 
-  function openCreate() {
-    if (typeof window.openCreateDoctorModal === 'function') {
-      window.openCreateDoctorModal();
-      var title = document.querySelector('#doctorAppCreateModal .admin-modal-title');
-      if (title) title.textContent = 'Create Doctor Application';
-    }
-  }
-
-  if (openBtn) openBtn.addEventListener('click', openCreate);
   if (searchInput) {
     var _debounceTimer;
     searchInput.addEventListener('input', function () {
