@@ -824,6 +824,17 @@ html[data-theme-resolved='dark'] body.patient-portal .text-h3 {
   color: #ffffff !important;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__icon {
+  background: rgba(6, 147, 150, 0.18);
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-badge--id {
+  background: #0f172a;
+  border-color: #334155;
+  color: #94a3b8;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .pdash-hero__sub,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-metric__label,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-session__meta,

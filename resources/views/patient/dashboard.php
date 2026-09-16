@@ -400,6 +400,7 @@ $patient_page_stylesheets = [
   <script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/medconnect-portal-charts.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/medconnect-portal-charts.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/patient-dashboard-greeting.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/patient-dashboard-greeting.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-symptoms-review.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/patient-symptoms-review.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-slot-wait.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/patient-slot-wait.js') ?>"></script>
   <script>

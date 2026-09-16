@@ -2,7 +2,15 @@
 /**
  * Patient dashboard home — redesigned layout.
  */
-$pt_first = htmlspecialchars(trim($pt['first_name'] ?? 'Patient'));
+$pt_last = trim((string) ($pt['last_name'] ?? ''));
+$pt_display_raw = trim((string) ($pt['first_name'] ?? ''));
+if ($pt_last !== '' && stripos($pt_display_raw, $pt_last) === false) {
+    $pt_display_raw = trim($pt_display_raw . ' ' . $pt_last);
+}
+if ($pt_display_raw === '') {
+    $pt_display_raw = 'Patient';
+}
+$pt_display = htmlspecialchars($pt_display_raw);
 $patient_id_label = htmlspecialchars($pt['patient_number'] ?? ('MC-' . str_pad((string) $uid, 6, '0', STR_PAD_LEFT)));
 
 $upcoming_list = array_values($upcoming_consults);
@@ -36,12 +44,37 @@ foreach ($upcoming_list as $c) {
 ?>
 <div id="view-dashboard" class="patient-page pdash-page">
 
-  <section class="pdash-hero pdash-hero--compact" aria-label="Welcome">
-    <div class="pdash-hero__content">
-      <h1 class="pdash-hero__title"><?= htmlspecialchars($dash_greeting_time) ?>, <?= $pt_first ?></h1>
-      <div class="pdash-hero__badges">
-        <span class="pdash-badge <?= $pt_is_verified ? 'pdash-badge--verified' : 'pdash-badge--pending' ?>"><?= htmlspecialchars($pt_status_label) ?></span>
-        <span class="pdash-badge pdash-badge--id">Patient ID: <strong><?= $patient_id_label ?></strong></span>
+  <section
+    class="pdash-hero pdash-hero--welcome"
+    aria-label="Welcome"
+    data-pdash-greeting
+    data-patient-name="<?= $pt_display ?>"
+  >
+    <div class="pdash-hero__main">
+      <span class="pdash-hero__icon" data-pdash-greeting-icon aria-hidden="true">
+        <svg class="pdash-hero__icon-svg" data-icon="morning" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+      </span>
+      <div class="pdash-hero__content">
+        <h1 class="pdash-hero__title">
+          <span data-pdash-greeting-period>Good morning</span>, <?= $pt_display ?>
+        </h1>
+        <div class="pdash-hero__badges">
+          <?php if ($pt_is_verified): ?>
+          <span class="pdash-badge pdash-badge--verified">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            Verified Patient
+          </span>
+          <?php else: ?>
+          <span class="pdash-badge pdash-badge--pending"><?= htmlspecialchars($pt_status_label) ?></span>
+          <?php endif; ?>
+          <span class="pdash-badge pdash-badge--id">Patient ID: <strong><?= $patient_id_label ?></strong></span>
+        </div>
       </div>
     </div>
     <div class="pdash-hero__actions">
@@ -66,6 +99,18 @@ foreach ($upcoming_list as $c) {
       <?php endif; ?>
     </div>
   </section>
+  <script>
+  (function () {
+    var root = document.querySelector('[data-pdash-greeting]');
+    if (!root) return;
+    var h = new Date().getHours();
+    var period = h < 12 ? 'morning' : (h < 18 ? 'afternoon' : 'evening');
+    var label = period === 'afternoon' ? 'Good afternoon' : (period === 'evening' ? 'Good evening' : 'Good morning');
+    var el = root.querySelector('[data-pdash-greeting-period]');
+    if (el) el.textContent = label;
+    root.setAttribute('data-greeting-period', period);
+  })();
+  </script>
 
   <?php if ($dash_live_session && $dash_live_join): ?>
   <div class="pdash-live" role="status" aria-live="polite">

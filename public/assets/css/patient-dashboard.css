@@ -14,14 +14,48 @@
 .pdash-hero {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  padding: 16px;
-  gap: 12px;
+  padding: 18px 20px;
+  gap: 14px 20px;
   border-radius: 16px;
-  border: 1px solid #cce8ec;
-  background: linear-gradient(135deg, #f0fdfa 0%, #e6f7f8 45%, #fff 100%);
-  box-shadow: 0 2px 12px rgba(2, 128, 144, 0.06);
+  border: 1px solid #d7eef1;
+  background: #fff;
+  box-shadow: 0 1px 8px rgba(2, 128, 144, 0.05);
+}
+
+.pdash-hero--welcome {
+  background: linear-gradient(180deg, #ffffff 0%, #f7fcfc 100%);
+  border-color: #cfe9ed;
+}
+
+.pdash-hero__main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.pdash-hero__icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #028090;
+  background: rgba(2, 128, 144, 0.1);
+}
+
+.pdash-hero__icon-svg {
+  display: block;
+}
+
+.pdash-hero__content {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .pdash-hero__eyebrow {
@@ -34,12 +68,13 @@
 }
 
 .pdash-hero__title {
-  margin: 0 0 8px;
-  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  margin: 0 0 10px;
+  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
   font-weight: 800;
   color: #0f172a;
   letter-spacing: -0.02em;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .pdash-hero__sub {
@@ -67,11 +102,16 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  max-width: 100%;
 }
 
 .pdash-badge--verified {
   background: #028090;
   color: #fff;
+}
+
+.pdash-badge--verified svg {
+  flex-shrink: 0;
 }
 
 .pdash-badge--pending {
@@ -82,8 +122,8 @@
 
 .pdash-badge--id {
   background: #fff;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+  border: 1px solid #b6e0e4;
+  color: #5b7a82;
   text-transform: none;
   letter-spacing: 0;
   font-weight: 600;
@@ -98,6 +138,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+  flex-shrink: 0;
+  align-items: center;
 }
 
 /* Buttons */
@@ -836,6 +878,36 @@
   .pdash-hero {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .pdash-hero__main {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .pdash-hero__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .pdash-hero__icon-svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .pdash-hero__title {
+    font-size: clamp(1.2rem, 5.5vw, 1.45rem);
+    margin-bottom: 8px;
+  }
+
+  .pdash-hero__badges {
+    gap: 6px;
+  }
+
+  .pdash-badge {
+    font-size: 0.68rem;
+    padding: 5px 10px;
   }
 
   .pdash-hero__content {
