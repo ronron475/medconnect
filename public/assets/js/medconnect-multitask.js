@@ -387,6 +387,10 @@
       if (!item || !item.id) return;
       if (item.type === 'webrtc') return; // restored by video shell
       if (!item.minimized && !item.restoreUrl) return;
+      // Drop stale restore chips that pointed at read-only detail pages.
+      if (item.type === 'consultation' && /consultation_detail\.php/i.test(String(item.restoreUrl || ''))) {
+        return;
+      }
       register({
         id: item.id,
         type: item.type || 'generic',
@@ -399,6 +403,31 @@
     });
   }
 
+  function clearConsultationTasks(consultId) {
+    const want = consultId != null && String(consultId) !== ''
+      ? String(consultId)
+      : null;
+    const ids = [];
+    tasks.forEach((task, id) => {
+      if (!task || task.type !== 'consultation') return;
+      if (want == null) {
+        ids.push(id);
+        return;
+      }
+      const metaId = task.meta && (task.meta.consultationId || task.meta.consultation_id);
+      const fromId = String(id).replace(/^consultation-/, '');
+      if (String(metaId || fromId) === want) ids.push(id);
+    });
+    ids.forEach(unregister);
+  }
+
+  function hasActiveVideoShell() {
+    const shell = document.getElementById('mcGlobalVideoShell');
+    if (!shell || shell.hidden) return false;
+    if (shell.classList.contains('is-ended')) return false;
+    return true;
+  }
+
   function registerConsultationContext() {
     const body = document.body;
     if (!body) return;
@@ -408,13 +437,37 @@
     const path = String(global.location.pathname || '');
     if (!consultId) {
       const m = String(global.location.search || '').match(/[?&](?:id|consultation_id)=(\d+)/i);
-      if (m && /consultation_session\.php|consultation_detail\.php/i.test(path)) {
+      if (m && /consultation_session\.php|video_room\.php|consultation_detail\.php/i.test(path)) {
         consultId = m[1];
       }
     }
-    const isConsultPage = /consultation_session\.php|video_room\.php|consultation_detail\.php/i.test(path);
-    if (!isConsultPage || !consultId) {
-      // Mark previously registered consultation tasks as minimized when browsing elsewhere.
+
+    const status = String(
+      body.getAttribute('data-consultation-status')
+      || body.dataset.consultationStatus
+      || ''
+    ).toLowerCase();
+    const isTerminal = /^(completed|cancelled|canceled|ended)$/.test(status);
+
+    // Past/record pages must never keep a "Return anytime" chip.
+    if (/consultation_detail\.php/i.test(path)) {
+      if (consultId) clearConsultationTasks(consultId);
+      else clearConsultationTasks(null);
+      return;
+    }
+
+    // Only live session / video room pages register a restore chip.
+    const isLiveSessionPage = /consultation_session\.php|video_room\.php/i.test(path);
+    if (!isLiveSessionPage || !consultId || isTerminal) {
+      if (consultId && isTerminal) {
+        clearConsultationTasks(consultId);
+        return;
+      }
+      // Elsewhere: keep minimized only while a live video shell is open; otherwise drop stale chips.
+      if (!hasActiveVideoShell()) {
+        clearConsultationTasks(null);
+        return;
+      }
       tasks.forEach((task) => {
         if (task.type === 'consultation' && task.restoreUrl) {
           task.minimized = true;
@@ -424,6 +477,7 @@
       renderDock();
       return;
     }
+
     register({
       id: 'consultation-' + consultId,
       type: 'consultation',
@@ -484,14 +538,29 @@
       renderDock();
     });
 
-    global.addEventListener('medconnect:video-shell-completed', function () {
+    function clearConsultFromEvent(detail) {
       unregister('webrtc-active');
+      const d = detail || {};
+      const id = d.consultation_id || d.consultationId || d.id || (d.data && (d.data.consultation_id || d.data.id));
+      clearConsultationTasks(id || null);
+    }
+
+    global.addEventListener('medconnect:video-shell-completed', function (e) {
+      clearConsultFromEvent(e && e.detail);
     });
-    global.addEventListener('medconnect:video-shell-ended', function () {
-      unregister('webrtc-active');
+    global.addEventListener('medconnect:video-shell-ended', function (e) {
+      clearConsultFromEvent(e && e.detail);
     });
-    global.addEventListener('medconnect:video-shell-left', function () {
-      unregister('webrtc-active');
+    global.addEventListener('medconnect:video-shell-left', function (e) {
+      clearConsultFromEvent(e && e.detail);
+    });
+    global.addEventListener('medconnect:consultation-completed', function (e) {
+      const d = (e && e.detail) || {};
+      clearConsultationTasks(d.id || d.consultation_id || d.consultationId || null);
+    });
+    document.addEventListener('medconnect:consultation-completed', function (e) {
+      const d = (e && e.detail) || {};
+      clearConsultationTasks(d.id || d.consultation_id || d.consultationId || null);
     });
   }
 
