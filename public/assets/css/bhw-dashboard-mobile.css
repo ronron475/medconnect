@@ -214,31 +214,31 @@
     overflow-wrap: anywhere;
   }
 
-  /* KPI cards — readable labels + large centered numbers */
+  /* KPI cards — Admin-matched layout on mobile */
   body.bhw-body .bhw-dash-stats {
-    gap: 10px;
+    gap: 12px;
     padding: 12px;
   }
 
   body.bhw-body .bhw-dash-stat {
-    min-height: var(--mob-dash-stat-min-h);
-    padding: 10px 12px 12px;
-    overflow: visible;
+    min-height: 0;
+    padding: 16px 14px;
+    overflow: hidden;
   }
 
   body.bhw-body .bhw-dash-stat__label {
     font-size: var(--mob-bhw-label);
     line-height: 1.35;
-    padding-right: 30px;
+    padding-right: 0;
     white-space: normal;
     overflow-wrap: anywhere;
   }
 
   body.bhw-body .bhw-dash-stat__val {
-    font-size: clamp(1.45rem, 6vw, var(--mob-bhw-stat));
-    margin-top: 10px;
-    text-align: center;
-    width: 100%;
+    font-size: clamp(1.35rem, 5vw, 1.5rem);
+    margin-top: 0;
+    text-align: left;
+    width: auto;
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget {
@@ -366,17 +366,18 @@
   }
 
   body.bhw-body .bhw-dash-stats {
-    gap: 8px;
+    gap: 10px;
     padding: 10px;
   }
 
   body.bhw-body .bhw-dash-stat {
-    padding: 10px;
+    padding: 14px 12px;
   }
 
   body.bhw-body .bhw-dash-stat__val {
-    font-size: clamp(1.4rem, 6.5vw, var(--mob-bhw-stat));
-    margin-top: 8px;
+    font-size: clamp(1.3rem, 5.5vw, 1.4rem);
+    margin-top: 0;
+    text-align: left;
   }
 
   body.bhw-body .topbar-title {
