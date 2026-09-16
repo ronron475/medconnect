@@ -19,7 +19,6 @@ $projectParagraphs = [
   <div class="services-container">
 
     <div class="services-header about-team-section__header">
-      <p class="about-team-section__kicker">BSIS Capstone</p>
       <h2 id="about-section-heading" class="services-title landing-reveal-title">About Us</h2>
       <p class="services-desc landing-reveal-desc about-team-section__intro">
         Fourth-year <span class="services-brand">Bachelor of Science in Information System</span> students building
