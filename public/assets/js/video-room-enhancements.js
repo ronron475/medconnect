@@ -163,6 +163,11 @@
         '<dl class="mc-vc-info-dl">' +
         '<div><dt>Consultation</dt><dd>#' + escapeHtml(p.consultation_id || CONSULTATION_ID || '—') + '</dd></div>' +
         '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
+        (p.scheduled_duration_label ? '<div><dt>Scheduled duration</dt><dd>' + escapeHtml(p.scheduled_duration_label) + '</dd></div>' : '') +
+        (p.started_label ? '<div><dt>Started</dt><dd>' + escapeHtml(p.started_label) + '</dd></div>' : '') +
+        (p.ended_label ? '<div><dt>Ended</dt><dd>' + escapeHtml(p.ended_label) + '</dd></div>' : '') +
+        (p.actual_duration_label ? '<div><dt>Actual duration</dt><dd>' + escapeHtml(p.actual_duration_label) + '</dd></div>' : '') +
+        (p.status_label ? '<div><dt>Status</dt><dd>' + escapeHtml(p.status_label) + '</dd></div>' : '') +
         '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
         '<div><dt>Preliminary AI Assessment</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.ai_triage_bucket || 'unknown') + '">' + escapeHtml(p.ai_triage_level || 'Not assessed') + '</span></dd></div>' +
         finalRow +
@@ -180,6 +185,11 @@
       '<div><dt>Patient ID</dt><dd>' + escapeHtml(p.patient_number || '—') + '</dd></div>' +
       '<div><dt>Consultation</dt><dd>#' + escapeHtml(p.consultation_id || CONSULTATION_ID || '—') + '</dd></div>' +
       '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
+      (p.scheduled_duration_label ? '<div><dt>Scheduled duration</dt><dd>' + escapeHtml(p.scheduled_duration_label) + '</dd></div>' : '') +
+      (p.started_label ? '<div><dt>Started</dt><dd>' + escapeHtml(p.started_label) + '</dd></div>' : '') +
+      (p.ended_label ? '<div><dt>Ended</dt><dd>' + escapeHtml(p.ended_label) + '</dd></div>' : '') +
+      (p.actual_duration_label ? '<div><dt>Actual duration</dt><dd>' + escapeHtml(p.actual_duration_label) + '</dd></div>' : '') +
+      (p.status_label ? '<div><dt>Status</dt><dd>' + escapeHtml(p.status_label) + '</dd></div>' : '') +
       '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
       '<div><dt>AI classification</dt><dd>' + escapeHtml(p.ai_classification || '—') + (p.confidence ? ' <span class="mc-vc-muted">(' + escapeHtml(p.confidence) + ')</span>' : '') + '</dd></div>' +
       '<div><dt>Final classification</dt><dd>' + escapeHtml(p.final_classification || p.ai_classification || '—') + '</dd></div>' +
@@ -552,8 +562,15 @@
     const providerEl = q('mcVcPostCallProvider');
     const dateEl = q('mcVcPostCallDate');
     const dateRow = q('mcVcPostCallDateRow');
+    const scheduledEl = q('mcVcPostCallScheduled');
+    const scheduledRow = q('mcVcPostCallScheduledRow');
+    const startedEl = q('mcVcPostCallStarted');
+    const startedRow = q('mcVcPostCallStartedRow');
+    const endedEl = q('mcVcPostCallEnded');
+    const endedRow = q('mcVcPostCallEndedRow');
     const durationEl = q('mcVcPostCallDuration');
     const durationRow = q('mcVcPostCallDurationRow');
+    const statusEl = q('mcVcPostCallStatus');
     const viewBtn = q('mcVcPostCallViewSession');
     const data = summary || {};
     const doctor = data.provider_name || META.providerName || '';
@@ -573,18 +590,45 @@
         dateRow.hidden = true;
       }
     }
-    if (durationEl && durationRow) {
-      const liveTimer = document.getElementById('consultDuration');
-      const liveLabel = liveTimer ? String(liveTimer.textContent || '').trim() : '';
-      const apiLabel = String(data.duration_label || '').trim();
-      const label = (liveLabel && liveLabel !== '00:00') ? liveLabel : apiLabel;
+    if (scheduledEl && scheduledRow) {
+      const label = String(data.scheduled_duration_label || '').trim();
       if (label) {
-        durationEl.textContent = label;
+        scheduledEl.textContent = label;
+        scheduledRow.hidden = false;
+      } else {
+        scheduledRow.hidden = true;
+      }
+    }
+    if (startedEl && startedRow) {
+      const label = String(data.start_label || '').trim();
+      if (label) {
+        startedEl.textContent = label;
+        startedRow.hidden = false;
+      } else {
+        startedRow.hidden = true;
+      }
+    }
+    if (endedEl && endedRow) {
+      const label = String(data.end_label || '').trim();
+      if (label) {
+        endedEl.textContent = label;
+        endedRow.hidden = false;
+      } else {
+        endedRow.hidden = true;
+      }
+    }
+    if (durationEl && durationRow) {
+      const apiLabel = String(data.actual_duration_label || data.duration_label || '').trim();
+      if (apiLabel) {
+        durationEl.textContent = apiLabel;
         durationRow.hidden = false;
       } else {
         durationEl.textContent = '—';
         durationRow.hidden = false;
       }
+    }
+    if (statusEl) {
+      statusEl.textContent = String(data.status_label || 'Completed').trim() || 'Completed';
     }
     if (viewBtn && data.detail_url) {
       viewBtn.setAttribute('href', data.detail_url);

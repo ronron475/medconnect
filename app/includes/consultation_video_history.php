@@ -5,34 +5,17 @@
  */
 declare(strict_types=1);
 
+require_once __DIR__ . '/consultation_duration.php';
+
 /**
  * Human duration from real started_at / ended_at (empty when either is missing).
+ * Uses exact seconds (floor minutes — never round).
  */
 function consultation_format_video_duration(?string $startedAt, ?string $endedAt): string
 {
-    $start = ($startedAt !== null && $startedAt !== '') ? strtotime($startedAt) : false;
-    $end = ($endedAt !== null && $endedAt !== '') ? strtotime($endedAt) : false;
-    if ($start === false || $end === false || $end < $start) {
-        return '';
-    }
-
-    $sec = (int) ($end - $start);
-    if ($sec < 60) {
-        return $sec . ' second' . ($sec === 1 ? '' : 's');
-    }
-
-    $mins = (int) round($sec / 60);
-    if ($mins < 60) {
-        return $mins . ' minute' . ($mins === 1 ? '' : 's');
-    }
-
-    $hours = intdiv($mins, 60);
-    $rem = $mins % 60;
-    $label = $hours . ' hour' . ($hours === 1 ? '' : 's');
-    if ($rem > 0) {
-        $label .= ' ' . $rem . ' minute' . ($rem === 1 ? '' : 's');
-    }
-    return $label;
+    return consultation_format_duration_seconds(
+        consultation_actual_duration_seconds($startedAt, $endedAt)
+    );
 }
 
 /**
@@ -154,13 +137,16 @@ function consultation_video_session_row(PDO $pdo, int $consultationId): ?array
 
 /**
  * Build display summary for history cards / detail panels.
+ *
+ * @param int $scheduledDurationSeconds Configured slot duration (exact). Pass 0 to omit scheduled fields.
  */
 function consultation_video_history_summary(
     string $consultationStatus,
     ?array $videoRow,
     ?string $consultationCompletedAt = null,
     string $doctorDisplayName = '',
-    string $patientDisplayName = ''
+    string $patientDisplayName = '',
+    int $scheduledDurationSeconds = 0
 ): array {
     $status = strtolower(trim($consultationStatus));
     $status = str_replace(' ', '_', $status);
@@ -174,6 +160,12 @@ function consultation_video_history_summary(
         'started_label' => '',
         'ended_label' => '',
         'duration_label' => '',
+        'scheduled_duration_seconds' => 0,
+        'scheduled_duration_label' => '',
+        'actual_duration_seconds' => null,
+        'actual_duration_label' => '',
+        'ended_early' => false,
+        'status_label' => '',
         'recording_path' => '',
         'has_recording' => false,
         'recording_segments' => [],
@@ -202,8 +194,13 @@ function consultation_video_history_summary(
             $empty['video_status_label'] = 'In progress';
             $started = (string) ($videoRow['started_at'] ?? '');
             if ($started !== '' && strtotime($started)) {
-                $empty['started_label'] = date('g:i A', strtotime($started));
+                $empty['started_label'] = consultation_format_clock_time($started);
                 $empty['date_label'] = date('M j, Y', strtotime($started));
+                if ($scheduledDurationSeconds > 0) {
+                    $empty['scheduled_duration_seconds'] = $scheduledDurationSeconds;
+                    $empty['scheduled_duration_label'] = consultation_format_duration_seconds($scheduledDurationSeconds);
+                }
+                $empty['status_label'] = 'In progress';
             }
             return $empty;
         }
@@ -222,7 +219,15 @@ function consultation_video_history_summary(
     $startedAt = trim((string) ($videoRow['started_at'] ?? ''));
     $endedAt = trim((string) ($videoRow['ended_at'] ?? ''));
     $vsStatus = strtolower(trim((string) ($videoRow['status'] ?? '')));
-    $duration = consultation_format_video_duration($startedAt, $endedAt);
+    $scheduledSecs = max(0, $scheduledDurationSeconds);
+    if ($scheduledSecs <= 0 && isset($GLOBALS['pdo']) && $GLOBALS['pdo'] instanceof PDO) {
+        $cidGuess = (int) ($videoRow['consultation_id'] ?? 0);
+        if ($cidGuess > 0) {
+            $scheduledSecs = consultation_scheduled_duration_seconds_for_id($GLOBALS['pdo'], $cidGuess);
+        }
+    }
+    $durationSnap = consultation_duration_snapshot($startedAt, $endedAt, $scheduledSecs, $consultationStatus);
+    $duration = (string) ($durationSnap['actual_duration_label'] ?? '');
     $recordingRel = consultation_video_recording_public_path(
         (string) ($videoRow['recording_path'] ?? ''),
         (string) ($videoRow['recording_url'] ?? '')
@@ -268,16 +273,29 @@ function consultation_video_history_summary(
     if ($startedAt !== '' && $endedAt !== '' && $duration !== '') {
         $summary['show_completed_details'] = true;
         $summary['duration_label'] = $duration;
+        $summary['scheduled_duration_seconds'] = (int) ($durationSnap['scheduled_duration_seconds'] ?? 0);
+        $summary['scheduled_duration_label'] = (string) ($durationSnap['scheduled_duration_label'] ?? '');
+        $summary['actual_duration_seconds'] = $durationSnap['actual_duration_seconds'];
+        $summary['actual_duration_label'] = (string) ($durationSnap['actual_duration_label'] ?? '');
+        $summary['ended_early'] = !empty($durationSnap['ended_early']);
+        $summary['status_label'] = (string) ($durationSnap['status_label'] ?? '');
         $summary['date_label'] = date('M j, Y', strtotime($startedAt) ?: time());
-        $summary['started_label'] = date('g:i A', strtotime($startedAt));
-        $summary['ended_label'] = date('g:i A', strtotime($endedAt));
+        $summary['started_label'] = (string) ($durationSnap['started_label'] ?? consultation_format_clock_time($startedAt));
+        $summary['ended_label'] = (string) ($durationSnap['ended_label'] ?? consultation_format_clock_time($endedAt));
 
         if ($status === 'completed') {
-            $summary['video_status_label'] = 'Completed';
-            $summary['session_outcome_label'] = 'Successfully completed';
+            $summary['video_status_label'] = !empty($durationSnap['ended_early'])
+                ? 'Completed — Ended early'
+                : 'Completed';
+            $summary['session_outcome_label'] = !empty($durationSnap['ended_early'])
+                ? 'Completed — Ended early'
+                : 'Successfully completed';
         } else {
             $summary['video_status_label'] = 'Ended';
             $summary['session_outcome_label'] = 'Final Assessment required';
+            if (!empty($durationSnap['ended_early'])) {
+                $summary['session_outcome_label'] = 'Final Assessment required — Ended early';
+            }
         }
 
         $timeline = [];
@@ -293,7 +311,7 @@ function consultation_video_history_summary(
         if ($status === 'completed' && $completedAt !== '' && strtotime($completedAt)) {
             $timeline[] = [
                 'label' => 'Session completed',
-                'time_label' => date('g:i A', strtotime($completedAt)),
+                'time_label' => consultation_format_clock_time($completedAt),
             ];
         } elseif ($status === 'completed') {
             $timeline[] = [
@@ -340,16 +358,19 @@ function consultation_video_history_enrich_rows(
     string $doctorNameKey = 'doctor_name',
     string $patientName = ''
 ): void {
+    $GLOBALS['pdo'] = $pdo;
     foreach ($consultations as &$row) {
         $cid = (int) ($row['id'] ?? 0);
         $videoRow = $cid > 0 ? consultation_video_session_row($pdo, $cid) : null;
+        $scheduled = $cid > 0 ? consultation_scheduled_duration_seconds_for_id($pdo, $cid) : 0;
         $row['video_session'] = $videoRow;
         $row['video_history'] = consultation_video_history_summary(
             (string) ($row['status'] ?? ''),
             $videoRow,
             isset($row['completed_at']) ? (string) $row['completed_at'] : null,
             (string) ($row[$doctorNameKey] ?? ''),
-            $patientName
+            $patientName,
+            $scheduled
         );
     }
     unset($row);

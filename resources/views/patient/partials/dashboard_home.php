@@ -36,11 +36,9 @@ foreach ($upcoming_list as $c) {
 ?>
 <div id="view-dashboard" class="patient-page pdash-page">
 
-  <section class="pdash-hero" aria-label="Welcome">
+  <section class="pdash-hero pdash-hero--compact" aria-label="Welcome">
     <div class="pdash-hero__content">
-      <p class="pdash-hero__eyebrow">Patient Care Portal</p>
       <h1 class="pdash-hero__title"><?= htmlspecialchars($dash_greeting_time) ?>, <?= $pt_first ?></h1>
-      <p class="pdash-hero__sub">Manage appointments, visit history, prescriptions, and health records in one secure place.</p>
       <div class="pdash-hero__badges">
         <span class="pdash-badge <?= $pt_is_verified ? 'pdash-badge--verified' : 'pdash-badge--pending' ?>"><?= htmlspecialchars($pt_status_label) ?></span>
         <span class="pdash-badge pdash-badge--id">Patient ID: <strong><?= $patient_id_label ?></strong></span>

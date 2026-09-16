@@ -294,6 +294,101 @@
   transform: translateY(1px);
 }
 
+/* Compact in-message TTS transport */
+.mute-tts-player {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: rgba(2, 6, 23, 0.45);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mute-tts-player.is-playing {
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(13, 148, 136, 0.14);
+  box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.12);
+}
+
+.mute-tts-player.is-paused {
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.mute-tts-player__btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border: none;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mc-tts-accent);
+  color: #ecfeff;
+  cursor: pointer;
+  padding: 0;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.mute-tts-player__btn:hover {
+  filter: brightness(1.08);
+}
+
+.mute-tts-player__btn:active {
+  transform: scale(0.96);
+}
+
+.mute-tts-player__btn:focus-visible {
+  outline: 2px solid #5eead4;
+  outline-offset: 2px;
+}
+
+.mute-tts-player.is-playing .mute-tts-player__btn {
+  background: #0f766e;
+}
+
+.mute-tts-player__track {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mute-tts-player__bar {
+  position: relative;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.28);
+  overflow: hidden;
+}
+
+.mute-tts-player__fill {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #14b8a6, #2dd4bf);
+  transition: width 0.1s linear;
+}
+
+.mute-tts-player__times {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  line-height: 1.2;
+}
+
+.mute-tts-player.is-playing .mute-tts-player__times {
+  color: #99f6e4;
+}
+
 .mute-tts-toast,
 .mute-tts-restore {
   position: fixed;
@@ -335,10 +430,10 @@
 /* Incoming typed-voice transcript (provider / patient) */
 .mute-tts-receive-panel {
   position: fixed;
-  right: 16px;
+  right: max(12px, env(safe-area-inset-right, 0px));
   bottom: var(--mc-tts-controls-clearance);
-  width: min(360px, calc(100vw - 32px));
-  max-height: min(48vh, 420px);
+  width: min(340px, calc(100vw - 28px));
+  max-height: min(34vh, 280px);
   z-index: 37;
   display: none;
   flex-direction: column;
@@ -348,6 +443,7 @@
   padding: 0;
   box-shadow: 0 14px 32px rgba(2, 6, 23, 0.42);
   overflow: hidden;
+  pointer-events: auto;
 }
 
 .mute-tts-receive-panel.has-items,
@@ -361,49 +457,92 @@
 
 .mute-tts-receive-panel__head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
+  padding: 10px 10px 9px 12px;
   border-bottom: 1px solid var(--mc-tts-line);
   background: rgba(15, 23, 42, 0.98);
+  flex-shrink: 0;
+}
+
+.mute-tts-receive-panel__heading {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mute-tts-receive-panel__title {
-  flex: 1;
   margin: 0;
-  padding: 12px 14px;
+  padding: 0;
   font-size: 13px;
-  font-weight: 650;
+  font-weight: 700;
   letter-spacing: -0.01em;
   text-transform: none;
   color: var(--mc-tts-ink);
+  line-height: 1.25;
   border-bottom: none;
   background: transparent;
 }
 
+.mute-tts-receive-panel__hint {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--mc-tts-muted);
+  font-weight: 450;
+}
+
+.mute-tts-receive-panel__tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
 .mute-tts-receive-panel__head .mute-tts-panel__close {
-  margin: 0 8px 0 0;
-  width: 40px;
-  height: 40px;
+  margin: 0;
+  width: 36px;
+  height: 36px;
+  font-size: 22px;
+  border-radius: 9px;
 }
 
 .mute-tts-speech-toggle {
   flex: 0 0 auto;
-  min-height: 32px;
-  padding: 6px 10px;
+  min-height: 36px;
+  padding: 0 10px;
   border: 1px solid var(--mc-tts-line);
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.14);
-  color: var(--mc-tts-ink);
+  background: rgba(13, 148, 136, 0.16);
+  color: #ccfbf1;
   font-size: 11.5px;
   font-weight: 650;
   white-space: nowrap;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
-.mute-tts-speech-toggle[aria-pressed="false"] {
+.mute-tts-speech-toggle__icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.mute-tts-speech-toggle__label {
+  line-height: 1;
+}
+
+.mute-tts-speech-toggle[aria-pressed="false"],
+.mute-tts-speech-toggle.is-off {
   background: transparent;
   color: #94a3b8;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.mute-tts-speech-toggle:hover {
+  filter: brightness(1.06);
 }
 
 .mute-tts-speech-toggle:focus-visible {
@@ -421,6 +560,7 @@
   border-radius: 50%;
   background: var(--mc-tts-accent);
   vertical-align: middle;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.18);
 }
 
 .mute-tts-receive-panel.is-watching:not(.has-items)::after {
@@ -438,13 +578,46 @@
   flex: 1 1 auto;
   margin: 0;
   max-height: none;
-  padding: 10px 10px 12px;
+  min-height: 0;
+  padding: 8px 8px 10px;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .mute-tts-receive-log .mute-tts-log-item {
   background: rgba(15, 23, 42, 0.72);
+  padding: 10px 10px 9px;
+}
+
+.mute-tts-receive-log .mute-tts-log-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.mute-tts-receive-log .mute-tts-log-time {
+  font-size: 11px;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.mute-tts-receive-log .mute-tts-log-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--mc-tts-ink);
+}
+
+.mute-tts-receive-log .mute-tts-log-flags {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.mute-tts-log-item--playable.is-speaking,
+.mute-tts-log-item:has(.mute-tts-player.is-playing) {
+  border-color: rgba(45, 212, 191, 0.4);
 }
 
 .remote-mute-banner {
@@ -500,7 +673,14 @@ body.role-provider .mute-tts-banner {
 body.role-patient .mute-tts-receive-panel,
 body.role-provider .mute-tts-receive-panel {
   bottom: calc(var(--mc-tts-controls-clearance) + 8px);
-  max-height: min(28vh, 220px);
+  max-height: min(30vh, 240px);
+}
+
+body.role-provider .mute-tts-receive-panel {
+  /* Keep clear of main remote video: dock to bottom-right above controls */
+  right: max(12px, env(safe-area-inset-right, 0px));
+  left: auto;
+  width: min(320px, calc(100vw - 28px));
 }
 
 body.role-patient .remote-mute-banner {
@@ -590,12 +770,60 @@ body.role-patient .remote-mute-banner {
   }
 
   .mute-tts-receive-panel {
-    left: 12px;
-    right: 12px;
+    left: 0;
+    right: 0;
     bottom: var(--mc-tts-controls-clearance);
     width: auto;
-    max-height: min(42vh, 360px);
-    border-radius: 14px 14px 12px 12px;
+    max-width: none;
+    max-height: min(38vh, 300px);
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    box-shadow: 0 -10px 28px rgba(2, 6, 23, 0.45);
+  }
+
+  body.role-provider .mute-tts-receive-panel,
+  body.role-patient .mute-tts-receive-panel {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: min(38vh, 300px);
+    bottom: var(--mc-tts-controls-clearance);
+  }
+
+  .mute-tts-receive-panel__head {
+    padding: 12px 12px 10px;
+  }
+
+  .mute-tts-speech-toggle {
+    min-height: 40px;
+    padding: 0 12px;
+  }
+
+  .mute-tts-receive-panel__head .mute-tts-panel__close {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mute-tts-player {
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .mute-tts-player__btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .mute-tts-player__bar {
+    height: 5px;
+  }
+
+  .mute-tts-player__times {
+    font-size: 11px;
   }
 
   .remote-mute-banner,

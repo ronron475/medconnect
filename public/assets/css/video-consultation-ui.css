@@ -581,15 +581,19 @@ body.media-ready .compact-hint {
   position: absolute;
   right: 0;
   bottom: calc(100% + 10px);
-  min-width: 188px;
+  min-width: 200px;
+  max-width: min(280px, calc(100vw - 16px));
   max-height: min(70vh, 360px);
-  overflow: auto;
-  padding: 6px;
-  border-radius: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 14px;
   background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   z-index: 70;
+  box-sizing: border-box;
+  overscroll-behavior: contain;
 }
 
 .mc-vc-more-menu.is-ported {
@@ -605,28 +609,67 @@ body.media-ready .compact-hint {
 }
 
 .mc-vc-more-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px 1fr;
   align-items: center;
+  column-gap: 12px;
   width: 100%;
   min-height: 44px;
+  height: 44px;
   padding: 0 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: #f8fafc;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 650;
   text-align: left;
   cursor: pointer;
+  box-sizing: border-box;
+  touch-action: manipulation;
+}
+
+.mc-vc-more-item__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.mc-vc-more-item__icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.mc-vc-more-item__label {
+  min-width: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .mc-vc-more-item:hover,
 .mc-vc-more-item:focus-visible {
   background: rgba(13, 148, 136, 0.22);
+  outline: none;
+}
+
+.mc-vc-more-item:hover .mc-vc-more-item__icon,
+.mc-vc-more-item:focus-visible .mc-vc-more-item__icon {
+  color: #5eead4;
+}
+
+.mc-vc-more-item:focus-visible {
+  box-shadow: inset 0 0 0 2px rgba(125, 211, 252, 0.7);
 }
 
 .mc-vc-more-item--compact {
-  display: flex;
+  display: grid;
 }
 
 .mc-vc-overlay-title {
@@ -694,8 +737,12 @@ body.role-patient .mc-vc-status-bar {
 .mc-vc-controls-inner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  justify-content: space-evenly;
+  gap: clamp(6px, 1.8vw, 14px);
+  width: 100%;
+  max-width: min(560px, 100%);
+  margin-inline: auto;
+  padding: 10px 12px;
   border-radius: var(--mc-vc-radius-pill);
   background: var(--mc-vc-glass);
   border: 1px solid var(--mc-vc-glass-border);
@@ -704,28 +751,14 @@ body.role-patient .mc-vc-status-bar {
   pointer-events: auto;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
+  flex-wrap: nowrap;
+  overflow: visible;
 }
 
 .mc-vc-controls-primary,
 .mc-vc-controls-secondary {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-
-@media (min-width: 769px) {
-  .mc-vc-controls-inner {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .mc-vc-controls-primary,
-  .mc-vc-controls-secondary {
-    display: contents;
-  }
+  display: contents;
 }
 
 .mc-vc-btn--desktop-only {
@@ -1277,11 +1310,13 @@ body.embedded-shell.role-provider .mc-vc-pip video {
   }
 
   .mc-vc-controls-inner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: clamp(6px, 1.8vw, 12px);
     width: 100%;
-    max-width: 100%;
+    max-width: min(560px, 100%);
+    margin-inline: auto;
     padding: 10px 12px;
     border-radius: 16px;
     flex-wrap: nowrap;
@@ -1289,9 +1324,7 @@ body.embedded-shell.role-provider .mc-vc-pip video {
 
   .mc-vc-controls-primary,
   .mc-vc-controls-secondary {
-    width: 100%;
-    justify-content: center;
-    gap: 10px;
+    display: contents;
   }
 
   .mc-vc-btn--desktop-only {
@@ -1314,16 +1347,16 @@ body.embedded-shell.role-provider .mc-vc-pip video {
 
   .mc-vc-btn--report,
   .mc-vc-btn--end {
-    min-width: 0;
-    flex: 1 1 0;
-    max-width: 168px;
+    min-width: 72px;
+    flex: 0 0 auto;
+    max-width: none;
     height: 48px;
     border-radius: 24px;
     font-size: 13px;
   }
 
   .mc-vc-btn--end {
-    min-width: 96px;
+    min-width: 72px;
   }
 
   .mc-vc-pip[data-corner="bottom-left"],
@@ -1428,14 +1461,17 @@ body.embedded-shell.role-provider .mc-vc-pip video {
   }
 
   .mc-vc-controls-inner {
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
     overflow: visible;
-    max-width: 100%;
+    max-width: min(560px, 100%);
+    margin-inline: auto;
   }
 
   .mc-vc-controls-primary,
   .mc-vc-controls-secondary {
-    flex-wrap: nowrap;
+    display: contents;
   }
 
   .mc-vc-btn {
@@ -1522,19 +1558,23 @@ body.embedded-shell.role-provider .mc-vc-pip video {
 }
 
 /* ── Narrow phones (320–414px) ──────────────────────────────────────────────
-   The secondary row is Info + Chat + Text + Report + End. Held on one nowrap
-   line those exceeded a 375px viewport, pushing "End Consultation" off screen.
-   The rows now wrap and the End button keeps its own full-width line so it can
-   never be clipped or covered. */
+   Keep a single centered control row with even spacing. Shrink gaps/sizes
+   instead of wrapping End onto its own line (that caused uneven layout). */
 @media (max-width: 414px) {
-  .mc-vc-controls-inner {
-    flex-wrap: wrap;
+  .mc-vc-controls {
+    padding-left: calc(8px + var(--mc-vc-safe-left));
+    padding-right: calc(8px + var(--mc-vc-safe-right));
   }
 
-  .mc-vc-controls-primary,
-  .mc-vc-controls-secondary {
-    flex-wrap: wrap;
-    width: 100%;
+  .mc-vc-controls-inner {
+    gap: 6px;
+    padding: 8px 8px;
+    max-width: 100%;
+  }
+
+  .mc-vc-btn {
+    width: 44px;
+    height: 44px;
   }
 
   .mc-vc-btn--label {
@@ -1544,9 +1584,12 @@ body.embedded-shell.role-provider .mc-vc-pip video {
   }
 
   .mc-vc-btn--end {
-    order: 99;
-    flex: 1 1 100%;
-    min-width: 0;
+    order: 0;
+    flex: 0 0 auto;
+    min-width: 60px;
+    height: 44px;
+    padding: 0 10px;
+    font-size: 12px;
   }
 }
 
@@ -1786,22 +1829,18 @@ body.role-patient .mc-vc-controls-inner {
   flex-wrap: nowrap;
   align-items: center;
   justify-content: space-evenly;
-  gap: 6px;
+  gap: clamp(6px, 2vw, 12px);
   width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 8px 8px;
+  max-width: min(520px, 100%);
+  margin: 0 auto;
+  padding: 8px 10px;
   overflow: visible;
   box-sizing: border-box;
 }
 
 body.role-patient .mc-vc-controls-primary,
 body.role-patient .mc-vc-controls-secondary {
-  width: auto;
-  flex: 0 0 auto;
-  flex-wrap: nowrap;
-  justify-content: center;
-  gap: 10px;
+  display: contents;
 }
 
 body.role-patient .mc-vc-btn--overflow-menu,
@@ -1823,6 +1862,12 @@ body.role-patient .mc-vc-main-label {
   display: none;
 }
 
+body.role-patient .mc-vc-btn {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+}
+
 body.role-patient .mc-vc-btn--end {
   order: 0;
   flex: 0 0 auto;
@@ -1842,15 +1887,18 @@ body.role-patient .mc-vc-more-menu {
   position: absolute;
   right: 0;
   bottom: calc(100% + 10px);
-  min-width: 188px;
+  min-width: 200px;
+  max-width: min(280px, calc(100vw - 16px));
   max-height: min(70vh, 360px);
-  overflow: auto;
-  padding: 6px;
-  border-radius: 12px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 8px;
+  border-radius: 14px;
   background: #0f172a;
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  border: 1px solid rgba(148, 163, 184, 0.28);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   z-index: 70;
+  box-sizing: border-box;
 }
 
 body.role-patient .mc-vc-more-menu.is-ported {
@@ -1865,17 +1913,20 @@ body.role-patient .mc-vc-more-menu[hidden] {
 }
 
 body.role-patient .mc-vc-more-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 22px 1fr;
   align-items: center;
+  column-gap: 12px;
   width: 100%;
   min-height: 44px;
+  height: 44px;
   padding: 0 12px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
   color: #f8fafc;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 650;
   text-align: left;
   cursor: pointer;
 }
@@ -2020,17 +2071,21 @@ body.mc-vc-call-ended .mc-vc-pip {
 
   body.role-patient .mc-vc-controls-primary,
   body.role-patient .mc-vc-controls-secondary {
-    gap: 8px;
+    display: contents;
   }
 }
 
 @media (max-width: 414px) {
-  body.role-patient .mc-vc-controls-inner,
+  body.role-patient .mc-vc-controls-inner {
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-evenly;
+  }
+
   body.role-patient .mc-vc-controls-primary,
   body.role-patient .mc-vc-controls-secondary {
-    flex-wrap: nowrap;
-    width: auto;
-    max-width: 100%;
+    display: contents;
   }
 
   body.role-patient .mc-vc-btn--end {
@@ -2049,6 +2104,7 @@ body.mc-vc-call-ended .mc-vc-pip {
   body.role-patient .mc-vc-controls-inner {
     flex-direction: row !important;
     align-items: center !important;
+    justify-content: space-evenly !important;
     gap: 4px !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -2056,9 +2112,7 @@ body.mc-vc-call-ended .mc-vc-pip {
 
   body.role-patient .mc-vc-controls-primary,
   body.role-patient .mc-vc-controls-secondary {
-    width: auto !important;
-    justify-content: space-evenly !important;
-    flex-wrap: nowrap !important;
+    display: contents !important;
   }
 
   body.role-patient .mc-vc-btn--end {
@@ -2088,7 +2142,7 @@ body.mc-vc-call-ended .mc-vc-pip {
 
   body.role-patient .mc-vc-controls-primary,
   body.role-patient .mc-vc-controls-secondary {
-    gap: 4px !important;
+    display: contents !important;
   }
 }
 
@@ -2125,7 +2179,7 @@ body.mc-vc-call-ended .mc-vc-pip {
 
   body.role-patient .mc-vc-controls-primary,
   body.role-patient .mc-vc-controls-secondary {
-    gap: 6px;
+    display: contents;
   }
 }
 
@@ -2207,15 +2261,18 @@ body.role-provider #mcVcMinimizeBtn {
 body.role-provider .mc-vc-controls-inner {
   flex-direction: row;
   flex-wrap: nowrap;
-  justify-content: center;
-  max-width: calc(100% - 16px);
+  justify-content: space-evenly;
+  align-items: center;
+  gap: clamp(6px, 1.8vw, 14px);
+  width: 100%;
+  max-width: min(560px, calc(100% - 16px));
+  margin-inline: auto;
   box-sizing: border-box;
 }
 
 body.role-provider .mc-vc-controls-primary,
 body.role-provider .mc-vc-controls-secondary {
-  width: auto;
-  flex-wrap: nowrap;
+  display: contents;
 }
 
 body.role-provider .mc-vc-btn--end {
@@ -2405,12 +2462,17 @@ body.role-provider:not(.embedded-shell) .mc-vc-header {
 }
 
 @media (max-width: 414px) {
-  body.role-provider .mc-vc-controls-inner,
+  body.role-provider .mc-vc-controls-inner {
+    flex-wrap: nowrap;
+    width: 100%;
+    max-width: 100%;
+    justify-content: space-evenly;
+    gap: 6px;
+  }
+
   body.role-provider .mc-vc-controls-primary,
   body.role-provider .mc-vc-controls-secondary {
-    flex-wrap: nowrap;
-    width: auto;
-    gap: 6px;
+    display: contents;
   }
 
   body.role-provider .mc-vc-btn--end {

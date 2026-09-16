@@ -59,6 +59,40 @@ $providerLabel = $endedProvider !== '' ? $endedProvider : 'your doctor';
             </dt>
             <dd><?= htmlspecialchars($providerLabel) ?></dd>
           </div>
+          <?php if (!empty($endedScheduledDurationLabel)): ?>
+          <div>
+            <dt>
+              <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              Scheduled duration
+            </dt>
+            <dd><?= htmlspecialchars($endedScheduledDurationLabel) ?></dd>
+          </div>
+          <?php endif; ?>
+          <?php if (!empty($endedStartedLabel)): ?>
+          <div>
+            <dt>
+              <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              Started
+            </dt>
+            <dd><?= htmlspecialchars($endedStartedLabel) ?></dd>
+          </div>
+          <?php endif; ?>
+          <?php if (!empty($endedEndedLabel)): ?>
+          <div>
+            <dt>
+              <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              Ended
+            </dt>
+            <dd><?= htmlspecialchars($endedEndedLabel) ?></dd>
+          </div>
+          <?php endif; ?>
+          <div>
+            <dt>
+              <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              Actual duration
+            </dt>
+            <dd><?= htmlspecialchars($endedDuration !== '' ? $endedDuration : '—') ?></dd>
+          </div>
           <?php if ($endedStatusLabel !== ''): ?>
           <div>
             <dt>
@@ -68,13 +102,6 @@ $providerLabel = $endedProvider !== '' ? $endedProvider : 'your doctor';
             <dd><?= htmlspecialchars($endedStatusLabel) ?></dd>
           </div>
           <?php endif; ?>
-          <div>
-            <dt>
-              <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-              Duration
-            </dt>
-            <dd><?= htmlspecialchars($endedDuration !== '' ? $endedDuration : '—') ?></dd>
-          </div>
         </dl>
       </section>
 

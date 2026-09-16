@@ -86,7 +86,8 @@ if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
             ],
             isset($consult['completed_at']) ? (string) $consult['completed_at'] : null,
             (string) ($consult['provider_name'] ?? ''),
-            ''
+            '',
+            consultation_scheduled_duration_seconds_for_id($pdo, $cid)
         );
         $consult['video_history'] = $vh;
         $consult['duration_label'] = (string) ($vh['duration_label'] ?? '');

@@ -80,26 +80,36 @@ $providerName = patient_provider_display_name(trim((string) ($consult['provider_
 $chiefComplaint = patient_session_chief_complaint($pdo, $uid, $consult);
 
 $video = consultation_video_session_row($pdo, $consultationId);
+$scheduledDurationSeconds = consultation_scheduled_duration_seconds_for_id($pdo, $consultationId);
 $videoHistory = consultation_video_history_summary(
     (string) ($consult['status'] ?? ''),
     $video,
     isset($consult['completed_at']) ? (string) $consult['completed_at'] : null,
     $providerName,
-    ''
+    '',
+    $scheduledDurationSeconds
 );
 
 $videoStarted = trim((string) ($video['started_at'] ?? ''));
 $videoEnded = trim((string) ($video['ended_at'] ?? ''));
-$durationLabel = patient_format_call_duration($videoStarted, $videoEnded);
-$startLabel = $videoStarted !== '' ? date('g:i A', strtotime($videoStarted)) : '';
-$endLabel = $videoEnded !== '' ? date('g:i A', strtotime($videoEnded)) : '';
+$durationSnap = consultation_duration_snapshot(
+    $videoStarted !== '' ? $videoStarted : null,
+    $videoEnded !== '' ? $videoEnded : null,
+    $scheduledDurationSeconds,
+    (string) ($consult['status'] ?? '')
+);
+$durationLabel = (string) ($durationSnap['actual_duration_label'] ?? '');
+$startLabel = (string) ($durationSnap['started_label'] ?? '');
+$endLabel = (string) ($durationSnap['ended_label'] ?? '');
+$scheduledDurationLabel = (string) ($durationSnap['scheduled_duration_label'] ?? '');
+$endedEarly = !empty($durationSnap['ended_early']);
 
 $status = strtolower(trim((string) ($consult['status'] ?? '')));
 if ($status === 'cancelled' || $status === 'canceled') {
     $statusLabel = 'Cancelled';
     $statusChip = 'cancelled';
 } elseif ($isFinalized || $status === 'completed' || ($video && (string) ($video['status'] ?? '') === 'ended')) {
-    $statusLabel = 'Completed';
+    $statusLabel = $endedEarly ? 'Completed — Ended early' : 'Completed';
     $statusChip = 'completed';
 } elseif ($status === 'in_consultation') {
     $statusLabel = 'Active';
@@ -161,12 +171,36 @@ $patient_page_stylesheets = [
   </header>
 
   <div class="pmh-detail-stack">
-    <section class="pmh-panel pmh-detail-card" aria-label="Session">
-      <h3 class="pmh-detail-card__title">Session</h3>
+    <section class="pmh-panel pmh-detail-card" aria-label="Consultation">
+      <h3 class="pmh-detail-card__title">Consultation</h3>
       <dl class="pmh-session-kv pmh-session-kv--grid">
+        <?php if ($scheduledDurationLabel !== ''): ?>
         <div>
-          <dt>Consultation ID</dt>
-          <dd>#<?= (int) $consultationId ?></dd>
+          <dt>Scheduled duration</dt>
+          <dd><?= htmlspecialchars($scheduledDurationLabel) ?></dd>
+        </div>
+        <?php endif; ?>
+        <?php if ($startLabel !== ''): ?>
+        <div>
+          <dt>Started</dt>
+          <dd><?= htmlspecialchars($startLabel) ?></dd>
+        </div>
+        <?php endif; ?>
+        <?php if ($endLabel !== ''): ?>
+        <div>
+          <dt>Ended</dt>
+          <dd><?= htmlspecialchars($endLabel) ?></dd>
+        </div>
+        <?php endif; ?>
+        <?php if ($durationLabel !== ''): ?>
+        <div>
+          <dt>Actual duration</dt>
+          <dd><?= htmlspecialchars($durationLabel) ?></dd>
+        </div>
+        <?php endif; ?>
+        <div>
+          <dt>Status</dt>
+          <dd><?= htmlspecialchars($statusLabel) ?></dd>
         </div>
         <div>
           <dt>Doctor</dt>
@@ -177,27 +211,9 @@ $patient_page_stylesheets = [
           <dd><?= htmlspecialchars($dateLabel) ?></dd>
         </div>
         <div>
-          <dt>Status</dt>
-          <dd><?= htmlspecialchars($statusLabel) ?></dd>
+          <dt>Consultation ID</dt>
+          <dd>#<?= (int) $consultationId ?></dd>
         </div>
-        <?php if ($startLabel !== ''): ?>
-        <div>
-          <dt>Start</dt>
-          <dd><?= htmlspecialchars($startLabel) ?></dd>
-        </div>
-        <?php endif; ?>
-        <?php if ($endLabel !== ''): ?>
-        <div>
-          <dt>End</dt>
-          <dd><?= htmlspecialchars($endLabel) ?></dd>
-        </div>
-        <?php endif; ?>
-        <?php if ($durationLabel !== ''): ?>
-        <div>
-          <dt>Duration</dt>
-          <dd><?= htmlspecialchars($durationLabel) ?></dd>
-        </div>
-        <?php endif; ?>
         <div>
           <dt>Patient Complaint</dt>
           <dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd>
@@ -214,12 +230,34 @@ $patient_page_stylesheets = [
           <dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd>
         </div>
         <?php endif; ?>
-        <?php if (!empty($videoHistory['duration_label'])): ?>
+        <?php if (!empty($videoHistory['scheduled_duration_label'])): ?>
         <div>
-          <dt>Duration</dt>
-          <dd><?= htmlspecialchars((string) $videoHistory['duration_label']) ?></dd>
+          <dt>Scheduled duration</dt>
+          <dd><?= htmlspecialchars((string) $videoHistory['scheduled_duration_label']) ?></dd>
         </div>
         <?php endif; ?>
+        <?php if (!empty($videoHistory['started_label'])): ?>
+        <div>
+          <dt>Started</dt>
+          <dd><?= htmlspecialchars((string) $videoHistory['started_label']) ?></dd>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($videoHistory['ended_label'])): ?>
+        <div>
+          <dt>Ended</dt>
+          <dd><?= htmlspecialchars((string) $videoHistory['ended_label']) ?></dd>
+        </div>
+        <?php endif; ?>
+        <?php if (!empty($videoHistory['actual_duration_label']) || !empty($videoHistory['duration_label'])): ?>
+        <div>
+          <dt>Actual duration</dt>
+          <dd><?= htmlspecialchars((string) ($videoHistory['actual_duration_label'] ?: $videoHistory['duration_label'])) ?></dd>
+        </div>
+        <?php endif; ?>
+        <div>
+          <dt>Status</dt>
+          <dd><?= htmlspecialchars((string) ($videoHistory['status_label'] ?: $videoHistory['video_status_label'] ?: $statusLabel)) ?></dd>
+        </div>
         <div>
           <dt>Provider</dt>
           <dd><?= htmlspecialchars($providerName) ?></dd>

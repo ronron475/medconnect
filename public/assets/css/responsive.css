@@ -307,18 +307,22 @@ body.mc-nav-opening .topbar-brand {
 
   /* Header must not sit above the backdrop while drawer is open. */
   body.mc-nav-open .topbar,
-  body.mc-nav-open .pd-header {
+  body.mc-nav-open .pd-header,
+  body.mc-nav-open .pt-header {
     z-index: 500;
     pointer-events: none;
   }
 
   body.mc-nav-open .topbar-right,
   body.mc-nav-open .pd-header-right,
+  body.mc-nav-open .pt-header-right,
   body.mc-nav-open .topbar-left .topbar-title-block,
   body.mc-nav-open .topbar-left .topbar-brand,
   body.mc-nav-open .topbar-left .topbar-date-label,
   body.mc-nav-open .pd-header-title,
-  body.mc-nav-open .pd-header-brand {
+  body.mc-nav-open .pd-header-brand,
+  body.mc-nav-open .pt-header-title,
+  body.mc-nav-open .pt-brand {
     pointer-events: none !important;
   }
 
@@ -328,6 +332,15 @@ body.mc-nav-opening .topbar-brand {
     position: fixed;
     top: calc(10px + env(safe-area-inset-top, 0px));
     left: calc(14px + env(safe-area-inset-left, 0px));
+    z-index: 920;
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  body.patient-portal.mc-nav-open .pt-hamburger {
+    position: fixed;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
     z-index: 920;
     pointer-events: auto;
     touch-action: manipulation;

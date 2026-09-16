@@ -257,27 +257,11 @@ function patient_provider_display_name(string $name): string
  */
 function patient_format_call_duration(?string $startedAt, ?string $endedAt): string
 {
-    $start = $startedAt !== null && $startedAt !== '' ? strtotime($startedAt) : false;
-    $end = $endedAt !== null && $endedAt !== '' ? strtotime($endedAt) : false;
-    if ($start === false || $end === false || $end < $start) {
-        return '';
-    }
+    require_once __DIR__ . '/consultation_duration.php';
 
-    $sec = (int) ($end - $start);
-    $hours = intdiv($sec, 3600);
-    $minutes = intdiv($sec % 3600, 60);
-    $seconds = $sec % 60;
-
-    $parts = [];
-    if ($hours > 0) {
-        $parts[] = $hours . ' hr';
-    }
-    if ($minutes > 0 || $hours > 0) {
-        $parts[] = $minutes . ' min';
-    }
-    $parts[] = $seconds . ' sec';
-
-    return implode(' ', $parts);
+    return consultation_format_duration_seconds(
+        consultation_actual_duration_seconds($startedAt, $endedAt)
+    );
 }
 
 /**

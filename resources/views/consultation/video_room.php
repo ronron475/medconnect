@@ -95,16 +95,27 @@ if (!$session) {
             $endedTs = strtotime((string) $ended['consult_date']);
             $endedDateLabel = $endedTs ? date('F j, Y', $endedTs) : '';
         }
-        $endedDuration = consultation_format_video_duration(
+        $endedCid = (int) ($ended['consultation_id'] ?? 0);
+        $endedScheduledSecs = consultation_scheduled_duration_seconds_for_id($pdo, $endedCid);
+        $endedSnap = consultation_duration_snapshot(
             isset($ended['started_at']) ? (string) $ended['started_at'] : null,
-            isset($ended['ended_at']) ? (string) $ended['ended_at'] : null
+            isset($ended['ended_at']) ? (string) $ended['ended_at'] : null,
+            $endedScheduledSecs,
+            (string) ($ended['consult_status'] ?? '')
         );
-        $endedStatusRaw = strtolower(str_replace(' ', '_', trim((string) ($ended['consult_status'] ?? ''))));
-        $endedStatusLabel = $endedStatusRaw !== ''
-            ? ucwords(str_replace('_', ' ', $endedStatusRaw))
-            : '';
+        $endedDuration = (string) ($endedSnap['actual_duration_label'] ?? '');
+        $endedScheduledDurationLabel = (string) ($endedSnap['scheduled_duration_label'] ?? '');
+        $endedStartedLabel = (string) ($endedSnap['started_label'] ?? '');
+        $endedEndedLabel = (string) ($endedSnap['ended_label'] ?? '');
+        $endedStatusLabel = (string) ($endedSnap['status_label'] ?? '');
+        if ($endedStatusLabel === '') {
+            $endedStatusRaw = strtolower(str_replace(' ', '_', trim((string) ($ended['consult_status'] ?? ''))));
+            $endedStatusLabel = $endedStatusRaw !== ''
+                ? ucwords(str_replace('_', ' ', $endedStatusRaw))
+                : 'Completed';
+        }
         $endedRecordingUrl = ($role === 'patient' && $isOwner)
-            ? consultation_video_recording_view_url((int) ($ended['consultation_id'] ?? 0))
+            ? consultation_video_recording_view_url($endedCid)
             : '';
         $endedCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-room-enhancements.css');
         $endedLogo = ASSET_BASE . '/assets/img/medcon_logo.png';
@@ -182,30 +193,40 @@ $patient_initials = strtoupper(substr($session['patient_first'] ?? 'P', 0, 1) . 
 $provider_initials = strtoupper(substr($session['doctor_first'] ?? 'H', 0, 1) . substr($session['doctor_last'] ?? 'P', 0, 1));
 $other_name = ($role === 'provider') ? $patient_name : $provider_name;
 
-$slot_minutes = 30;
-$seconds_remaining = $slot_minutes * 60;
-$slot_end_label = '';
-if (!empty($session['slot_start']) && !empty($session['slot_end'])) {
-    $start_ts = strtotime((string) $session['slot_start']);
-    $end_ts = strtotime((string) $session['slot_end']);
-    if ($start_ts && $end_ts && $end_ts > $start_ts) {
-        $slot_minutes = max(15, (int) round(($end_ts - $start_ts) / 60));
-    }
-}
-$slot_date = $session['slot_date'] ?? $session['consult_date'] ?? date('Y-m-d');
-if (!empty($session['slot_end'])) {
-    $slot_end_ts = strtotime($slot_date . ' ' . $session['slot_end']);
-    if ($slot_end_ts) {
-        $seconds_remaining = max(0, $slot_end_ts - time());
-        $slot_end_label = date('g:i A', $slot_end_ts);
-    }
-} elseif (!empty($session['consult_time'])) {
-    $slot_end_ts = strtotime($slot_date . ' ' . $session['consult_time']) + ($slot_minutes * 60);
-    $seconds_remaining = max(0, $slot_end_ts - time());
-    $slot_end_label = date('g:i A', $slot_end_ts);
-}
-$is_patient = ($role === 'patient');
+require_once BASE_PATH . '/app/includes/consultation_duration.php';
 $consultation_id = (int) ($session['consultation_id'] ?? 0);
+$scheduled_duration_seconds = consultation_scheduled_duration_seconds(
+    isset($session['slot_start']) ? (string) $session['slot_start'] : null,
+    isset($session['slot_end']) ? (string) $session['slot_end'] : null,
+    null
+);
+if ($scheduled_duration_seconds <= 0) {
+    $scheduled_duration_seconds = consultation_scheduled_duration_seconds_for_id($pdo, $consultation_id);
+}
+$slot_minutes = max(1, (int) intdiv($scheduled_duration_seconds, 60));
+$slot_date = $session['slot_date'] ?? $session['consult_date'] ?? date('Y-m-d');
+$calendar_slot_end_ts = null;
+if (!empty($session['slot_end'])) {
+    $calendar_slot_end_ts = strtotime($slot_date . ' ' . $session['slot_end']) ?: null;
+} elseif (!empty($session['consult_time'])) {
+    $calendar_slot_end_ts = strtotime($slot_date . ' ' . $session['consult_time']) + $scheduled_duration_seconds;
+}
+$video_started_at = trim((string) ($session['started_at'] ?? ''));
+$session_deadline_ts = consultation_session_deadline_ts(
+    $video_started_at !== '' ? $video_started_at : null,
+    $scheduled_duration_seconds,
+    $calendar_slot_end_ts
+);
+$seconds_remaining = consultation_seconds_remaining_until($session_deadline_ts);
+$elapsed_capped_seconds = consultation_elapsed_capped_seconds(
+    $video_started_at !== '' ? $video_started_at : null,
+    $scheduled_duration_seconds,
+    null
+);
+$slot_end_label = $session_deadline_ts
+    ? consultation_format_clock_time(date('Y-m-d H:i:s', $session_deadline_ts))
+    : '';
+$is_patient = ($role === 'patient');
 
 // Persist a real CSRF token so mute-TTS / messages APIs work in production.
 // Never invent a page-only token — it would fail auth_csrf_validate on send.php.
@@ -294,7 +315,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       chiefComplaint: <?= json_encode($chief_complaint_seed) ?>,
       appointmentLabel: <?= json_encode($appointment_label) ?>,
       consultDate: <?= json_encode((string) ($session['consult_date'] ?? '')) ?>,
-      videoStartedAt: <?= json_encode((string) ($session['started_at'] ?? '')) ?>,
+      videoStartedAt: <?= json_encode($video_started_at) ?>,
+      scheduledDurationSeconds: <?= (int) $scheduled_duration_seconds ?>,
+      elapsedSeconds: <?= (int) $elapsed_capped_seconds ?>,
+      secondsRemaining: <?= (int) $seconds_remaining ?>,
+      scheduledEndLabel: <?= json_encode($slot_end_label) ?>,
     };
   </script>
   <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
@@ -396,58 +421,230 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 20px;
-      background: rgba(2, 6, 23, 0.72);
-      backdrop-filter: blur(6px);
+      padding: max(12px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(12px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+      background: rgba(2, 6, 23, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-sizing: border-box;
+      overflow: auto;
+      overscroll-behavior: contain;
     }
     .violation-modal.show { display: flex; }
     .violation-dialog {
-      width: min(480px, 100%);
-      max-height: min(90dvh, 720px);
-      overflow: auto;
-      background: #0f172a;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      border-radius: 18px;
-      padding: 22px;
-      box-shadow: 0 24px 70px rgba(0,0,0,.45);
-      color: #fff;
+      width: min(440px, 100%);
+      max-width: 100%;
+      max-height: min(92dvh, 680px);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      overflow: hidden;
+      background: #0b1220;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: 0 22px 56px rgba(0, 0, 0, 0.5);
+      color: #f8fafc;
       text-align: left;
+      box-sizing: border-box;
     }
-    .violation-dialog h2 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
-    .violation-dialog p { color: #cbd5e1; font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
-    .violation-dialog label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #e2e8f0; }
+    .violation-dialog__head {
+      flex-shrink: 0;
+      padding: 18px 18px 0;
+    }
+    .violation-dialog__head h2 {
+      margin: 0 0 6px;
+      font-size: 1.125rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.25;
+      color: #f8fafc;
+    }
+    .violation-dialog__head p {
+      color: #94a3b8;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      margin: 0 0 14px;
+    }
+    .violation-dialog__body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+      padding: 0 18px 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .violation-field {
+      margin-bottom: 14px;
+    }
+    .violation-field:last-child {
+      margin-bottom: 8px;
+    }
+    .violation-field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin-bottom: 6px;
+      color: #e2e8f0;
+    }
     .violation-dialog select,
     .violation-dialog textarea {
+      display: block;
       width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
       border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      background: #1e293b;
-      color: #fff;
-      padding: 10px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #111827;
+      color: #f8fafc;
+      padding: 11px 12px;
       font: inherit;
-      margin-bottom: 12px;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      margin: 0;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .violation-dialog select {
+      min-height: 44px;
+      padding-right: 36px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #94a3b8 50%),
+        linear-gradient(135deg, #94a3b8 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 2px),
+        calc(100% - 12px) calc(50% - 2px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      background-color: #111827;
+      cursor: pointer;
+    }
+    .violation-dialog select:focus,
+    .violation-dialog textarea:focus {
+      outline: none;
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
+    }
+    .violation-dialog select:invalid {
+      color: #94a3b8;
+    }
+    .violation-dialog select option {
+      color: #0f172a;
+      background: #fff;
+    }
+    .violation-dialog textarea {
+      min-height: 88px;
+      resize: vertical;
+      max-height: 160px;
+    }
+    .violation-dialog textarea::placeholder {
+      color: #64748b;
     }
     .violation-actions {
-      display: flex;
-      flex-wrap: wrap;
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      justify-content: flex-end;
-      margin-top: 8px;
+      margin: 0;
+      padding: 14px 18px 18px;
+      border-top: 1px solid rgba(148, 163, 184, 0.16);
+      background: rgba(15, 23, 42, 0.65);
     }
     .violation-actions button {
-      height: 40px;
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 44px;
+      height: auto;
       border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      padding: 0 14px;
-      font-weight: 800;
+      border: 1px solid transparent;
+      padding: 10px 12px;
+      font-weight: 700;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 0.8125rem;
+      line-height: 1.2;
+      white-space: nowrap;
+      transition: filter 0.15s ease, transform 0.1s ease;
     }
-    .violation-actions .ghost { background: #1e293b; color: #fff; }
-    .violation-actions .primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-    .violation-actions .warn { background: #b45309; color: #fff; border-color: #b45309; }
-    .violation-actions .danger { background: #dc2626; color: #fff; border-color: #dc2626; }
+    .violation-actions button:hover {
+      filter: brightness(1.06);
+    }
+    .violation-actions button:active {
+      transform: translateY(1px);
+    }
+    .violation-actions button:focus-visible {
+      outline: 2px solid #93c5fd;
+      outline-offset: 2px;
+    }
+    .violation-actions button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: none;
+      transform: none;
+    }
+    .violation-actions .ghost {
+      grid-column: 1;
+      background: transparent;
+      color: #e2e8f0;
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+    .violation-actions .primary {
+      grid-column: 2;
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+    .violation-actions .warn {
+      grid-column: 1;
+      background: #c2410c;
+      color: #fff;
+      border-color: #c2410c;
+    }
+    .violation-actions .danger {
+      grid-column: 2;
+      background: #dc2626;
+      color: #fff;
+      border-color: #dc2626;
+    }
+    @media (max-width: 480px) {
+      .violation-modal {
+        align-items: flex-end;
+        padding: 0;
+      }
+      .violation-dialog {
+        width: 100%;
+        max-height: min(94dvh, 100%);
+        border-radius: 16px 16px 0 0;
+        border-left: 0;
+        border-right: 0;
+        border-bottom: 0;
+      }
+      .violation-dialog__head,
+      .violation-dialog__body {
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .violation-dialog__head {
+        padding-top: 16px;
+      }
+      .violation-actions {
+        grid-template-columns: 1fr;
+        padding: 12px max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+      }
+      .violation-actions .ghost,
+      .violation-actions .primary,
+      .violation-actions .warn,
+      .violation-actions .danger {
+        grid-column: 1;
+      }
+      .violation-actions button {
+        white-space: normal;
+      }
+    }
+    @media (min-width: 481px) and (max-width: 720px) {
+      .violation-dialog {
+        width: min(420px, 100%);
+      }
+    }
     @media (max-width: 720px) {
       .media-permission-gate {
         padding: calc(16px + env(safe-area-inset-top, 0px)) calc(16px + env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) calc(16px + env(safe-area-inset-left, 0px));
@@ -730,7 +927,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Secure
         </span>
-        <span class="mc-vc-pill mc-vc-pill--duration" id="consultDuration" title="Consultation duration">00:00</span>
+        <span class="mc-vc-pill mc-vc-pill--duration" id="consultDuration" title="Consultation duration"><?= sprintf('%02d:%02d', (int) floor($elapsed_capped_seconds / 60), $elapsed_capped_seconds % 60) ?></span>
         <span class="mc-vc-pill mc-vc-pill--timer mc-vc-slot-timer" id="timerDisplay" title="Time remaining in slot"><?= sprintf('%02d:%02d', (int) floor($seconds_remaining / 60), $seconds_remaining % 60) ?></span>
         <?php if (!$is_patient): ?>
         <button type="button" class="mc-vc-pill extend-btn" id="extendBtn" onclick="requestExtension(15)">+15 min</button>
@@ -816,16 +1013,37 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             <button type="button" class="mc-vc-btn" id="mcVcMoreBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mcVcMoreMenu" title="More tools" aria-label="More tools">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
             </button>
-            <div id="mcVcMoreMenu" class="mc-vc-more-menu" hidden role="menu">
-              <button type="button" class="mc-vc-more-item" id="mcVcInfoBtn" role="menuitem" title="<?= $is_patient ? 'Consultation details' : 'Patient information' ?>" aria-label="<?= $is_patient ? 'Open consultation details' : 'Open patient information' ?>">Info</button>
-              <button type="button" class="mc-vc-more-item" id="mcVcChatBtn" role="menuitem" title="Chat" aria-label="Open chat">Chat</button>
-              <button type="button" class="mc-vc-more-item" id="mcVcTtsBtn" role="menuitem" title="Type a message while muted" aria-label="Open typed voice message">Text</button>
+            <div id="mcVcMoreMenu" class="mc-vc-more-menu" hidden role="menu" aria-label="More tools">
+              <button type="button" class="mc-vc-more-item" id="mcVcInfoBtn" role="menuitem" title="<?= $is_patient ? 'Consultation details' : 'Patient information' ?>" aria-label="<?= $is_patient ? 'Open consultation details' : 'Open patient information' ?>">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+                <span class="mc-vc-more-item__label">Info</span>
+              </button>
+              <button type="button" class="mc-vc-more-item" id="mcVcChatBtn" role="menuitem" title="Chat" aria-label="Open chat">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                <span class="mc-vc-more-item__label">Chat</span>
+              </button>
+              <button type="button" class="mc-vc-more-item" id="mcVcTtsBtn" role="menuitem" title="Type a message while muted" aria-label="Open typed voice message">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg></span>
+                <span class="mc-vc-more-item__label">Text</span>
+              </button>
               <?php if (!$is_patient): ?>
-              <button type="button" class="mc-vc-more-item" id="violationReportBtn" role="menuitem" title="Report patient during consultation" aria-label="Report patient during consultation">Report Patient</button>
+              <button type="button" class="mc-vc-more-item" id="violationReportBtn" role="menuitem" title="Report patient during consultation" aria-label="Report patient during consultation">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>
+                <span class="mc-vc-more-item__label">Report Patient</span>
+              </button>
               <?php endif; ?>
-              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFlipBtn" role="menuitem">Switch camera</button>
-              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcSpeakerBtn" role="menuitem">Speaker</button>
-              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFullscreenBtn" role="menuitem">Fullscreen</button>
+              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFlipBtn" role="menuitem">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
+                <span class="mc-vc-more-item__label">Switch camera</span>
+              </button>
+              <button type="button" class="mc-vc-more-item" data-mc-proxy="mcVcSpeakerBtn" role="menuitem" title="Speaker on or off" aria-label="Toggle speaker">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
+                <span class="mc-vc-more-item__label">Speaker</span>
+              </button>
+              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFullscreenBtn" role="menuitem">
+                <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
+                <span class="mc-vc-more-item__label">Fullscreen</span>
+              </button>
             </div>
           </div>
           <button type="button" class="mc-vc-btn mc-vc-btn--end btn-end" id="endCallBtn" aria-label="<?= $is_patient ? 'Leave consultation' : 'End consultation' ?>"><?= $is_patient ? 'Leave' : 'End' ?></button>
@@ -881,9 +1099,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </div>
   <div id="muteTtsReceivePanel" class="mute-tts-receive-panel" aria-label="<?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?>">
     <div class="mute-tts-receive-panel__head">
-      <div class="mute-tts-receive-panel__title"><?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?></div>
-      <button type="button" class="mute-tts-speech-toggle" id="muteTtsSpeechToggle" aria-pressed="true" aria-label="Turn read-aloud off" title="Read incoming messages aloud">🔊 Read aloud</button>
-      <button type="button" class="mute-tts-panel__close" id="muteTtsReceiveCloseBtn" aria-label="Close incoming messages" title="Close">×</button>
+      <div class="mute-tts-receive-panel__heading">
+        <div class="mute-tts-receive-panel__title"><?= $is_patient ? 'Messages from provider' : 'Messages from patient' ?></div>
+        <p class="mute-tts-receive-panel__hint">Typed while mic muted · play back anytime</p>
+      </div>
+      <div class="mute-tts-receive-panel__tools">
+        <button type="button" class="mute-tts-speech-toggle" id="muteTtsSpeechToggle" aria-pressed="true" aria-label="Turn read-aloud off" title="Read incoming messages aloud">
+          <span class="mute-tts-speech-toggle__icon" aria-hidden="true">🔊</span>
+          <span class="mute-tts-speech-toggle__label">Read aloud</span>
+        </button>
+        <button type="button" class="mute-tts-panel__close" id="muteTtsReceiveCloseBtn" aria-label="Close incoming messages" title="Close">×</button>
+      </div>
     </div>
     <div id="muteTtsReceiveLog" class="mute-tts-receive-log mute-tts-log" aria-live="polite"></div>
   </div>
@@ -907,22 +1133,30 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </div>
 
   <?php if (!$is_patient): ?>
-  <div class="violation-modal" id="violationReportModal" role="dialog" aria-modal="true" aria-labelledby="violationModalTitle">
+  <div class="violation-modal" id="violationReportModal" role="dialog" aria-modal="true" aria-labelledby="violationModalTitle" aria-describedby="violationModalDesc">
     <div class="violation-dialog">
-      <h2 id="violationModalTitle">Report Patient</h2>
-      <p>Report a possible violation during this video consultation. The report is sent to an authorized administrator for review and does not automatically suspend the patient's account.</p>
-      <label for="violationReason">Report reason</label>
-      <select id="violationReason" required>
-        <option value="">Select a reason…</option>
-        <?php
-        require_once BASE_PATH . '/app/includes/case_reports_schema.php';
-        foreach (case_report_valid_video_reasons() as $vr): ?>
-        <option value="<?= htmlspecialchars($vr) ?>"><?= htmlspecialchars(case_report_reason_label($vr)) ?></option>
-        <?php endforeach; ?>
-      </select>
-      <label for="violationNotes" id="violationNotesLabel">Additional details (optional)</label>
-      <textarea id="violationNotes" rows="3" placeholder="Optional notes for administrators"></textarea>
-      <div class="violation-actions">
+      <header class="violation-dialog__head">
+        <h2 id="violationModalTitle">Report Patient</h2>
+        <p id="violationModalDesc">Report a possible violation during this video consultation. The report is sent to an authorized administrator for review and does not automatically suspend the patient's account.</p>
+      </header>
+      <div class="violation-dialog__body">
+        <div class="violation-field">
+          <label for="violationReason">Report reason</label>
+          <select id="violationReason" required aria-required="true">
+            <option value="">Select a reason…</option>
+            <?php
+            require_once BASE_PATH . '/app/includes/case_reports_schema.php';
+            foreach (case_report_valid_video_reasons() as $vr): ?>
+            <option value="<?= htmlspecialchars($vr) ?>"><?= htmlspecialchars(case_report_reason_label($vr)) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="violation-field">
+          <label for="violationNotes" id="violationNotesLabel">Additional details (optional)</label>
+          <textarea id="violationNotes" rows="3" placeholder="Optional notes for administrators" aria-labelledby="violationNotesLabel"></textarea>
+        </div>
+      </div>
+      <div class="violation-actions" role="group" aria-label="Report actions">
         <button type="button" class="ghost" id="violationCancelBtn">Cancel</button>
         <button type="button" class="primary" id="violationSubmitBtn">Submit Report</button>
         <button type="button" class="warn" id="violationEndOnlyBtn">End Consultation</button>
@@ -2525,6 +2759,18 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function applyExtension(mins, label) {
       timeLeft += mins * 60;
+      if (window.__mcVideoRoomMeta) {
+        const prev = parseInt(window.__mcVideoRoomMeta.scheduledDurationSeconds, 10) || 0;
+        window.__mcVideoRoomMeta.scheduledDurationSeconds = prev + (mins * 60);
+      }
+      if (consultUi && typeof consultUi.setDurationFromServer === 'function') {
+        const sched = (window.__mcVideoRoomMeta && window.__mcVideoRoomMeta.scheduledDurationSeconds)
+          ? window.__mcVideoRoomMeta.scheduledDurationSeconds
+          : null;
+        consultUi.setDurationFromServer({
+          scheduled_duration_seconds: sched,
+        });
+      }
       document.getElementById('extensionPrompt').style.display = 'none';
       const suffix = label ? ' New end: ' + label + '.' : '';
       showExtendToast('Session extended by ' + mins + ' minutes.' + suffix, 'success');
@@ -2629,6 +2875,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           const previous = timeLeft;
           timeLeft = data.seconds_remaining;
           updateTimerDisplay();
+          if (consultUi && typeof consultUi.setDurationFromServer === 'function') {
+            consultUi.setDurationFromServer(data);
+          } else if (consultUi && typeof consultUi.startDurationTimer === 'function') {
+            consultUi.startDurationTimer();
+          }
 
           if (timeLeft > 300) {
             document.getElementById('extensionPrompt').style.display = 'none';
