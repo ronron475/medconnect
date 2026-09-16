@@ -272,26 +272,21 @@ body.landing-page.landing-nav-open {
 }
 
 .landing-page .hero--cinematic .hero-ctas {
+  display: flex;
+  flex-wrap: nowrap;
   gap: 16px !important;
-  row-gap: 14px !important;
+  row-gap: 16px !important;
   align-items: stretch !important;
+  justify-content: flex-start !important;
 }
 
 .landing-page .hero--cinematic .hero-cta {
-  white-space: normal;
+  flex: 0 1 auto;
+  white-space: nowrap;
   text-align: center;
   min-width: 0;
   padding: 12px 24px;
-}
-
-/* Keep Download App on its own row (desktop/tablet), left-aligned like reference */
-@media (min-width: 576px) {
-  .landing-page .hero--cinematic .hero-ctas > .hero-cta:nth-child(3) {
-    flex: 0 0 auto;
-    flex-basis: 100%;
-    width: fit-content;
-    max-width: 100%;
-  }
+  align-self: stretch;
 }
 
 @media (max-width: 768px) {
@@ -327,6 +322,7 @@ body.landing-page.landing-nav-open {
   .landing-page .hero--cinematic .hero-ctas {
     width: 100%;
     flex-direction: column !important;
+    flex-wrap: nowrap !important;
     align-items: stretch !important;
     justify-content: center !important;
     gap: 12px !important;
@@ -336,12 +332,9 @@ body.landing-page.landing-nav-open {
 
   .landing-page .hero--cinematic .hero-cta {
     width: 100%;
+    flex: 1 1 auto;
+    white-space: normal;
     justify-content: center;
-  }
-
-  .landing-page .hero--cinematic .hero-ctas > .hero-cta:nth-child(3) {
-    flex-basis: auto;
-    width: 100%;
   }
 
   .landing-page .hero--cinematic .hero-badge {
@@ -497,7 +490,7 @@ body.landing-page.landing-nav-open {
 }
 
 .landing-page .hero--cinematic .hero-ctas {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .landing-page .hero-media {
@@ -551,7 +544,7 @@ body.landing-page.landing-nav-open {
   }
 }
 
-@media (min-width: 768px) and (max-width: 991px) {
+@media (min-width: 769px) and (max-width: 991px) {
   .landing-page .hero--cinematic .hero-inner {
     min-height: auto;
     padding-bottom: var(--landing-space-md);
@@ -568,7 +561,7 @@ body.landing-page.landing-nav-open {
 
   .landing-page .hero--cinematic .hero-cta {
     flex: 1 1 auto;
-    min-width: min(100%, 200px);
+    min-width: min(100%, 180px);
   }
 }
 
