@@ -5,21 +5,29 @@
 .pmh-page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   max-width: 100%;
   width: 100%;
   min-width: 0;
   margin: 0;
 }
 
-/* ── Page hero (transparent, like Health Summary) ── */
+/* ── Page toolbar (no greeting block) ── */
 .pmh-hero {
   margin: 0;
-  padding: 0 2px 2px;
+  padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+}
+
+.pmh-hero--toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
 }
 
 .pmh-hero__top {
@@ -92,9 +100,11 @@
 .pmh-hero__metrics {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 0;
   padding-top: 0;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .pmh-metric-pill {
@@ -160,13 +170,13 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 12px 14px 16px;
+  padding: 8px 12px 12px;
   min-width: 0;
   min-height: 0;
 }
 
 .pmh-panel > .pmh-tabs--segment {
-  margin: 0 0 12px;
+  margin: 0 0 6px;
 }
 
 /* ── Content surface (inner, borderless under tabs) ── */
@@ -179,14 +189,14 @@
 }
 
 .pmh-surface__head {
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid #f1f5f9;
 }
 
 .pmh-surface__head--compact {
-  margin-bottom: 10px;
-  padding-bottom: 8px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .pmh-surface__head--split {
@@ -198,8 +208,8 @@
 }
 
 .pmh-surface__title {
-  margin: 0 0 4px;
-  font-size: 1rem;
+  margin: 0 0 2px;
+  font-size: 0.95rem;
   font-weight: 800;
   color: var(--pt-color-text, #0f172a);
   line-height: 1.3;
@@ -207,10 +217,10 @@
 
 .pmh-surface__desc {
   margin: 0;
-  font-size: 0.84rem;
+  font-size: 0.8rem;
   color: var(--pt-color-muted, #64748b);
   max-width: 52ch;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 .pmh-lead {
@@ -329,8 +339,8 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   gap: 2px;
-  padding: 4px;
-  margin-bottom: 14px;
+  padding: 3px;
+  margin-bottom: 8px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-radius: 11px;
@@ -393,6 +403,13 @@
   max-width: none;
   margin-left: 0;
   margin-right: 0;
+  margin-bottom: 4px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pmh-page--timeline .pmh-feed--timeline {
+  margin-top: 0;
 }
 
 /* Empty state */
@@ -1768,10 +1785,17 @@ body.pmh-care-modal-open .pt-remedy__fab {
     padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  .pmh-hero {
-    padding: 2px 0 4px;
+  .pmh-hero,
+  .pmh-hero--toolbar {
+    padding: 0;
     margin-bottom: 0;
     border-radius: 0;
+    gap: 8px;
+  }
+
+  .pmh-hero--toolbar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .pmh-hero__top {
@@ -1816,6 +1840,8 @@ body.pmh-care-modal-open .pt-remedy__fab {
 
   .pmh-page--timeline .pmh-surface__head {
     max-width: 100%;
+    margin-bottom: 4px;
+    padding-bottom: 0;
   }
 
   .pmh-page--timeline .pmh-surface {
@@ -1823,8 +1849,12 @@ body.pmh-care-modal-open .pt-remedy__fab {
   }
 
   .pmh-panel {
-    padding: 10px;
+    padding: 6px 8px 10px;
     border-radius: 12px;
+  }
+
+  .pmh-panel > .pmh-tabs--segment {
+    margin-bottom: 4px;
   }
 
   .pmh-metric-pill {
