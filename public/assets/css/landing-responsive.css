@@ -239,24 +239,59 @@ body.landing-page.landing-nav-open {
 
 /* ── Hero ── */
 .landing-page .hero--cinematic .hero-inner {
-  padding: clamp(var(--landing-space-sm), 5vw, 56px)
-           clamp(var(--landing-space-xs), 4vw, 80px)
-           clamp(var(--landing-space-md), 6vw, 80px);
+  max-width: 1400px;
+  padding: clamp(48px, 7vh, 80px)
+           clamp(24px, 5vw, 64px)
+           clamp(40px, 6vh, 72px);
 }
 
 .landing-page .hero--cinematic .hero-left {
   max-width: min(640px, 100%);
+  gap: 0;
+}
+
+.landing-page .hero--cinematic .hero-badge {
+  margin-bottom: 18px;
+  padding: 7px 14px;
+}
+
+.landing-page .hero--cinematic .hero-title {
+  margin-bottom: 22px !important;
+  gap: 6px !important;
 }
 
 .landing-page .hero--cinematic .hero-desc {
   max-width: min(520px, 100%) !important;
+  margin-bottom: 28px !important;
   overflow-wrap: anywhere;
+}
+
+.landing-page .hero--cinematic .hero-trust-chips {
+  gap: 12px;
+  margin: 0 0 32px;
+}
+
+.landing-page .hero--cinematic .hero-ctas {
+  gap: 16px !important;
+  row-gap: 14px !important;
+  align-items: stretch !important;
 }
 
 .landing-page .hero--cinematic .hero-cta {
   white-space: normal;
   text-align: center;
   min-width: 0;
+  padding: 12px 24px;
+}
+
+/* Keep Download App on its own row (desktop/tablet), left-aligned like reference */
+@media (min-width: 576px) {
+  .landing-page .hero--cinematic .hero-ctas > .hero-cta:nth-child(3) {
+    flex: 0 0 auto;
+    flex-basis: 100%;
+    width: fit-content;
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 768px) {
@@ -294,6 +329,8 @@ body.landing-page.landing-nav-open {
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: center !important;
+    gap: 12px !important;
+    row-gap: 12px !important;
     margin-bottom: max(80px, calc(64px + env(safe-area-inset-bottom, 0px)));
   }
 
@@ -302,9 +339,15 @@ body.landing-page.landing-nav-open {
     justify-content: center;
   }
 
+  .landing-page .hero--cinematic .hero-ctas > .hero-cta:nth-child(3) {
+    flex-basis: auto;
+    width: 100%;
+  }
+
   .landing-page .hero--cinematic .hero-badge {
     margin-left: auto;
     margin-right: auto;
+    margin-bottom: 16px;
     max-width: 100%;
     text-align: center;
     flex-wrap: wrap;
@@ -427,8 +470,8 @@ body.landing-page.landing-nav-open {
 
 .landing-page .hero--cinematic .hero-inner {
   width: 100%;
-  max-width: 1320px;
-  min-height: calc(100svh - var(--landing-hero-offset, 80px));
+  max-width: 1400px;
+  min-height: calc(100svh - var(--landing-hero-offset, 76px));
   height: auto;
   display: flex;
   flex-direction: column;
@@ -473,7 +516,7 @@ body.landing-page.landing-nav-open {
   .landing-page .hero--cinematic .hero-inner {
     min-height: auto;
     justify-content: flex-start;
-    padding-top: clamp(20px, 3vh, 40px);
+    padding-top: clamp(36px, 5vh, 56px);
     padding-bottom: clamp(36px, 5vh, 64px);
   }
 }
@@ -550,13 +593,25 @@ body.landing-page.landing-nav-open {
 @media (max-width: 768px) {
   .landing-page .hero--cinematic .hero-inner {
     min-height: auto;
+    padding-top: clamp(28px, 5vh, 44px);
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: clamp(32px, 5vh, 48px);
+  }
+
+  .landing-page .hero--cinematic .hero-title {
+    margin-bottom: 18px !important;
+  }
+
+  .landing-page .hero--cinematic .hero-desc {
+    margin-bottom: 22px !important;
   }
 
   .landing-page .hero--cinematic .hero-trust-chips {
     width: 100%;
     max-width: 100%;
+    margin-bottom: 24px;
+    gap: 8px;
   }
 
   .landing-page .hero--cinematic .hero-cta {
@@ -961,8 +1016,8 @@ body.landing-page.landing-nav-open {
 
 /* ── FAB dock — align menu + theme toggle (shared inset & size) ── */
 body.landing-page .fcb {
-  left: max(24px, env(safe-area-inset-left, 0px));
-  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  left: max(32px, env(safe-area-inset-left, 0px));
+  bottom: max(32px, env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 768px) {

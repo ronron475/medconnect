@@ -62,9 +62,9 @@
   align-items: center;
   width: 100%;
   box-sizing: border-box;
-  min-height: calc(100vh - var(--landing-hero-offset, 84px));
-  min-height: calc(100svh - var(--landing-hero-offset, 84px));
-  padding-bottom: clamp(28px, 4vw, 44px);
+  min-height: calc(100vh - var(--landing-hero-offset, 76px));
+  min-height: calc(100svh - var(--landing-hero-offset, 76px));
+  padding-bottom: clamp(40px, 6vh, 72px);
 }
 
 .landing-page .hero--cinematic .announcements-section {
