@@ -100,7 +100,8 @@ $clinical_notes = [];
 $referrals = [];
 try {
     $s = $pdo->prepare("
-        SELECT CONCAT(pr.medication_name, ' ', pr.dosage) AS record_name, pr.frequency, pr.duration,
+        SELECT CONCAT(pr.medication_name, ' ', pr.dosage) AS record_name,
+               pr.medication_name, pr.dosage, pr.frequency, pr.duration,
                COALESCE(pr.notes, '') AS detail, DATE(pr.created_at) AS record_date,
                CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM prescriptions pr
@@ -133,6 +134,20 @@ try {
     ");
     $s->execute([$uid]);
     $clinical_notes = $s->fetchAll(PDO::FETCH_ASSOC);
+    $historyById = [];
+    foreach ($history as $hRow) {
+        $hid = (int) ($hRow['id'] ?? 0);
+        if ($hid > 0) {
+            $historyById[$hid] = $hRow;
+        }
+    }
+    foreach ($clinical_notes as &$cnRow) {
+        $cid = (int) ($cnRow['consultation_id'] ?? 0);
+        $cnRow['chief_complaint'] = $cid > 0
+            ? patient_session_chief_complaint($pdo, $uid, $historyById[$cid] ?? ['id' => $cid])
+            : '';
+    }
+    unset($cnRow);
 } catch (PDOException $e) { /* optional */ }
 
 try {
