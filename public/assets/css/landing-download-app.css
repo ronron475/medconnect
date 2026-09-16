@@ -10,7 +10,7 @@ body.landing-page .download-app-section {
   position: relative;
   z-index: 1;
   isolation: isolate;
-  padding: var(--landing-section-pad-y, 64px) clamp(20px, 4vw, 40px);
+  padding: var(--landing-section-pad-y, clamp(40px, 5vw, 56px)) clamp(20px, 4vw, 40px);
   background:
     radial-gradient(ellipse 50% 60% at 12% 20%, rgba(6, 147, 150, 0.22) 0%, transparent 58%),
     radial-gradient(ellipse 40% 50% at 92% 80%, rgba(34, 211, 238, 0.1) 0%, transparent 55%),

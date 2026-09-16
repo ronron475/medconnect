@@ -241,13 +241,15 @@
 }
 
 .landing-page .ann-slideshow__footer {
-  padding: 20px 0 28px;
+  padding: 16px 0 0;
 }
 
 .landing-page .ann-slideshow__bottom-transition {
-  margin-top: clamp(-12px, -1.5vw, -4px);
+  margin-top: clamp(-8px, -1vw, -2px);
+  margin-bottom: 0;
 }
 
+/* Announcements → Our Services uses the same section pad as later sections */
 .landing-page .hero--cinematic + .services-section,
 .landing-page .services-section + .services-section,
 .landing-page .services-section + .download-app-section,
