@@ -69,11 +69,12 @@
 
 .pdash-hero__title {
   margin: 0 0 10px;
-  font-size: clamp(1.35rem, 2.6vw, 1.85rem);
-  font-weight: 800;
+  font-family: inherit;
+  font-size: 1.125rem;
+  font-weight: 700;
   color: #0f172a;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
   overflow-wrap: anywhere;
 }
 
@@ -897,7 +898,7 @@
   }
 
   .pdash-hero__title {
-    font-size: clamp(1.2rem, 5.5vw, 1.45rem);
+    font-size: 1.0625rem;
     margin-bottom: 8px;
   }
 
