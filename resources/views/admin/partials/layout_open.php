@@ -18,7 +18,7 @@
   require_once VIEWS_PATH . '/partials/theme_init.php';
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin_dashboard.css') ?>"/>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-mobile.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css"/>
   <?php if (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin'): ?>
