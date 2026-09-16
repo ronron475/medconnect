@@ -41,7 +41,21 @@ function pmh_note_text(?string $value, string $fallback = ''): string {
 }
 
 /**
+ * Whether a recorded field is the patient chief complaint.
+ *
+ * @param array<string, mixed> $field
+ */
+if (!function_exists('pmh_is_chief_complaint_field')) {
+function pmh_is_chief_complaint_field(array $field): bool {
+    $key = strtolower(trim((string) ($field['key'] ?? '')));
+    $label = strtolower(trim((string) ($field['label'] ?? '')));
+    return $key === 'chief_complaint' || $label === 'chief complaint';
+}
+}
+
+/**
  * Split chief complaint from other recorded fields for clearer hierarchy.
+ * Only the patient-reported chief complaint is treated as primary (highlighted).
  *
  * @param list<array<string, mixed>> $fields
  * @return array{0: ?array<string, mixed>, 1: list<array<string, mixed>>}
@@ -51,11 +65,7 @@ function pmh_split_primary_field(array $fields): array {
     $primary = null;
     $rest = [];
     foreach ($fields as $field) {
-        $key = strtolower((string) ($field['key'] ?? ''));
-        $label = strtolower((string) ($field['label'] ?? ''));
-        $isPrimary = in_array($key, ['chief_complaint', 'reason', 'notes'], true)
-            || in_array($label, ['chief complaint', 'reason', 'notes'], true);
-        if ($isPrimary && $primary === null) {
+        if ($primary === null && pmh_is_chief_complaint_field($field)) {
             $primary = $field;
             continue;
         }
@@ -106,7 +116,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
     <?php endif; ?>
   </div>
 <?php else: ?>
-  <div class="pmh-feed pmh-feed--timeline grid w-full max-w-none grid-cols-1 items-stretch gap-3 md:grid-cols-2">
+  <div class="pmh-feed pmh-feed--timeline grid w-full max-w-none grid-cols-1 items-start gap-3 md:grid-cols-2">
     <?php foreach ($care_timeline as $item):
       $type = (string) ($item['type'] ?? '');
       $row = $item['data'] ?? [];
@@ -173,7 +183,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         <div class="pmh-visit__main">
           <?php if ($chiefComplaint !== ''): ?>
           <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief complaint</h4>
+            <h4 class="pmh-visit__label">Chief Complaint</h4>
             <p class="pmh-visit__highlight-value"><?= htmlspecialchars($chiefComplaint) ?></p>
           </section>
           <?php endif; ?>
@@ -245,7 +255,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         <div class="pmh-visit__main">
           <?php if ($chiefComplaint !== ''): ?>
           <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief complaint</h4>
+            <h4 class="pmh-visit__label">Chief Complaint</h4>
             <p class="pmh-visit__highlight-value"><?= htmlspecialchars($chiefComplaint) ?></p>
           </section>
           <?php endif; ?>
@@ -302,7 +312,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         <div class="pmh-visit__main">
           <?php if ($primaryField !== null): ?>
           <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($primaryField['label'] ?? 'Chief Complaint')) ?></h4>
+            <h4 class="pmh-visit__label">Chief Complaint</h4>
             <p class="pmh-visit__highlight-value"><?= htmlspecialchars((string) ($primaryField['value'] ?? '')) ?></p>
           </section>
           <?php endif; ?>
@@ -310,7 +320,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
           <?php if ($otherFields !== []): ?>
           <div class="pmh-visit__grid">
             <?php foreach ($otherFields as $field): ?>
-            <section class="pmh-visit__block">
+            <section class="pmh-visit__block pmh-visit__block--full">
               <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($field['label'] ?? '')) ?></h4>
               <p><?= htmlspecialchars((string) ($field['value'] ?? '')) ?></p>
             </section>
@@ -354,7 +364,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         <div class="pmh-visit__main">
           <?php if ($primaryField !== null): ?>
           <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label"><?= htmlspecialchars((string) ($primaryField['label'] ?? 'Reason')) ?></h4>
+            <h4 class="pmh-visit__label">Chief Complaint</h4>
             <p class="pmh-visit__highlight-value"><?= htmlspecialchars((string) ($primaryField['value'] ?? '')) ?></p>
           </section>
           <?php endif; ?>
@@ -404,9 +414,9 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         </header>
         <?php if (!empty($entry['notes'])): ?>
         <div class="pmh-visit__main">
-          <section class="pmh-visit__highlight">
+          <section class="pmh-visit__block pmh-visit__block--full">
             <h4 class="pmh-visit__label">Notes</h4>
-            <p class="pmh-visit__highlight-value"><?= htmlspecialchars((string) $entry['notes']) ?></p>
+            <p><?= htmlspecialchars((string) $entry['notes']) ?></p>
           </section>
         </div>
         <?php endif; ?>
@@ -461,17 +471,18 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
       $who = trim((string) ($entry['added_by'] ?? $entry['bhw_name'] ?? ''));
       $title = trim((string) ($entry['type'] ?? 'Referral'));
     ?>
-    <article class="pmh-visit pmh-visit--record">
+    <article class="pmh-visit pmh-visit--record pmh-visit--referral">
       <div class="pmh-visit__rail" aria-hidden="true"><span class="pmh-visit__dot"></span></div>
       <div class="pmh-visit__body">
         <header class="pmh-visit__head">
           <div class="pmh-visit__identity">
             <p class="pmh-visit__eyebrow">Referral</p>
-            <h3 class="pmh-visit__title"><?= htmlspecialchars($title) ?></h3>
+            <h3 class="pmh-visit__title"><?= htmlspecialchars($title !== '' ? $title : 'Referral') ?></h3>
             <?php if (!empty($entry['date_label']) && $entry['date_label'] !== '—'): ?>
             <p class="pmh-visit__meta"><?= htmlspecialchars((string) $entry['date_label']) ?></p>
             <?php endif; ?>
           </div>
+          <span class="pmh-status pmh-status--default">Referral</span>
         </header>
         <div class="pmh-visit__main">
           <div class="pmh-visit__grid">
@@ -527,7 +538,7 @@ function pmh_when_parts(array $entry, bool $includeCategory = false): array {
         <?php if ($complaint !== ''): ?>
         <div class="pmh-visit__main">
           <section class="pmh-visit__highlight">
-            <h4 class="pmh-visit__label">Chief complaint</h4>
+            <h4 class="pmh-visit__label">Chief Complaint</h4>
             <p class="pmh-visit__highlight-value"><?= htmlspecialchars($complaint) ?></p>
           </section>
         </div>

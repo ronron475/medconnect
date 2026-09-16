@@ -304,7 +304,7 @@ $patient_page_stylesheets = [
       </a>
     </nav>
 
-    <div class="pmh-surface<?= $active_tab === 'timeline' ? ' w-full max-w-none' : '' ?>" role="tabpanel">
+    <div class="pmh-surface<?= in_array($active_tab, ['timeline', 'files'], true) ? ' w-full max-w-none' : '' ?>" role="tabpanel">
       <?php if ($active_tab === 'timeline'): ?>
         <header class="pmh-surface__head pmh-surface__head--compact pmh-surface__head--timeline">
           <h3 class="pmh-surface__title">Care timeline</h3>
@@ -312,7 +312,7 @@ $patient_page_stylesheets = [
         </header>
         <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
       <?php elseif ($active_tab === 'files'): ?>
-        <header class="pmh-surface__head pmh-surface__head--compact">
+        <header class="pmh-surface__head pmh-surface__head--compact pmh-surface__head--files">
           <h3 class="pmh-surface__title">Health files</h3>
           <p class="pmh-surface__desc">Finalized consultation records signed by your provider.</p>
         </header>
