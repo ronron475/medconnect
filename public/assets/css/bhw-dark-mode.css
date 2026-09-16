@@ -73,31 +73,20 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget {
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat {
-  border-top-color: #14b8a6 !important;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28) !important;
+  border-color: #243347 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__icon {
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__icon,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__icon,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__icon {
   background: rgba(20, 184, 166, 0.16) !important;
   color: #2dd4bf !important;
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn {
-  border-top-color: #f59e0b !important;
-}
-
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__icon {
-  background: rgba(245, 158, 11, 0.16) !important;
-  color: #fbbf24 !important;
-}
-
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert {
-  border-top-color: #ef4444 !important;
-}
-
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__icon {
-  background: rgba(239, 68, 68, 0.16) !important;
-  color: #f87171 !important;
+  border-color: #243347 !important;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-header {
@@ -188,14 +177,14 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-sync {
   border-color: #243347 !important;
 }
 
-/* ── Stat accents ── */
+/* ── Stat accents (Sector Indicators stay neutral like Admin) ── */
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__val,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget--alert .mc-notif-widget-value {
-  color: #f87171 !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__val {
+  color: #ffffff !important;
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__val {
-  color: #fbbf24 !important;
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget--alert .mc-notif-widget-value {
+  color: #f87171 !important;
 }
 
 /* ── Forms & filters ── */

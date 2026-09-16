@@ -312,66 +312,88 @@
   }
 }
 
-/* ── Sector health KPI cards (Provider dashboard visual style) ── */
+/* ── Sector health KPI cards (Admin dashboard metric style) ── */
 .bhw-dash-stats {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 8px;
+  gap: 16px;
   padding: 14px 16px 16px;
   background: transparent;
 }
 
 .bhw-dash-stat {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 16px;
+  row-gap: 5px;
+  align-items: start;
   min-width: 0;
-  min-height: 78px;
-  padding: 10px 12px 12px;
-  overflow: visible;
+  min-height: 0;
+  padding: 22px 20px;
+  overflow: hidden;
   background: #fff;
-  border: 1px solid #e2e8f0;
-  border-top: 3px solid #069396;
+  border: 1px solid #edf0f5;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(1, 42, 74, 0.035);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .bhw-dash-stat__icon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  position: static;
+  top: auto;
+  right: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(6, 147, 150, 0.1);
-  color: #069396;
+  background: #f0fdfa;
+  color: #0d9488;
   flex-shrink: 0;
   z-index: 1;
   pointer-events: none;
 }
 
 .bhw-dash-stat__icon svg {
-  width: 14px;
-  height: 14px;
+  width: 22px;
+  height: 22px;
   display: block;
 }
 
-.bhw-dash-stat__label {
+.bhw-dash-stat__val {
+  grid-column: 2;
+  grid-row: 1;
   display: block;
-  order: 1;
-  width: 100%;
+  order: unset;
+  width: auto;
   margin: 0;
-  padding: 0 28px 0 0;
-  font-size: 11px;
+  padding: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  align-self: start;
+}
+
+.bhw-dash-stat__label {
+  grid-column: 2;
+  grid-row: 2;
+  display: block;
+  order: unset;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
   color: #64748b;
   line-height: 1.35;
   text-align: left;
@@ -380,45 +402,21 @@
   hyphens: auto;
 }
 
-.bhw-dash-stat__val {
-  display: block;
-  order: 2;
-  width: 100%;
-  margin: 8px 0 0;
-  padding: 0;
-  font-size: var(--mc-fs-stat, 1.5rem);
-  font-weight: 800;
-  line-height: 1.1;
-  color: #0f172a;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  align-self: stretch;
-}
-
-.bhw-dash-stat--warn {
-  border-top-color: #f59e0b;
-}
-
-.bhw-dash-stat--warn .bhw-dash-stat__icon {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-}
-
-.bhw-dash-stat--warn .bhw-dash-stat__val {
-  color: #d97706;
-}
-
+/* Tone modifiers keep markup hooks but stay visually neutral like Admin cards */
+.bhw-dash-stat--warn,
 .bhw-dash-stat--alert {
-  border-top-color: #ef4444;
+  border-color: #edf0f5;
 }
 
+.bhw-dash-stat--warn .bhw-dash-stat__icon,
 .bhw-dash-stat--alert .bhw-dash-stat__icon {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
+  background: #f0fdfa;
+  color: #0d9488;
 }
 
+.bhw-dash-stat--warn .bhw-dash-stat__val,
 .bhw-dash-stat--alert .bhw-dash-stat__val {
-  color: #dc2626;
+  color: #0f172a;
 }
 
 /* ── Operations summary strip ── */
@@ -645,8 +643,34 @@
 
   .bhw-dash-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
+    gap: 12px;
     padding: 12px;
+  }
+
+  .bhw-dash-stat {
+    min-height: 0;
+    padding: 16px 14px;
+  }
+
+  .bhw-dash-stat__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .bhw-dash-stat__icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bhw-dash-stat__val {
+    margin-top: 0;
+    text-align: left;
+    width: auto;
+  }
+
+  .bhw-dash-stat__label {
+    margin-top: 0;
   }
 
   .bhw-dash-ops {
@@ -715,19 +739,31 @@
 @media (max-width: 480px) {
   .bhw-dash-stats {
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px;
     padding: 10px;
   }
 
   .bhw-dash-stat {
-    min-height: 80px;
-    padding: 10px;
+    min-height: 0;
+    padding: 14px 12px;
+    column-gap: 12px;
+  }
+
+  .bhw-dash-stat__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+  }
+
+  .bhw-dash-stat__icon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .bhw-dash-stat__val {
-    font-size: var(--mc-fs-stat, 1.35rem);
-    text-align: center;
-    margin-top: 8px;
+    font-size: 1.35rem;
+    text-align: left;
+    margin-top: 0;
   }
 
   .bhw-dash-ops {
@@ -745,31 +781,20 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash .mc-notif-widget {
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat {
-  border-top-color: #14b8a6;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  border-color: #334155;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__icon {
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat__icon,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__icon,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__icon {
   background: rgba(20, 184, 166, 0.16);
   color: #2dd4bf;
 }
 
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn {
-  border-top-color: #f59e0b;
-}
-
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn .bhw-dash-stat__icon {
-  background: rgba(245, 158, 11, 0.16);
-  color: #fbbf24;
-}
-
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--warn,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert {
-  border-top-color: #ef4444;
-}
-
-html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-stat--alert .bhw-dash-stat__icon {
-  background: rgba(239, 68, 68, 0.16);
-  color: #f87171;
+  border-color: #334155;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-panel__head,
