@@ -181,5 +181,99 @@ function patient_registrations_ensure_barangay_id(PDO $pdo): void
         error_log('patient_registrations_ensure_barangay_id backfill: ' . $e->getMessage());
     }
 
+    // Alias-aware pass for remaining / mismatched ids (e.g. "Maao" → Ma-ao).
+    patient_registrations_backfill_barangay_ids_aliased($pdo);
+    patients_sync_users_barangay_id($pdo);
+
     $done = true;
+}
+
+/**
+ * Set patient_registrations.barangay_id from registered barangay text using
+ * canonical aliases. Only updates barangay_id; never invents a barangay.
+ */
+function patient_registrations_backfill_barangay_ids_aliased(PDO $pdo): int
+{
+    $cols = [];
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM patient_registrations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    } catch (PDOException $e) {
+        return 0;
+    }
+    if (!in_array('barangay_id', $cols, true)) {
+        return 0;
+    }
+
+    try {
+        $rows = $pdo->query("
+            SELECT id, barangay, barangay_id
+            FROM patient_registrations
+            WHERE barangay IS NOT NULL AND TRIM(barangay) <> ''
+        ")->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (PDOException $e) {
+        return 0;
+    }
+
+    $update = $pdo->prepare('UPDATE patient_registrations SET barangay_id = ? WHERE id = ? AND (barangay_id IS NULL OR barangay_id <> ?)');
+    $updated = 0;
+
+    foreach ($rows as $row) {
+        $resolved = barangay_resolve_id_by_name($pdo, (string) ($row['barangay'] ?? ''));
+        if ($resolved === null || $resolved <= 0) {
+            continue;
+        }
+        $current = $row['barangay_id'] !== null ? (int) $row['barangay_id'] : 0;
+        if ($current === $resolved) {
+            continue;
+        }
+        // Keep Poblacion patients on Poblacion when their registered text is Poblacion.
+        $canonical = BagoBarangayCentroids::canonicalName((string) $row['barangay']);
+        if ($canonical !== null && strcasecmp($canonical, 'Poblacion') === 0) {
+            $poblacionId = barangay_resolve_id_by_name($pdo, 'Poblacion');
+            if ($poblacionId !== null) {
+                $resolved = $poblacionId;
+            }
+        }
+        $update->execute([$resolved, (int) $row['id'], $resolved]);
+        if ($update->rowCount() > 0) {
+            $updated++;
+        }
+    }
+
+    return $updated;
+}
+
+/**
+ * Mirror patient_registrations.barangay_id onto linked patient users.barangay_id.
+ * Does not create users or change non-patient roles.
+ */
+function patients_sync_users_barangay_id(PDO $pdo): int
+{
+    $userCols = [];
+    $prCols = [];
+    try {
+        $userCols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $prCols = $pdo->query('SHOW COLUMNS FROM patient_registrations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    } catch (PDOException $e) {
+        return 0;
+    }
+    if (!in_array('barangay_id', $userCols, true) || !in_array('barangay_id', $prCols, true)) {
+        return 0;
+    }
+
+    try {
+        return (int) $pdo->exec("
+            UPDATE users u
+            INNER JOIN patient_registrations pr
+              ON (pr.user_id = u.id OR (pr.user_id IS NULL AND pr.email = u.email))
+            SET u.barangay_id = pr.barangay_id
+            WHERE u.role = 'patient'
+              AND pr.barangay_id IS NOT NULL
+              AND pr.barangay_id > 0
+              AND (u.barangay_id IS NULL OR u.barangay_id = 0 OR u.barangay_id <> pr.barangay_id)
+        ");
+    } catch (PDOException $e) {
+        error_log('patients_sync_users_barangay_id: ' . $e->getMessage());
+        return 0;
+    }
 }
