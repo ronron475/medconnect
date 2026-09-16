@@ -1077,8 +1077,8 @@ html.landing-scroll {
 
 .landing-page .services-section {
   margin-top: 0;
-  padding-top: var(--landing-section-pad-y, clamp(64px, 9vw, 88px));
-  padding-bottom: var(--landing-section-pad-y, clamp(64px, 9vw, 88px));
+  padding-top: var(--landing-section-pad-y, clamp(40px, 5vw, 56px));
+  padding-bottom: var(--landing-section-pad-y, clamp(40px, 5vw, 56px));
 }
 
 .landing-page .services-section::before,
