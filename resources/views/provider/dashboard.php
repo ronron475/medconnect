@@ -3,7 +3,8 @@
  * medConnect Clinical Portal - Provider Dashboard
  */
 $active_page = 'dashboard';
-$page_title  = 'Clinical Dashboard';
+$page_title  = 'Dashboard';
+$pd_hide_header_brand = true;
 $page_styles = ['provider-dashboard-home.css', 'provider_session_alert.css'];
 
 require __DIR__.'/partials/icons.php';
