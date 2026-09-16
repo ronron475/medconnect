@@ -130,7 +130,7 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
     <div class="adm-nav-group<?= $sectionHasActive ? ' is-open' : '' ?>" data-adm-nav-group>
       <button type="button"
               class="adm-nav-section"
-              style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);"
+              style="padding: 4px 16px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);"
               data-adm-nav-toggle
               aria-expanded="<?= $sectionHasActive ? 'true' : 'false' ?>"
               aria-controls="<?= htmlspecialchars($panelId) ?>">

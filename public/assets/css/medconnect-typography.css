@@ -115,6 +115,16 @@ body.superadmin-body .adm-nav-section {
   margin: 10px 8px 4px;
 }
 
+/* Accordion titles: tight stack when collapsed (override section margins above) */
+body.admin-body .adm-nav[data-adm-nav-accordion] button.adm-nav-section {
+  margin: 0 8px;
+  line-height: 1.2;
+}
+
+body.admin-body .adm-nav[data-adm-nav-accordion] .adm-nav-group.is-open > button.adm-nav-section {
+  margin-bottom: 2px;
+}
+
 body.admin-body .topbar-title,
 body.superadmin-body .topbar-title {
   font-size: var(--mc-fs-h3);
