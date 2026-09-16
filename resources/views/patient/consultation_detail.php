@@ -159,7 +159,9 @@ $patient_page_stylesheets = [
 <head>
 <?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
 </head>
-<body class="patient-portal">
+<body class="patient-portal"
+      data-consultation-id="<?= (int) $consultationId ?>"
+      data-consultation-status="<?= htmlspecialchars($statusChip, ENT_QUOTES, 'UTF-8') ?>">
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 
 <div class="patient-page pmh-page pmh-page--detail">
