@@ -5,7 +5,7 @@
 .pmh-page {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   max-width: 100%;
   width: 100%;
   min-width: 0;
@@ -27,7 +27,8 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px 12px;
+  gap: 8px 10px;
+  min-height: 0;
 }
 
 .pmh-hero__top {
@@ -170,7 +171,7 @@
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
-  padding: 8px 12px 12px;
+  padding: 8px 12px 10px;
   min-width: 0;
   min-height: 0;
 }
@@ -226,17 +227,30 @@
 .pmh-surface__actions {
   display: flex;
   justify-content: flex-end;
-  margin: 0 0 12px;
+  margin: 0 0 8px;
 }
 
 .pmh-surface__actions--care-tips {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .pmh-page--timeline .pmh-surface,
 .pmh-page--files .pmh-surface,
 .pmh-page--care-tips .pmh-surface {
-  padding-top: 12px;
+  padding-top: 8px;
+}
+
+.pmh-section-lead {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--pt-color-muted, #64748b);
+  max-width: 62ch;
+}
+
+.pmh-section-lead + .pmh-tl-toolbar,
+.pmh-section-lead + .pmh-files__filters {
+  margin-top: -2px;
 }
 
 .pmh-page--files .pmh-files__filters {
@@ -1525,12 +1539,12 @@ body.patient-portal .pmh-feed--timeline .pmh-visit__body {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .pmh-toolbar {
-  padding-bottom: 16px;
-  margin-bottom: 4px;
+  padding-bottom: 12px;
+  margin-bottom: 2px;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -3575,7 +3589,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   padding: 0;
 }
 
@@ -3620,7 +3634,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
   gap: 0 12px;
   align-items: stretch;
   position: relative;
-  padding: 0 0 22px;
+  padding: 0 0 16px;
 }
 
 .pmh-tl__item[hidden] {
@@ -3665,7 +3679,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
   content: "";
   position: absolute;
   top: 0;
-  bottom: -22px;
+  bottom: -16px;
   left: 50%;
   width: 2px;
   margin-left: -1px;
@@ -3706,7 +3720,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
 .pmh-tl__cards {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   align-items: start;
 }
@@ -3714,7 +3728,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
 @media (min-width: 900px) {
   .pmh-tl__cards {
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.15fr);
-    gap: 12px;
+    gap: 10px;
   }
 }
 
@@ -3722,7 +3736,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   min-width: 0;
   box-sizing: border-box;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
@@ -3762,6 +3776,11 @@ body.pmh-care-modal-open .pt-remedy__fab {
 .pmh-tl-badge--record {
   background: #ede9fe;
   color: #6d28d9;
+}
+
+.pmh-tl-badge--referral {
+  background: #ffedd5;
+  color: #c2410c;
 }
 
 .pmh-tl-badge--care {
@@ -3832,12 +3851,16 @@ button.pmh-tl-link {
 }
 
 .pmh-tl-card__sub {
-  margin: 0 0 8px;
+  margin: 0;
   font-size: 0.8125rem;
   font-weight: 400;
   color: #64748b;
   line-height: 1.4;
   overflow-wrap: break-word;
+}
+
+.pmh-tl-card__sub + .pmh-tl-card__meta {
+  margin-top: 8px;
 }
 
 .pmh-tl-card__meta {
