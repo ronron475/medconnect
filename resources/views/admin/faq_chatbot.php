@@ -23,9 +23,10 @@ $api = ASSET_BASE . '/app/api/admin/faq_chatbot_dictionary.php';
 
 require __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="container-fluid py-4">
-    <h1 class="h3 mb-3">FAQ Chatbot — Hiligaynon NLP</h1>
-    <p class="text-muted">Rule-based translation, FAQ memory, and dictionary maintenance (PHP only, no external AI).</p>
+<div>
+<div class="admin-page-intro">
+    <p class="admin-page-intro__desc text-muted">Rule-based translation, FAQ memory, and dictionary maintenance (PHP only, no external AI).</p>
+</div>
 
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -112,4 +113,5 @@ require __DIR__ . '/partials/layout_open.php';
   });
 })();
 </script>
+</div>
 <?php require __DIR__ . '/partials/layout_close.php'; ?>

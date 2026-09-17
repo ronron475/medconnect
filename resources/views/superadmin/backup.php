@@ -6,8 +6,10 @@ $backups = superadmin_list_backups($pdo);
 $api = ASSET_BASE . '/app/api/superadmin/backup.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
-  <div><h2 class="text-h2">Backup & Restore</h2><p class="text-muted">Manual backups, download, and restore database snapshots.</p></div>
+<div class="header-row admin-page-intro">
+  <div>
+    <p class="admin-page-intro__desc text-muted">Manual backups, download, and restore database snapshots.</p>
+  </div>
   <button type="button" class="mc-btn mc-btn--primary" id="btnBackup">Create Manual Backup</button>
 </div>
 <div class="mc-card" style="padding:0;overflow:hidden;">

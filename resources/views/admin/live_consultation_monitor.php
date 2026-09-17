@@ -32,9 +32,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=<?= $staffCssVer ?>">
 
 <article class="cm-monitor-page" id="cmMonitor">
-  <div class="header-row" style="margin-bottom:20px;">
-    <h2 class="text-h2">Consultation Monitoring</h2>
-    <p class="text-muted">Monitor waiting patients and active consultations.</p>
+  <div class="header-row admin-page-intro">
+    <p class="admin-page-intro__desc text-muted">Monitor waiting patients and active consultations.</p>
   </div>
 
   <nav class="staff-mgmt-tabs" aria-label="Consultation monitoring views">

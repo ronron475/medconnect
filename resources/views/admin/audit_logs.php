@@ -54,10 +54,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <article class="audit-logs-page staff-apps-page">
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portal_eyebrow) ?></span>
-        <h1 class="staff-apps-hero__title"><?= htmlspecialchars($portal_heading) ?></h1>
         <p class="staff-apps-hero__desc">
             Track critical platform actions across all user roles — logins, account changes, profile updates, and administrative operations for security monitoring and compliance.
         </p>

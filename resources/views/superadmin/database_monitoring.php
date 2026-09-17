@@ -5,10 +5,9 @@ $page_title = 'Database Monitoring';
 $api = ASSET_BASE . '/app/api/admin/database_monitoring.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2">Database Monitoring</h2>
-    <p class="text-muted">Live database metrics — auto-refreshes every 45 seconds.</p>
+    <p class="admin-page-intro__desc text-muted">Live database metrics — auto-refreshes every 45 seconds.</p>
   </div>
   <span id="dbMonUpdated" class="text-xs text-muted">Loading…</span>
 </div>

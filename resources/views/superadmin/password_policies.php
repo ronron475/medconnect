@@ -5,7 +5,9 @@ $stored = system_settings_get_all($pdo);
 $page_title = 'Password Policies';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="margin-bottom:24px;"><h2 class="text-h2">Password Policies</h2><p class="text-muted">Configure minimum password requirements for all accounts.</p></div>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">Configure minimum password requirements for all accounts.</p>
+</div>
 <form id="pwForm" class="mc-card" style="display:flex;flex-direction:column;gap:16px;max-width:480px;">
   <label class="text-sm">Minimum Length<input type="number" name="PASSWORD_MIN_LENGTH" value="<?= htmlspecialchars($stored['PASSWORD_MIN_LENGTH'] ?? '8') ?>" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;margin-top:6px;"></label>
   <label class="text-sm"><input type="checkbox" name="PASSWORD_REQUIRE_UPPERCASE" value="1" <?= ($stored['PASSWORD_REQUIRE_UPPERCASE'] ?? '1') === '1' ? 'checked' : '' ?>> Require uppercase letter</label>

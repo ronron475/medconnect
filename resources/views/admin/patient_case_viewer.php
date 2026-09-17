@@ -95,10 +95,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <article class="case-viewer-page staff-apps-page">
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow">Administration · Clinical Records</span>
-        <h1 class="staff-apps-hero__title">Patient Case Viewer</h1>
         <p class="staff-apps-hero__desc">Read-only administrative view of patient clinical data. No modifications are permitted from this module.</p>
     </div>
 </header>

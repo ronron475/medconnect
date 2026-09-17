@@ -18,9 +18,8 @@ $queue_colspan = 7;
 ?>
 
 <?php if (!$queue_embedded): ?>
-<div class="header-row" style="margin-bottom:24px;">
-  <h2 class="text-h2">Queue</h2>
-  <p class="text-muted">Today's waiting, active, and completed consultations.</p>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">Today's waiting, active, and completed consultations.</p>
 </div>
 <?php endif; ?>
 

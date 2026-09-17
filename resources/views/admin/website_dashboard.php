@@ -34,10 +34,9 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
 
 <div class="lp-mgmt" id="lpMgmt">
 
-  <div class="lp-mgmt__hero-banner">
+  <div class="lp-mgmt__hero-banner admin-page-intro">
     <div class="lp-mgmt__hero-banner-text">
-      <h2 class="text-h2">Website Dashboard</h2>
-      <p class="text-muted">Manage the public landing page — hero content, announcements, media, and section visibility.</p>
+      <p class="admin-page-intro__desc text-muted">Manage the public landing page — hero content, announcements, media, and section visibility.</p>
     </div>
     <span class="mc-badge">Landing Page CMS</span>
   </div>

@@ -36,10 +36,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-announcements.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-announcements.css') ?>">
 
 <div class="ann-mgmt">
-  <div class="ann-mgmt__header">
+  <div class="ann-mgmt__header admin-page-intro">
     <div>
-      <h2 class="text-h2">Announcement Management</h2>
-      <p class="text-muted">Create, publish, schedule, and manage announcements. Published items appear on the landing page automatically.</p>
+      <p class="admin-page-intro__desc text-muted">Create, publish, schedule, and manage announcements. Published items appear on the landing page automatically.</p>
     </div>
     <button type="button" class="mc-btn mc-btn--primary" id="annCreateBtn">+ Create Announcement</button>
   </div>

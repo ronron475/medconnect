@@ -84,9 +84,8 @@ $statsPayload = json_encode([
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $chart_theme_css_ver ?>">
-<div class="header-row" style="margin-bottom:24px;">
-  <h2 class="text-h2">Disease & Triage Statistics</h2>
-  <p class="text-muted">Live aggregates from triage assessments and recorded clinical diagnoses.</p>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">Live aggregates from triage assessments and recorded clinical diagnoses.</p>
 </div>
 
 <div class="superadmin-stat-grid" style="margin-bottom:24px;">

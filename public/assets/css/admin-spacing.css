@@ -90,6 +90,55 @@ body.admin-body .header-row {
   margin-bottom: 16px;
 }
 
+/* ── Uniform page intro (subtitle + actions; title lives in topbar) ── */
+body.admin-body .admin-page-intro,
+body.admin-body .staff-apps-hero--intro,
+body.admin-body .ann-mgmt__header.admin-page-intro,
+body.admin-body .ml-mgmt__header.admin-page-intro,
+body.admin-body .lp-mgmt__hero-banner.admin-page-intro,
+body.admin-body .sa-nc__header.admin-page-intro,
+body.admin-body .gis-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+body.admin-body .admin-page-intro__desc,
+body.admin-body .staff-apps-hero--intro .staff-apps-hero__desc,
+body.admin-body .gis-subtitle {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .admin-page-intro__desc,
+html[data-theme-resolved='dark'] body.admin-body .staff-apps-hero--intro .staff-apps-hero__desc,
+html[data-theme-resolved='dark'] body.admin-body .gis-subtitle {
+  color: #94a3b8;
+}
+
+body.admin-body .staff-apps-hero--intro {
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  align-items: center;
+  gap: 12px 16px;
+  border-radius: 12px;
+}
+
+body.admin-body .staff-apps-hero--intro .staff-apps-hero__actions {
+  margin: 0;
+}
+
+body.admin-body .staff-apps-hero--intro .staff-apps-hero__eyebrow,
+body.admin-body .staff-apps-hero--intro .staff-apps-hero__title {
+  display: none;
+}
+
 body.admin-body .stats-grid {
   gap: 12px;
   margin-bottom: 16px;

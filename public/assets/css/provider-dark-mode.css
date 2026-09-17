@@ -1476,6 +1476,23 @@ html[data-theme-resolved='dark'] body.provider-body .mr-field__value {
   color: #ffffff !important;
 }
 
+html[data-theme-resolved='dark'] body.provider-body .mr-record-item {
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+  color: #E8F0F7 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mr-record-item__title,
+html[data-theme-resolved='dark'] body.provider-body .mr-info-item span {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .mr-record-item__meta,
+html[data-theme-resolved='dark'] body.provider-body .mr-record-item__extra,
+html[data-theme-resolved='dark'] body.provider-body .mr-info-item label {
+  color: #8FAABF !important;
+}
+
 /* ── Settings ── */
 html[data-theme-resolved='dark'] body.provider-body .ps-nav,
 html[data-theme-resolved='dark'] body.provider-body .ps-nav__item,

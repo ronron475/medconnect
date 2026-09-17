@@ -38,10 +38,8 @@ require_once __DIR__ . '/partials/layout_open.php';
          data-superadmin="<?= $isSuperadmin ? '1' : '0' ?>"
          data-deep-link="<?= (int) $deepLinkId ?>">
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
   <div class="staff-apps-hero__content">
-    <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portalEyebrow) ?></span>
-    <h1 class="staff-apps-hero__title">Violation Reports</h1>
     <p class="staff-apps-hero__desc">
       Review provider-reported concerns from Chief Complaint cases and live video consultations. Dismiss false positives, confirm possible violations when appropriate, and apply proportional account restrictions.
     </p>

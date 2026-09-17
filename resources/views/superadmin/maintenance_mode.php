@@ -7,7 +7,9 @@ $on = ($stored['MAINTENANCE_MODE'] ?? '0') === '1'
 $page_title = 'Maintenance Mode';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="margin-bottom:24px;"><h2 class="text-h2">Maintenance Mode</h2><p class="text-muted">When enabled, visitors see a maintenance banner on the public landing page and are notified that some features may be unavailable.</p></div>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">When enabled, visitors see a maintenance banner on the public landing page and are notified that some features may be unavailable.</p>
+</div>
 <div class="mc-card" style="max-width:480px;">
   <p class="text-sm mb-md">Current status: <strong style="color:<?= $on ? '#b45309' : '#16a34a' ?>;"><?= $on ? 'MAINTENANCE ON' : 'LIVE' ?></strong></p>
   <form id="maintForm">

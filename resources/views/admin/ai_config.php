@@ -44,10 +44,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-config.css?v=1.0">
 
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;flex-wrap:wrap;gap:12px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2">System Configuration</h2>
-    <p class="text-muted">Adjust AI triage parameters, system thresholds, and triage priority rules.</p>
+    <p class="admin-page-intro__desc text-muted">Adjust AI triage parameters, system thresholds, and triage priority rules.</p>
   </div>
   <button type="button" class="mc-btn mc-btn--primary" id="saveSystemSettings">Save Global Changes</button>
 </div>

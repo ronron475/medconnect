@@ -31,10 +31,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <div class="ml-mgmt" id="mlMgmt" data-api="<?= htmlspecialchars($mediaApi) ?>" data-media="<?= htmlspecialchars(json_encode($media, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8') ?>">
 
-  <div class="ml-mgmt__header">
+  <div class="ml-mgmt__header admin-page-intro">
     <div>
-      <h2 class="text-h2" style="margin:0 0 6px;">Media Library</h2>
-      <p class="text-muted" style="margin:0;">Upload and manage images and PDFs for announcements and website content.</p>
+      <p class="admin-page-intro__desc text-muted">Upload and manage images and PDFs for announcements and website content.</p>
     </div>
     <button type="button" class="mc-btn mc-btn--primary" id="mlToggleUpload">+ Upload file</button>
   </div>

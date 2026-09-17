@@ -8,9 +8,8 @@
  * @var array<int, string> $columns
  */
 ?>
-<div class="header-row" style="margin-bottom:24px;">
-  <h2 class="text-h2"><?= htmlspecialchars($page_title) ?></h2>
-  <?php if (!empty($page_desc)): ?><p class="text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
+<div class="header-row admin-page-intro">
+  <?php if (!empty($page_desc)): ?><p class="admin-page-intro__desc text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
 </div>
 <div class="mc-card" style="padding:0;overflow:hidden;overflow-x:auto;">
   <table class="mc-table admin-stack-table">

@@ -337,10 +337,10 @@ body.provider-body .provider-page-body:has(.mr-page) {
 
 .mr-record-item {
   padding: 10px 12px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid var(--mc-border-thin, #f1f5f9);
   border-radius: 8px;
   margin-bottom: 8px;
-  background: #fafbfc;
+  background: var(--mc-theme-surface-2, #fafbfc);
 }
 
 .mr-record-item:last-child {
@@ -355,13 +355,13 @@ body.provider-body .provider-page-body:has(.mr-page) {
 
 .mr-record-item__meta {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--mc-slate-muted, #94a3b8);
   margin-top: 2px;
 }
 
 .mr-record-item__extra {
   font-size: 11px;
-  color: #64748b;
+  color: var(--mc-slate-muted, #64748b);
   margin-top: 4px;
   line-height: 1.4;
 }
