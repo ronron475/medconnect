@@ -257,7 +257,6 @@ require_once __DIR__ . '/partials/layout_open.php';
             <h1 class="queue-title">Consultation Queue</h1>
             <div class="queue-subtitle">Track assigned patients, live rooms, triage priority, and session status from one workspace.</div>
         </div>
-        <div class="queue-date"><?= date('l, F j, Y') ?></div>
     </section>
 
     <section class="queue-metrics" aria-label="Queue summary">

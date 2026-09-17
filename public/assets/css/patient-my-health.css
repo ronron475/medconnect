@@ -223,6 +223,26 @@
   line-height: 1.4;
 }
 
+.pmh-surface__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 12px;
+}
+
+.pmh-surface__actions--care-tips {
+  margin-top: 2px;
+}
+
+.pmh-page--timeline .pmh-surface,
+.pmh-page--files .pmh-surface,
+.pmh-page--care-tips .pmh-surface {
+  padding-top: 12px;
+}
+
+.pmh-page--files .pmh-files__filters {
+  margin-top: 0;
+}
+
 .pmh-lead {
   margin: -4px 0 16px;
   font-size: 0.925rem;
@@ -3530,7 +3550,7 @@ body.pmh-care-modal-open .pt-remedy__fab {
 }
 
 /* -------------------------------------------
-   Care Timeline — vertical rail + paired cards
+   Care Timeline ï¿½ vertical rail + paired cards
    ------------------------------------------- */
 .pmh-tl-wrap {
   font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -3550,49 +3570,13 @@ body.pmh-care-modal-open .pt-remedy__fab {
   border: 0;
 }
 
-.pmh-tl-head {
+.pmh-tl-toolbar {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px 20px;
-  flex-wrap: wrap;
-  margin: 0 0 20px;
-  padding: 0 0 4px;
-}
-
-.pmh-tl-head__brand {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 0;
-}
-
-.pmh-tl-head__icon {
-  flex-shrink: 0;
-  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  background: #028090;
-  color: #fff;
-}
-
-.pmh-tl-head__title {
-  margin: 0 0 2px;
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
-}
-
-.pmh-tl-head__desc {
-  margin: 0;
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: #64748b;
-  line-height: 1.4;
+  justify-content: flex-end;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 0;
 }
 
 .pmh-tl-filter {
@@ -3780,9 +3764,54 @@ body.pmh-care-modal-open .pt-remedy__fab {
   color: #6d28d9;
 }
 
-.pmh-tl-badge--referral {
-  background: #fef3c7;
-  color: #b45309;
+.pmh-tl-badge--care {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+.pmh-tl-highlight--care {
+  background: #f0fdfa;
+  border-color: #99f6e4;
+}
+
+.pmh-tl-wrap--care {
+  padding-bottom: 88px;
+}
+
+.pmh-tl__item--care .pmh-tl__node {
+  background: #0d9488;
+}
+
+.pmh-tl-card .pmh-care-card__status {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+button.pmh-tl-link {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+/* Hide floating Care tips FAB on the Care tips tab â€” content already lists tips. */
+.pmh-page--care-tips .pt-remedy,
+.pmh-page--care-tips .pt-remedy__fab {
+  display: none !important;
+}
+
+.pmh-page--care-tips .mc-messages-fab {
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
 }
 
 .pmh-tl-card__title {
@@ -4002,15 +4031,11 @@ body.pmh-care-modal-open .pt-remedy__fab {
   .pmh-tl__cards {
     grid-column: 2;
   }
-
-  .pmh-tl-head__title {
-    font-size: 1.05rem;
-  }
 }
 
 @media (max-width: 480px) {
-  .pmh-tl-head {
-    flex-direction: column;
+  .pmh-tl-toolbar {
+    justify-content: stretch;
   }
 
   .pmh-tl-filter {

@@ -52,7 +52,9 @@ function provider_triage_classification_detail(string $badge, string $label): st
 function provider_triage_cases_load(PDO $pdo, int $providerId): array
 {
     triage_assessment_ensure_schema($pdo);
+    require_once __DIR__ . '/provider_patient_access.php';
 
+    $visibility = provider_triage_row_visibility_sql('tr');
     $stmt = $pdo->prepare("
         SELECT
             tr.id, tr.patient_id, tr.level AS triage, tr.symptoms, tr.chief_complaint, tr.urgency_label,
@@ -67,31 +69,8 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             u.first_name, u.last_name
         FROM triage_results tr
         JOIN users u ON tr.patient_id = u.id
-        WHERE
-          EXISTS (
-            SELECT 1 FROM consultations c
-            WHERE c.patient_id = tr.patient_id AND c.provider_id = ?
-            ORDER BY c.id DESC LIMIT 1
-          )
-          OR EXISTS (
-            SELECT 1 FROM appointment_slots s
-            WHERE s.patient_id = tr.patient_id AND s.provider_id = ? AND s.status = 'booked'
-              AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            ORDER BY s.id DESC LIMIT 1
-          )
-          OR EXISTS (
-            SELECT 1 FROM digital_referrals dr
-            WHERE dr.patient_id = tr.patient_id
-              AND dr.provider_id = ?
-              AND dr.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-          )
-          OR (
-            tr.assigned_provider_id = ?
-            AND tr.recommendation_status IN ('pending_approval', 'approved', 'rejected')
-            AND UPPER(COALESCE(tr.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
-            AND LOWER(COALESCE(tr.outcome, '')) <> 'cancelled'
-            AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-          )
+        WHERE {$visibility}
+          AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
         ORDER BY
           CASE
             WHEN LOWER(COALESCE(tr.triage_level, '')) = 'emergency'
@@ -102,6 +81,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
           END ASC,
           tr.assessed_at DESC
     ");
+    // Bind order matches provider_triage_row_visibility_sql: assigned, consult, slot, referral.
     $stmt->execute([$providerId, $providerId, $providerId, $providerId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -363,6 +343,9 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'slot_waiting_since_label' => !empty($waitRow['waiting_since'])
                 ? date('M j, Y g:i A', strtotime((string) $waitRow['waiting_since']))
                 : '',
+            'assigned_provider_id'  => (int) ($t['assigned_provider_id'] ?? 0),
+            'assigned_at'           => (string) ($t['assigned_at'] ?? ''),
+            'recommendation_approved_by' => (int) ($t['recommendation_approved_by'] ?? 0),
             'care_tips_reviewed'    => $recStatus === 'approved',
             'workflow_badges'       => provider_triage_workflow_badges(
                 $status,
@@ -510,6 +493,48 @@ function provider_triage_case_is_active(array $t): bool
 }
 
 /**
+ * Cases awaiting provider review (accept / care-tips decision).
+ */
+function provider_triage_case_needs_review(array $t): bool
+{
+    return empty($t['is_terminated'])
+        && empty($t['expired'])
+        && (empty($t['reviewed']) || !empty($t['needs_tips_approval']));
+}
+
+/**
+ * Compact rows for dashboard "Review Triage" widget.
+ *
+ * @param list<array<string, mixed>> $cases
+ * @return list<array{id:int,name:string,complaint:string,urgency:string,label:string,time:string,needs_tips:bool}>
+ */
+function provider_triage_pending_preview(array $cases, int $limit = 5): array
+{
+    $pending = array_values(array_filter($cases, 'provider_triage_case_needs_review'));
+    $out = [];
+    foreach (array_slice($pending, 0, max(0, $limit)) as $t) {
+        $complaint = trim((string) ($t['complaint'] ?? ''));
+        if ($complaint === '') {
+            $complaint = trim((string) ($t['english_complaint'] ?? ''));
+        }
+        if ($complaint === '') {
+            $complaint = 'Symptom assessment';
+        }
+        $out[] = [
+            'id'         => (int) ($t['id'] ?? 0),
+            'name'       => (string) (($t['name'] ?? '') !== '' ? $t['name'] : 'Patient'),
+            'complaint'  => $complaint,
+            'urgency'    => (string) ($t['urgency'] ?? 'Non-Urgent'),
+            'label'      => (string) ($t['label'] ?? ''),
+            'time'       => (string) ($t['time'] ?? ''),
+            'needs_tips' => !empty($t['needs_tips_approval']),
+        ];
+    }
+
+    return $out;
+}
+
+/**
  * @param list<array<string, mixed>> $cases
  * @return array{total: int, urgent: int, non_urgent: int, reviewed: int, pending: int, tips_pending: int, needs_review: int, needs_review_urgent: int}
  */
@@ -520,12 +545,7 @@ function provider_triage_cases_stats(array $cases): array
     $total      = count($cases);
     $non_urgent = count(array_filter($cases, fn($t) => ($t['urgency'] ?? '') === 'Non-Urgent'));
     $tipsPending = count(array_filter($cases, fn($t) => !empty($t['needs_tips_approval'])));
-    $needsReview = array_values(array_filter(
-        $cases,
-        static fn($t) => empty($t['is_terminated'])
-            && empty($t['expired'])
-            && (empty($t['reviewed']) || !empty($t['needs_tips_approval']))
-    ));
+    $needsReview = array_values(array_filter($cases, 'provider_triage_case_needs_review'));
 
     return [
         'total'               => $total,

@@ -165,16 +165,7 @@ function pmh_tl_vitals_from_fields(array $fields): array {
   </div>
 <?php else: ?>
   <div class="pmh-tl-wrap">
-    <header class="pmh-tl-head">
-      <div class="pmh-tl-head__brand">
-        <span class="pmh-tl-head__icon" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        </span>
-        <div>
-          <h3 class="pmh-tl-head__title">Care Timeline</h3>
-          <p class="pmh-tl-head__desc">Consultations, assessments, and recorded health activity.</p>
-        </div>
-      </div>
+    <div class="pmh-tl-toolbar">
       <label class="pmh-tl-filter">
         <span class="sr-only">Filter records</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -186,7 +177,7 @@ function pmh_tl_vitals_from_fields(array $fields): array {
           <option value="referral">Referrals</option>
         </select>
       </label>
-    </header>
+    </div>
 
     <ol class="pmh-tl" id="pmh-tl-list">
       <?php foreach ($care_timeline as $item):

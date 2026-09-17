@@ -24,7 +24,7 @@ $bookUrl = $asset . '/views/patient/triage.php';
       </svg>
     </div>
     <p class="mc-urgency-modal__eyebrow" id="mcPatientUrgencyEyebrow">NON-URGENT</p>
-    <h2 class="mc-urgency-modal__title" id="mcPatientUrgencyTitle">Routine Care Recommended</h2>
+    <h2 class="mc-urgency-modal__title" id="mcPatientUrgencyTitle">Regular Check-up Recommended</h2>
     <label class="mc-urgency-lang" for="mcPatientUrgencyLang">
       <span class="mc-urgency-lang__label" data-i18n="language">Language</span>
       <select id="mcPatientUrgencyLang" class="mc-urgency-lang__select" aria-label="Language">
@@ -33,18 +33,10 @@ $bookUrl = $asset . '/views/patient/triage.php';
         <option value="hil">Hiligaynon</option>
       </select>
     </label>
-    <p class="mc-urgency-modal__message" id="mcPatientUrgencyMessage">
-      Emergency symptoms were detected. Please go to the nearest hospital or emergency department.
-      Online self-care tips and teleconsultation are not appropriate for this case.
-    </p>
-    <p id="mcPatientUrgencyContinue" class="mc-urgency-modal__continue" hidden role="status">
-      Please click &ldquo;Submit patient complaint&rdquo; again to continue.
-    </p>
-    <ul class="mc-urgency-modal__steps" id="mcPatientUrgencySteps">
-      <li>Call local emergency services if needed</li>
-      <li>Go to the nearest hospital or ER</li>
-      <li>Do not wait for online care tips or a video slot</li>
-    </ul>
+    <p class="mc-urgency-modal__message" id="mcPatientUrgencyMessage">AI Assessment: NON-URGENT</p>
+    <p id="mcPatientUrgencyContinue" class="mc-urgency-modal__continue" hidden role="status"></p>
+    <p id="mcPatientUrgencySafety" class="mc-urgency-modal__safety" hidden></p>
+    <ul class="mc-urgency-modal__steps" id="mcPatientUrgencySteps" hidden></ul>
 
     <div id="mcPatientUrgencyFacility" class="mc-urgency-facility" hidden>
       <p class="mc-urgency-facility__heading" id="mcPatientUrgencyFacilityHeading">NEAREST HEALTH FACILITY</p>

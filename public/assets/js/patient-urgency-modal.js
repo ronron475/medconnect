@@ -24,6 +24,7 @@
   var slotsStatus = null;
   var continueConsultBtn = null;
   var continueEl = null;
+  var safetyEl = null;
   var facilityWrap = null;
   var facilityHeading = null;
   var facilityStatus = null;
@@ -45,26 +46,21 @@
     eyebrow_non_urgent: 'NON-URGENT',
     eyebrow_urgent: 'URGENT',
     eyebrow_emergency: 'EMERGENCY',
-    title_non_urgent: 'Routine Care Recommended',
-    title_urgent: 'Urgent Medical Attention Recommended',
-    title_urgent_consult: 'URGENT CONSULTATION',
-    title_emergency: 'Emergency Symptoms Detected',
-    msg_emergency: 'Your reported symptoms may require immediate medical attention. Please seek emergency care immediately.',
-    msg_urgent: 'Your symptoms should be assessed by a healthcare professional promptly.',
-    msg_non_urgent: 'Based on the information provided, your symptoms do not currently show signs requiring emergency attention. Routine consultation is appropriate.',
-    step_nu_1: 'Your AI preliminary assessment is shown below',
-    step_nu_2: 'Please click "Submit patient complaint" again to continue',
-    step_nu_3: 'Seek urgent or emergency care if symptoms worsen',
-    step_urg_triage_1: 'Your AI preliminary assessment is shown below',
-    step_urg_triage_2: 'Please click "Submit patient complaint" again to continue',
-    step_urg_triage_3: 'Seek ER care if symptoms suddenly worsen',
-    step_urg_book_1: 'Choose a doctor — only their earliest open slot today is shown',
-    step_urg_book_2: 'The earliest doctor is recommended — you may book another available doctor',
-    step_urg_book_3: 'Seek ER care if symptoms suddenly worsen',
-    step_em_1: 'Call local emergency services if needed',
-    step_em_2: 'Go to the nearest hospital or ER',
-    step_em_3: 'Do not wait for online care tips or a video slot',
-    click_again_continue: 'Please click "Submit patient complaint" again to continue.',
+    title_non_urgent: 'Regular Check-up Recommended',
+    title_urgent: 'Prompt Medical Attention Recommended',
+    title_urgent_consult: 'Urgent Consultation Recommended',
+    title_emergency: 'Seek Emergency Care Immediately',
+    ai_assessment_line: 'AI Assessment: {level}',
+    instruction_non_urgent: 'Review the assessment, then tap “Submit Patient Complaint” to continue.',
+    instruction_urgent: 'Review the assessment, then tap “Submit Patient Complaint” to continue.',
+    instruction_urgent_book: 'Choose a doctor with an open slot today to book your visit.',
+    instruction_emergency: 'Go to the nearest hospital or emergency department now.',
+    safety_non_urgent: 'Seek urgent care if symptoms suddenly worsen.',
+    safety_urgent: 'Seek ER care if symptoms suddenly worsen.',
+    safety_emergency: 'Do not wait for online care tips or a video consultation.',
+    msg_emergency: 'AI Assessment: EMERGENCY',
+    msg_urgent: 'AI Assessment: URGENT',
+    msg_non_urgent: 'AI Assessment: NON-URGENT',
     slots_heading: 'Doctors available today',
     slots_heading_recommended: 'Recommended — Earliest Available',
     slots_heading_others: 'Other Available Doctors',
@@ -135,6 +131,7 @@
       slotsList = document.getElementById('mcPatientUrgencySlotsList');
       slotsStatus = document.getElementById('mcPatientUrgencySlotsStatus');
       continueEl = document.getElementById('mcPatientUrgencyContinue');
+      safetyEl = document.getElementById('mcPatientUrgencySafety');
       continueConsultBtn = document.getElementById('mcPatientUrgencyContinueConsult');
       facilityWrap = document.getElementById('mcPatientUrgencyFacility');
       facilityHeading = document.getElementById('mcPatientUrgencyFacilityHeading');
@@ -458,6 +455,34 @@
     iconEl.innerHTML = kind === 'non_urgent' ? SUCCESS_ICON_SVG : WARNING_ICON_SVG;
   }
 
+  function levelLabel(kind) {
+    if (kind === 'non_urgent') return i18n('eyebrow_non_urgent');
+    if (kind === 'urgent') return i18n('eyebrow_urgent');
+    return i18n('eyebrow_emergency');
+  }
+
+  function setSafety(text) {
+    if (!safetyEl) return;
+    if (!text) {
+      safetyEl.hidden = true;
+      safetyEl.textContent = '';
+      return;
+    }
+    safetyEl.hidden = false;
+    safetyEl.textContent = text;
+  }
+
+  function setInstruction(text) {
+    if (!continueEl) return;
+    if (!text) {
+      continueEl.hidden = true;
+      continueEl.textContent = '';
+      return;
+    }
+    continueEl.hidden = false;
+    continueEl.textContent = text;
+  }
+
   function open(opts) {
     try {
       if (!els()) return;
@@ -470,11 +495,15 @@
     lastFocus = document.activeElement;
     bookingInFlight = false;
     hideFacility();
+    setSteps([]);
+    setSafety('');
+    setInstruction('');
     var understandBtn = modal.querySelector('[data-mc-urgency-close]');
     if (understandBtn) understandBtn.hidden = false;
 
     var kind = normalizeKind(opts.kind);
     var triageResult = opts.mode === 'triage_result';
+    var doctorReferral = opts.doctorReferral === true;
 
     modal.classList.toggle('is-urgent', kind === 'urgent');
     modal.classList.toggle('is-emergency', kind === 'emergency');
@@ -485,37 +514,26 @@
       langSelect.value = window.McPatientTriageI18n.current();
     }
 
-    if (eyebrowEl) {
-      if (kind === 'non_urgent') eyebrowEl.textContent = i18n('eyebrow_non_urgent');
-      else if (kind === 'urgent') eyebrowEl.textContent = i18n('eyebrow_urgent');
-      else eyebrowEl.textContent = i18n('eyebrow_emergency');
-    }
+    var classification = levelLabel(kind);
+    if (eyebrowEl) eyebrowEl.textContent = classification;
+
     if (titleEl) {
-      titleEl.textContent = opts.title
-        || (kind === 'non_urgent'
-          ? i18n('title_non_urgent')
-            : (kind === 'urgent'
-              ? (triageResult ? i18n('title_urgent') : i18n('title_urgent_consult'))
-              : i18n('title_emergency')));
-    }
-    if (msgEl) {
-      var defaultMsg = kind === 'non_urgent'
-        ? i18n('msg_non_urgent')
-        : (kind === 'urgent'
-          ? i18n('msg_urgent')
-          : i18n('msg_emergency'));
-      msgEl.textContent = opts.useCustomMessage && opts.message ? opts.message : defaultMsg;
+      if (opts.title) {
+        titleEl.textContent = opts.title;
+      } else if (kind === 'non_urgent') {
+        titleEl.textContent = i18n('title_non_urgent');
+      } else if (kind === 'urgent') {
+        titleEl.textContent = triageResult ? i18n('title_urgent') : i18n('title_urgent_consult');
+      } else {
+        titleEl.textContent = i18n('title_emergency');
+      }
     }
 
-    if (continueEl) {
-      if (triageResult && kind !== 'emergency') {
-        continueEl.hidden = false;
-        var again = i18n('click_again_continue');
-        continueEl.textContent = (!again || again === 'click_again_continue')
-          ? 'Please click "Submit patient complaint" again to continue.'
-          : again;
+    if (msgEl) {
+      if (doctorReferral && opts.useCustomMessage && opts.message) {
+        msgEl.textContent = opts.message;
       } else {
-        continueEl.hidden = true;
+        msgEl.textContent = i18n('ai_assessment_line', { level: classification });
       }
     }
 
@@ -524,19 +542,21 @@
 
     if (kind === 'emergency') {
       hideSlots();
+      if (!doctorReferral) {
+        setInstruction(i18n('instruction_emergency'));
+        setSafety(i18n('safety_emergency'));
+      } else {
+        setInstruction('');
+        setSafety(i18n('safety_emergency'));
+      }
       var facilityPayload = opts.facility || null;
-      var showNearestHospital = opts.doctorReferral === true || hasFacilityPayload(facilityPayload);
+      var showNearestHospital = doctorReferral || hasFacilityPayload(facilityPayload);
       if (showNearestHospital) {
-        if (opts.doctorReferral) {
-          setSteps([]);
-        } else {
-          setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
-        }
         var mapsUrl = renderFacility(facilityPayload || {});
         if (closeBtn && closeBtn.id !== 'mcPatientUrgencyContinueConsult') {
-          closeBtn.hidden = opts.doctorReferral === true;
+          closeBtn.hidden = doctorReferral === true;
         }
-        if (continueConsultBtn) continueConsultBtn.hidden = opts.doctorReferral !== true;
+        if (continueConsultBtn) continueConsultBtn.hidden = doctorReferral !== true;
         if (primaryBtn) {
           if (mapsUrl) {
             primaryBtn.hidden = false;
@@ -551,7 +571,6 @@
         }
       } else {
         hideFacility();
-        setSteps([i18n('step_em_1'), i18n('step_em_2'), i18n('step_em_3')]);
         if (continueConsultBtn) continueConsultBtn.hidden = true;
         if (primaryBtn) {
           primaryBtn.hidden = true;
@@ -560,20 +579,23 @@
       }
     } else if (kind === 'non_urgent') {
       hideSlots();
-      setSteps([i18n('step_nu_1'), i18n('step_nu_2'), i18n('step_nu_3')]);
+      setInstruction(i18n('instruction_non_urgent'));
+      setSafety(i18n('safety_non_urgent'));
       if (primaryBtn) {
         primaryBtn.hidden = true;
         primaryBtn.removeAttribute('href');
       }
     } else if (triageResult) {
       hideSlots();
-      setSteps([i18n('step_urg_triage_1'), i18n('step_urg_triage_2'), i18n('step_urg_triage_3')]);
+      setInstruction(i18n('instruction_urgent'));
+      setSafety(i18n('safety_urgent'));
       if (primaryBtn) {
         primaryBtn.hidden = true;
         primaryBtn.removeAttribute('href');
       }
     } else {
-      setSteps([i18n('step_urg_book_1'), i18n('step_urg_book_2'), i18n('step_urg_book_3')]);
+      setInstruction(i18n('instruction_urgent_book'));
+      setSafety(i18n('safety_urgent'));
       urgentCtx = {
         complaint: String(opts.complaint || '').trim(),
         triageId: parseInt(opts.triageId, 10) || 0,
@@ -605,7 +627,8 @@
     document.body.classList.remove('mc-urgency-modal-open');
     hideSlots();
     hideFacility();
-    if (continueEl) continueEl.hidden = true;
+    setInstruction('');
+    setSafety('');
     if (lastFocus && typeof lastFocus.focus === 'function') {
       try { lastFocus.focus(); } catch (_) { /* ignore */ }
     }

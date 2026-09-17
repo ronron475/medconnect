@@ -27,6 +27,10 @@ $recordings = consultation_provider_recent_recordings($pdo, $provider_id, 5);
 
 $display_name = $provider['display_name'] ?? trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
 $last_name = $provider['last_name'] ?? 'Provider';
+
+$pending_triage_cases = array_values(array_filter($triage_cases ?? [], 'provider_triage_case_needs_review'));
+$pending_triage_count = count($pending_triage_cases);
+$pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5);
 ?>
 
 <div class="prov-dash" data-live-dashboard>
@@ -203,10 +207,48 @@ $last_name = $provider['last_name'] ?? 'Provider';
     <!-- Sidebar column -->
     <aside class="prov-dash-side">
 
-      <section class="prov-dash-card prov-dash-cta">
-        <h3 class="prov-dash-card__title">AI Triage Engine</h3>
-        <p>Prioritize critical cases from automated symptom assessments.</p>
-        <a href="<?= ASSET_BASE ?>/views/provider/triage.php" class="mc-btn">Review Triage</a>
+      <section class="prov-dash-card prov-dash-triage-review">
+        <div class="prov-dash-card__head">
+          <h3 class="prov-dash-card__title"><?= icon('activity') ?> Review Triage</h3>
+          <span class="mc-badge" data-live-triage-count><?= (int) $pending_triage_count ?> pending</span>
+        </div>
+        <div data-live-triage>
+        <?php if ($pending_triage_preview): ?>
+          <ul class="prov-triage-preview">
+            <?php foreach ($pending_triage_preview as $row):
+              $isUrgent = ($row['urgency'] ?? '') === 'Urgent';
+            ?>
+            <li class="prov-triage-preview__item">
+              <a href="<?= ASSET_BASE ?>/views/provider/triage.php?case=<?= (int) $row['id'] ?>" class="prov-triage-preview__link">
+                <div class="prov-triage-preview__main">
+                  <span class="prov-triage-preview__name"><?= htmlspecialchars($row['name']) ?></span>
+                  <span class="prov-triage-preview__complaint"><?= htmlspecialchars($row['complaint']) ?></span>
+                </div>
+                <div class="prov-triage-preview__meta">
+                  <span class="prov-triage-preview__badge<?= $isUrgent ? ' is-urgent' : '' ?>">
+                    <?= htmlspecialchars($isUrgent ? 'Urgent' : 'Non-Urgent') ?>
+                  </span>
+                  <?php if (!empty($row['needs_tips'])): ?>
+                  <span class="prov-triage-preview__tips">Tips</span>
+                  <?php endif; ?>
+                  <?php if (!empty($row['time'])): ?>
+                  <span class="prov-triage-preview__time"><?= htmlspecialchars($row['time']) ?></span>
+                  <?php endif; ?>
+                </div>
+              </a>
+            </li>
+            <?php endforeach; ?>
+          </ul>
+          <?php if ($pending_triage_count > count($pending_triage_preview)): ?>
+          <p class="prov-triage-preview__more text-xs text-muted">+<?= (int) ($pending_triage_count - count($pending_triage_preview)) ?> more awaiting review</p>
+          <?php endif; ?>
+        <?php else: ?>
+          <div class="prov-triage-preview__empty">
+            <p>No triage records pending review</p>
+          </div>
+        <?php endif; ?>
+        </div>
+        <a href="<?= ASSET_BASE ?>/views/provider/triage.php" class="mc-btn mc-btn--outline prov-dash-triage-review__cta">Open Triage</a>
       </section>
 
       <section class="prov-dash-card">

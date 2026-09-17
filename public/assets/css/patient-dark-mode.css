@@ -696,7 +696,6 @@ html[data-theme-resolved='dark'] body.patient-portal .pmh-tl-filter {
   color: #e2e8f0 !important;
 }
 
-html[data-theme-resolved='dark'] body.patient-portal .pmh-tl-head__title,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-tl-card__title,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-tl-card__heading,
 html[data-theme-resolved='dark'] body.patient-portal .pmh-tl-highlight__value {

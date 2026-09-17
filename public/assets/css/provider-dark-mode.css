@@ -652,6 +652,30 @@ html[data-theme-resolved='dark'] body.provider-body .prov-dash-cta .mc-btn {
   box-shadow: 0 2px 12px rgba(13, 148, 136, 0.35);
 }
 
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__link {
+  background: var(--bg-secondary, #0f172a) !important;
+  border-color: var(--border-color, #243347) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__link:hover {
+  background: var(--card-bg, #151F2E) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__name {
+  color: var(--text-primary, #ffffff) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__complaint,
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__time,
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__empty p {
+  color: var(--text-muted, #94a3b8) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .prov-triage-preview__empty {
+  background: var(--bg-secondary, #0f172a) !important;
+  border-color: var(--border-color, #243347) !important;
+}
+
 /* â”€â”€ Dropdown / profile menu â”€â”€ */
 html[data-theme-resolved='dark'] body.provider-body .pd-profile-menu,
 html[data-theme-resolved='dark'] body.provider-body .profile-menu-dropdown,
