@@ -898,7 +898,50 @@ html[data-theme-resolved='dark'] body.provider-body .pch-session-badge--done {
 
 html[data-theme-resolved='dark'] body.provider-body .pch-session-badge--rec {
   background: rgba(45, 212, 191, 0.12);
-  color: #5eead4;
+  color: #5eead4 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-session-badge {
+  color: #cbd5e1 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-session-badge--done {
+  color: #6ee7b7 !important;
+}
+
+/* Status chips: light palettes are unreadable once dark mode forces white span text */
+html[data-theme-resolved='dark'] body.provider-body .pch-chip {
+  border: 1px solid transparent;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-chip--completed {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #6ee7b7 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-chip--scheduled {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #93c5fd !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-chip--active {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fcd34d !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-chip--cancelled {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-chip--neutral {
+  background: #1f2937;
+  border-color: #334155;
+  color: #cbd5e1 !important;
 }
 
 /* Keep teal accent after provider-ui-system card borders */
