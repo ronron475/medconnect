@@ -167,109 +167,120 @@ $patient_page_stylesheets = [
 <div class="patient-page pmh-page pmh-page--detail">
   <header class="pmh-detail__head patient-page-intro">
     <a href="<?= htmlspecialchars($backUrl) ?>" class="pmh-detail__back"><?= htmlspecialchars($backLabel) ?></a>
-    <p class="pmh-detail__meta"><?= htmlspecialchars($providerName) ?> · Medical Video Consultation</p>
-    <p class="pmh-detail__meta"><?= htmlspecialchars($dateLabel) ?> · <span class="pmh-status pmh-status--<?= htmlspecialchars($statusChip) ?>"><?= htmlspecialchars($statusLabel) ?></span></p>
+    <div class="pmh-detail__head-main">
+      <div class="pmh-detail__head-row">
+        <p class="pmh-detail__provider"><?= htmlspecialchars($providerName) ?></p>
+        <span class="pmh-status pmh-status--<?= htmlspecialchars($statusChip) ?>"><?= htmlspecialchars($statusLabel) ?></span>
+      </div>
+      <p class="pmh-detail__meta"><?= htmlspecialchars($dateLabel) ?> · Medical Video Consultation</p>
+    </div>
   </header>
 
   <div class="pmh-detail-stack">
-    <section class="pmh-panel pmh-detail-card" aria-label="Consultation">
-      <h3 class="pmh-detail-card__title">Consultation</h3>
+    <section class="pmh-panel pmh-detail-card pmh-detail-card--summary" aria-label="Consultation">
+      <div class="pmh-detail-card__head">
+        <h3 class="pmh-detail-card__title">Consultation</h3>
+      </div>
       <dl class="pmh-session-kv pmh-session-kv--grid">
+        <div class="pmh-kv-item">
+          <dt>Doctor</dt>
+          <dd><?= htmlspecialchars($providerName) ?></dd>
+        </div>
+        <div class="pmh-kv-item">
+          <dt>Date</dt>
+          <dd><?= htmlspecialchars($dateLabel) ?></dd>
+        </div>
+        <div class="pmh-kv-item pmh-kv-item--status">
+          <dt>Status</dt>
+          <dd><span class="pmh-status pmh-status--<?= htmlspecialchars($statusChip) ?>"><?= htmlspecialchars($statusLabel) ?></span></dd>
+        </div>
+        <div class="pmh-kv-item">
+          <dt>Consultation ID</dt>
+          <dd>#<?= (int) $consultationId ?></dd>
+        </div>
         <?php if ($scheduledDurationLabel !== ''): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Scheduled duration</dt>
           <dd><?= htmlspecialchars($scheduledDurationLabel) ?></dd>
         </div>
         <?php endif; ?>
         <?php if ($startLabel !== ''): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Started</dt>
           <dd><?= htmlspecialchars($startLabel) ?></dd>
         </div>
         <?php endif; ?>
         <?php if ($endLabel !== ''): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Ended</dt>
           <dd><?= htmlspecialchars($endLabel) ?></dd>
         </div>
         <?php endif; ?>
         <?php if ($durationLabel !== ''): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Actual duration</dt>
           <dd><?= htmlspecialchars($durationLabel) ?></dd>
         </div>
         <?php endif; ?>
-        <div>
-          <dt>Status</dt>
-          <dd><?= htmlspecialchars($statusLabel) ?></dd>
-        </div>
-        <div>
-          <dt>Doctor</dt>
-          <dd><?= htmlspecialchars($providerName) ?></dd>
-        </div>
-        <div>
-          <dt>Date</dt>
-          <dd><?= htmlspecialchars($dateLabel) ?></dd>
-        </div>
-        <div>
-          <dt>Consultation ID</dt>
-          <dd>#<?= (int) $consultationId ?></dd>
-        </div>
-        <div>
+        <div class="pmh-kv-item pmh-kv-item--complaint pmh-kv-item--full">
           <dt>Patient Complaint</dt>
           <dd><?= htmlspecialchars($chiefComplaint !== '' ? $chiefComplaint : 'Not recorded.') ?></dd>
         </div>
       </dl>
     </section>
 
-    <section class="pmh-panel pmh-detail-card" aria-label="Video consultation">
-      <h3 class="pmh-detail-card__title">Video consultation</h3>
+    <section class="pmh-panel pmh-detail-card pmh-detail-card--video" aria-label="Video consultation">
+      <div class="pmh-detail-card__head">
+        <h3 class="pmh-detail-card__title">Video consultation</h3>
+      </div>
       <dl class="pmh-session-kv pmh-session-kv--grid pmh-session-kv--video">
         <?php if (!empty($videoHistory['date_label'])): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Date</dt>
           <dd><?= htmlspecialchars((string) $videoHistory['date_label']) ?></dd>
         </div>
         <?php endif; ?>
         <?php if (!empty($videoHistory['scheduled_duration_label'])): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Scheduled duration</dt>
           <dd><?= htmlspecialchars((string) $videoHistory['scheduled_duration_label']) ?></dd>
         </div>
         <?php endif; ?>
         <?php if (!empty($videoHistory['started_label'])): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Started</dt>
           <dd><?= htmlspecialchars((string) $videoHistory['started_label']) ?></dd>
         </div>
         <?php endif; ?>
         <?php if (!empty($videoHistory['ended_label'])): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Ended</dt>
           <dd><?= htmlspecialchars((string) $videoHistory['ended_label']) ?></dd>
         </div>
         <?php endif; ?>
         <?php if (!empty($videoHistory['actual_duration_label']) || !empty($videoHistory['duration_label'])): ?>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Actual duration</dt>
           <dd><?= htmlspecialchars((string) ($videoHistory['actual_duration_label'] ?: $videoHistory['duration_label'])) ?></dd>
         </div>
         <?php endif; ?>
-        <div>
+        <div class="pmh-kv-item pmh-kv-item--status">
           <dt>Status</dt>
           <dd><?= htmlspecialchars((string) ($videoHistory['status_label'] ?: $videoHistory['video_status_label'] ?: $statusLabel)) ?></dd>
         </div>
-        <div>
+        <div class="pmh-kv-item">
           <dt>Provider</dt>
           <dd><?= htmlspecialchars($providerName) ?></dd>
         </div>
       </dl>
-      <div class="pmh-detail-card__footer">
+      <div class="pmh-detail-card__footer<?= !empty($videoHistory['has_recording']) ? ' pmh-detail-card__footer--action' : '' ?>">
         <?php if (!empty($videoHistory['has_recording'])): ?>
-        <a class="pmh-btn pmh-btn--primary pmh-btn--sm" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
-        <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
-        <p class="pmh-detail-card__hint"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
-        <?php endif; ?>
+        <div class="pmh-detail-card__action">
+          <a class="pmh-btn pmh-btn--primary" href="<?= htmlspecialchars(consultation_video_recording_view_url((int) $consultationId)) ?>" target="_blank" rel="noopener">View Recording</a>
+          <?php if (!empty($videoHistory['recording_segment_count']) && (int) $videoHistory['recording_segment_count'] > 1): ?>
+          <p class="pmh-detail-card__hint"><?= (int) $videoHistory['recording_segment_count'] ?> recording segments</p>
+          <?php endif; ?>
+        </div>
         <?php else: ?>
         <p class="pmh-detail-card__hint">Video recording not available for this consultation.</p>
         <?php endif; ?>
@@ -277,11 +288,18 @@ $patient_page_stylesheets = [
     </section>
 
     <?php if ($timeline !== []): ?>
-    <section class="pmh-panel pmh-detail-card" aria-label="Session timeline">
-      <h3 class="pmh-detail-card__title">Session timeline</h3>
+    <section class="pmh-panel pmh-detail-card pmh-detail-card--timeline" aria-label="Session timeline">
+      <div class="pmh-detail-card__head">
+        <h3 class="pmh-detail-card__title">Session timeline</h3>
+      </div>
       <ol class="pmh-session-timeline">
-        <?php foreach ($timeline as $event): ?>
-        <li>
+        <?php
+        $timelineCount = count($timeline);
+        foreach ($timeline as $ti => $event):
+          $isFirst = $ti === 0;
+          $isLast = $ti === $timelineCount - 1;
+        ?>
+        <li class="<?= $isFirst ? 'is-first' : '' ?><?= $isLast ? ' is-last' : '' ?>">
           <strong><?= htmlspecialchars((string) $event['label']) ?></strong>
           <span><?= htmlspecialchars(date('M j, Y g:i A', strtotime((string) $event['at']))) ?></span>
         </li>
@@ -292,7 +310,9 @@ $patient_page_stylesheets = [
 
     <?php if (!empty($clinicalOutcome['final_case_level'])): ?>
     <section class="pmh-panel pmh-detail-card pmh-detail-card--case-level" aria-label="Triage assessment">
-      <h3 class="pmh-detail-card__title">Triage assessment</h3>
+      <div class="pmh-detail-card__head">
+        <h3 class="pmh-detail-card__title">Triage assessment</h3>
+      </div>
       <?php
         if (!function_exists('mc_render_consultation_outcome_stack')) {
             require_once VIEWS_PATH . '/patient/partials/triage_helpers.php';
@@ -323,12 +343,17 @@ $patient_page_stylesheets = [
     </section>
     <?php endif; ?>
 
-    <section class="pmh-panel pmh-detail-card<?= !$isFinalized ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
-      <h3 class="pmh-detail-card__title">Provider documentation</h3>
+    <section class="pmh-panel pmh-detail-card pmh-detail-card--docs<?= !$isFinalized ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
+      <div class="pmh-detail-card__head">
+        <h3 class="pmh-detail-card__title">Provider documentation</h3>
+        <?php if (!$isFinalized): ?>
+        <span class="pmh-detail__pending-badge">In progress</span>
+        <?php endif; ?>
+      </div>
       <?php if (!$isFinalized): ?>
       <div class="pmh-detail__pending">
-        <p>Provider documentation is still in progress.</p>
-        <p class="text-muted">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
+        <p class="pmh-detail__pending-lead">Provider documentation is still in progress.</p>
+        <p class="pmh-detail__pending-note">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
       </div>
       <?php else: ?>
 
