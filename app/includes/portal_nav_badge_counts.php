@@ -63,6 +63,23 @@ function portal_nav_patient_counts(PDO $pdo, int $patientId): array
 }
 
 /**
+ * Unread My Health notifications for one patient.
+ * Link-based only (opens My Health or consultation health-file detail) — not record totals.
+ */
+function portal_nav_patient_my_health_unread_where(): string
+{
+    return "
+        is_read = 0
+        AND status = 'active'
+        AND (expires_at IS NULL OR expires_at > NOW())
+        AND (
+          link LIKE '%/my_health.php%'
+          OR link LIKE '%/consultation_detail.php%'
+        )
+    ";
+}
+
+/**
  * Unread patient notifications belonging to a sidebar section (not the bell total).
  */
 function portal_nav_patient_section_unread_count(PDO $pdo, int $patientId, string $section): int
@@ -105,33 +122,63 @@ function portal_nav_patient_section_unread_count(PDO $pdo, int $patientId, strin
             SELECT COUNT(*)
             FROM notifications
             WHERE user_id = ?
-              AND is_read = 0
-              AND status = 'active'
-              AND (expires_at IS NULL OR expires_at > NOW())
-              AND (
-                link LIKE '%/my_health.php%'
-                OR link LIKE '%/consultation_detail.php%'
-                OR title IN (
-                  'Medical record updated',
-                  'Medical Record Updated',
-                  'Consultation completed',
-                  'Follow-up instructions available',
-                  'New referral',
-                  'Referral Created',
-                  'Prescription updated',
-                  'Prescription Available',
-                  'New care tips available',
-                  'Your Patient Complaint Has Been Reviewed'
-                )
-              )
-              AND (
-                link IS NULL
-                OR link = ''
-                OR link NOT LIKE '%/health_summary.php%'
-              )
+              AND " . portal_nav_patient_my_health_unread_where() . "
         ");
         $stmt->execute([$patientId]);
         return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/**
+ * Mark unread patient notifications for a sidebar section as read (same filter as the count).
+ * Updates only currently unread rows. Does not change medical records.
+ */
+function portal_nav_patient_section_mark_read(PDO $pdo, int $patientId, string $section): int
+{
+    if ($patientId <= 0) {
+        return 0;
+    }
+
+    $section = strtolower(trim($section));
+    if (!in_array($section, ['my_health', 'health_summary'], true)) {
+        return 0;
+    }
+
+    try {
+        if (!$pdo->query("SHOW TABLES LIKE 'notifications'")->rowCount()) {
+            return 0;
+        }
+
+        if ($section === 'health_summary') {
+            $stmt = $pdo->prepare("
+                UPDATE notifications
+                SET is_read = 1, updated_at = NOW()
+                WHERE user_id = ?
+                  AND is_read = 0
+                  AND status = 'active'
+                  AND (expires_at IS NULL OR expires_at > NOW())
+                  AND (
+                    link LIKE '%/health_summary.php%'
+                    OR title IN (
+                      'Health Summary Update Approved',
+                      'Health Summary Update Rejected'
+                    )
+                  )
+            ");
+            $stmt->execute([$patientId]);
+            return (int) $stmt->rowCount();
+        }
+
+        $stmt = $pdo->prepare("
+            UPDATE notifications
+            SET is_read = 1, updated_at = NOW()
+            WHERE user_id = ?
+              AND " . portal_nav_patient_my_health_unread_where() . "
+        ");
+        $stmt->execute([$patientId]);
+        return (int) $stmt->rowCount();
     } catch (Throwable $e) {
         return 0;
     }

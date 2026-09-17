@@ -15,6 +15,7 @@ require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
 require_once BASE_PATH . '/app/includes/community_bhw_activity.php';
+require_once BASE_PATH . '/app/includes/portal_nav_badge_counts.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -22,6 +23,11 @@ patient_consultation_records_schema_ensure($pdo);
 $uid = (int) $uid;
 $tab = (string) ($_GET['tab'] ?? 'timeline');
 $active_tab = in_array($tab, ['files', 'care-tips'], true) ? $tab : 'timeline';
+
+// Sidebar My Health badge = unread My Health notifications only (not Timeline/Files totals).
+// Mark currently unread My Health items read when the patient opens this page.
+portal_nav_patient_section_mark_read($pdo, $uid, 'my_health');
+$my_health_unread_remaining = portal_nav_patient_section_unread_count($pdo, $uid, 'my_health');
 
 $stmt = $pdo->prepare("
     SELECT u.first_name, u.last_name, CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number
@@ -267,6 +273,12 @@ try {
 
 $care_timeline = patient_care_timeline_build($history, $bhw_activity, $timeline_assessments);
 
+// Tab counts = real on-page records (not unread notifications).
+$timeline_count = count($care_timeline);
+$health_files_count = (int) ($counts['all'] ?? 0);
+// Care Tips tab chip = items that still need attention (same set as "Needs attention" filter).
+$care_tips_attention_count = (int) $care_tips_active_count;
+
 $page_title = 'My Health';
 $pmh_css_ver = (int) @filemtime(ASSETS_PATH . '/css/patient-my-health.css');
 $patient_page_stylesheets = [
@@ -298,8 +310,10 @@ $patient_page_stylesheets = [
          role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>"
          title="Your care history in order">
         Timeline
-        <?php if (!empty($care_timeline)): ?>
-        <span class="pmh-tab__count"><?= count($care_timeline) ?></span>
+        <?php if ($timeline_count > 0): ?>
+        <span class="pmh-tab__count pmh-tab__count--total"
+              title="<?= (int) $timeline_count ?> timeline event<?= $timeline_count === 1 ? '' : 's' ?>"
+              aria-label="<?= (int) $timeline_count ?> timeline event<?= $timeline_count === 1 ? '' : 's' ?>"><?= (int) $timeline_count ?></span>
         <?php endif; ?>
       </a>
       <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files"
@@ -307,8 +321,10 @@ $patient_page_stylesheets = [
          role="tab" aria-selected="<?= $active_tab === 'files' ? 'true' : 'false' ?>"
          title="Visit notes, prescriptions, and referrals">
         Health Files
-        <?php if ($counts['all'] > 0): ?>
-        <span class="pmh-tab__count"><?= (int) $counts['all'] ?></span>
+        <?php if ($health_files_count > 0): ?>
+        <span class="pmh-tab__count pmh-tab__count--total"
+              title="<?= (int) $health_files_count ?> health file<?= $health_files_count === 1 ? '' : 's' ?>"
+              aria-label="<?= (int) $health_files_count ?> health file<?= $health_files_count === 1 ? '' : 's' ?>"><?= (int) $health_files_count ?></span>
         <?php endif; ?>
       </a>
       <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
@@ -316,8 +332,10 @@ $patient_page_stylesheets = [
          role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>"
          title="Home-care guidance from your provider">
         Care Tips
-        <?php if ($care_tips_active_count > 0): ?>
-        <span class="pmh-tab__count"><?= (int) $care_tips_active_count ?></span>
+        <?php if ($care_tips_attention_count > 0): ?>
+        <span class="pmh-tab__count pmh-tab__count--attention"
+              title="<?= (int) $care_tips_attention_count ?> care tip<?= $care_tips_attention_count === 1 ? '' : 's' ?> needing attention"
+              aria-label="<?= (int) $care_tips_attention_count ?> care tip<?= $care_tips_attention_count === 1 ? '' : 's' ?> needing attention"><?= (int) $care_tips_attention_count ?></span>
         <?php endif; ?>
       </a>
     </nav>
@@ -328,7 +346,7 @@ $patient_page_stylesheets = [
       <?php elseif ($active_tab === 'files'): ?>
         <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
       <?php else: ?>
-        <?php if ($care_tips_active_count > 0): ?>
+        <?php if ($care_tips_attention_count > 0): ?>
         <div class="pmh-surface__actions pmh-surface__actions--care-tips">
           <button
             type="button"
@@ -348,6 +366,31 @@ $patient_page_stylesheets = [
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>
 
 <script>
+(function () {
+  // Keep sidebar My Health unread badge in sync after mark-as-read on this page.
+  var remaining = <?= (int) $my_health_unread_remaining ?>;
+  document.querySelectorAll('[data-nav-badge="my_health"]').forEach(function (badge) {
+    if (remaining <= 0) {
+      badge.textContent = '';
+      badge.hidden = true;
+      badge.setAttribute('aria-hidden', 'true');
+      badge.removeAttribute('title');
+      badge.removeAttribute('aria-label');
+    } else {
+      badge.textContent = remaining > 9 ? '9+' : String(remaining);
+      badge.hidden = false;
+      badge.setAttribute('aria-hidden', 'false');
+      badge.setAttribute('title', 'Unread My Health updates');
+      badge.setAttribute('aria-label', remaining + ' unread My Health updates');
+    }
+  });
+  if (window.MedConnectNavBadgesRefresh) {
+    window.MedConnectNavBadgesRefresh();
+  } else {
+    window.dispatchEvent(new CustomEvent('medconnect:nav-badges-refresh'));
+  }
+})();
+
 document.addEventListener('medconnect:consultation-completed', function () {
   if (document.querySelector('.pmh-feed--timeline') || document.getElementById('pmh-files-list')) {
     window.setTimeout(function () { window.location.reload(); }, 1200);

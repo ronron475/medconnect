@@ -18,5 +18,13 @@ $badgeClass = ($portal_nav_badge_key === 'messages')
 $attrs = portal_nav_badge_data_attr($portal_nav_badge_key);
 $hidden = $portal_nav_badge_count <= 0 ? ' hidden' : '';
 $text = portal_nav_badge_format($portal_nav_badge_count);
+
+// Clarify My Health sidebar chip: unread updates, not a record total.
+$titleAttr = '';
+$ariaLabel = '';
+if ($portal_nav_badge_key === 'my_health' && $portal_nav_badge_count > 0) {
+    $titleAttr = ' title="Unread My Health updates"';
+    $ariaLabel = ' aria-label="' . htmlspecialchars((string) $portal_nav_badge_count . ' unread My Health updates', ENT_QUOTES, 'UTF-8') . '"';
+}
 ?>
-<span class="<?= htmlspecialchars($badgeClass) ?>" <?= $attrs ?><?= $hidden ?> aria-hidden="<?= $portal_nav_badge_count <= 0 ? 'true' : 'false' ?>"><?= htmlspecialchars($text) ?></span>
+<span class="<?= htmlspecialchars($badgeClass) ?>" <?= $attrs ?><?= $hidden ?><?= $titleAttr ?><?= $ariaLabel ?> aria-hidden="<?= $portal_nav_badge_count <= 0 ? 'true' : 'false' ?>"><?= htmlspecialchars($text) ?></span>
