@@ -346,6 +346,22 @@ html[data-theme-resolved='dark'] body.provider-body .msg-thread-item.active {
   background: var(--hover-overlay) !important;
 }
 
+html[data-theme-resolved='dark'] body.provider-body .provider-page-body .msg-kebab {
+  background: var(--bg-secondary, #0D1E30) !important;
+  border-color: var(--border-color, #243347) !important;
+  color: var(--text-secondary, #8FAABF) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .provider-page-body .msg-kebab:hover {
+  background: var(--hover-overlay, rgba(255, 255, 255, 0.06)) !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .provider-page-body .msg-kebab__dots {
+  background: var(--text-secondary, #8FAABF);
+  box-shadow: 0 -6px 0 var(--text-secondary, #8FAABF), 0 6px 0 var(--text-secondary, #8FAABF);
+  opacity: 1;
+}
+
 html[data-theme-resolved='dark'] body.provider-body .msg-bubble,
 html[data-theme-resolved='dark'] body.provider-body .chat-bubble {
   background: var(--bg-secondary) !important;
