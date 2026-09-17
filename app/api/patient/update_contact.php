@@ -151,7 +151,8 @@ if ($form_type === 'emergency') {
 
         $pdo->commit();
 
-        // Sync GIS location when barangay/contact changes
+        // Sync GIS address metadata when barangay/contact changes.
+        // Preserve existing GPS/geocoded coordinates — never wipe precise pins on contact-only updates.
         $profile = $pdo->prepare("
             SELECT pr.province, pr.city_municipality, pr.barangay,
                    COALESCE(pr.full_address, pr.address, '') AS address
@@ -165,15 +166,44 @@ if ($form_type === 'emergency') {
         if ($profileRow) {
             require_once BASE_PATH . '/app/core/GisDashboardService.php';
             $gis = new GisDashboardService($pdo);
+
+            $keepLat = null;
+            $keepLng = null;
+            $keepSource = 'barangay_centroid';
+            try {
+                $locStmt = $pdo->prepare("
+                    SELECT latitude, longitude, location_source
+                    FROM patient_locations
+                    WHERE patient_id = ?
+                    LIMIT 1
+                ");
+                $locStmt->execute([$user_id]);
+                $existingLoc = $locStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+                if ($existingLoc) {
+                    $src = strtolower(trim((string) ($existingLoc['location_source'] ?? '')));
+                    $latRaw = $existingLoc['latitude'] ?? null;
+                    $lngRaw = $existingLoc['longitude'] ?? null;
+                    $hasCoords = is_numeric($latRaw) && is_numeric($lngRaw)
+                        && !(((float) $latRaw) == 0.0 && ((float) $lngRaw) == 0.0);
+                    if ($hasCoords && in_array($src, ['gps', 'manual', 'imported', 'address_geocoded'], true)) {
+                        $keepLat = (float) $latRaw;
+                        $keepLng = (float) $lngRaw;
+                        $keepSource = $src === 'address_geocoded' ? 'address_geocoded' : 'gps';
+                    }
+                }
+            } catch (Throwable $e) {
+                // Non-fatal — fall back to barangay centroid sync.
+            }
+
             $gis->savePatientLocation(
                 $user_id,
                 (string) ($profileRow['province'] ?? 'Negros Occidental'),
                 (string) ($profileRow['city_municipality'] ?? 'Bago City'),
                 (string) ($profileRow['barangay'] ?? ''),
                 (string) ($profileRow['address'] ?? ''),
-                null,
-                null,
-                'manual'
+                $keepLat,
+                $keepLng,
+                $keepSource
             );
         }
 

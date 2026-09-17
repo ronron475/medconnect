@@ -88,6 +88,21 @@ $chief_complaint      = trim((string) ($_POST['chief_complaint'] ?? ''));
 $triage_urgency       = strtoupper(trim((string) ($_POST['triage_urgency'] ?? '')));
 $nlp_result_json      = trim((string) ($_POST['nlp_result_json'] ?? ''));
 $chief_complaint_skipped = ($_POST['chief_complaint_skipped'] ?? '') === '1';
+// Optional browser GPS (never required — barangay pin remains the GIS fallback).
+$gps_latitude_raw  = trim((string) ($_POST['latitude'] ?? ''));
+$gps_longitude_raw = trim((string) ($_POST['longitude'] ?? ''));
+$gps_latitude  = is_numeric($gps_latitude_raw) ? (float) $gps_latitude_raw : null;
+$gps_longitude = is_numeric($gps_longitude_raw) ? (float) $gps_longitude_raw : null;
+if ($gps_latitude !== null && $gps_longitude !== null) {
+    $validGps = $gps_latitude >= -90 && $gps_latitude <= 90
+        && $gps_longitude >= -180 && $gps_longitude <= 180
+        && !($gps_latitude == 0.0 && $gps_longitude == 0.0);
+    if (!$validGps) {
+        $gps_latitude = null;
+        $gps_longitude = null;
+    }
+}
+$hasOptionalGps = $gps_latitude !== null && $gps_longitude !== null;
 if (!in_array($triage_urgency, ['EMERGENCY', 'URGENT', 'NON-URGENT', 'NON_URGENT'], true)) {
     $triage_urgency = '';
 }
@@ -382,15 +397,16 @@ try {
         require_once dirname(dirname(__DIR__)) . '/app/core/BagoBarangayCentroids.php';
         require_once dirname(dirname(__DIR__)) . '/app/core/GisDashboardService.php';
         $gis = new GisDashboardService($pdo);
+        // Optional GPS upgrades precision; valid barangay always keeps GIS visibility via fallback.
         $gis->savePatientLocation(
             $patient_user_id,
             $province,
             $city_municipality,
             $barangay,
             $address,
-            null,
-            null,
-            'barangay_centroid'
+            $hasOptionalGps ? $gps_latitude : null,
+            $hasOptionalGps ? $gps_longitude : null,
+            $hasOptionalGps ? 'gps' : 'barangay_centroid'
         );
     } catch (Throwable $e) {
         error_log('register.php GIS (non-fatal): ' . $e->getMessage());
