@@ -97,7 +97,6 @@ if (!$session_access['allowed'] && !$history_view) {
     require __DIR__ . '/partials/layout_open.php';
     ?>
     <div class="mc-card" style="max-width: 640px; margin: 0 auto; padding: 28px 32px;">
-      <h2 class="text-h2" style="margin-bottom: 12px;">Session Not Available</h2>
       <p style="color: var(--mc-slate-muted); line-height: 1.6; margin-bottom: 18px;">
         <?= htmlspecialchars($session_access['reason']) ?>
       </p>

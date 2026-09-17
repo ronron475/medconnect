@@ -13,9 +13,8 @@ $records_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-records.js');
 
 <div class="bhw-records-page" id="bhwRecordsView" data-preselect="<?= $preselect ?>">
 
-  <header class="bhw-records-header">
+  <header class="bhw-records-header bhw-page-intro">
     <div>
-      <h2 class="text-h2">Records</h2>
       <p class="bhw-records-sub">Browse uploaded documents and prescriptions for residents in <strong>Brgy. <?= $barangay_label ?></strong>. Select a patient below to review their file history.</p>
     </div>
     <a href="upload.php<?= $preselect ? '?patient_id=' . $preselect : '' ?>" class="bhw-records-link-btn" id="bhwRecordsUploadLink" style="display:none;">Upload document</a>

@@ -203,9 +203,8 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
 
 <div class="mr-page">
 
-  <div class="mr-toolbar">
+  <div class="mr-toolbar provider-page-intro">
     <div class="mr-toolbar__left">
-      <h2 class="mr-toolbar__title">Medical Records</h2>
       <span class="mr-badge"><?= $patient_count . ' patients' ?></span>
       <nav class="mr-tabs" aria-label="Records view">
         <a href="?view=patients" class="is-active">Patient Directory</a>

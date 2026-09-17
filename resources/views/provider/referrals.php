@@ -27,8 +27,8 @@ try {
 }
 ?>
 
-<div class="greeting-banner" style="margin-bottom:20px;">
-  <div><h2 class="text-h2">Digital Referrals</h2><p class="text-muted text-sm">Referrals you issue during consultation. Patients can view these in My Health — medConnect does not track whether the patient followed the referral.</p></div>
+<div class="greeting-banner provider-page-intro">
+  <p class="text-muted text-sm provider-page-intro__desc">Referrals you issue during consultation. Patients can view these in My Health — medConnect does not track whether the patient followed the referral.</p>
   <a href="<?= ASSET_BASE ?>/views/provider/queue.php" class="mc-btn mc-btn--primary">+ New Referral from Queue</a>
 </div>
 

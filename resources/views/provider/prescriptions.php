@@ -31,8 +31,8 @@ try {
 $patient_options = $patients ?? [];
 ?>
 
-<div class="greeting-banner" style="margin-bottom:20px;">
-  <div><h2 class="text-h2">e-Prescriptions</h2><p class="text-muted text-sm">Create, print, and review prescription history.</p></div>
+<div class="greeting-banner provider-page-intro">
+  <p class="text-muted text-sm provider-page-intro__desc">Create, print, and review prescription history.</p>
   <button type="button" class="mc-btn mc-btn--primary" id="rxOpenForm">+ New Prescription</button>
 </div>
 

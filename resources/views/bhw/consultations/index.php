@@ -23,11 +23,10 @@ $bhw_extra_js = [
 
 <div class="bhw-cons-page" id="bhwConsRoot">
 
-  <header class="bhw-cons-hero">
+  <header class="bhw-cons-hero bhw-page-intro">
     <div>
-      <h2 class="bhw-cons-hero__title">Consultation Center — Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></h2>
       <p class="bhw-cons-hero__sub">
-        Monitor teleconsultations for residents in your barangay, assist with video calls, and track consent status.
+        Brgy. <?= htmlspecialchars($bhw_barangay_name) ?> — Monitor teleconsultations for residents in your barangay, assist with video calls, and track consent status.
       </p>
     </div>
     <div class="bhw-cons-hero__actions">

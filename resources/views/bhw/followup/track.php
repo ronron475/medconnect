@@ -11,9 +11,8 @@ $bhw_subnav_items = [
 $bhw_subnav_active = 'followup/track.php';
 ?>
 <div class="bhw-followup-page">
-  <header class="bhw-followup-header">
-    <h2 class="text-h2">Follow-Up Monitoring</h2>
-    <p>Monitor doctor-scheduled follow-ups for residents in your barangay and log community home visits.</p>
+  <header class="bhw-followup-header bhw-page-intro">
+    <p class="bhw-page-intro__desc">Monitor doctor-scheduled follow-ups for residents in your barangay and log community home visits.</p>
   </header>
 
   <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>

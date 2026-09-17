@@ -214,8 +214,7 @@ require __DIR__ . '/partials/layout_open.php';
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-messages.css?v=<?= $provider_messages_css_ver ?>"/>
 
 <div class="messages-page">
-  <header class="messages-page-head">
-    <h1 class="messages-page-title">Messages</h1>
+  <header class="messages-page-head provider-page-intro">
     <span class="messages-refresh-badge" id="refreshStatus">Auto-refresh on</span>
   </header>
 

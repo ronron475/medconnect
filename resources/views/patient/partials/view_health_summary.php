@@ -112,9 +112,8 @@ if (!function_exists('phs_render_assessment_pair')) {
     }
 }
 ?>
-<header class="phs-hero" aria-label="Health Summary overview">
+<header class="phs-hero patient-page-intro" aria-label="Health Summary overview">
   <div class="phs-hero__content">
-    <h1 class="phs-hero__title">Health Summary</h1>
     <p class="phs-hero__sub">Your health information at a glance.</p>
   </div>
   <div class="phs-hero__actions">

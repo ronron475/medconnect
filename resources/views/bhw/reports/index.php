@@ -17,9 +17,8 @@ $bhw_extra_js = [
 
 <div class="bhw-reports-page" id="bhwReportsRoot" data-barangay="<?= $barangay_label ?>">
 
-  <header class="bhw-reports-header">
+  <header class="bhw-reports-header bhw-page-intro">
     <div>
-      <h2 class="text-h2">Healthcare Reports</h2>
       <p class="bhw-reports-sub">Barangay-scoped statistics for <strong>Brgy. <?= $barangay_label ?></strong>. Charts auto-refresh every 15 seconds. Use filters to narrow results.</p>
     </div>
     <div class="bhw-reports-export-btns no-print">

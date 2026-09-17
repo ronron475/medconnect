@@ -290,11 +290,9 @@ function pch_filter_url(string $filter): string
     $historyCount = count($history_patients);
   ?>
 
-  <header class="pch-hero">
+  <header class="pch-hero provider-page-intro">
     <div class="pch-hero__copy">
-      <p class="pch-hero__eyebrow">Clinical workflow</p>
       <div class="pch-hero__title-row">
-        <h2 class="pch-toolbar__title">Consultation History</h2>
         <span class="pch-count" id="pchCount" data-total="<?= (int) $historyCount ?>">
           <?= (int) $historyCount ?> patient<?= $historyCount === 1 ? '' : 's' ?>
         </span>

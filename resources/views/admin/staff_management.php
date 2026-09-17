@@ -95,16 +95,14 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 <?php endif; ?>
 
-<div class="header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+<div class="header-row admin-page-intro">
     <div>
         <?php if ($role_filter === 'bhw'): ?>
-        <h2 style="font-size: 24px; font-weight: 800; color: var(--mc-navy-deep); margin-bottom: 6px;">Barangay Health Worker Accounts</h2>
-        <p style="color: var(--mc-text-muted); font-size: 14px; margin: 0;">
+        <p class="admin-page-intro__desc text-muted">
             Active BHW accounts approved via Maker-Checker workflow. New applications must be submitted for Super Administrator approval.
         </p>
         <?php else: ?>
-        <h2 style="font-size: 24px; font-weight: 800; color: var(--mc-navy-deep); margin-bottom: 6px;">Doctor Accounts</h2>
-        <p style="color: var(--mc-text-muted); font-size: 14px; margin: 0;">
+        <p class="admin-page-intro__desc text-muted">
             Active doctor accounts approved via Maker-Checker workflow. New applications must be submitted for Super Administrator approval.
             <strong><?= $doctor_count ?></strong> active doctor<?= $doctor_count === 1 ? '' : 's' ?>.
         </p>

@@ -585,10 +585,9 @@ $bhw_inline_script = ob_get_clean();
     <p class="bhw-pl-print-sub" id="bhwPlPrintMeta">Brgy. <?= $barangay_label ?> · Generated <?= date('M j, Y g:i A') ?></p>
   </div>
 
-  <header class="bhw-pl-header">
+  <header class="bhw-pl-header bhw-page-intro">
     <div>
-      <h2 class="text-h2"><?= htmlspecialchars($pl_heading) ?></h2>
-      <p><?= $pl_intro ?></p>
+      <p class="bhw-page-intro__desc"><?= $pl_intro ?></p>
     </div>
     <div class="bhw-pl-header-actions no-print">
       <button type="button" class="bhw-pl-btn bhw-pl-btn--ghost" id="bhwPlRefresh" aria-label="Refresh list">Refresh</button>

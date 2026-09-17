@@ -4,7 +4,6 @@
  * Expects: $pt, $patient_initials, $patient_picture_url
  */
 ?>
-<h2 class="text-h2 mb-md">Personal Health Identity</h2>
 
 <?php if (!empty($_SESSION['identity_success'])): ?>
   <div class="mc-alert mc-alert--success" style="margin-bottom:16px;padding:12px 16px;border-radius:8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;font-size:13px;display:flex;align-items:center;gap:8px;">

@@ -1,0 +1,94 @@
+/**
+ * Provider portal page-intro spacing — title lives in .pd-header-page.
+ * Does not redesign components; only tightens duplicate-title leftovers.
+ */
+
+body.provider-body .provider-page-intro,
+body.provider-body .greeting-banner.provider-page-intro,
+body.provider-body .queue-hero.provider-page-intro,
+body.provider-body .fu-hero.provider-page-intro,
+body.provider-body .pch-hero.provider-page-intro,
+body.provider-body .mr-toolbar.provider-page-intro,
+body.provider-body .sched-page-header.provider-page-intro,
+body.provider-body .ps-page-header.provider-page-intro,
+body.provider-body .messages-page-head.provider-page-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+body.provider-body .provider-page-intro__desc,
+body.provider-body .greeting-banner.provider-page-intro .text-muted,
+body.provider-body .queue-hero.provider-page-intro .queue-subtitle,
+body.provider-body .fu-hero.provider-page-intro .fu-sub,
+body.provider-body .pch-hero.provider-page-intro .pch-toolbar__sub,
+body.provider-body .sched-page-header.provider-page-intro .provider-page-intro__desc {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--mc-slate-muted, #64748b);
+}
+
+body.provider-body .provider-page-intro__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+}
+
+body.provider-body .queue-hero.provider-page-intro {
+  padding: 12px 16px;
+  align-items: center;
+}
+
+body.provider-body .fu-hero.provider-page-intro .fu-hero__eyebrow,
+body.provider-body .pch-hero.provider-page-intro .pch-hero__eyebrow {
+  display: none;
+}
+
+body.provider-body .fu-hero.provider-page-intro .fu-hero__title-row,
+body.provider-body .pch-hero.provider-page-intro .pch-hero__title-row {
+  margin: 0 0 6px;
+}
+
+body.provider-body .messages-page-head.provider-page-intro {
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+body.provider-body .ps-page-header.provider-page-intro {
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 14px;
+}
+
+body.provider-body .mr-toolbar.provider-page-intro {
+  margin-bottom: 14px;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .provider-page-intro__desc,
+html[data-theme-resolved='dark'] body.provider-body .greeting-banner.provider-page-intro .text-muted,
+html[data-theme-resolved='dark'] body.provider-body .queue-hero.provider-page-intro .queue-subtitle,
+html[data-theme-resolved='dark'] body.provider-body .fu-hero.provider-page-intro .fu-sub,
+html[data-theme-resolved='dark'] body.provider-body .pch-hero.provider-page-intro .pch-toolbar__sub,
+html[data-theme-resolved='dark'] body.provider-body .sched-page-header.provider-page-intro .provider-page-intro__desc {
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  body.provider-body .provider-page-intro,
+  body.provider-body .greeting-banner.provider-page-intro,
+  body.provider-body .queue-hero.provider-page-intro,
+  body.provider-body .fu-hero.provider-page-intro,
+  body.provider-body .pch-hero.provider-page-intro,
+  body.provider-body .sched-page-header.provider-page-intro {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+}
