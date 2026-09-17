@@ -30,11 +30,12 @@ body.patient-portal .phs-hero.patient-page-intro .phs-hero__sub {
 body.patient-portal .pmh-detail__head.patient-page-intro {
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
-  margin-bottom: 14px;
+  gap: 0;
+  margin-bottom: 12px;
 }
 
-body.patient-portal .pmh-detail__head.patient-page-intro .pmh-detail__meta {
+body.patient-portal .pmh-detail__head.patient-page-intro .pmh-detail__meta,
+body.patient-portal .pmh-detail__head.patient-page-intro .pmh-detail__provider {
   margin: 0;
 }
 
