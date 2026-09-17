@@ -295,15 +295,17 @@ $patient_page_stylesheets = [
     <nav class="pmh-tabs pmh-tabs--segment" role="tablist" aria-label="My Health sections">
       <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=timeline"
          class="pmh-tab <?= $active_tab === 'timeline' ? 'is-active' : '' ?>"
-         role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>">
-        Care Timeline
+         role="tab" aria-selected="<?= $active_tab === 'timeline' ? 'true' : 'false' ?>"
+         title="Your care history in order">
+        Timeline
         <?php if (!empty($care_timeline)): ?>
         <span class="pmh-tab__count"><?= count($care_timeline) ?></span>
         <?php endif; ?>
       </a>
       <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=files"
          class="pmh-tab <?= $active_tab === 'files' ? 'is-active' : '' ?>"
-         role="tab" aria-selected="<?= $active_tab === 'files' ? 'true' : 'false' ?>">
+         role="tab" aria-selected="<?= $active_tab === 'files' ? 'true' : 'false' ?>"
+         title="Visit notes, prescriptions, and referrals">
         Health Files
         <?php if ($counts['all'] > 0): ?>
         <span class="pmh-tab__count"><?= (int) $counts['all'] ?></span>
@@ -311,8 +313,9 @@ $patient_page_stylesheets = [
       </a>
       <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips"
          class="pmh-tab <?= $active_tab === 'care-tips' ? 'is-active' : '' ?>"
-         role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>">
-        Care tips
+         role="tab" aria-selected="<?= $active_tab === 'care-tips' ? 'true' : 'false' ?>"
+         title="Home-care guidance from your provider">
+        Care Tips
         <?php if ($care_tips_active_count > 0): ?>
         <span class="pmh-tab__count"><?= (int) $care_tips_active_count ?></span>
         <?php endif; ?>
@@ -332,7 +335,7 @@ $patient_page_stylesheets = [
             class="pmh-btn pmh-btn--primary pmh-btn--sm"
             onclick="if(window.MedConnectPtRemedy&amp;&amp;window.MedConnectPtRemedy.open){window.MedConnectPtRemedy.open();}"
           >
-            Open Care Assistant
+            Open Care Assistant chat
           </button>
         </div>
         <?php endif; ?>
