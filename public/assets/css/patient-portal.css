@@ -525,23 +525,23 @@ body.mc-urgency-modal-open {
 }
 
 .mc-urgency-modal__message {
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   font-size: 0.9375rem;
-  line-height: 1.55;
-  color: #475569;
-  text-align: left;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #0f172a;
+  text-align: center;
 }
 
 .mc-urgency-modal__continue {
-  margin: 0 0 16px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: #fff7ed;
-  border: 2px solid #ea580c;
-  color: #9a3412;
-  font-size: 1rem;
-  font-weight: 800;
-  line-height: 1.45;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #334155;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.5;
   text-align: center;
 }
 
@@ -549,8 +549,32 @@ body.mc-urgency-modal-open {
   display: none !important;
 }
 
+.mc-urgency-modal__safety {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.mc-urgency-modal.is-emergency .mc-urgency-modal__safety {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+  font-weight: 600;
+}
+
+.mc-urgency-modal__safety[hidden] {
+  display: none !important;
+}
+
 .mc-urgency-modal__steps {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   padding: 12px 12px 12px 32px;
   text-align: left;
   font-size: 0.8125rem;

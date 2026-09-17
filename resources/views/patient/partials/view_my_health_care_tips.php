@@ -1,6 +1,6 @@
 <?php
 /**
- * My Health — Care tips history (provider-approved self-care from triage).
+ * My Health — Care tips (timeline layout matching Care Timeline).
  * Expects: $care_tips_history, $care_tips_active_count (optional)
  */
 require_once __DIR__ . '/triage_helpers.php';
@@ -83,68 +83,105 @@ foreach ($care_tips_history as $row) {
 /**
  * @param array<string, mixed> $row
  */
-function pmh_care_tip_card(array $row): void
+function pmh_care_tip_timeline_item(array $row): void
 {
     $meta = mc_patient_care_tip_meta($row);
     $kind = (string) ($meta['kind'] ?? 'default');
     $complaint = trim((string) ($row['chief_complaint'] ?? ''));
-    $tips = $meta['show_tips']
+    $tips = !empty($meta['show_tips'])
         ? triage_recommendations_to_list((string) ($row['recommendations'] ?? ''))
         : [];
     $dateRaw = (string) ($row['recommendation_approved_at'] ?? '');
     if ($dateRaw === '') {
         $dateRaw = (string) ($row['assessed_at'] ?? '');
     }
-    $dateLabel = $dateRaw !== '' ? date('M j, Y', strtotime($dateRaw)) : '—';
-    $timeLabel = $dateRaw !== '' ? date('g:i A', strtotime($dateRaw)) : '';
+    $ts = $dateRaw !== '' ? (strtotime($dateRaw) ?: 0) : 0;
+    $dateLabel = $ts > 0 ? date('M j, Y', $ts) : '—';
+    $timeLabel = $ts > 0 ? date('g:i A', $ts) : '';
+    $combined = $dateLabel . ($timeLabel !== '' ? ' · ' . $timeLabel : '');
     $status = (string) ($row['recommendation_status'] ?? '');
     $triageId = (int) ($row['id'] ?? 0);
+    $provider = pmh_care_tip_provider_label($row);
+    $tipCount = count($tips);
+    $isActive = !empty($meta['active']);
+    $filterType = $isActive ? 'active' : 'history';
+    $nodeMod = match ($kind) {
+        'pending' => 'pmh-tl__item--assessment',
+        'ready' => 'pmh-tl__item--consultation',
+        'rejected' => 'pmh-tl__item--referral',
+        default => 'pmh-tl__item--record',
+    };
     ?>
-    <article class="pmh-care-card pmh-care-card--<?= htmlspecialchars($kind) ?>">
-      <div class="pmh-care-card__timeline" aria-hidden="true">
-        <span class="pmh-care-card__dot"></span>
+    <li class="pmh-tl__item <?= htmlspecialchars($nodeMod) ?> pmh-tl__item--care" data-tl-type="<?= htmlspecialchars($filterType) ?>" data-care-kind="<?= htmlspecialchars($kind) ?>">
+      <div class="pmh-tl__when">
+        <span class="pmh-tl__date"><?= htmlspecialchars($dateLabel) ?></span>
+        <?php if ($timeLabel !== ''): ?><span class="pmh-tl__time"><?= htmlspecialchars($timeLabel) ?></span><?php endif; ?>
       </div>
-      <div class="pmh-care-card__body">
-        <header class="pmh-care-card__head">
-          <div class="pmh-care-card__titles">
-            <h3 class="pmh-care-card__title"><?= htmlspecialchars($complaint !== '' ? $complaint : 'Health concern') ?></h3>
-            <p class="pmh-care-card__meta">
-              <time datetime="<?= htmlspecialchars($dateRaw) ?>"><?= htmlspecialchars($dateLabel) ?></time>
-              <?php if ($timeLabel !== ''): ?>
-                <span class="pmh-care-card__meta-sep">·</span>
-                <span><?= htmlspecialchars($timeLabel) ?></span>
-              <?php endif; ?>
-            </p>
+      <div class="pmh-tl__rail" aria-hidden="true">
+        <span class="pmh-tl__node">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+        </span>
+      </div>
+      <div class="pmh-tl__cards">
+        <article class="pmh-tl-card pmh-tl-card--summary">
+          <div class="pmh-tl-card__top">
+            <span class="pmh-tl-badge pmh-tl-badge--care">Care Tip</span>
+            <span class="pmh-care-card__status <?= htmlspecialchars((string) $meta['class']) ?>"><?= htmlspecialchars((string) $meta['label']) ?></span>
           </div>
-          <span class="pmh-care-card__status <?= htmlspecialchars($meta['class']) ?>">
-            <?= htmlspecialchars($meta['label']) ?>
-          </span>
-        </header>
+          <h4 class="pmh-tl-card__title"><?= htmlspecialchars($complaint !== '' ? $complaint : 'Health concern') ?></h4>
+          <?php if ($provider !== ''): ?>
+          <p class="pmh-tl-card__sub"><?= htmlspecialchars($provider) ?></p>
+          <?php elseif ($isActive): ?>
+          <p class="pmh-tl-card__sub">Needs attention</p>
+          <?php else: ?>
+          <p class="pmh-tl-card__sub">Self-care guidance</p>
+          <?php endif; ?>
+          <p class="pmh-tl-card__meta">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            <?= htmlspecialchars($combined) ?>
+          </p>
+        </article>
+        <article class="pmh-tl-card pmh-tl-card--detail">
+          <div class="pmh-tl-card__top">
+            <h4 class="pmh-tl-card__heading">Self-care tips</h4>
+            <?php if ($tipCount > 0): ?>
+            <span class="pmh-status pmh-status--default"><?= (int) $tipCount ?> tip<?= $tipCount === 1 ? '' : 's' ?></span>
+            <?php endif; ?>
+          </div>
 
-        <?php if ($meta['show_tips'] && $tips !== []): ?>
-          <button
-            type="button"
-            class="pmh-care-card__tips-trigger"
-            data-pmh-care-tips-open
-            data-triage-id="<?= $triageId ?>"
-            aria-haspopup="dialog"
-            aria-controls="pmhCareTipsModal"
-          >
-            <span><?= count($tips) ?> self-care tip<?= count($tips) === 1 ? '' : 's' ?></span>
-            <svg class="pmh-care-card__tips-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-        <?php elseif ($status === 'pending_approval'): ?>
-          <div class="pmh-care-card__message pmh-care-card__message--pending">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <p>Your provider is reviewing this concern. Approved tips will appear here and in the Care Assistant.</p>
+          <?php if ($meta['show_tips'] && $tips !== []): ?>
+          <p class="pmh-tl-card__copy">Provider-approved guidance for this concern.</p>
+          <div class="pmh-tl-highlight pmh-tl-highlight--care">
+            <span class="pmh-tl-highlight__icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>
+            </span>
+            <div>
+              <span class="pmh-tl-highlight__label">Chief Complaint</span>
+              <p class="pmh-tl-highlight__value"><?= htmlspecialchars($complaint !== '' ? $complaint : 'Health concern') ?></p>
+            </div>
           </div>
-        <?php elseif ($status === 'rejected'): ?>
-          <div class="pmh-care-card__message pmh-care-card__message--muted">
-            <p>Self-care tips were not shared for this concern. Book a consultation if you need clinical advice.</p>
-          </div>
-        <?php endif; ?>
+          <p class="pmh-tl-card__actions">
+            <button
+              type="button"
+              class="pmh-tl-link pmh-tl-link--accent"
+              data-pmh-care-tips-open
+              data-triage-id="<?= $triageId ?>"
+              aria-haspopup="dialog"
+              aria-controls="pmhCareTipsModal"
+            >
+              View <?= (int) $tipCount ?> self-care tip<?= $tipCount === 1 ? '' : 's' ?> →
+            </button>
+          </p>
+          <?php elseif ($status === 'pending_approval'): ?>
+          <p class="pmh-tl-card__copy">Your provider is reviewing this concern. Approved tips will appear here and in the Care Assistant.</p>
+          <?php elseif ($status === 'rejected'): ?>
+          <p class="pmh-tl-card__copy">Self-care tips were not shared for this concern. Book a consultation if you need clinical advice.</p>
+          <?php else: ?>
+          <p class="pmh-tl-card__copy">No self-care tips are available for this entry yet.</p>
+          <?php endif; ?>
+        </article>
       </div>
-    </article>
+    </li>
     <?php
 }
 ?>
@@ -164,40 +201,46 @@ function pmh_care_tip_card(array $row): void
     <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="pmh-btn pmh-btn--primary">Check symptoms / book</a>
   </div>
 <?php else: ?>
-  <div class="pmh-care-layout">
-    <?php if ($care_tips_active !== []): ?>
-      <section class="pmh-care-section" aria-labelledby="pmh-care-active-heading">
-        <div class="pmh-care-section__head">
-          <h2 id="pmh-care-active-heading" class="pmh-care-section__title">
-            Needs attention
-            <span class="pmh-care-section__count"><?= count($care_tips_active) ?></span>
-          </h2>
-          <p class="pmh-care-section__hint">Open the Care Assistant for the latest messages on these concerns.</p>
-        </div>
-        <div class="pmh-care-feed">
-          <?php foreach ($care_tips_active as $row) {
-              pmh_care_tip_card($row);
-          } ?>
-        </div>
-      </section>
-    <?php endif; ?>
+  <div class="pmh-tl-wrap pmh-tl-wrap--care">
+    <div class="pmh-tl-toolbar">
+      <label class="pmh-tl-filter">
+        <span class="sr-only">Filter care tips</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        <select id="pmh-care-tl-filter" data-pmh-care-tl-filter>
+          <option value="all">All Records</option>
+          <?php if ($care_tips_active !== []): ?>
+          <option value="active">Needs attention (<?= count($care_tips_active) ?>)</option>
+          <?php endif; ?>
+          <?php if ($care_tips_past !== []): ?>
+          <option value="history">History (<?= count($care_tips_past) ?>)</option>
+          <?php endif; ?>
+        </select>
+      </label>
+    </div>
 
-    <?php if ($care_tips_past !== []): ?>
-      <section class="pmh-care-section pmh-care-section--past" aria-labelledby="pmh-care-past-heading">
-        <div class="pmh-care-section__head">
-          <h2 id="pmh-care-past-heading" class="pmh-care-section__title">
-            History
-            <span class="pmh-care-section__count pmh-care-section__count--muted"><?= count($care_tips_past) ?></span>
-          </h2>
-        </div>
-        <div class="pmh-care-feed pmh-care-feed--compact">
-          <?php foreach ($care_tips_past as $row) {
-              pmh_care_tip_card($row);
-          } ?>
-        </div>
-      </section>
-    <?php endif; ?>
+    <ol class="pmh-tl" id="pmh-care-tl-list">
+      <?php
+        foreach ($care_tips_active as $row) {
+            pmh_care_tip_timeline_item($row);
+        }
+        foreach ($care_tips_past as $row) {
+            pmh_care_tip_timeline_item($row);
+        }
+      ?>
+    </ol>
   </div>
+  <script>
+  (function () {
+    var sel = document.querySelector('[data-pmh-care-tl-filter]');
+    if (!sel) return;
+    sel.addEventListener('change', function () {
+      var type = sel.value;
+      document.querySelectorAll('#pmh-care-tl-list > .pmh-tl__item').forEach(function (item) {
+        item.hidden = !(type === 'all' || item.getAttribute('data-tl-type') === type);
+      });
+    });
+  })();
+  </script>
 <?php endif; ?>
 
 <?php if ($pmh_care_tips_modal !== []): ?>

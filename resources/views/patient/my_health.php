@@ -319,22 +319,14 @@ $patient_page_stylesheets = [
       </a>
     </nav>
 
-    <div class="pmh-surface<?= in_array($active_tab, ['timeline', 'files'], true) ? ' w-full max-w-none' : '' ?>" role="tabpanel">
+    <div class="pmh-surface<?= in_array($active_tab, ['timeline', 'files', 'care-tips'], true) ? ' w-full max-w-none' : '' ?>" role="tabpanel">
       <?php if ($active_tab === 'timeline'): ?>
         <?php require VIEWS_PATH . '/patient/partials/view_my_health_timeline.php'; ?>
       <?php elseif ($active_tab === 'files'): ?>
-        <header class="pmh-surface__head pmh-surface__head--compact pmh-surface__head--files">
-          <h3 class="pmh-surface__title">Health files</h3>
-          <p class="pmh-surface__desc">Finalized consultation records signed by your provider.</p>
-        </header>
         <?php require VIEWS_PATH . '/patient/partials/view_my_health_files.php'; ?>
       <?php else: ?>
-        <div class="pmh-surface__head pmh-surface__head--split pmh-surface__head--compact">
-          <div>
-            <h3 class="pmh-surface__title">Self-care guidance</h3>
-            <p class="pmh-surface__desc">Provider-approved tips from your triage assessments.</p>
-          </div>
-          <?php if ($care_tips_active_count > 0): ?>
+        <?php if ($care_tips_active_count > 0): ?>
+        <div class="pmh-surface__actions pmh-surface__actions--care-tips">
           <button
             type="button"
             class="pmh-btn pmh-btn--primary pmh-btn--sm"
@@ -342,8 +334,8 @@ $patient_page_stylesheets = [
           >
             Open Care Assistant
           </button>
-          <?php endif; ?>
         </div>
+        <?php endif; ?>
         <?php require VIEWS_PATH . '/patient/partials/view_my_health_care_tips.php'; ?>
       <?php endif; ?>
     </div>

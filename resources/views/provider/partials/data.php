@@ -54,6 +54,7 @@ $stats = [
     'completed'    => 0,
     'missed'       => 0,
     'slot_waiting' => 0,
+    'triage_pending' => 0,
 ];
 
 $hr = (int)date('H');
@@ -209,11 +210,12 @@ try {
     }
 
     $triage_cases = provider_triage_cases_load($pdo, $providerId);
+    $stats['triage_pending'] = count(array_filter($triage_cases, 'provider_triage_case_needs_review'));
 
 } catch (Exception $e) {
     error_log("Data.php Error: " . $e->getMessage());
     // DB not ready — use safe empty defaults
-    $stats        = ['appointments' => 0, 'pending' => 0, 'urgent' => 0, 'ongoing' => 0, 'completed' => 0, 'missed' => 0, 'slot_waiting' => 0];
+    $stats        = ['appointments' => 0, 'pending' => 0, 'urgent' => 0, 'ongoing' => 0, 'completed' => 0, 'missed' => 0, 'slot_waiting' => 0, 'triage_pending' => 0];
     $queue        = [];
     $triage_cases = [];
     $schedule     = [];

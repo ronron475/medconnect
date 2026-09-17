@@ -191,6 +191,7 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         'completed'    => 0,
         'missed'       => 0,
         'slot_waiting' => 0,
+        'triage_pending' => 0,
     ];
 
     try {
@@ -220,6 +221,28 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         ");
         $s->execute([$providerId, $providerId, $providerId, $providerId]);
         $stats['urgent'] = (int) $s->fetchColumn();
+
+        // Review Triage widget: pending accept OR care-tips awaiting decision.
+        $s = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM triage_results tr
+            WHERE " . provider_triage_row_visibility_sql('tr') . "
+              AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
+              AND UPPER(COALESCE(tr.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
+              AND LOWER(COALESCE(tr.outcome, '')) NOT IN ('cancelled', 'canceled')
+              AND (
+                tr.status = 'pending'
+                OR COALESCE(tr.recommendation_status, '') = 'pending_approval'
+              )
+              AND (
+                NULLIF(TRIM(COALESCE(tr.triage_level, '')), '') IS NOT NULL
+                OR NULLIF(TRIM(COALESCE(tr.triage_classification, '')), '') IS NOT NULL
+                OR NULLIF(TRIM(COALESCE(tr.urgency_label, '')), '') IS NOT NULL
+                OR tr.status = 'pending'
+              )
+        ");
+        $s->execute([$providerId, $providerId, $providerId, $providerId]);
+        $stats['triage_pending'] = (int) $s->fetchColumn();
 
         $s = $pdo->prepare("
             SELECT COUNT(*)
@@ -329,6 +352,17 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         $activity = [];
     }
 
+    $triagePreview = [];
+    $triagePendingCount = (int) ($stats['triage_pending'] ?? $stats['pending'] ?? 0);
+    try {
+        $triageCases = provider_triage_cases_load($pdo, $providerId);
+        $triagePreview = provider_triage_pending_preview($triageCases, 5);
+        $triagePendingCount = count(array_filter($triageCases, 'provider_triage_case_needs_review'));
+        $stats['triage_pending'] = $triagePendingCount;
+    } catch (Throwable $e) {
+        $triagePreview = [];
+    }
+
     return [
         'stats'              => $stats,
         'chart_period'       => $chart['period'],
@@ -338,6 +372,8 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         'week_total'         => $weekTotal,
         'queue'              => $queue,
         'activity'           => $activity,
+        'triage_preview'     => $triagePreview,
+        'triage_pending'     => $triagePendingCount,
         'updated_at'         => date('c'),
     ];
 }

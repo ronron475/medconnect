@@ -200,6 +200,55 @@
       '</div>';
   }
 
+  function triagePreviewRowHtml(item) {
+    var isUrgent = String(item.urgency || '') === 'Urgent';
+    var badgeClass = 'prov-triage-preview__badge' + (isUrgent ? ' is-urgent' : '');
+    var tips = item.needs_tips
+      ? '<span class="prov-triage-preview__tips">Tips</span>'
+      : '';
+    var time = item.time
+      ? '<span class="prov-triage-preview__time">' + esc(item.time) + '</span>'
+      : '';
+    return '<li class="prov-triage-preview__item">' +
+      '<a href="' + esc(assetBase()) + '/views/provider/triage.php?case=' + Number(item.id || 0) +
+      '" class="prov-triage-preview__link">' +
+      '<div class="prov-triage-preview__main">' +
+      '<span class="prov-triage-preview__name">' + esc(item.name || 'Patient') + '</span>' +
+      '<span class="prov-triage-preview__complaint">' + esc(item.complaint || 'Symptom assessment') + '</span>' +
+      '</div>' +
+      '<div class="prov-triage-preview__meta">' +
+      '<span class="' + badgeClass + '">' + (isUrgent ? 'Urgent' : 'Non-Urgent') + '</span>' +
+      tips + time +
+      '</div></a></li>';
+  }
+
+  function updateTriagePreview(preview, pendingCount) {
+    var host = document.querySelector('[data-live-triage]');
+    var badge = document.querySelector('[data-live-triage-count]');
+    if (!host) return;
+
+    var list = Array.isArray(preview) ? preview : [];
+    var total = Number(pendingCount != null ? pendingCount : list.length) || 0;
+    if (badge) badge.textContent = total + ' pending';
+
+    if (!list.length) {
+      host.innerHTML =
+        '<div class="prov-triage-preview__empty">' +
+        '<p>No triage records pending review</p>' +
+        '</div>';
+      return;
+    }
+
+    var more = total > list.length
+      ? '<p class="prov-triage-preview__more text-xs text-muted">+' + (total - list.length) + ' more awaiting review</p>'
+      : '';
+
+    host.innerHTML =
+      '<ul class="prov-triage-preview">' +
+      list.map(triagePreviewRowHtml).join('') +
+      '</ul>' + more;
+  }
+
   function touchSync(updatedAt) {
     var el = document.querySelector('[data-live-sync]');
     if (!el) return;
@@ -216,6 +265,8 @@
         w: payload.week_chart,
         q: (payload.queue || []).map(function (x) { return [x.id, x.raw_status, x.session_allowed]; }),
         a: (payload.activity || []).map(function (x) { return [x.msg, x.time]; }),
+        t: (payload.triage_preview || []).map(function (x) { return [x.id, x.urgency, x.needs_tips]; }),
+        tp: payload.triage_pending,
       });
     } catch (e) {
       return String(Date.now());
@@ -234,13 +285,16 @@
     updateChart(payload.week_chart || [], payload.week_total || 0, payload);
     updateQueue(payload.queue || []);
     updateActivity(payload.activity || []);
+    updateTriagePreview(payload.triage_preview || [], payload.triage_pending);
     touchSync(payload.updated_at);
 
     // Keep sidebar badges in sync when dashboard refreshes.
     if (global.MedConnectProviderNavCounts && typeof global.MedConnectProviderNavCounts.setCounts === 'function') {
       global.MedConnectProviderNavCounts.setCounts({
         queue: (payload.queue || []).length,
-        triage: (payload.stats && payload.stats.pending) || 0,
+        triage: payload.triage_pending != null
+          ? payload.triage_pending
+          : ((payload.stats && (payload.stats.triage_pending || payload.stats.pending)) || 0),
       });
     }
 

@@ -13,10 +13,6 @@
     border-radius: 12px;
     padding: 14px 16px;
     box-shadow: var(--mc-shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.06));
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-    align-items: center;
 }
 
 .queue-eyebrow {
@@ -42,25 +38,25 @@
     line-height: 1.5;
 }
 
-.queue-date {
-    color: var(--mc-slate-muted, #608395);
-    font-size: 12px;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
 .queue-metrics {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 16px;
+    gap: 1.5rem;
+    align-items: stretch;
 }
 
 .queue-metric {
     background: var(--card-bg);
     border: 1px solid var(--mc-border-thin, #dce8ed);
     border-radius: 12px;
-    padding: 12px;
+    padding: 1rem 1.125rem;
     box-shadow: var(--mc-shadow-sm, 0 1px 3px rgba(15, 23, 42, 0.06));
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .queue-metric-label {
@@ -440,13 +436,18 @@
 
 @media (max-width: 1200px) {
     .queue-layout-inner { grid-template-columns: 1fr; }
-    .queue-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .queue-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.25rem;
+    }
     .queue-feed { max-height: none; }
 }
 
 @media (max-width: 768px) {
-    .queue-hero { flex-direction: column; align-items: flex-start; }
-    .queue-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .queue-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+    }
 
     .queue-panel-header {
         flex-wrap: wrap;

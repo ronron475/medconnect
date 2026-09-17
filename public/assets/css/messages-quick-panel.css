@@ -16,7 +16,7 @@
   --mc-msgqp-bg: #ffffff;
   --mc-msgqp-muted: #64748b;
   --mc-msgqp-text: #0f172a;
-  --mc-msgqp-z: 100002;
+  --mc-msgqp-z: 200010;
 }
 
 .mc-msgqp-overlay {
@@ -58,6 +58,16 @@
   transform-origin: bottom right;
   transition: transform 0.22s ease, opacity 0.22s ease;
   pointer-events: none;
+}
+
+/* When Care tips FAB is present, messages FAB sits lower — keep panel clear of both. */
+body:has(#ptRemedyFab:not([hidden])) .mc-msgqp:not(.is-fab-anchored) {
+  bottom: calc(12px + 44px + 12px + var(--mc-messages-fab-size, 56px) + 18px + env(safe-area-inset-bottom, 0px));
+}
+
+/* While open, FABs are hidden — drop panel closer to the corner without covering UI chrome. */
+body.mc-msgqp-open .mc-msgqp:not(.is-fab-anchored) {
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
 }
 
 .mc-msgqp.is-open {
@@ -370,17 +380,21 @@
   justify-content: center;
   font-size: 12px;
   position: relative;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .mc-msgqp__dot {
   position: absolute;
-  right: 2px;
-  bottom: 2px;
-  width: 10px;
-  height: 10px;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
   border-radius: 999px;
   border: 2px solid #fff;
   background: #94a3b8;
+  box-sizing: border-box;
+  pointer-events: none;
 }
 .mc-msgqp__dot.is-online { background: #22c55e; }
 

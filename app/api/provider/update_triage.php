@@ -74,8 +74,24 @@ try {
             exit;
         }
 
+        $assignCheck = $pdo->prepare('SELECT assigned_provider_id FROM triage_results WHERE id = ? LIMIT 1');
+        $assignCheck->execute([$id]);
+        $existingAssignee = (int) ($assignCheck->fetchColumn() ?: 0);
+        $actingProvider = (int) $_SESSION['user_id'];
+        if ($existingAssignee > 0 && $existingAssignee !== $actingProvider) {
+            http_response_code(403);
+            echo json_encode([
+                'success' => false,
+                'message' => 'This AI review case is assigned to another provider.',
+            ]);
+            exit;
+        }
+
         $stmt = $pdo->prepare("UPDATE triage_results SET status = 'accepted' WHERE id = ? AND status = 'pending'");
         $stmt->execute([$id]);
+
+        require_once BASE_PATH . '/app/includes/triage_provider_assignment.php';
+        triage_bind_assigned_provider($pdo, $id, $actingProvider);
         
         audit_log($pdo, [
             'patient_id'  => $patientId,
@@ -140,9 +156,11 @@ try {
                 UPDATE triage_results
                 SET recommendation_status = 'rejected',
                     recommendation_approved_by = ?,
-                    recommendation_approved_at = NOW()
+                    recommendation_approved_at = NOW(),
+                    assigned_provider_id = COALESCE(NULLIF(assigned_provider_id, 0), ?),
+                    assigned_at = COALESCE(assigned_at, NOW())
                 WHERE id = ?
-            ")->execute([(int) $_SESSION['user_id'], $id]);
+            ")->execute([(int) $_SESSION['user_id'], (int) $_SESSION['user_id'], $id]);
 
             triage_mark_provider_review_complete($pdo, $id);
 
@@ -208,7 +226,7 @@ try {
                 recommendation_assistant_first_opened_at = NULL,
                 recommendation_assistant_dismissed_at = NULL,
                 recommendation_last_viewed_at = NULL,
-                assigned_provider_id = COALESCE(assigned_provider_id, ?),
+                assigned_provider_id = COALESCE(NULLIF(assigned_provider_id, 0), ?),
                 assigned_at = COALESCE(assigned_at, NOW())
             WHERE id = ?
         ")->execute([$savedText, (int) $_SESSION['user_id'], (int) $_SESSION['user_id'], $id]);
