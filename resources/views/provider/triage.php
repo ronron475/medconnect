@@ -128,7 +128,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
         <tr>
           <td colspan="6">
             <div class="triage-empty">
-              <p>No triage cases yet. New patient assessments will appear here.</p>
+              <p>No triage cases assigned to you yet.</p>
             </div>
           </td>
         </tr>

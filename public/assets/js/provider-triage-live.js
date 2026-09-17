@@ -147,7 +147,7 @@
     if (!tbody) return;
 
     if (!cases || !cases.length) {
-      tbody.innerHTML = '<tr><td colspan="6"><div class="triage-empty"><p>No triage cases yet. New patient assessments will appear here.</p></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6"><div class="triage-empty"><p>No triage cases assigned to you yet.</p></div></td></tr>';
       return;
     }
 

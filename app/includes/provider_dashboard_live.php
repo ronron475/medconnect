@@ -209,7 +209,7 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
             WHERE tr.status = 'pending'
               AND " . provider_triage_row_visibility_sql('tr') . "
         ");
-        $s->execute([$providerId, $providerId, $providerId, $providerId]);
+        $s->execute([$providerId]);
         $stats['pending'] = (int) $s->fetchColumn();
 
         $s = $pdo->prepare("
@@ -219,7 +219,7 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
               AND tr.status = 'pending'
               AND " . provider_triage_row_visibility_sql('tr') . "
         ");
-        $s->execute([$providerId, $providerId, $providerId, $providerId]);
+        $s->execute([$providerId]);
         $stats['urgent'] = (int) $s->fetchColumn();
 
         // Review Triage widget: pending accept OR care-tips awaiting decision.
@@ -241,7 +241,7 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
                 OR tr.status = 'pending'
               )
         ");
-        $s->execute([$providerId, $providerId, $providerId, $providerId]);
+        $s->execute([$providerId]);
         $stats['triage_pending'] = (int) $s->fetchColumn();
 
         $s = $pdo->prepare("
