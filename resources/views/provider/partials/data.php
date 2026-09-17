@@ -79,7 +79,7 @@ try {
         WHERE tr.status = 'pending'
           AND " . provider_triage_row_visibility_sql('tr') . "
     ");
-    $s->execute([$providerId, $providerId, $providerId, $providerId]);
+    $s->execute([$providerId]);
     $stats['pending'] = (int) $s->fetchColumn();
 
     // 3. Urgent (Priority Level 1 or 2)
@@ -90,7 +90,7 @@ try {
           AND tr.status = 'pending'
           AND " . provider_triage_row_visibility_sql('tr') . "
     ");
-    $s->execute([$providerId, $providerId, $providerId, $providerId]);
+    $s->execute([$providerId]);
     $stats['urgent'] = (int) $s->fetchColumn();
 
     // 4. Ongoing (In Consultation)

@@ -60,24 +60,44 @@ function pch_filter_url(string $filter): string
       <h2 class="pch-detail-name"><?= htmlspecialchars((string) $patient_detail['patient_name']) ?></h2>
       <div class="pch-detail-meta">
         Patient ID: <?= htmlspecialchars((string) $patient_detail['patient_number']) ?>
-        | Total consultations: <?= count($patient_consultations) ?>
+        · Total consultations: <?= count($patient_consultations) ?>
       </div>
-      <div class="pch-detail-grid">
-        <div>
-          <label>Age</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['age'] ?: '-')) ?></span>
+      <div class="pch-info-banner" role="group" aria-label="Patient details">
+        <div class="pch-info-banner__item">
+          <span class="pch-info-banner__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          </span>
+          <div class="pch-info-banner__text">
+            <span class="pch-info-banner__label">Age</span>
+            <span class="pch-info-banner__value"><?= htmlspecialchars((string) ($patient_detail['age'] ?: '—')) ?></span>
+          </div>
         </div>
-        <div>
-          <label>Sex</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['sex'] ?: '-')) ?></span>
+        <div class="pch-info-banner__item">
+          <span class="pch-info-banner__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <div class="pch-info-banner__text">
+            <span class="pch-info-banner__label">Sex</span>
+            <span class="pch-info-banner__value"><?= htmlspecialchars((string) ($patient_detail['sex'] ?: '—')) ?></span>
+          </div>
         </div>
-        <div>
-          <label>Contact</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['contact'] ?: '-')) ?></span>
+        <div class="pch-info-banner__item">
+          <span class="pch-info-banner__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </span>
+          <div class="pch-info-banner__text">
+            <span class="pch-info-banner__label">Contact</span>
+            <span class="pch-info-banner__value"><?= htmlspecialchars((string) ($patient_detail['contact'] ?: '—')) ?></span>
+          </div>
         </div>
-        <div>
-          <label>Address</label>
-          <span><?= htmlspecialchars((string) ($patient_detail['address'] ?: '-')) ?></span>
+        <div class="pch-info-banner__item">
+          <span class="pch-info-banner__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </span>
+          <div class="pch-info-banner__text">
+            <span class="pch-info-banner__label">Address</span>
+            <span class="pch-info-banner__value"><?= htmlspecialchars((string) ($patient_detail['address'] ?: '—')) ?></span>
+          </div>
         </div>
       </div>
     </div>
@@ -91,12 +111,20 @@ function pch_filter_url(string $filter): string
           $status = (string) ($row['status'] ?? '');
           $dateLabel = !empty($row['consult_date'])
               ? date('M j, Y', strtotime((string) $row['consult_date']))
-              : '-';
+              : '—';
           $timeLabel = !empty($row['consult_time'])
               ? date('g:i A', strtotime((string) $row['consult_time']))
               : '';
-          $complaint = trim((string) ($row['chief_complaint'] ?? '')) ?: '-';
+          $complaint = trim((string) ($row['chief_complaint'] ?? '')) ?: '—';
           $sessionUrl = ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $row['id'];
+          $vh = is_array($row['video_history'] ?? null) ? $row['video_history'] : [];
+          $vhLabel = (string) ($vh['video_status_label'] ?? 'Not started');
+          $vhCompleted = !empty($vh['show_completed_details']);
+          $consultation_id = (int) ($row['id'] ?? 0);
+          $recUrl = consultation_video_recording_view_url($consultation_id);
+          $recordingLabel = $recUrl !== ''
+              ? (string) ($vh['recording_label'] ?? 'Available')
+              : 'Not available';
         ?>
         <article class="pch-consult-card">
           <div class="pch-consult-card__head">
@@ -108,81 +136,146 @@ function pch_filter_url(string $filter): string
               <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
             </span>
           </div>
-          <div class="pch-consult-card__row"><strong>Patient complaint:</strong> <?= htmlspecialchars($complaint) ?></div>
-          <div class="pch-consult-card__row"><strong>Doctor:</strong> <?= htmlspecialchars((string) ($row['doctor_name'] ?? '-')) ?></div>
-          <?php if (!empty($row['ai_classification'])): ?>
-          <div class="pch-consult-card__row"><strong>AI classification:</strong> <?= htmlspecialchars((string) $row['ai_classification']) ?></div>
-          <?php endif; ?>
-          <?php if (!empty($row['final_classification'])): ?>
-          <div class="pch-consult-card__row"><strong>Final doctor classification:</strong> <?= htmlspecialchars((string) $row['final_classification']) ?></div>
-          <?php endif; ?>
-          <?php if (!empty($row['diagnosis'])): ?>
-          <div class="pch-consult-card__row"><strong>Diagnosis:</strong> <?= htmlspecialchars((string) $row['diagnosis']) ?></div>
-          <?php endif; ?>
-          <?php
-            $vh = is_array($row['video_history'] ?? null) ? $row['video_history'] : [];
-            $vhLabel = (string) ($vh['video_status_label'] ?? 'Not started');
-            $vhCompleted = !empty($vh['show_completed_details']);
-          ?>
-          <div class="pch-video-block">
-            <div class="pch-video-block__title">VIDEO CONSULTATION</div>
-            <?php if ($vhCompleted): ?>
-            <div class="pch-video-block__status pch-video-block__status--done">&#10003; Completed</div>
-            <div class="pch-consult-card__row"><strong>Video call date:</strong> <?= htmlspecialchars((string) ($vh['date_label'] ?? '-')) ?></div>
-            <?php if (!empty($vh['scheduled_duration_label'])): ?>
-            <div class="pch-consult-card__row"><strong>Scheduled duration:</strong> <?= htmlspecialchars((string) $vh['scheduled_duration_label']) ?></div>
-            <?php endif; ?>
-            <div class="pch-consult-card__row"><strong>Started:</strong> <?= htmlspecialchars((string) ($vh['started_label'] ?? '-')) ?></div>
-            <div class="pch-consult-card__row"><strong>Ended:</strong> <?= htmlspecialchars((string) ($vh['ended_label'] ?? '-')) ?></div>
-            <div class="pch-consult-card__row"><strong>Actual duration:</strong> <?= htmlspecialchars((string) ($vh['actual_duration_label'] ?: ($vh['duration_label'] ?? '-'))) ?></div>
-            <div class="pch-consult-card__row"><strong>Status:</strong> <?= htmlspecialchars((string) ($vh['status_label'] ?: ($vh['video_status_label'] ?? 'Completed'))) ?></div>
-            <?php
-              $consultation_id = (int) ($row['id'] ?? 0);
-              $recUrl = consultation_video_recording_view_url($consultation_id);
-            ?>
-            <?php if ($recUrl === ''): ?>
-            <div class="pch-consult-card__row"><strong>Video recording:</strong> Not available</div>
-            <?php else: ?>
-            <div class="pch-consult-card__row"><strong>Video recording:</strong> <?= htmlspecialchars((string) ($vh['recording_label'] ?? 'Available')) ?></div>
-            <?php if (!empty($vh['recording_segments']) && is_array($vh['recording_segments'])): ?>
-            <?php foreach ($vh['recording_segments'] as $seg):
-                $segIdx = (int) ($seg['segment_index'] ?? 0);
-                if (empty($seg['playable'])) {
-                    echo '<div class="pch-consult-card__row"><strong>Segment ' . ($segIdx > 0 ? $segIdx : '1') . ':</strong> ' . htmlspecialchars(ucfirst((string) ($seg['status'] ?? 'unavailable'))) . '</div>';
-                    continue;
-                }
-                $segUrl = consultation_video_recording_segment_url($consultation_id, (int) ($seg['id'] ?? 0));
-                $timeBits = trim((string) ($seg['started_label'] ?? ''));
-                if ((string) ($seg['ended_label'] ?? '') !== '') {
-                    $timeBits .= ($timeBits !== '' ? ' - ' : '') . (string) $seg['ended_label'];
-                }
-            ?>
-            <div class="pch-consult-card__row">
-                <strong>Segment <?= $segIdx > 0 ? $segIdx : 1 ?>:</strong>
-                <?= htmlspecialchars($timeBits !== '' ? $timeBits : 'Ready') ?>
-                <?php if ($segUrl !== ''): ?>
-                - <a href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">Play</a>
+
+          <div class="pch-consult-card__body">
+            <div class="pch-consult-col pch-consult-col--medical">
+              <h4 class="pch-consult-col__title">Medical info</h4>
+              <dl class="pch-kv">
+                <div class="pch-kv__row">
+                  <dt>Patient complaint</dt>
+                  <dd><?= htmlspecialchars($complaint) ?></dd>
+                </div>
+                <div class="pch-kv__row">
+                  <dt>Doctor</dt>
+                  <dd><?= htmlspecialchars((string) ($row['doctor_name'] ?? '—')) ?></dd>
+                </div>
+                <?php if (!empty($row['ai_classification'])): ?>
+                <div class="pch-kv__row">
+                  <dt>AI classification</dt>
+                  <dd><?= htmlspecialchars((string) $row['ai_classification']) ?></dd>
+                </div>
                 <?php endif; ?>
+                <?php if (!empty($row['final_classification'])): ?>
+                <div class="pch-kv__row">
+                  <dt>Final doctor classification</dt>
+                  <dd><?= htmlspecialchars((string) $row['final_classification']) ?></dd>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($row['diagnosis'])): ?>
+                <div class="pch-kv__row">
+                  <dt>Diagnosis</dt>
+                  <dd><?= htmlspecialchars((string) $row['diagnosis']) ?></dd>
+                </div>
+                <?php endif; ?>
+              </dl>
             </div>
-            <?php endforeach; ?>
-            <?php endif; ?>
-            <?php endif; ?>
-            <?php else: ?>
-            <?php $recUrl = consultation_video_recording_view_url((int) ($row['id'] ?? 0)); ?>
-            <div class="pch-consult-card__row"><strong>Video consultation:</strong> <?= htmlspecialchars($vhLabel) ?></div>
-            <?php if ($recUrl !== ''): ?>
-            <div class="pch-consult-card__row"><strong>Video recording:</strong> <?= htmlspecialchars((string) ($vh['recording_label'] ?? 'Available')) ?></div>
-            <?php endif; ?>
-            <?php endif; ?>
+
+            <div class="pch-consult-col pch-consult-col--session">
+              <h4 class="pch-consult-col__title">Session details</h4>
+              <dl class="pch-kv">
+                <?php if ($vhCompleted): ?>
+                <div class="pch-kv__row">
+                  <dt>Video status</dt>
+                  <dd><span class="pch-session-badge pch-session-badge--done">Completed</span></dd>
+                </div>
+                <div class="pch-kv__row">
+                  <dt>Video call date</dt>
+                  <dd><?= htmlspecialchars((string) ($vh['date_label'] ?? '—')) ?></dd>
+                </div>
+                <?php if (!empty($vh['scheduled_duration_label'])): ?>
+                <div class="pch-kv__row">
+                  <dt>Scheduled duration</dt>
+                  <dd><?= htmlspecialchars((string) $vh['scheduled_duration_label']) ?></dd>
+                </div>
+                <?php endif; ?>
+                <div class="pch-kv__row">
+                  <dt>Started</dt>
+                  <dd><?= htmlspecialchars((string) ($vh['started_label'] ?? '—')) ?></dd>
+                </div>
+                <div class="pch-kv__row">
+                  <dt>Ended</dt>
+                  <dd><?= htmlspecialchars((string) ($vh['ended_label'] ?? '—')) ?></dd>
+                </div>
+                <div class="pch-kv__row">
+                  <dt>Actual duration</dt>
+                  <dd><?= htmlspecialchars((string) ($vh['actual_duration_label'] ?: ($vh['duration_label'] ?? '—'))) ?></dd>
+                </div>
+                <div class="pch-kv__row">
+                  <dt>Call status</dt>
+                  <dd><?= htmlspecialchars((string) ($vh['status_label'] ?: ($vh['video_status_label'] ?? 'Completed'))) ?></dd>
+                </div>
+                <div class="pch-kv__row">
+                  <dt>Video recording</dt>
+                  <dd><?= htmlspecialchars($recordingLabel) ?></dd>
+                </div>
+                <?php if ($recUrl !== '' && !empty($vh['recording_segments']) && is_array($vh['recording_segments'])): ?>
+                <?php foreach ($vh['recording_segments'] as $seg):
+                    $segIdx = (int) ($seg['segment_index'] ?? 0);
+                    if (empty($seg['playable'])) {
+                        echo '<div class="pch-kv__row"><dt>Segment ' . ($segIdx > 0 ? $segIdx : '1') . '</dt><dd>' . htmlspecialchars(ucfirst((string) ($seg['status'] ?? 'unavailable'))) . '</dd></div>';
+                        continue;
+                    }
+                    $segUrl = consultation_video_recording_segment_url($consultation_id, (int) ($seg['id'] ?? 0));
+                    $timeBits = trim((string) ($seg['started_label'] ?? ''));
+                    if ((string) ($seg['ended_label'] ?? '') !== '') {
+                        $timeBits .= ($timeBits !== '' ? ' – ' : '') . (string) $seg['ended_label'];
+                    }
+                ?>
+                <div class="pch-kv__row">
+                  <dt>Segment <?= $segIdx > 0 ? $segIdx : 1 ?></dt>
+                  <dd>
+                    <?= htmlspecialchars($timeBits !== '' ? $timeBits : 'Ready') ?>
+                    <?php if ($segUrl !== ''): ?>
+                    · <a href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">Play</a>
+                    <?php endif; ?>
+                  </dd>
+                </div>
+                <?php endforeach; ?>
+                <?php endif; ?>
+                <?php else: ?>
+                <div class="pch-kv__row">
+                  <dt>Video consultation</dt>
+                  <dd><span class="pch-session-badge"><?= htmlspecialchars($vhLabel) ?></span></dd>
+                </div>
+                <?php if ($recUrl !== ''): ?>
+                <div class="pch-kv__row">
+                  <dt>Video recording</dt>
+                  <dd><?= htmlspecialchars((string) ($vh['recording_label'] ?? 'Available')) ?></dd>
+                </div>
+                <?php else: ?>
+                <div class="pch-kv__row">
+                  <dt>Video recording</dt>
+                  <dd>Not available</dd>
+                </div>
+                <?php endif; ?>
+                <?php endif; ?>
+              </dl>
+            </div>
           </div>
-          <div class="pch-consult-card__actions">
-            <?php if ($recUrl !== ''): ?>
-            <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline pch-consult-card__btn">View Recording</a>
-            <?php endif; ?>
-            <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline pch-consult-card__btn">View History</a>
-            <?php if ($status === 'completed' && !empty($row['clinical_note_finalized'])): ?>
-            <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline pch-consult-card__btn">View SOAP</a>
-            <?php endif; ?>
+
+          <div class="pch-consult-card__footer">
+            <div class="pch-consult-card__tags">
+              <span class="pch-chip <?= htmlspecialchars(provider_consultation_status_chip_class($status)) ?>">
+                <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
+              </span>
+              <?php if ($vhCompleted): ?>
+              <span class="pch-session-badge pch-session-badge--done">Video completed</span>
+              <?php elseif ($vhLabel !== ''): ?>
+              <span class="pch-session-badge"><?= htmlspecialchars($vhLabel) ?></span>
+              <?php endif; ?>
+              <?php if ($recUrl !== ''): ?>
+              <span class="pch-session-badge pch-session-badge--rec">Recording available</span>
+              <?php endif; ?>
+            </div>
+            <div class="pch-consult-card__actions">
+              <?php if ($recUrl !== ''): ?>
+              <a href="<?= htmlspecialchars($recUrl) ?>" target="_blank" rel="noopener" class="mc-btn mc-btn--outline pch-consult-card__btn">View Recording</a>
+              <?php endif; ?>
+              <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline pch-consult-card__btn">View History</a>
+              <?php if ($status === 'completed' && !empty($row['clinical_note_finalized'])): ?>
+              <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline pch-consult-card__btn">View SOAP</a>
+              <?php endif; ?>
+            </div>
           </div>
           <?php if ($status === 'completed' && empty($row['clinical_note_finalized'])): ?>
           <p class="pch-doc-pending">Provider documentation is still in progress.</p>

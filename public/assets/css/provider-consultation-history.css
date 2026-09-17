@@ -370,26 +370,58 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   line-height: 1.5;
 }
 
-.pch-detail-grid {
+.pch-info-banner {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
   margin-top: 14px;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
 }
 
-.pch-detail-grid label {
-  display: block;
-  font-size: var(--pv-font-caption, 0.6875rem);
-  font-weight: 700;
+.pch-info-banner__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pch-info-banner__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #ecfeff;
+  color: #0f766e;
+  border: 1px solid #a5f3fc;
+}
+
+.pch-info-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pch-info-banner__label {
+  font-size: 0.6875rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-secondary, #64748b);
-  margin-bottom: 2px;
+  letter-spacing: 0.04em;
+  color: #64748b;
 }
 
-.pch-detail-grid span {
-  font-size: var(--pv-font-body, 0.8125rem);
-  color: var(--text-primary, #334155);
+.pch-info-banner__value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .pch-consult-list {
@@ -412,6 +444,9 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   padding: var(--pv-card-pad, 14px) var(--pv-space-lg, 16px);
   background: var(--card-bg, #fff);
   box-shadow: var(--pv-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .pch-consult-card__head {
@@ -419,7 +454,7 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .pch-consult-card__title {
@@ -434,11 +469,101 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   margin-top: 2px;
 }
 
-.pch-consult-card__row {
-  font-size: var(--pv-font-body, 0.8125rem);
-  color: var(--text-primary, #334155);
-  margin-top: 6px;
+.pch-consult-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem 1.5rem;
+}
+
+.pch-consult-col__title {
+  margin: 0 0 8px;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.pch-kv {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pch-kv__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 38%) minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: start;
+}
+
+.pch-kv__row dt {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.pch-kv__row dd {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
   line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.pch-kv__row dd a {
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pch-kv__row dd a:hover {
+  text-decoration: underline;
+}
+
+.pch-session-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.pch-session-badge--done {
+  background: #dcfce7;
+  color: #047857;
+}
+
+.pch-session-badge--rec {
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+.pch-consult-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 14px;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pch-consult-card__tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .pch-consult-card__actions {
@@ -446,8 +571,7 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   flex-direction: row;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 0.75rem;
 }
 
 .pch-consult-card__btn {
@@ -464,35 +588,10 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
 }
 
 .pch-doc-pending {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   font-size: var(--pv-font-helper, 0.75rem);
   color: var(--text-secondary, #64748b);
   line-height: 1.45;
-}
-
-.pch-video-block {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--pv-border, #dbe4ee);
-}
-
-.pch-video-block__title {
-  font-size: var(--pv-font-caption, 0.6875rem);
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  color: #0f766e;
-  margin-bottom: 4px;
-}
-
-.pch-video-block__status {
-  font-size: var(--pv-font-body, 0.8125rem);
-  font-weight: 700;
-  color: var(--text-primary, #334155);
-  margin-bottom: 4px;
-}
-
-.pch-video-block__status--done {
-  color: #047857;
 }
 
 @media (min-width: 769px) {
@@ -526,74 +625,12 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
     color: #5eead4;
   }
 
-  .pch-detail-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-width: 880px;
-    gap: 12px 24px;
-  }
-
   .pch-consult-list {
     padding: 16px 20px 20px;
   }
 
   .pch-consult-card {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    column-gap: 8px;
     padding: 16px 18px 18px;
-  }
-
-  .pch-consult-card__head,
-  .pch-consult-card > .pch-consult-card__row {
-    flex: 1 1 100%;
-  }
-
-  .pch-consult-card__row {
-    display: block;
-    margin-top: 6px;
-  }
-
-  .pch-consult-card__row strong {
-    display: inline;
-    margin-right: 0.4em;
-    color: var(--text-secondary, #475569);
-    font-weight: 700;
-  }
-
-  .pch-video-block {
-    display: contents;
-  }
-
-  .pch-video-block__title,
-  .pch-video-block__status,
-  .pch-video-block .pch-consult-card__row {
-    flex: 1 1 100%;
-  }
-
-  .pch-video-block__title {
-    margin-top: 12px;
-    margin-bottom: 8px;
-    padding-top: 12px;
-    border-top: 1px dashed var(--pv-border, #dbe4ee);
-  }
-
-  .pch-video-block .pch-consult-card__actions,
-  .pch-consult-card > .pch-consult-card__actions {
-    flex: 1 1 100%;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    width: 100%;
-    margin-top: 12px;
-    margin-right: 0;
-  }
-
-  .pch-doc-pending {
-    flex: 1 1 100%;
-    display: block;
-    margin-top: 8px;
   }
 }
 
@@ -609,6 +646,12 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   .pch-col-status,
   .pch-col-action {
     width: auto;
+  }
+}
+
+@media (max-width: 1024px) {
+  .pch-info-banner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -725,8 +768,31 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
     margin-bottom: 6px;
   }
 
-  .pch-detail-grid {
+  .pch-info-banner {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .pch-consult-card__body {
+    grid-template-columns: 1fr;
+  }
+
+  .pch-kv__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .pch-consult-card__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pch-consult-card__actions {
+    width: 100%;
+  }
+
+  .pch-consult-card__btn {
+    flex: 1 1 auto;
   }
 
   .pch-toolbar__title {
@@ -782,7 +848,9 @@ html[data-theme-resolved='dark'] body.provider-body .pch-patient-name,
 html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__title,
 html[data-theme-resolved='dark'] body.provider-body .pch-detail-name,
 html[data-theme-resolved='dark'] body.provider-body .pch-toolbar__title,
-html[data-theme-resolved='dark'] body.provider-body .pch-consult-list__title {
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-list__title,
+html[data-theme-resolved='dark'] body.provider-body .pch-info-banner__value,
+html[data-theme-resolved='dark'] body.provider-body .pch-kv__row dd {
   color: #ffffff !important;
 }
 
@@ -790,7 +858,9 @@ html[data-theme-resolved='dark'] body.provider-body .pch-patient-id,
 html[data-theme-resolved='dark'] body.provider-body .pch-toolbar__sub,
 html[data-theme-resolved='dark'] body.provider-body .pch-detail-meta,
 html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__date,
-html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__row,
+html[data-theme-resolved='dark'] body.provider-body .pch-info-banner__label,
+html[data-theme-resolved='dark'] body.provider-body .pch-kv__row dt,
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-col__title,
 html[data-theme-resolved='dark'] body.provider-body .pch-complaint,
 html[data-theme-resolved='dark'] body.provider-body .pch-table__date {
   color: #c4c4cc !important;
@@ -799,6 +869,36 @@ html[data-theme-resolved='dark'] body.provider-body .pch-table__date {
 html[data-theme-resolved='dark'] body.provider-body .pch-detail-head {
   background: linear-gradient(180deg, #111827 0%, var(--card-bg, #1c1c1c) 100%);
   border-bottom-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-info-banner {
+  background: #111827;
+  border-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-info-banner__icon {
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(45, 212, 191, 0.28);
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-consult-card__footer {
+  border-top-color: #2a2a2a;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-session-badge {
+  background: #1f2937;
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-session-badge--done {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-session-badge--rec {
+  background: rgba(45, 212, 191, 0.12);
+  color: #5eead4;
 }
 
 /* Keep teal accent after provider-ui-system card borders */

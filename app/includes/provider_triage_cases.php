@@ -44,8 +44,8 @@ function provider_triage_classification_detail(string $badge, string $label): st
 }
 
 /**
- * Load triage cases visible to a provider
- * (consultations, booked slots, or recent digital referrals — including emergency-only).
+ * Load triage cases assigned to the authenticated provider
+ * (triage_results.assigned_provider_id = provider session id).
  *
  * @return list<array<string, mixed>>
  */
@@ -53,6 +53,10 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
 {
     triage_assessment_ensure_schema($pdo);
     require_once __DIR__ . '/provider_patient_access.php';
+
+    if ($providerId <= 0) {
+        return [];
+    }
 
     $visibility = provider_triage_row_visibility_sql('tr');
     $stmt = $pdo->prepare("
@@ -81,8 +85,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
           END ASC,
           tr.assessed_at DESC
     ");
-    // Bind order matches provider_triage_row_visibility_sql: assigned, consult, slot, referral.
-    $stmt->execute([$providerId, $providerId, $providerId, $providerId]);
+    $stmt->execute([$providerId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $consultByTriage = provider_triage_linked_consultations($pdo, array_column($rows, 'id'));

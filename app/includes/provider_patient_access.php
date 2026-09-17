@@ -294,45 +294,22 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
 }
 
 /**
- * SQL predicate: triage_results row is visible on this provider's AI Triage Case Review list.
+ * SQL predicate: triage_results row appears on this provider's AI Triage Case Review.
  *
- * Assignment wins: when assigned_provider_id is set, only that provider sees the case.
- * Unassigned rows still use consultation / slot / referral relationship (legacy).
- *
- * Bind provider_id five times (assigned, unassigned-gate, consult, slot, referral).
+ * Only cases explicitly assigned to the authenticated provider
+ * (triage_results.assigned_provider_id = session provider id).
+ * Bind provider_id once.
  */
 function provider_triage_row_visibility_sql(string $trAlias = 'tr'): string
 {
     $tr = preg_replace('/[^a-zA-Z0-9_]/', '', $trAlias) ?: 'tr';
 
     return "(
-        (
-            {$tr}.assigned_provider_id IS NOT NULL
-            AND {$tr}.assigned_provider_id > 0
-            AND {$tr}.assigned_provider_id = ?
-            AND UPPER(COALESCE({$tr}.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
-            AND LOWER(COALESCE({$tr}.outcome, '')) NOT IN ('cancelled', 'canceled')
-        )
-        OR (
-            ({$tr}.assigned_provider_id IS NULL OR {$tr}.assigned_provider_id = 0)
-            AND (
-                EXISTS (
-                    SELECT 1 FROM consultations c
-                    WHERE c.patient_id = {$tr}.patient_id AND c.provider_id = ?
-                )
-                OR EXISTS (
-                    SELECT 1 FROM appointment_slots s
-                    WHERE s.patient_id = {$tr}.patient_id AND s.provider_id = ?
-                      AND s.status = 'booked'
-                      AND s.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                )
-                OR EXISTS (
-                    SELECT 1 FROM digital_referrals dr
-                    WHERE dr.patient_id = {$tr}.patient_id AND dr.provider_id = ?
-                      AND dr.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                )
-            )
-        )
+        {$tr}.assigned_provider_id IS NOT NULL
+        AND {$tr}.assigned_provider_id > 0
+        AND {$tr}.assigned_provider_id = ?
+        AND UPPER(COALESCE({$tr}.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
+        AND LOWER(COALESCE({$tr}.outcome, '')) NOT IN ('cancelled', 'canceled')
     )";
 }
 

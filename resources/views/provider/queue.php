@@ -107,7 +107,7 @@ try {
             tr.assessed_at DESC
         LIMIT 8
     ");
-    $stmt->execute([$provider_id, $provider_id, $provider_id, $provider_id]);
+    $stmt->execute([$provider_id]);
     $triage_feed = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     $urgent_followup_queue = urgent_followup_queue_load($pdo, $provider_id);
