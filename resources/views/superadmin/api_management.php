@@ -7,9 +7,8 @@ $apiRows = $pdo->query('SELECT api_key, api_value, updated_at FROM api_settings 
 $api = ASSET_BASE . '/app/api/superadmin/api_settings.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="margin-bottom:24px;">
-  <h2 class="text-h2">API Management</h2>
-  <p class="text-muted">Configure AI, video, and email service integration endpoints.</p>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">Configure AI, video, and email service integration endpoints.</p>
 </div>
 <form id="apiForm" class="mc-card" style="display:flex;flex-direction:column;gap:12px;max-width:640px;">
   <?php if (empty($apiRows)): ?>

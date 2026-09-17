@@ -123,10 +123,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 <?php endif; ?>
 
-<div class="header-row" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+<div class="header-row admin-page-intro">
     <div>
-        <h2 class="text-h2"><?= htmlspecialchars($um_heading) ?></h2>
-        <p class="text-muted"><?= htmlspecialchars($um_subtitle) ?></p>
+        <p class="admin-page-intro__desc text-muted"><?= htmlspecialchars($um_subtitle) ?></p>
     </div>
     <?php if ($show_create_doctor): ?>
     <button type="button" class="mc-btn mc-btn--primary" data-open-create-doctor>

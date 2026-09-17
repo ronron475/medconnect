@@ -16,10 +16,9 @@ $raw = $pdo->query('
 ')->fetchAll(PDO::FETCH_ASSOC);
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2"><?= htmlspecialchars($page_title) ?></h2>
-    <?php if (!empty($page_desc)): ?><p class="text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
+    <?php if (!empty($page_desc)): ?><p class="admin-page-intro__desc text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
   </div>
   <span id="sessUpdated" class="text-xs text-muted">Loading…</span>
 </div>

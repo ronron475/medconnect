@@ -102,10 +102,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 <?php endif; ?>
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow"><?= $is_superadmin_portal ? 'User Management · Doctor Operations' : 'User Management · Maker-Checker Workflow' ?></span>
-        <h1 class="staff-apps-hero__title"><?= $is_superadmin_portal ? 'Doctors' : 'Doctor Management' ?></h1>
         <p class="staff-apps-hero__desc"><?php if ($is_superadmin_portal): ?>
             Manage doctor applications and approved accounts. Use the Pending Approval tab to review submissions from administrators.
         <?php else: ?>

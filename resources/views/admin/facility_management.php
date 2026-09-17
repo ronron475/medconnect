@@ -42,16 +42,15 @@ if ($pdo->query("SHOW TABLES LIKE 'digital_referrals'")->rowCount()) {
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2"><?= $is_referral ? 'Referral Center' : 'Facility Management' ?></h2>
     <?php if ($is_referral): ?>
-    <p class="text-muted"><?= (int) $referral_count ?> doctor-issued referral<?= (int) $referral_count === 1 ? '' : 's' ?> on record.</p>
+    <p class="admin-page-intro__desc text-muted"><?= (int) $referral_count ?> doctor-issued referral<?= (int) $referral_count === 1 ? '' : 's' ?> on record.</p>
     <p class="text-xs text-muted" style="margin-top:6px;max-width:52rem;">
       Monitoring only. Doctors create clinical referrals; this center does not track whether a patient followed the referral, and status cannot be changed here.
     </p>
     <?php else: ?>
-    <p class="text-muted"><?= (int) $referral_count ?> referral<?= (int) $referral_count === 1 ? '' : 's' ?> on record.</p>
+    <p class="admin-page-intro__desc text-muted"><?= (int) $referral_count ?> referral<?= (int) $referral_count === 1 ? '' : 's' ?> on record.</p>
     <?php endif; ?>
   </div>
   <?php if (!$is_referral): ?>

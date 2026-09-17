@@ -26,10 +26,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
 
-<div class="header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+<div class="header-row admin-page-intro">
     <div>
-        <h2 class="text-h2">Operational Reports</h2>
-        <p class="text-muted">Generate and export system performance data, appointment summaries, and user statistics.</p>
+        <p class="admin-page-intro__desc text-muted">Generate and export system performance data, appointment summaries, and user statistics.</p>
     </div>
     <div style="display: flex; gap: 12px;">
         <button onclick="exportReport('appointments')" class="mc-btn mc-btn--primary">

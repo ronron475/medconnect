@@ -62,10 +62,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <article class="portal-profile-page staff-apps-page">
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portal_eyebrow) ?></span>
-        <h1 class="staff-apps-hero__title"><?= htmlspecialchars($portal_heading) ?></h1>
         <p class="staff-apps-hero__desc">Manage your profile photo and review your account details for the medConnect <?= htmlspecialchars($portal_portal_name) ?>.</p>
     </div>
 </header>

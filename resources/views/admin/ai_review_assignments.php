@@ -30,10 +30,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <article class="air-review-page staff-apps-page" id="airReviewRoot" data-api="<?= htmlspecialchars($apiUrl) ?>" data-ui="read-unread-only">
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
   <div class="staff-apps-hero__content">
-    <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portal_eyebrow) ?></span>
-    <h1 class="staff-apps-hero__title">AI Review Assignments</h1>
     <p class="staff-apps-hero__desc">
       Monitor AI review cases and mark them read or unread. Assigned providers come from each patient’s existing consultation assignment and cannot be changed here.
     </p>

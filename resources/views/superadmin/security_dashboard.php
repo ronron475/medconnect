@@ -9,10 +9,9 @@ $api = ASSET_BASE . '/app/api/superadmin/security.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2">Security Center</h2>
-    <p class="text-muted">Enterprise security monitoring — failed logins, blocked IPs, sessions, and audit events.</p>
+    <p class="admin-page-intro__desc text-muted">Enterprise security monitoring — failed logins, blocked IPs, sessions, and audit events.</p>
   </div>
 </div>
 

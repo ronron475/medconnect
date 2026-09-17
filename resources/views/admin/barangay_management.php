@@ -26,8 +26,10 @@ $barangays = $stmt->fetchAll(PDO::FETCH_ASSOC);
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<div class="header-row" style="display:flex;justify-content:space-between;margin-bottom:24px;">
-  <div><h2 class="text-h2">Barangay Management</h2><p class="text-muted">CRUD for barangay records used by GIS and BHW sector assignment.</p></div>
+<div class="header-row admin-page-intro">
+  <div>
+    <p class="admin-page-intro__desc text-muted">CRUD for barangay records used by GIS and BHW sector assignment.</p>
+  </div>
   <button class="mc-btn mc-btn--primary" id="brgyAddBtn">+ Add Barangay</button>
 </div>
 

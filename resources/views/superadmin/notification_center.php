@@ -30,10 +30,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-notification-center.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-notification-center.css') ?>">
 
 <div class="sa-nc">
-  <div class="sa-nc__header">
+  <div class="sa-nc__header admin-page-intro">
     <div class="sa-nc__title-block">
-      <h2 class="text-h2">Notification Center</h2>
-      <p class="text-muted"><?= number_format($pending) ?> unread notifications system-wide.</p>
+      <p class="admin-page-intro__desc text-muted"><?= number_format($pending) ?> unread notifications system-wide.</p>
     </div>
     <div class="sa-nc__filters" role="group" aria-label="Notification filters">
       <a href="?filter=all" class="mc-btn mc-btn--outline<?= $filter === 'all' ? ' is-active' : '' ?>">All</a>

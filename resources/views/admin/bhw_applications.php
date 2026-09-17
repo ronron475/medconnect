@@ -119,10 +119,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 </div>
 <?php endif; ?>
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow"><?= $is_superadmin_checker ? 'Super Administration · Maker-Checker Review' : 'User Management · Maker-Checker Workflow' ?></span>
-        <h1 class="staff-apps-hero__title"><?= $is_superadmin_checker ? 'Barangay Health Workers' : 'BHW Management' ?></h1>
         <p class="staff-apps-hero__desc"><?= $is_superadmin_checker
             ? 'Review Barangay Health Worker applications completed by invitees and manage approved accounts. Use the Pending Approval tab for Super Administrator review.'
             : 'Invite Barangay Health Workers, attach institutional documents, and track activation until Super Administrator approval.' ?></p>

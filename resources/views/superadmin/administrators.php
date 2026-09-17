@@ -9,10 +9,9 @@ $api = ASSET_BASE . '/app/api/superadmin/administrators.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2">Administrator Management</h2>
-    <p class="text-muted">Create, edit, suspend, and manage system administrators. Super Admin accounts are protected.</p>
+    <p class="admin-page-intro__desc text-muted">Create, edit, suspend, and manage system administrators. Super Admin accounts are protected.</p>
   </div>
   <button type="button" class="mc-btn mc-btn--primary" id="btnAddAdmin">Add Administrator</button>
 </div>

@@ -8,10 +8,9 @@ $api = ASSET_BASE . '/app/api/superadmin/security.php?action=blocked_ips';
 $blockApi = ASSET_BASE . '/app/api/superadmin/security.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;margin-bottom:24px;">
+<div class="header-row admin-page-intro">
   <div>
-    <h2 class="text-h2"><?= htmlspecialchars($page_title) ?></h2>
-    <?php if (!empty($page_desc)): ?><p class="text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
+    <?php if (!empty($page_desc)): ?><p class="admin-page-intro__desc text-muted"><?= htmlspecialchars($page_desc) ?></p><?php endif; ?>
   </div>
   <span id="secUpdated" class="text-xs text-muted">Loading…</span>
 </div>

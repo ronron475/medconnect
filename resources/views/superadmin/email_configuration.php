@@ -5,7 +5,9 @@ $stored = system_settings_get_all($pdo);
 $page_title = 'Email Configuration';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="margin-bottom:24px;"><h2 class="text-h2">Email Configuration</h2><p class="text-muted">Outbound email identity for system notifications.</p></div>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">Outbound email identity for system notifications.</p>
+</div>
 <form id="emailForm" class="mc-card" style="max-width:480px;display:flex;flex-direction:column;gap:12px;">
   <label class="text-sm">From Name<input name="EMAIL_FROM_NAME" value="<?= htmlspecialchars($stored['EMAIL_FROM_NAME'] ?? '') ?>" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;margin-top:6px;"></label>
   <label class="text-sm">From Address<input name="EMAIL_FROM_ADDRESS" type="email" value="<?= htmlspecialchars($stored['EMAIL_FROM_ADDRESS'] ?? '') ?>" class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;margin-top:6px;"></label>

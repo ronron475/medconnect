@@ -6,7 +6,9 @@ $page_title = 'System Settings';
 $api = ASSET_BASE . '/app/api/superadmin/system_settings.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
-<div class="header-row" style="margin-bottom:24px;"><h2 class="text-h2">Central System Configuration</h2><p class="text-muted">Global platform settings — name, version, timezone, uploads, and policies.</p></div>
+<div class="header-row admin-page-intro">
+  <p class="admin-page-intro__desc text-muted">Global platform settings — name, version, timezone, uploads, and policies.</p>
+</div>
 <form id="sysForm" class="mc-card" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
   <?php
   $fields = [

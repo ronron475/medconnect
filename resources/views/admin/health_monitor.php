@@ -39,10 +39,8 @@ require_once __DIR__ . '/partials/layout_open.php';
   data-api="<?= htmlspecialchars(ASSET_BASE . '/app/api/admin/system_health.php') ?>"
 >
 
-<header class="staff-apps-hero">
+<header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
-        <span class="staff-apps-hero__eyebrow"><?= htmlspecialchars($portal_eyebrow) ?></span>
-        <h1 class="staff-apps-hero__title"><?= htmlspecialchars($portal_heading) ?></h1>
         <p class="staff-apps-hero__desc">Live operational metrics from the database, application runtime, storage, and integrated services.</p>
     </div>
 </header>
