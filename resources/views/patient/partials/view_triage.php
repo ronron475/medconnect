@@ -132,9 +132,8 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
     || $interview_complaint_locked
     || $preliminary_payload !== null;
 ?>
-<h2 class="text-h2 mb-md patient-triage-page__title">Book Consultation</h2>
 <?php if ($urgent_open_choice && $registration_chief_complaint !== ''): ?>
-<p class="text-sm text-muted patient-triage-lead">
+<p class="text-sm text-muted patient-triage-lead patient-page-intro__desc">
   URGENT consultation — each doctor shows only their earliest open slot today. The earliest overall option is recommended; you may choose another eligible doctor.
 </p>
 <?php elseif (($is_provider_locked || $consultation_already_assigned) && $assigned_display_name !== ''): ?>

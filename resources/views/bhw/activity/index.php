@@ -11,9 +11,8 @@ $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
 
 <div class="bhw-activity-page" id="bhwActivityRoot">
 
-  <header class="bhw-reports-header">
+  <header class="bhw-reports-header bhw-page-intro">
     <div>
-      <h2 class="text-h2">My Activity Log</h2>
       <p class="bhw-reports-sub">A personal audit record of your actions in the BHW portal. Entries are read-only and cannot be modified.</p>
     </div>
     <div class="bhw-reports-export-btns no-print">

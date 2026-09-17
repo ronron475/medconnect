@@ -575,10 +575,9 @@ $update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-update-patient.css?v=<?= $update_css_ver ?>">
 <div class="bhw-update-page">
 
-  <header class="bhw-update-header">
+  <header class="bhw-update-header bhw-page-intro">
     <div class="bhw-update-header-text">
-      <h2 class="text-h2">Update Patient Information</h2>
-      <p>Locate a registered resident in <strong>Brgy. <?= $barangay_label ?></strong> to update their <strong>contact details</strong> and <strong>medical information</strong>. Personal and demographic fields remain read-only.</p>
+      <p class="bhw-page-intro__desc">Locate a registered resident in <strong>Brgy. <?= $barangay_label ?></strong> to update their <strong>contact details</strong> and <strong>medical information</strong>. Personal and demographic fields remain read-only.</p>
     </div>
     <a href="list.php" class="bhw-btn-ghost bhw-update-back-link" aria-label="Back to patient list">Back to Patient List</a>
   </header>

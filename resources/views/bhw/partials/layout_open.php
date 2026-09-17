@@ -42,6 +42,11 @@
   $bhwPortalVer = file_exists($bhwPortalCss) ? (int) filemtime($bhwPortalCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-portal.css?v=<?= $bhwPortalVer ?>"/>
+  <?php
+  $bhwSpacingCss = ASSETS_PATH . '/css/bhw-spacing.css';
+  $bhwSpacingVer = file_exists($bhwSpacingCss) ? (int) filemtime($bhwSpacingCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-spacing.css?v=<?= $bhwSpacingVer ?>"/>
   <?php if (!empty($bhw_head_css)): ?>
   <link rel="stylesheet" href="<?= htmlspecialchars((string) $bhw_head_css, ENT_QUOTES, 'UTF-8') ?>"/>
   <?php endif; ?>

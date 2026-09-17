@@ -39,8 +39,7 @@ $tabs = [
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
   data-provider-theme="<?= htmlspecialchars($system['theme'] ?? 'system') ?>"
 >
-  <header class="ps-page-header">
-    <h2 class="ps-page-title">Account Settings</h2>
+  <header class="ps-page-header provider-page-intro">
     <span class="ps-verification-badge ps-verification-badge--header <?= htmlspecialchars($verification_class) ?>">
       PRC <?= htmlspecialchars(ucfirst($verification)) ?>
     </span>

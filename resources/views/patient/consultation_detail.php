@@ -165,9 +165,8 @@ $patient_page_stylesheets = [
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
 
 <div class="patient-page pmh-page pmh-page--detail">
-  <header class="pmh-detail__head">
+  <header class="pmh-detail__head patient-page-intro">
     <a href="<?= htmlspecialchars($backUrl) ?>" class="pmh-detail__back"><?= htmlspecialchars($backLabel) ?></a>
-    <h2 class="pmh-detail__title">Session Details</h2>
     <p class="pmh-detail__meta"><?= htmlspecialchars($providerName) ?> · Medical Video Consultation</p>
     <p class="pmh-detail__meta"><?= htmlspecialchars($dateLabel) ?> · <span class="pmh-status pmh-status--<?= htmlspecialchars($statusChip) ?>"><?= htmlspecialchars($statusLabel) ?></span></p>
   </header>

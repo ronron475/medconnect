@@ -61,11 +61,9 @@ require __DIR__ . '/partials/layout_open.php';
 
 <div class="bhw-dash">
 
-  <header class="bhw-dash-header">
+  <header class="bhw-dash-header bhw-page-intro">
     <div class="bhw-dash-header__main">
-      <p class="bhw-dash-header__eyebrow">Barangay Health Operations</p>
-      <h2 class="bhw-dash-header__title">Dashboard — Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></h2>
-      <p class="bhw-dash-header__desc"><?= htmlspecialchars($dashboard_nav['description']) ?></p>
+      <p class="bhw-dash-header__desc">Brgy. <?= htmlspecialchars($bhw_barangay_name) ?> — <?= htmlspecialchars($dashboard_nav['description']) ?></p>
     </div>
     <div class="bhw-dash-header__meta">
       <span class="bhw-dash-sync">Data refreshed: <time id="bhwLastSync"><?= date('h:i A') ?></time> · Auto-refresh 15s</span>

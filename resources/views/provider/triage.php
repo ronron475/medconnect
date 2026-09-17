@@ -22,12 +22,9 @@ $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['revie
 $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['slot_waiting']) || !empty($t['slot_available_for_patient'])));
 ?>
 
-<div class="greeting-banner" style="margin-bottom:16px;">
-  <div>
-    <h2 class="text-h2">Triage</h2>
-    <p class="text-muted text-sm" style="margin:0;">Active case review and historical triage records.</p>
-  </div>
-  <div style="display:flex;gap:8px;">
+<div class="greeting-banner provider-page-intro">
+  <p class="text-muted text-sm provider-page-intro__desc">Active case review and historical triage records.</p>
+  <div class="provider-page-intro__actions">
     <a href="?tab=active" class="mc-btn <?= $module_tab === 'active' ? 'mc-btn--primary' : 'mc-btn--outline' ?>">Active Cases</a>
     <a href="?tab=history" class="mc-btn <?= $module_tab === 'history' ? 'mc-btn--primary' : 'mc-btn--outline' ?>">History</a>
   </div>

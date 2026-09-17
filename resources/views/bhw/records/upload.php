@@ -13,9 +13,8 @@ $records_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-records.js');
 
 <div class="bhw-records-page bhw-records-upload-page" id="bhwRecordsUpload" data-preselect="<?= $preselect ?>">
 
-  <header class="bhw-records-header">
+  <header class="bhw-records-header bhw-page-intro">
     <div>
-      <h2 class="text-h2">Upload Documents</h2>
       <p class="bhw-records-sub">Attach residency certificates, lab results, referral letters, and other files to a patient in <strong>Brgy. <?= $barangay_label ?></strong>. Fill in all fields below, then submit.</p>
     </div>
   </header>

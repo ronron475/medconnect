@@ -251,12 +251,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <div class="queue-page">
-    <section class="queue-hero">
-        <div>
-            <div class="queue-eyebrow">Clinical Portal</div>
-            <h1 class="queue-title">Consultation Queue</h1>
-            <div class="queue-subtitle">Track assigned patients, live rooms, triage priority, and session status from one workspace.</div>
-        </div>
+    <section class="queue-hero provider-page-intro">
+        <p class="queue-subtitle">Track assigned patients, live rooms, triage priority, and session status from one workspace.</p>
     </section>
 
     <section class="queue-metrics" aria-label="Queue summary">

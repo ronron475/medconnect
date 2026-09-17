@@ -1,0 +1,54 @@
+/**
+ * Patient portal page-intro spacing — title lives in .topbar-title.
+ */
+
+body.patient-portal .patient-page-intro,
+body.patient-portal .phs-hero.patient-page-intro,
+body.patient-portal .pmh-detail__head.patient-page-intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+body.patient-portal .patient-page-intro__desc,
+body.patient-portal .phs-hero.patient-page-intro .phs-hero__sub,
+body.patient-portal .patient-triage-lead.patient-page-intro__desc {
+  margin: 0 0 12px;
+  max-width: 68ch;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--mc-slate-muted, #64748b);
+}
+
+body.patient-portal .phs-hero.patient-page-intro .phs-hero__sub {
+  margin: 0;
+}
+
+body.patient-portal .pmh-detail__head.patient-page-intro {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+body.patient-portal .pmh-detail__head.patient-page-intro .pmh-detail__meta {
+  margin: 0;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-page-intro__desc,
+html[data-theme-resolved='dark'] body.patient-portal .phs-hero.patient-page-intro .phs-hero__sub,
+html[data-theme-resolved='dark'] body.patient-portal .patient-triage-lead.patient-page-intro__desc {
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  body.patient-portal .patient-page-intro,
+  body.patient-portal .phs-hero.patient-page-intro,
+  body.patient-portal .pmh-detail__head.patient-page-intro {
+    margin-bottom: 12px;
+    gap: 10px;
+  }
+}

@@ -42,10 +42,9 @@ $slot_counts = $schedule_live['counts'];
 $session_count_today = count($today_sessions);
 ?>
 
-<div class="sched-page-header">
+<div class="sched-page-header provider-page-intro">
   <div>
-    <h2 class="text-h2">Daily Availability</h2>
-    <p>
+    <p class="provider-page-intro__desc">
       Set your <strong>video consultation</strong> hours for <strong>today only</strong>
       (<?= htmlspecialchars($today_name) ?>, <?= htmlspecialchars($today_label) ?>).
       At <strong>12:00 AM</strong> today&apos;s schedule locks — create a new one tomorrow.

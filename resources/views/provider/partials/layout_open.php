@@ -63,6 +63,11 @@ if (!headers_sent()) {
   $providerMobileVer = file_exists($providerMobileCss) ? (int) filemtime($providerMobileCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-mobile.css?v=<?= $providerMobileVer ?>"/>
+  <?php
+  $providerSpacingCss = ASSETS_PATH . '/css/provider-spacing.css';
+  $providerSpacingVer = file_exists($providerSpacingCss) ? (int) filemtime($providerSpacingCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-spacing.css?v=<?= $providerSpacingVer ?>"/>
   <?php $portal_nav_badges_skip_js = true; require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
 </head>

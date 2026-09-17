@@ -11,10 +11,9 @@ $bhw_subnav_active = 'referral/status.php';
 ?>
 <div class="bhw-referral-status-page">
 
-  <header class="bhw-referral-header">
+  <header class="bhw-referral-header bhw-page-intro">
     <div>
-      <h2 class="text-h2">Referrals</h2>
-      <p>View doctor-issued referrals for residents in <strong>Brgy. <?= $barangay_label ?></strong>. This list is read-only — you cannot create, edit, approve, or change the doctor’s clinical referral decision.</p>
+      <p class="bhw-page-intro__desc">View doctor-issued referrals for residents in <strong>Brgy. <?= $barangay_label ?></strong>. This list is read-only — you cannot create, edit, approve, or change the doctor’s clinical referral decision.</p>
     </div>
   </header>
 

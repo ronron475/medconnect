@@ -10,9 +10,8 @@ $bhw_subnav_items = [
 $bhw_subnav_active = 'followup/reminders.php';
 ?>
 <div class="bhw-followup-page">
-  <header class="bhw-followup-header">
-    <h2 class="text-h2">Follow-Up Monitoring</h2>
-    <p>Send email reminders to the patient’s registered Gmail for upcoming doctor follow-ups. Each successful send is audited.</p>
+  <header class="bhw-followup-header bhw-page-intro">
+    <p class="bhw-page-intro__desc">Send email reminders to the patient’s registered Gmail for upcoming doctor follow-ups. Each successful send is audited.</p>
   </header>
 
   <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>

@@ -103,11 +103,9 @@ function fu_display_status(array $row, string $filter): array
 ?>
 
 <div class="fu-page">
-  <header class="fu-hero">
+  <header class="fu-hero provider-page-intro">
     <div class="fu-hero__copy">
-      <p class="fu-hero__eyebrow">Patient care</p>
       <div class="fu-hero__title-row">
-        <h2 class="fu-title">Follow-Up Management</h2>
         <span class="fu-count"><?= (int) $followup_count ?> result<?= $followup_count === 1 ? '' : 's' ?></span>
       </div>
       <p class="fu-sub">Track scheduled, completed, and missed follow-ups for your patients.</p>
