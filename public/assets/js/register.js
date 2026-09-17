@@ -670,6 +670,9 @@ function syncStep1HiddenFields() {
   setHidden('h-city', getVal('city-text'));
   setHidden('h-barangay', getVal('barangay-text'));
   setHidden('h-street-address', getVal('street-address'));
+  setHidden('h-latitude', getVal('reg-latitude'));
+  setHidden('h-longitude', getVal('reg-longitude'));
+  setHidden('h-location-accuracy', getVal('reg-location-accuracy'));
   setHidden('h-national-id', getVal('national-id'));
 
   const fileInput = document.getElementById('national-id-image');
@@ -677,6 +680,113 @@ function syncStep1HiddenFields() {
     setHidden('h-national-id-image', fileInput.files[0].name);
   }
 }
+
+/* ===== OPTIONAL GPS (Provider GIS exact pin) ===== */
+(function initOptionalRegistrationGps() {
+  const btnUse = document.getElementById('btn-use-gps');
+  const btnClear = document.getElementById('btn-clear-gps');
+  const statusEl = document.getElementById('gis-gps-status');
+  const latEl = document.getElementById('reg-latitude');
+  const lngEl = document.getElementById('reg-longitude');
+  const accEl = document.getElementById('reg-location-accuracy');
+  if (!btnUse || !latEl || !lngEl) return;
+
+  // Match BagoBarangayCentroids::cityBounds() defaults.
+  const BAGO_BOUNDS = { south: 10.478, west: 122.748, north: 10.598, east: 122.898 };
+
+  function setStatus(message, kind) {
+    if (!statusEl) return;
+    statusEl.textContent = message;
+    statusEl.classList.remove('is-success', 'is-error', 'is-busy');
+    if (kind) statusEl.classList.add(kind);
+  }
+
+  function clearGps(message) {
+    latEl.value = '';
+    lngEl.value = '';
+    if (accEl) accEl.value = '';
+    btnUse.classList.remove('is-captured');
+    btnUse.disabled = false;
+    if (btnClear) btnClear.hidden = true;
+    setStatus(
+      message || 'GPS is optional. Barangay map pin will be used if you skip this.',
+      ''
+    );
+  }
+
+  function inBagoBounds(lat, lng) {
+    return lat >= BAGO_BOUNDS.south && lat <= BAGO_BOUNDS.north
+      && lng >= BAGO_BOUNDS.west && lng <= BAGO_BOUNDS.east;
+  }
+
+  function captureSuccess(pos) {
+    const lat = Number(pos.coords.latitude);
+    const lng = Number(pos.coords.longitude);
+    const accuracy = Number(pos.coords.accuracy);
+    btnUse.disabled = false;
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) {
+      clearGps('Could not read a valid GPS position. Your barangay pin will be used instead.');
+      if (statusEl) statusEl.classList.add('is-error');
+      return;
+    }
+
+    if (!inBagoBounds(lat, lng)) {
+      clearGps('Detected location is outside Bago City. Your selected barangay pin will be used instead.');
+      if (statusEl) statusEl.classList.add('is-error');
+      return;
+    }
+
+    latEl.value = String(lat);
+    lngEl.value = String(lng);
+    if (accEl && Number.isFinite(accuracy)) {
+      accEl.value = String(Math.round(accuracy));
+    }
+    btnUse.classList.add('is-captured');
+    if (btnClear) btnClear.hidden = false;
+    const accNote = Number.isFinite(accuracy) ? ' (±' + Math.round(accuracy) + ' m)' : '';
+    setStatus(
+      'GPS captured for a precise health-map pin' + accNote + '. You can clear this anytime. Barangay remains required.',
+      'is-success'
+    );
+  }
+
+  function captureError(err) {
+    btnUse.disabled = false;
+    const code = err && typeof err.code === 'number' ? err.code : 0;
+    let msg = 'GPS unavailable. Registration will continue with your barangay map pin.';
+    if (code === 1) {
+      msg = 'Location permission denied. Registration will continue with your barangay map pin.';
+    } else if (code === 2) {
+      msg = 'GPS unavailable on this device. Registration will continue with your barangay map pin.';
+    } else if (code === 3) {
+      msg = 'GPS timed out. Registration will continue with your barangay map pin.';
+    }
+    clearGps(msg);
+    if (statusEl) statusEl.classList.add('is-error');
+  }
+
+  btnUse.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      clearGps('This browser does not support GPS. Your barangay map pin will be used.');
+      if (statusEl) statusEl.classList.add('is-error');
+      return;
+    }
+    btnUse.disabled = true;
+    setStatus('Requesting location permission… For best accuracy, use this at your home address.', 'is-busy');
+    navigator.geolocation.getCurrentPosition(captureSuccess, captureError, {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0,
+    });
+  });
+
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      clearGps('GPS cleared. Your barangay map pin will be used.');
+    });
+  }
+})();
 
 function goToStep2() {
   // Copy Step 1 values into hidden fields for Step 2 form submission

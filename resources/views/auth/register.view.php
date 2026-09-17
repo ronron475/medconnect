@@ -452,9 +452,27 @@
                 </div>
               </div>
 
-              <p class="gis-barangay-note" role="note">
-                Health map location is assigned automatically from your selected barangay — no GPS pin needed.
-              </p>
+              <div class="gis-reg-location" id="gis-reg-location">
+                <div class="gis-reg-location-head">
+                  <div>
+                    <p class="gis-reg-location-title">Optional precise location</p>
+                    <p class="gis-barangay-note" role="note" style="margin:6px 0 0">
+                      Your barangay is required for the health map. You may also share your current GPS location for a more precise pin. If you skip this, you still appear on the map using your barangay (Approximate).
+                    </p>
+                  </div>
+                  <div class="gis-reg-location-actions">
+                    <button type="button" class="btn-gis-location" id="btn-use-gps" aria-describedby="gis-gps-status">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                      Use My Current Location
+                    </button>
+                    <button type="button" class="btn-gis-location-clear" id="btn-clear-gps" hidden>Clear GPS</button>
+                  </div>
+                </div>
+                <p class="gis-reg-gps-status" id="gis-gps-status" aria-live="polite">GPS is optional. Barangay map pin will be used if you skip this.</p>
+                <input type="hidden" id="reg-latitude" value="" autocomplete="off" />
+                <input type="hidden" id="reg-longitude" value="" autocomplete="off" />
+                <input type="hidden" id="reg-location-accuracy" value="" autocomplete="off" />
+              </div>
 
               <div id="non-bago-notice" class="non-bago-notice" hidden role="alert">
                 <div class="non-bago-notice__icon" aria-hidden="true">
@@ -532,6 +550,9 @@
         <input type="hidden" id="h-city" name="city_municipality" />
         <input type="hidden" id="h-barangay" name="barangay" />
         <input type="hidden" id="h-street-address" name="street_address" />
+        <input type="hidden" id="h-latitude" name="latitude" />
+        <input type="hidden" id="h-longitude" name="longitude" />
+        <input type="hidden" id="h-location-accuracy" name="location_accuracy_m" />
         <input type="hidden" id="h-national-id" name="national_id" />
         <input type="hidden" id="h-national-id-image" name="national_id_image" />
 
@@ -808,7 +829,7 @@
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260816ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260806cds1"></script>
-<script src="<?= $b ?>/assets/js/register.js?v=20260816ocr4"></script>
+<script src="<?= $b ?>/assets/js/register.js?v=20260917gps1"></script>
 
 <!-- Silent NLP loading overlay (patient-facing; no technical AI output) -->
 <?php
