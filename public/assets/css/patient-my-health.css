@@ -361,6 +361,31 @@
   font-weight: 800;
 }
 
+/* Record totals — quiet count chips (not red unread notifications). */
+.pmh-tab__count--total {
+  background: #e2e8f0;
+  color: #475569;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.pmh-tab:not(.is-active) .pmh-tab__count--total {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+/* Attention-only Care Tips count — distinct from totals and from sidebar unread. */
+.pmh-tab__count--attention {
+  background: #ffedd5;
+  color: #c2410c;
+  box-shadow: none;
+}
+
+.pmh-tab:not(.is-active) .pmh-tab__count--attention {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
 .pmh-tab:not(.is-active) .pmh-tab__count {
   background: #e0f2f1;
   color: #028090;
@@ -418,6 +443,16 @@
 .pmh-tabs--segment .pmh-tab.is-active .pmh-tab__count {
   background: #ccfbf1;
   color: #0f766e;
+}
+
+.pmh-tabs--segment .pmh-tab.is-active .pmh-tab__count--total {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.pmh-tabs--segment .pmh-tab.is-active .pmh-tab__count--attention {
+  background: #ffedd5;
+  color: #c2410c;
 }
 
 .pmh-page--timeline .pmh-surface,

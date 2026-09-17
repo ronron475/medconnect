@@ -359,7 +359,7 @@ function mc_patient_care_tip_meta(array $row): array
             'label' => 'Completed',
             'class' => 'pmh-care-card__status--acked',
             'show_tips' => true,
-            'active' => true,
+            'active' => false,
             'kind' => 'acked',
         ];
     }
