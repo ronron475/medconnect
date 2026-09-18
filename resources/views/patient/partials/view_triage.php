@@ -282,7 +282,7 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
         <p id="triageFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
       </div>
       <div class="pdash-followup__answer">
-        <label class="form-label" for="triage_followup_answer">Your answer</label>
+        <label class="form-label pdash-care-form__label" for="triage_followup_answer">Your answer</label>
         <textarea
           id="triage_followup_answer"
           name="followup_answer"
