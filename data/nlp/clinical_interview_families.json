@@ -30,6 +30,15 @@
       "text_regex": ["abdominal", "sakit tiyan", "masakit tiyan", "saket tyan", "msk tiyan", "\\btiyan\\b", "\\btyan\\b", "\\btian\\b", "stomach", "belly"]
     },
     {
+      "complaint_id": "DENTAL_PAIN",
+      "label": "Dental / tooth pain",
+      "family_key": "dental_pain",
+      "symptom_name_contains": ["toothache", "tooth pain", "dental pain"],
+      "symptom_ids": ["toothache", "tooth_pain"],
+      "body_parts": ["tooth", "teeth", "gum"],
+      "text_regex": ["toothache", "tooth\\s*pain", "dental\\s*pain", "sakit\\s+(ng\\s+)?ngipon", "masakit.{0,12}ngipon", "\\bngipon\\b", "\\btooth\\b", "\\bteeth\\b"]
+    },
+    {
       "complaint_id": "BLEEDING",
       "label": "Bleeding",
       "family_key": "bleeding",
@@ -141,7 +150,7 @@
   "derived_families": [
     {
       "key": "pain",
-      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "pain", "pain_unspecified"]
+      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "pain", "pain_unspecified", "dental_pain"]
     },
     {
       "key": "respiratory",

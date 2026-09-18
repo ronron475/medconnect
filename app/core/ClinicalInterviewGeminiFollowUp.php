@@ -147,6 +147,21 @@ final class ClinicalInterviewGeminiFollowUp
             $ollamaMeaning = '';
         }
 
+        $activeId = trim((string) ($context['active_complaint_id'] ?? ''));
+        $activeSpan = '';
+        $activeFamilies = [];
+        foreach ((array) ($context['complaints'] ?? []) as $track) {
+            if (!is_array($track) || (string) ($track['id'] ?? '') !== $activeId) {
+                continue;
+            }
+            $activeSpan = trim((string) ($track['text_span'] ?? ''));
+            $activeFamilies = array_values(array_filter(array_map('strval', (array) ($track['family_keys'] ?? []))));
+            break;
+        }
+        if ($activeSpan === '') {
+            $activeSpan = trim((string) ($context['_active_complaint_span'] ?? ''));
+        }
+
         return "Write one follow-up question a nurse would say out loud.\n"
             . "Language: {$langLine} only.\n"
             . 'Clinical purpose (chosen by existing NLP — phrase this purpose only): '
@@ -155,6 +170,10 @@ final class ClinicalInterviewGeminiFollowUp
             . $painRule
             . ($bankTemplate !== '' ? "Keep the same meaning as this template: {$bankTemplate}\n" : '')
             . 'Detected complaints: ' . ($complaints !== [] ? implode(', ', $complaints) : '(unspecified)') . "\n"
+            . 'Active complaint id: ' . ($activeId !== '' ? $activeId : '(single)') . "\n"
+            . 'Active complaint focus (answer applies ONLY to this): '
+            . ($activeSpan !== '' ? mb_substr($activeSpan, 0, 240) : '(full case)') . "\n"
+            . 'Active complaint families: ' . ($activeFamilies !== [] ? implode(', ', $activeFamilies) : '(none)') . "\n"
             . 'Original patient complaint (authoritative wording; never discard): '
             . ($originalComplaint !== '' ? mb_substr($originalComplaint, 0, 400) : '(none)') . "\n"
             . 'Ollama/local meaning support (secondary; may be empty; do not invent beyond this): '
@@ -163,6 +182,7 @@ final class ClinicalInterviewGeminiFollowUp
             . 'Prior answers: ' . ($answered !== [] ? implode(' | ', $answered) : '(none)') . "\n"
             . 'Already asked slots: ' . ($asked !== [] ? implode(', ', $asked) : '(none)') . "\n"
             . 'Accumulated case text: ' . mb_substr(trim($transcript), 0, 800) . "\n"
+            . "Do not assume facts from a different complaint apply to the active one.\n"
             . "Reply with the question only. No preamble.";
     }
 
