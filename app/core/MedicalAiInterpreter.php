@@ -60,6 +60,58 @@ PROMPT;
     }
 
     /**
+     * Hiligaynon/local-language meaning support for the complaint interview.
+     * Prefers Ollama (local Llama); fails soft so existing Hiligaynon NLP continues.
+     * Does not triage and must not replace the original patient text at the call site.
+     *
+     * @return array<string, mixed>
+     */
+    public static function interpretComplaintMeaning(string $originalText): array
+    {
+        $originalText = trim($originalText);
+        if (!AI_INTERPRETER_ENABLED) {
+            return self::emptyResult('disabled', $originalText, 'AI interpreter disabled via MEDCONNECT_AI_INTERPRETER=0');
+        }
+        if ($originalText === '') {
+            return self::emptyResult('skipped', '', 'No input text');
+        }
+
+        $userPrompt = "Field: Chief complaint (language understanding only)\n"
+            . "Original patient input:\n" . $originalText . "\n\n"
+            . "Produce a short English medical interpretation of what the patient is describing.\n"
+            . "Extract only concepts clearly supported by the text. Do not diagnose. Do not invent urgency.\n"
+            . "Do not output EMERGENCY, URGENT, or NON-URGENT.";
+
+        // Prefer Ollama/local first for Hiligaynon support; fail soft on error.
+        try {
+            [$content, $usedProvider, $usedModel] = self::chatCompletion('local', $userPrompt);
+            $parsed = self::extractJson($content);
+            $concepts = self::normalizeConcepts($parsed);
+            $score = max(0, min(100, (int) ($parsed['confidence_score'] ?? 0)));
+            if ($score === 0 && $concepts !== []) {
+                $sum = array_sum(array_column($concepts, 'confidence'));
+                $score = (int) round($sum / count($concepts));
+            }
+            $english = trim((string) ($parsed['english_interpretation'] ?? ''));
+            if ($english !== '') {
+                return [
+                    'status'                 => 'complete',
+                    'provider'               => $usedProvider,
+                    'model'                  => $usedModel,
+                    'english_interpretation' => $english,
+                    'confidence_score'       => $score,
+                    'concepts'               => $concepts,
+                    'notes'                  => trim((string) ($parsed['notes'] ?? '')),
+                ];
+            }
+        } catch (Throwable $e) {
+            return self::emptyResult('unavailable', $originalText, $e->getMessage());
+        }
+
+        return self::emptyResult('unavailable', $originalText, 'Local interpreter returned empty meaning');
+    }
+
+    /**
      * @param list<string> $dictionaryTerms
      * @return array<string, mixed>
      */

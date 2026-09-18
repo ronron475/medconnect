@@ -100,20 +100,37 @@ final class ClinicalInterviewContextResolver
             ) {
                 $keys[] = $key;
             }
-            if (!empty($derived['add_when_vague_or_unlocated_pain'])
-                && (ClinicalFeatureExtractors::isVagueComplaint($transcript)
-                    || (in_array('pain_unspecified', $keys, true) && ($facts['body_locations'] ?? []) === []))
-            ) {
-                $keys[] = $key;
+            if (!empty($derived['add_when_vague_or_unlocated_pain'])) {
+                // Only when pain is already indicated — never invent pain from vague unwell.
+                $painIndicated = array_intersect($keys, ['pain', 'pain_unspecified', 'pain_no_location']) !== [];
+                if ($painIndicated
+                    && (
+                        ClinicalFeatureExtractors::isVagueComplaint($transcript)
+                        || (in_array('pain_unspecified', $keys, true) && ($facts['body_locations'] ?? []) === [])
+                    )
+                ) {
+                    $keys[] = $key;
+                }
             }
         }
 
         if ($keys === []) {
-            $keys[] = 'pain_unspecified';
+            // Never assume pain when the patient did not express pain language.
+            $hasPainToken = (bool) preg_match(
+                '/\b(sakit|masakit|pain|hurts|hapdi|discomfort|kasakit|gasakit)\b/u',
+                mb_strtolower($transcript)
+            );
+            $keys[] = $hasPainToken ? 'pain_unspecified' : 'general_unwell';
         }
 
         if (($facts['body_locations'] ?? []) === []
-            && (ClinicalFeatureExtractors::isVagueComplaint($transcript) || in_array('pain_unspecified', $keys, true))
+            && (
+                in_array('pain_unspecified', $keys, true)
+                || (
+                    ClinicalFeatureExtractors::isVagueComplaint($transcript)
+                    && in_array('pain_unspecified', $keys, true)
+                )
+            )
         ) {
             $keys[] = 'pain_no_location';
         }

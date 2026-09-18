@@ -592,10 +592,18 @@ final class ClinicalInterviewAdaptivePolicy
             'urinary', 'cough', 'respiratory', 'breathing', 'fever', 'skin', 'bleeding',
             'dizziness', 'eye', 'nose_pain', 'chest_pain', 'abdominal_pain', 'headache',
         ]) !== [];
-        if ($locs === [] && !$siteImplied && preg_match('/\b(sakit|masakit|pain|hapdi|kasakit|gasakit)\b/u', $low)) {
+        $hasPainLanguage = (bool) preg_match('/\b(sakit|masakit|pain|hapdi|kasakit|gasakit|hurts?)\b/u', $low);
+        if ($locs === [] && !$siteImplied && $hasPainLanguage) {
             $concepts[] = 'pain';
             $concepts[] = 'pain_unspecified';
             $concepts[] = 'pain_no_location';
+        }
+        // Health-related but no established symptom/site → clarify first (never assume pain).
+        if (!$siteImplied && !$hasPainLanguage && (
+            in_array('general_unwell', $concepts, true)
+            || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::isVagueComplaint($transcript))
+        )) {
+            $concepts[] = 'general_unwell';
         }
         if (in_array('eye', $locs, true) || preg_match('/\b(mata|eye)\b/u', $low)) {
             $concepts[] = 'eye';
