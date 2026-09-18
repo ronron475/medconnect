@@ -10,7 +10,8 @@ body.patient-portal .pmh-detail__head.patient-page-intro {
   justify-content: space-between;
   gap: var(--pt-space-md, 12px) var(--pt-space-lg, 16px);
   flex-wrap: wrap;
-  margin: 0 0 var(--pt-page-gap, 12px);
+  /* Parent page flex gap owns vertical rhythm — do not stack margin */
+  margin: 0;
 }
 
 body.patient-portal .patient-page-intro__desc,
@@ -31,7 +32,7 @@ body.patient-portal .pmh-detail__head.patient-page-intro {
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
-  margin-bottom: var(--pt-page-gap, 12px);
+  margin-bottom: 0;
 }
 
 body.patient-portal .pmh-detail__head.patient-page-intro .pmh-detail__meta,
@@ -49,7 +50,7 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-lead.patien
   body.patient-portal .patient-page-intro,
   body.patient-portal .phs-hero.patient-page-intro,
   body.patient-portal .pmh-detail__head.patient-page-intro {
-    margin-bottom: var(--pt-page-gap, 12px);
+    margin-bottom: 0;
     gap: var(--pt-space-sm, 8px) var(--pt-space-md, 12px);
   }
 }

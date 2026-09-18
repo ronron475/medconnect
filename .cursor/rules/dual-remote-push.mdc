@@ -1,0 +1,22 @@
+---
+description: When user says push, push to both GitLab and GitHub
+alwaysApply: true
+---
+
+# Dual remote push
+
+When the user says **push** (or asks to push changes / push all):
+
+1. Push the current branch to **both** remotes — do not stop after one.
+2. Remotes for this repo:
+   - `origin` → GitLab (`gitlab.bagocitycollege.com`)
+   - `github` → GitHub (`github.com/ronron475/medconnect`, Railway deploy)
+3. Prefer:
+   ```bash
+   git push origin HEAD
+   git push github HEAD
+   ```
+   Or equivalent for the current branch name. Use `-u` only when the branch has no upstream yet.
+4. If one remote fails, still attempt the other, then report both outcomes.
+5. Do not force-push unless the user explicitly asks.
+6. Commit only when the user asked to commit; push implies pushing already-committed work (and commit first only if they also asked to commit, or said “commit and push”).

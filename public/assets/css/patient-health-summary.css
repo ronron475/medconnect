@@ -14,10 +14,10 @@ body.patient-portal .patient-health-summary-page {
   --phs-border-soft: #f1f5f9;
   --phs-surface: #ffffff;
   --phs-surface-soft: #f8fafc;
-  --phs-radius: 14px;
-  --phs-radius-sm: 12px;
-  --phs-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.03);
-  --phs-gap: 16px;
+  --phs-radius: var(--pt-card-radius, 10px);
+  --phs-radius-sm: var(--pt-card-radius, 10px);
+  --phs-shadow: var(--pt-shadow-card, 0 1px 2px rgba(15, 23, 42, 0.04));
+  --phs-gap: var(--pt-page-gap, 12px);
 
   display: flex;
   flex-direction: column;
@@ -35,8 +35,9 @@ body.patient-portal .phs-hero {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px 20px;
-  padding: 2px 2px 4px;
+  gap: var(--pt-space-md, 12px) var(--pt-space-lg, 16px);
+  padding: 0;
+  margin: 0;
   border: 0;
   background: transparent;
   box-shadow: none;
@@ -72,13 +73,13 @@ body.patient-portal .phs-panel {
   border: 1px solid var(--phs-border);
   border-radius: var(--phs-radius);
   box-shadow: var(--phs-shadow);
-  padding: 16px 18px;
+  padding: var(--pt-card-pad, 14px);
   min-width: 0;
 }
 
 body.patient-portal .phs-panel__head {
-  margin-bottom: 14px;
-  padding-bottom: 12px;
+  margin-bottom: var(--pt-space-md, 12px);
+  padding-bottom: var(--pt-space-md, 12px);
   border-bottom: 1px solid var(--phs-border-soft);
 }
 
@@ -128,7 +129,7 @@ body.patient-portal .phs-panel__body {
 body.patient-portal .phs-assess-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--pt-card-gap, 12px);
   align-items: stretch;
 }
 
@@ -314,8 +315,8 @@ body.patient-portal .patient-health-summary-page .pt-assess-chip--emergency {
    Earlier assessments (timeline)
    -------------------------------------------------------------------------- */
 body.patient-portal .phs-history {
-  margin-top: 16px;
-  padding-top: 14px;
+  margin-top: var(--pt-card-gap, 12px);
+  padding-top: var(--pt-space-md, 12px);
   border-top: 1px solid var(--phs-border-soft);
 }
 
@@ -521,13 +522,13 @@ body.patient-portal .phs-skeleton-line--medium { width: 68%; }
 body.patient-portal .phs-content {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--pt-card-gap, 12px);
 }
 
 body.patient-portal .phs-info-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--pt-card-gap, 12px);
 }
 
 body.patient-portal .phs-info-card {
@@ -653,15 +654,15 @@ body.patient-portal .phs-empty {
    Profile metadata (supporting panel)
    -------------------------------------------------------------------------- */
 body.patient-portal .phs-meta {
-  margin-top: 14px;
-  padding: 12px 14px;
+  margin-top: 0;
+  padding: var(--pt-space-md, 12px) var(--pt-card-pad, 14px);
   border: 1px solid var(--phs-border-soft);
   border-radius: var(--phs-radius-sm);
   background: #fcfcfd;
 }
 
 body.patient-portal .phs-meta__intro {
-  margin-bottom: 10px;
+  margin-bottom: var(--pt-space-md, 12px);
 }
 
 body.patient-portal .phs-meta__title {

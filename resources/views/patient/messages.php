@@ -154,14 +154,13 @@ $patient_page_stylesheets = [
 
     <div class="messages-page">
       <header class="messages-page-head">
+        <div class="mc-msg-filters" role="tablist" aria-label="Conversation filter">
+          <a class="mc-msg-filter <?= $box === 'inbox' ? 'is-active' : '' ?>" href="?box=inbox" role="tab" aria-selected="<?= $box === 'inbox' ? 'true' : 'false' ?>">Inbox</a>
+          <a class="mc-msg-filter <?= $box === 'archived' ? 'is-active' : '' ?>" href="?box=archived" role="tab" aria-selected="<?= $box === 'archived' ? 'true' : 'false' ?>">Archived</a>
+          <a class="mc-msg-filter <?= $box === 'all' ? 'is-active' : '' ?>" href="?box=all" role="tab" aria-selected="<?= $box === 'all' ? 'true' : 'false' ?>">All</a>
+        </div>
         <span class="messages-page-count" role="status"><?= count($conversations) ?> conversation<?= count($conversations) === 1 ? '' : 's' ?></span>
       </header>
-
-      <div class="mc-msg-filters" role="tablist" aria-label="Conversation filter">
-        <a class="mc-msg-filter <?= $box === 'inbox' ? 'is-active' : '' ?>" href="?box=inbox" role="tab" aria-selected="<?= $box === 'inbox' ? 'true' : 'false' ?>">Inbox</a>
-        <a class="mc-msg-filter <?= $box === 'archived' ? 'is-active' : '' ?>" href="?box=archived" role="tab" aria-selected="<?= $box === 'archived' ? 'true' : 'false' ?>">Archived</a>
-        <a class="mc-msg-filter <?= $box === 'all' ? 'is-active' : '' ?>" href="?box=all" role="tab" aria-selected="<?= $box === 'all' ? 'true' : 'false' ?>">All</a>
-      </div>
 
       <div class="messages-shell" id="messagesShell">
         <aside class="msg-panel msg-panel--list">

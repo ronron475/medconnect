@@ -141,17 +141,51 @@ body.patient-portal {
 .patient-portal .profile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: 20px;
+  gap: var(--pt-card-gap, 12px);
+  align-items: stretch;
+  margin: 0;
+}
+
+/* Equal-height identity cards; push save actions to a shared baseline */
+.patient-portal .profile-grid > .mc-card {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+  height: 100%;
+}
+
+.patient-portal .profile-grid > .mc-card > form,
+.patient-portal .profile-grid > .mc-card > .patient-appearance-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.patient-portal .profile-grid > .mc-card > form > .mc-btn,
+.patient-portal .profile-grid > .mc-card > .patient-appearance-form > .mc-btn,
+.patient-portal .profile-grid .profile-card-save {
+  width: 100%;
+  margin-top: auto;
+}
+
+.patient-portal .profile-grid .profile-card-hint {
+  font-size: 13px;
+  margin: 0 0 var(--pt-form-gap, 12px);
 }
 
 .patient-portal .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--pt-form-gap, 12px);
 }
 
 .patient-portal .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--pt-form-gap, 12px);
+}
+
+.patient-portal .form-group:last-child {
+  margin-bottom: 0;
 }
 
 .patient-portal .form-label {
@@ -160,7 +194,7 @@ body.patient-portal {
   font-weight: 700;
   color: var(--mc-slate-muted);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: var(--pt-space-xs, 4px);
   letter-spacing: 0.03em;
 }
 
@@ -192,10 +226,10 @@ body.patient-portal {
 .patient-portal .tab-filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: var(--pt-space-sm, 8px);
+  margin-bottom: var(--pt-page-gap, 12px);
   border-bottom: 1px solid var(--mc-border-thin);
-  padding-bottom: 12px;
+  padding-bottom: var(--pt-space-md, 12px);
 }
 
 .patient-portal .tab-btn {
