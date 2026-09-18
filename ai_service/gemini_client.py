@@ -160,12 +160,19 @@ def test_gemini_health(force: bool = False) -> dict[str, Any]:
         logger.info("Gemini health check passed model=%s", model_used)
     except Exception as exc:
         logger.exception("Gemini health check failed: %s", exc)
+        err = str(exc)
+        status = "offline"
+        if "429" in err or "quota" in err.lower() or "rate" in err.lower():
+            status = "quota_exceeded"
+        elif "401" in err or "403" in err or "API key" in err:
+            status = "auth_failed"
         _startup_health = {
+            # Key is present but Google rejected the call — still "configured", not connected.
             "gemini": False,
             "provider": None,
             "model": model,
-            "status": "offline",
-            "error": str(exc),
+            "status": status,
+            "error": err,
         }
 
     return _startup_health
