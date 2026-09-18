@@ -1704,13 +1704,18 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup {
-  margin: 8px 0 10px;
+  margin: var(--pt-space-sm, 8px) 0 var(--pt-space-md, 12px);
   padding: 0;
-  border-radius: 10px;
+  border-radius: var(--pt-card-radius, 10px);
   border: 1px solid #99f6e4;
   background: linear-gradient(180deg, #f0fdfa 0%, #ffffff 42%);
   box-shadow: 0 4px 14px rgba(15, 118, 110, 0.06);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .pdash-followup[hidden] {
@@ -1720,8 +1725,9 @@ body.mc-tips-ready-modal-open {
 .pdash-followup__head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  flex-wrap: wrap;
+  gap: var(--pt-space-xs, 4px) var(--pt-space-sm, 8px);
+  padding: var(--pt-space-sm, 8px) var(--pt-space-md, 12px);
   border-bottom: 1px solid #ccfbf1;
   background: rgba(240, 253, 250, 0.9);
 }
@@ -1730,43 +1736,49 @@ body.mc-tips-ready-modal-open {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 999px;
   background: #0f766e;
   color: #fff;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .pdash-followup__eyebrow,
 .pdash-followup__label {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #0f766e;
+  line-height: 1.3;
 }
 
 .pdash-followup__panel {
-  padding: 8px 12px 4px;
+  padding: var(--pt-space-md, 12px) var(--pt-space-md, 12px) var(--pt-space-sm, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pt-space-sm, 8px);
+  min-width: 0;
 }
 
 .pdash-followup__question {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   color: #0f172a;
-  line-height: 1.4;
-  letter-spacing: -0.01em;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
 }
 
 .pdash-followup__helper {
-  margin: 6px 0 0;
-  font-size: 0.8rem;
+  margin: 0;
+  font-size: var(--pt-font-helper, 0.75rem);
   line-height: 1.4;
   color: #475569;
 }
@@ -1778,26 +1790,41 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__scale {
-  margin-top: 8px;
+  margin: 0;
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: var(--pt-space-sm, 8px);
+  row-gap: var(--pt-space-xs, 4px);
+  align-items: center;
+  min-width: 0;
+  width: 100%;
 }
 
 .pdash-followup__scale-label {
-  font-size: 0.72rem;
+  grid-row: 1;
+  grid-column: 1;
+  font-size: 0.7rem;
   font-weight: 700;
   color: #64748b;
   letter-spacing: 0.02em;
+  line-height: 1.3;
+  min-width: 0;
 }
 
 .pdash-followup__scale-label--end {
+  grid-row: 1;
+  grid-column: 2;
   text-align: right;
 }
 
 .pdash-followup__scale-track {
+  grid-row: 2;
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: repeat(11, minmax(0, 1fr));
+  grid-template-columns: repeat(10, minmax(0, 1fr));
   gap: 4px;
+  width: 100%;
+  min-width: 0;
 }
 
 .pdash-followup__scale-btn {
@@ -1807,6 +1834,8 @@ body.mc-tips-ready-modal-open {
   color: #0f766e;
   border-radius: 8px;
   min-height: 36px;
+  min-width: 0;
+  width: 100%;
   padding: 0;
   font-size: 0.78rem;
   font-weight: 800;
@@ -1831,8 +1860,8 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__notice {
-  margin: 6px 0 0;
-  padding: 8px 10px;
+  margin: var(--pt-space-xs, 4px) 0 0;
+  padding: var(--pt-space-sm, 8px) 10px;
   border-radius: 8px;
   border: 1px solid #fca5a5;
   background: #fef2f2;
@@ -1845,16 +1874,33 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__answer {
-  padding: 2px 12px 10px;
+  padding: var(--pt-space-xs, 4px) var(--pt-space-md, 12px) var(--pt-space-md, 12px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pt-space-xs, 4px);
+  min-width: 0;
 }
 
-.pdash-followup__answer .form-label {
-  margin-bottom: 4px;
+.pdash-followup__answer .form-label,
+.pdash-followup__answer .pdash-care-form__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #0f766e;
 }
 
-.pdash-followup__input {
-  min-height: 52px;
+.pdash-followup__input,
+body.patient-portal textarea.pdash-followup__input,
+body.patient-portal .pdash-followup textarea.form-control {
+  min-height: 56px;
+  max-height: none;
   resize: vertical;
+  margin: 0;
+  padding: 8px 12px;
+  line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .pdash-followup__input.is-invalid,
@@ -1871,14 +1917,14 @@ body.mc-tips-ready-modal-open {
 }
 
 .pdash-followup__hint {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 0.72rem;
   color: #64748b;
   line-height: 1.35;
 }
 
 .pdash-followup__answer:has(.pdash-followup__notice:not([hidden])) .pdash-followup__hint {
-  margin-top: 6px;
+  margin-top: 0;
 }
 
 .pdash-review-form.is-followup-active #pdashSymptomsComplaint,
@@ -1920,18 +1966,48 @@ body.mc-tips-ready-modal-open {
 }
 
 @media (max-width: 640px) {
+  .pdash-followup__head {
+    padding: var(--pt-space-sm, 8px) var(--pt-space-md, 12px);
+  }
+
+  .pdash-followup__panel {
+    padding: var(--pt-space-sm, 8px) var(--pt-space-md, 12px) var(--pt-space-xs, 4px);
+    gap: var(--pt-space-sm, 8px);
+  }
+
+  .pdash-followup__answer {
+    padding: var(--pt-space-xs, 4px) var(--pt-space-md, 12px) var(--pt-space-md, 12px);
+  }
+
   .pdash-followup__scale-track {
     gap: 3px;
   }
 
   .pdash-followup__scale-btn {
     min-height: 34px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     border-radius: 7px;
   }
 
   .pdash-followup__question {
-    font-size: 0.98rem;
+    font-size: 1rem;
+  }
+
+  .pdash-followup__input,
+  body.patient-portal textarea.pdash-followup__input,
+  body.patient-portal .pdash-followup textarea.form-control {
+    min-height: 52px;
+  }
+}
+
+@media (max-width: 380px) {
+  .pdash-followup__scale-track {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    row-gap: 4px;
+  }
+
+  .pdash-followup__scale-btn {
+    min-height: 36px;
   }
 }
 
@@ -2548,11 +2624,12 @@ html[data-theme-resolved='dark'] .booking-today-date {
   }
 
   .patient-triage-page .pdash-followup {
-    margin: 6px 0 8px;
+    margin: var(--pt-space-sm, 8px) 0;
   }
 
-  .patient-triage-page .pdash-followup__input {
-    min-height: 48px;
+  .patient-triage-page .pdash-followup__input,
+  .patient-triage-page textarea.pdash-followup__input {
+    min-height: 52px;
   }
 
   .patient-triage-page #chief_complaint {
