@@ -1,10 +1,12 @@
 <?php
 /**
- * Gemini phrases ONE follow-up question after existing NLP selects the clinical slot.
+ * Gemini adaptive follow-up: selects ONE allow-listed finding/slot and phrases it.
  *
- * Slot selection / sufficiency stay in ClinicalInterviewAdaptivePolicy + question bank.
- * Gemini does not invent the clinical agenda, does not classify triage, and does not
- * replace ClinicalTriageEngine. If Gemini is unavailable, bank templates are used.
+ * PHP (AdaptivePolicy + question bank) builds the candidate allow-list.
+ * Gemini chooses among those candidates and writes ONE atomic question.
+ * Gemini does not invent the clinical agenda outside the allow-list, does not
+ * classify triage, and does not replace ClinicalTriageEngine.
+ * If Gemini is unavailable or invalid, bank/policy fallback is used.
  *
  * For Hiligaynon/local complaints, the prompt receives BOTH the original patient text
  * and optional Ollama meaning support so wording stays faithful without dropping either.
@@ -20,6 +22,129 @@ final class ClinicalInterviewGeminiFollowUp
     public static function lastError(): string
     {
         return self::$lastError;
+    }
+
+    /**
+     * Select ONE next question from PHP allow-list candidates.
+     *
+     * @param list<array<string, mixed>> $candidates
+     * @param array<string, mixed> $context
+     * @return array{
+     *   question_id:string,
+     *   target_finding:string,
+     *   clinical_purpose:string,
+     *   red_flag_related:bool,
+     *   priority:int,
+     *   text:string,
+     *   language:string,
+     *   complaint_id:string,
+     *   source:string,
+     *   parent_question_id?:string
+     * }|null
+     */
+    public static function selectNext(array $candidates, array $context, string $transcript): ?array
+    {
+        if (!self::enabled() || $candidates === []) {
+            self::$lastError = $candidates === [] ? 'no_candidates' : 'disabled';
+
+            return null;
+        }
+        if (self::envFlag('MEDCONNECT_SKIP_GEMINI_SELECT', false)) {
+            self::$lastError = 'select_disabled';
+
+            return null;
+        }
+
+        $indexed = [];
+        foreach ($candidates as $i => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $qid = strtoupper(trim((string) ($row['question_id'] ?? '')));
+            if ($qid === '') {
+                continue;
+            }
+            $indexed[] = [
+                'index' => count($indexed),
+                'question_id' => $qid,
+                'target_finding' => strtolower(trim((string) ($row['target_finding'] ?? $qid))),
+                'clinical_purpose' => trim((string) ($row['clinical_purpose'] ?? '')),
+                'red_flag_related' => !empty($row['red_flag_related']),
+                'priority' => (int) ($row['priority'] ?? 99),
+                'parent_question_id' => strtoupper(trim((string) ($row['parent_question_id'] ?? ''))),
+                'bank_template' => trim((string) ($row['bank_template'] ?? '')),
+            ];
+        }
+        if ($indexed === []) {
+            self::$lastError = 'no_valid_candidates';
+
+            return null;
+        }
+
+        // Cap prompt size — keep highest-priority candidates.
+        $indexed = array_slice($indexed, 0, 8);
+
+        try {
+            $raw = self::complete(self::selectUserPrompt($indexed, $context, $transcript));
+            $parsed = self::parseSelectPayload($raw);
+            if ($parsed === null) {
+                self::$lastError = 'invalid_select_json: ' . mb_substr(trim($raw), 0, 160);
+
+                return null;
+            }
+
+            $pick = self::resolveSelectedCandidate($parsed, $indexed);
+            if ($pick === null) {
+                self::$lastError = 'select_not_in_allow_list';
+
+                return null;
+            }
+
+            $question = self::sanitizeQuestion((string) ($parsed['question'] ?? ''));
+            if ($question === '') {
+                // Prefer bank template wording if Gemini text was rejected.
+                $question = self::sanitizeQuestion((string) ($pick['bank_template'] ?? ''));
+            }
+            if ($question === '' || self::looksBundledOrMultiQuestion($question)) {
+                self::$lastError = 'select_question_rejected';
+
+                return null;
+            }
+            if (self::looksLikeTriageOrDiagnosis($question)) {
+                self::$lastError = 'select_triage_or_diagnosis';
+
+                return null;
+            }
+
+            $lang = strtoupper((string) ($context['question_language'] ?? 'ENGLISH'));
+            if ($lang === 'TAGALOG' || $lang === 'FILIPINO') {
+                $language = 'TAGALOG';
+            } elseif ($lang === 'HILIGAYNON' || $lang === 'ILONGGO') {
+                $language = 'HILIGAYNON';
+            } else {
+                $language = 'ENGLISH';
+            }
+
+            self::$lastError = '';
+
+            return [
+                'question_id' => (string) $pick['question_id'],
+                'target_finding' => (string) $pick['target_finding'],
+                'clinical_purpose' => (string) $pick['clinical_purpose'],
+                'red_flag_related' => !empty($pick['red_flag_related']),
+                'priority' => (int) $pick['priority'],
+                'text' => $question,
+                'language' => $language,
+                'complaint_id' => trim((string) ($parsed['complaint_id'] ?? ($context['active_complaint_id'] ?? ''))),
+                'source' => 'gemini_adaptive_select',
+                'parent_question_id' => (string) ($pick['parent_question_id'] ?? ''),
+            ];
+        } catch (Throwable $e) {
+            self::$lastError = $e->getMessage();
+            error_log('ClinicalInterviewGeminiFollowUp::selectNext: ' . $e->getMessage());
+
+            return null;
+        }
     }
 
     /**
@@ -431,5 +556,164 @@ PROMPT;
         }
 
         return !in_array(strtolower(trim((string) $raw)), ['0', 'false', 'no', 'off'], true);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $indexed
+     * @param array<string, mixed> $context
+     */
+    private static function selectUserPrompt(array $indexed, array $context, string $transcript): string
+    {
+        $lang = strtoupper((string) ($context['question_language'] ?? 'HILIGAYNON'));
+        $langLine = match ($lang) {
+            'TAGALOG', 'FILIPINO' => 'Tagalog/Filipino',
+            'ENGLISH' => 'English',
+            default => 'Hiligaynon/Ilonggo',
+        };
+        $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+        $known = '';
+        if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+            $known = ClinicalInterviewAdaptivePolicy::fullCaseHaystack($context, $transcript, $facts);
+        }
+        $whoNeeds = self::whoInformationNeeds($known);
+        $activeId = trim((string) ($context['active_complaint_id'] ?? ''));
+        $candidatesJson = json_encode($indexed, JSON_UNESCAPED_UNICODE);
+        $findingStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+
+        return "Select ONE next follow-up question for medConnect preliminary triage.\n"
+            . "Language for the spoken question: {$langLine} only.\n"
+            . "You MUST pick exactly one candidate from this allow-list (JSON):\n{$candidatesJson}\n"
+            . "Active complaint id: " . ($activeId !== '' ? $activeId : '(single)') . "\n"
+            . "Already known case (do not re-ask): " . mb_substr($known !== '' ? $known : '(none)', 0, 1200) . "\n"
+            . "Finding status map: " . json_encode($findingStatus, JSON_UNESCAPED_UNICODE) . "\n"
+            . "WHO/IITT information needs still worth clarifying (NOT a triage decision):\n"
+            . ($whoNeeds !== '' ? $whoNeeds : '(none listed)') . "\n"
+            . "Accumulated text: " . mb_substr(trim($transcript), 0, 700) . "\n\n"
+            . "Return ONLY compact JSON with keys:\n"
+            . "{\"index\":0,\"question_id\":\"...\",\"target_finding\":\"...\",\"complaint_id\":\"...\",\"question\":\"...\",\"continue_interview\":true}\n"
+            . "Rules:\n"
+            . "- index must match one allow-list item.\n"
+            . "- question_id and target_finding must match that same allow-list item.\n"
+            . "- Ask exactly ONE atomic question for that one finding only.\n"
+            . "- Never ask A or B or C in one question.\n"
+            . "- Never diagnose. Never say EMERGENCY, URGENT, or NON-URGENT.\n"
+            . "- Never invent symptoms the patient did not state.\n"
+            . "- Output JSON only.";
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function parseSelectPayload(string $raw): ?array
+    {
+        $raw = trim(str_replace("\r\n", "\n", $raw));
+        $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw) ?? $raw;
+        $raw = preg_replace('/\s*```$/', '', $raw) ?? $raw;
+        $decoded = json_decode(trim($raw), true);
+        if (!is_array($decoded) && preg_match('/\{[\s\S]*\}/', $raw, $m)) {
+            $decoded = json_decode($m[0], true);
+        }
+        if (!is_array($decoded)) {
+            return null;
+        }
+        if (!isset($decoded['question']) && isset($decoded['text'])) {
+            $decoded['question'] = $decoded['text'];
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @param array<string, mixed> $parsed
+     * @param list<array<string, mixed>> $indexed
+     * @return array<string, mixed>|null
+     */
+    private static function resolveSelectedCandidate(array $parsed, array $indexed): ?array
+    {
+        if (isset($parsed['index'])) {
+            $i = (int) $parsed['index'];
+            if (isset($indexed[$i])) {
+                return $indexed[$i];
+            }
+        }
+        $qid = strtoupper(trim((string) ($parsed['question_id'] ?? '')));
+        $finding = strtolower(trim((string) ($parsed['target_finding'] ?? '')));
+        foreach ($indexed as $row) {
+            if ($qid !== '' && $qid === (string) $row['question_id']) {
+                if ($finding === '' || $finding === (string) $row['target_finding']) {
+                    return $row;
+                }
+            }
+        }
+        foreach ($indexed as $row) {
+            if ($finding !== '' && $finding === (string) $row['target_finding']) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    private static function looksBundledOrMultiQuestion(string $text): bool
+    {
+        $low = mb_strtolower($text);
+        if (substr_count($text, '?') > 1) {
+            return true;
+        }
+        if (preg_match('/\b(or|ukon|o|at|and|kag)\b/u', $low)
+            && preg_match('/\b(vomit|fever|bleed|sweat|dizz|blood|suka|hilanat|lagnat|dugo)\b/u', $low)
+            && preg_match('/\b(vomit|fever|bleed|sweat|dizz|blood|suka|hilanat|lagnat|dugo).{0,40}\b(or|ukon|o)\b.{0,40}\b(vomit|fever|bleed|sweat|dizz|blood|suka|hilanat|lagnat|dugo)/u', $low)
+        ) {
+            return true;
+        }
+        if (preg_match('/\b(first|second|third|1\)|2\)|3\)|a\)|b\)|c\))\b/u', $low)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static function looksLikeTriageOrDiagnosis(string $text): bool
+    {
+        return (bool) preg_match(
+            '/\b(EMERGENCY|URGENT|NON-URGENT|diagnos|prescription|you have (a |an )?[a-z]{4,}\s+disease)\b/iu',
+            $text
+        );
+    }
+
+    /**
+     * WHO/IITT signs as information-need hints only (never a triage decision).
+     */
+    private static function whoInformationNeeds(string $caseHaystack): string
+    {
+        if ($caseHaystack === '' || !class_exists('WhoIittTriageRulesLoader')) {
+            return '';
+        }
+        try {
+            $lines = [];
+            foreach (WhoIittTriageRulesLoader::rules() as $rule) {
+                if (!is_array($rule)) {
+                    continue;
+                }
+                $sign = trim((string) ($rule['clinical_sign'] ?? ''));
+                $level = strtoupper((string) ($rule['triage_level'] ?? ''));
+                $id = trim((string) ($rule['rule_id'] ?? ''));
+                if ($sign === '' || $id === '') {
+                    continue;
+                }
+                // Only surface RED/YELLOW as gatherable needs; skip if text already matches pattern weakly via keyword.
+                if (!in_array($level, ['EMERGENCY', 'URGENT'], true)) {
+                    continue;
+                }
+                $lines[] = $id . ' [' . ($level === 'EMERGENCY' ? 'RED info' : 'YELLOW info') . ']: ' . $sign;
+                if (count($lines) >= 10) {
+                    break;
+                }
+            }
+
+            return implode("\n", $lines);
+        } catch (Throwable) {
+            return '';
+        }
     }
 }
