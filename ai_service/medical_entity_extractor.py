@@ -137,6 +137,14 @@ def _symptom_from_english(english: str) -> str:
 
 
 def _body_part_from_text(hil: str, english: str) -> str:
+    try:
+        from body_location_lexicon import extract_canonical
+
+        locs = extract_canonical(f"{hil} {english}")
+        if locs:
+            return locs[0]
+    except Exception:
+        pass
     mapping = {
         "itlog": "testicle", "itlug": "testicle", "bilat": "vagina", "bilad": "vagina",
         "ari": "penis", "bayag": "scrotum", "kipay": "vulva", "singit": "groin",

@@ -735,6 +735,13 @@ final class ClinicalInterviewEngine
             'patient_uncertain' => (bool) ($seed['patient_uncertain'] ?? false),
             'patient_conditional' => (bool) ($seed['patient_conditional'] ?? false),
             'clinical_state' => is_array($seed['clinical_state'] ?? null) ? $seed['clinical_state'] : [],
+            'body_location_matches' => is_array($seed['body_location_matches'] ?? null)
+                ? $seed['body_location_matches']
+                : [],
+            'body_location_verification' => is_array($seed['body_location_verification'] ?? null)
+                ? $seed['body_location_verification']
+                : [],
+            'needs_location_clarification' => (bool) ($seed['needs_location_clarification'] ?? false),
         ];
     }
 
@@ -1548,20 +1555,65 @@ final class ClinicalInterviewEngine
             $duration = trim((string) (ClinicalFeatureExtractors::extractDuration($transcript)['label'] ?? ''));
         }
         $body = self::stringList($triage['detected_body_parts'] ?? []);
-        $body = array_merge($body, ClinicalFeatureExtractors::extractBodyLocations($transcript));
+        // Multi-level: local CSV datasets FIRST; Gemini only if unresolved/low confidence.
+        $lang = '';
+        if (class_exists('HiligaynonLanguageDetector')) {
+            try {
+                $lang = strtolower((string) (HiligaynonLanguageDetector::detect($transcript)['primary'] ?? ''));
+            } catch (Throwable) {
+                $lang = '';
+            }
+        }
+        $resolved = class_exists('BodyLocationLexicon')
+            ? BodyLocationLexicon::resolveMultiLevel($transcript, $lang, [], ['body_locations' => $body])
+            : [
+                'matches' => ClinicalFeatureExtractors::extractBodyLocationDetails($transcript, $transcript),
+                'body_locations' => ClinicalFeatureExtractors::extractBodyLocations($transcript),
+                'verification_status' => 'local_dataset_match',
+                'needs_clarification' => false,
+                'not_medical' => false,
+                'gemini_called' => false,
+                'reason' => 'lexicon_unavailable',
+            ];
+        $locationMatches = is_array($resolved['matches'] ?? null) ? $resolved['matches'] : [];
+        foreach ((array) ($resolved['body_locations'] ?? []) as $c) {
+            $c = strtolower(trim((string) $c));
+            if ($c !== '' && !in_array($c, $body, true)) {
+                $body[] = $c;
+            }
+        }
+        $body = array_values(array_unique(array_filter(array_map(
+            static fn ($v) => strtolower(trim((string) $v)),
+            $body
+        ))));
+
         $onset = ClinicalFeatureExtractors::extractOnset($transcript);
         if ($onset === '' && $duration !== '') {
             $onset = ClinicalFeatureExtractors::onsetFromDuration(['label' => $duration]);
         }
 
-        return self::blankFacts([
+        $facts = self::blankFacts([
             'body_locations' => $body,
             'pain_score' => $pain['score'] ?? null,
             'pain_qualifier' => ClinicalFeatureExtractors::extractPainQualifier($transcript),
             'onset' => $onset,
             'duration_label' => $duration,
             'denied_associated' => ClinicalFeatureExtractors::deniedAssociatedSymptoms($transcript),
+            'body_location_matches' => $locationMatches,
         ]);
+        $facts['body_location_verification'] = [
+            'status' => (string) ($resolved['verification_status'] ?? ''),
+            'needs_clarification' => !empty($resolved['needs_clarification']),
+            'not_medical' => !empty($resolved['not_medical']),
+            'gemini_called' => !empty($resolved['gemini_called']),
+            'reason' => (string) ($resolved['reason'] ?? ''),
+            'original_complaint' => $transcript,
+        ];
+        if (!empty($resolved['needs_clarification'])) {
+            $facts['needs_location_clarification'] = true;
+        }
+
+        return $facts;
     }
 
     /**

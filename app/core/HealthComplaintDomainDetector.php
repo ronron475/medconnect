@@ -460,6 +460,30 @@ final class HealthComplaintDomainDetector
             }
         }
 
+        return self::enrichBodyPartSignals($hay, $signals);
+    }
+
+    /**
+     * Supplement regex body_part hits with dataset lexicon matches (Hiligaynon CSV first).
+     *
+     * @param list<array{type:string,value:string}> $signals
+     * @return list<array{type:string,value:string}>
+     */
+    private static function enrichBodyPartSignals(string $hay, array $signals): array
+    {
+        if (!class_exists('BodyLocationLexicon')) {
+            return $signals;
+        }
+        foreach (BodyLocationLexicon::extractDetailed($hay, $hay) as $row) {
+            $canonical = trim((string) ($row['canonical_body_location'] ?? ''));
+            $normalized = trim((string) ($row['normalized_term'] ?? ''));
+            $value = $normalized !== '' ? $normalized : $canonical;
+            if ($value === '' || self::signalExists($signals, 'body_part', $value)) {
+                continue;
+            }
+            $signals[] = ['type' => 'body_part', 'value' => $value];
+        }
+
         return $signals;
     }
 
