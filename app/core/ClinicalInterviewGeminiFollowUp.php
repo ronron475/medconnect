@@ -1,11 +1,13 @@
 <?php
 /**
- * Gemini writes the next patient follow-up question after existing NLP
- * decides that clinical information is insufficient, ambiguous, unclear,
- * invalid, contradictory, or missing context needed for safe triage.
+ * Gemini phrases ONE follow-up question after existing NLP selects the clinical slot.
  *
- * Gemini does not classify triage and does not replace ClinicalTriageEngine.
- * If Gemini is unavailable, ClinicalFollowUpQuestionBank templates are used.
+ * Slot selection / sufficiency stay in ClinicalInterviewAdaptivePolicy + question bank.
+ * Gemini does not invent the clinical agenda, does not classify triage, and does not
+ * replace ClinicalTriageEngine. If Gemini is unavailable, bank templates are used.
+ *
+ * For Hiligaynon/local complaints, the prompt receives BOTH the original patient text
+ * and optional Ollama meaning support so wording stays faithful without dropping either.
  */
 final class ClinicalInterviewGeminiFollowUp
 {
@@ -132,16 +134,35 @@ final class ClinicalInterviewGeminiFollowUp
             ? "If asking pain intensity, ALWAYS use a 1 to 10 scale (1=very mild, 10=worst). Never use 0–10.\n"
             : '';
 
+        $bridge = is_array($context['semantic_bridge'] ?? null) ? $context['semantic_bridge'] : [];
+        $originalComplaint = trim((string) (
+            ($bridge['original'] ?? '')
+            ?: ($context['chief_complaint'] ?? '')
+            ?: (($context['complaint_text_cleaner']['original'] ?? '') ?: '')
+        ));
+        $ollamaMeaning = trim((string) ($bridge['ollama_meaning'] ?? ''));
+        if ($ollamaMeaning !== '' && $originalComplaint !== ''
+            && mb_strtolower($ollamaMeaning) === mb_strtolower($originalComplaint)
+        ) {
+            $ollamaMeaning = '';
+        }
+
         return "Write one follow-up question a nurse would say out loud.\n"
             . "Language: {$langLine} only.\n"
-            . 'Clinical purpose: ' . trim((string) ($slot['clinical_purpose'] ?? 'clarify the complaint')) . "\n"
+            . 'Clinical purpose (chosen by existing NLP — phrase this purpose only): '
+            . trim((string) ($slot['clinical_purpose'] ?? 'clarify the complaint')) . "\n"
+            . 'Question slot id: ' . ($qid !== '' ? $qid : '(none)') . "\n"
             . $painRule
             . ($bankTemplate !== '' ? "Keep the same meaning as this template: {$bankTemplate}\n" : '')
             . 'Detected complaints: ' . ($complaints !== [] ? implode(', ', $complaints) : '(unspecified)') . "\n"
+            . 'Original patient complaint (authoritative wording; never discard): '
+            . ($originalComplaint !== '' ? mb_substr($originalComplaint, 0, 400) : '(none)') . "\n"
+            . 'Ollama/local meaning support (secondary; may be empty; do not invent beyond this): '
+            . ($ollamaMeaning !== '' ? mb_substr($ollamaMeaning, 0, 240) : '(none)') . "\n"
             . 'Already known from the COMPLETE case (do not ask again): ' . ($known !== [] ? implode('; ', $known) : '(none)') . "\n"
             . 'Prior answers: ' . ($answered !== [] ? implode(' | ', $answered) : '(none)') . "\n"
             . 'Already asked slots: ' . ($asked !== [] ? implode(', ', $asked) : '(none)') . "\n"
-            . "Patient said: " . mb_substr(trim($transcript), 0, 800) . "\n"
+            . 'Accumulated case text: ' . mb_substr(trim($transcript), 0, 800) . "\n"
             . "Reply with the question only. No preamble.";
     }
 
@@ -273,12 +294,19 @@ final class ClinicalInterviewGeminiFollowUp
     private static function systemPrompt(): string
     {
         return <<<'PROMPT'
-You write ONE follow-up question for medConnect preliminary triage.
+You phrase ONE follow-up question for medConnect preliminary triage.
 
-Existing NLP already analyzed the COMPLETE accumulated clinical case and decided that a follow-up is required because important applicable information is still missing.
+Existing NLP (adaptive policy + question bank) already chose the clinical purpose / slot.
+You only write the spoken wording for that purpose. You do NOT invent a different clinical agenda.
 You do NOT classify urgency. You do NOT diagnose. You do NOT invent symptoms, pain scores, vitals, or history.
 Do NOT ask for information already present in the case (primary complaint, prior answers, or extracted facts).
 Do NOT ask a generic fixed questionnaire. Ask only what is still unknown and clinically useful for THIS case.
+
+When both an original patient complaint and an Ollama/local meaning support are provided:
+- Treat the original patient wording as authoritative.
+- Use the Ollama meaning only as secondary understanding help.
+- Do not replace or discard the original language meaning.
+- Do not invent clinical facts that appear in neither source.
 
 CRITICAL — never assume unsupported clinical facts:
 - Do not assume pain, body location, severity, duration, associated symptoms, or risk factors unless the patient already stated them.
@@ -292,7 +320,7 @@ Rules:
 - Do not use medical jargon.
 - Do not repeat facts the patient already provided.
 - For pain intensity, always use a 1–10 scale (1=very mild, 10=worst). Never use 0–10.
-- Do not mention datasets, JSON, NLP, Gemini, or triage colors.
+- Do not mention datasets, JSON, NLP, Gemini, Ollama, or triage colors.
 - Output only the spoken question.
 PROMPT;
     }
