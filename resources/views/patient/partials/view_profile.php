@@ -6,14 +6,14 @@
 ?>
 
 <?php if (!empty($_SESSION['identity_success'])): ?>
-  <div class="mc-alert mc-alert--success" style="margin-bottom:16px;padding:12px 16px;border-radius:8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;font-size:13px;display:flex;align-items:center;gap:8px;">
+  <div class="mc-alert mc-alert--success" style="padding:12px 16px;border-radius:8px;background:#f0fdf4;border:1px solid #86efac;color:#166534;font-size:13px;display:flex;align-items:center;gap:8px;">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     <?= htmlspecialchars($_SESSION['identity_success']) ?>
   </div>
   <?php unset($_SESSION['identity_success']); ?>
 <?php endif; ?>
 <?php if (!empty($_SESSION['identity_error'])): ?>
-  <div class="mc-alert mc-alert--error" style="margin-bottom:16px;padding:12px 16px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:13px;display:flex;align-items:center;gap:8px;">
+  <div class="mc-alert mc-alert--error" style="padding:12px 16px;border-radius:8px;background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;font-size:13px;display:flex;align-items:center;gap:8px;">
     <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
     <?= htmlspecialchars($_SESSION['identity_error']) ?>
   </div>
@@ -87,7 +87,7 @@
         <?php endif; ?>
       </div>
       <?php unset($_SESSION['contact_errors']); ?>
-      <button type="submit" class="mc-btn mc-btn--primary" style="width:100%;margin-top:8px;">
+      <button type="submit" class="mc-btn mc-btn--primary profile-card-save">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Contact Details
       </button>
@@ -96,9 +96,9 @@
 
   <div class="mc-card mc-appearance-card">
     <h3 class="text-h3 mb-md">Appearance</h3>
-    <p class="text-muted" style="font-size:13px;margin-bottom:14px;">Choose how MedConnect looks on your device. System Default follows your OS light or dark setting.</p>
-    <div id="patientAppearanceAlert" class="mc-alert" style="display:none;margin-bottom:12px;"></div>
     <form id="patientAppearanceForm" class="patient-appearance-form" novalidate>
+      <p class="text-muted profile-card-hint">Choose how MedConnect looks on your device. System Default follows your OS light or dark setting.</p>
+      <div id="patientAppearanceAlert" class="mc-alert" style="display:none;margin-bottom:12px;"></div>
       <div class="form-group">
         <label class="form-label" for="patientTheme">Theme Preference</label>
         <select id="patientTheme" name="theme_preference" class="mc-theme-select">
@@ -110,7 +110,7 @@
           <?php endforeach; ?>
         </select>
       </div>
-      <button type="submit" class="mc-btn mc-btn--primary" style="width:100%;margin-top:8px;">Save Appearance</button>
+      <button type="submit" class="mc-btn mc-btn--primary profile-card-save">Save Appearance</button>
     </form>
   </div>
 
@@ -135,7 +135,7 @@
           <?php unset($_SESSION['emergency_errors']); ?>
         <?php endif; ?>
       </div>
-      <button type="submit" class="mc-btn mc-btn--primary" style="width:100%;margin-top:8px;">
+      <button type="submit" class="mc-btn mc-btn--primary profile-card-save">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align:middle;margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v14a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
         Save Emergency Contact
       </button>

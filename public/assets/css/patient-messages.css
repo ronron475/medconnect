@@ -4,13 +4,13 @@
    ========================================================================== */
 
 body.patient-portal .portal-page-body:has(.messages-page) {
-  padding-bottom: 12px;
+  padding-bottom: var(--pt-space-lg, 16px);
 }
 
 body.patient-portal .messages-page {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--pt-page-gap, 12px);
   width: 100%;
   max-width: 100%;
   margin: 0;
@@ -20,16 +20,18 @@ body.patient-portal .messages-page {
 body.patient-portal .messages-page-head {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
+  justify-content: space-between;
+  gap: var(--pt-space-md, 12px);
   min-height: 0;
+  margin: 0;
+  flex-wrap: wrap;
 }
 
 /* Inbox / Archived / All tabs */
 body.patient-portal .mc-msg-filters {
   display: flex;
-  gap: 10px;
-  margin-top: -4px;
+  gap: var(--pt-space-sm, 8px);
+  margin: 0;
 }
 body.patient-portal .mc-msg-filter {
   display: inline-flex;
@@ -75,7 +77,7 @@ body.patient-portal .messages-shell {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  height: calc(100vh - var(--mc-header-offset, 64px) - 56px);
+  height: calc(100vh - var(--mc-header-offset, 64px) - 48px);
   min-height: 520px;
   background: #fff;
   border: 1px solid #e2e8f0;
@@ -147,7 +149,7 @@ body.patient-portal .msg-list {
 }
 
 body.patient-portal .msg-list-empty {
-  padding: 16px;
+  padding: var(--pt-space-xl, 20px) var(--pt-card-pad, 14px);
   color: #64748b;
   font-size: 13px;
   font-weight: 600;

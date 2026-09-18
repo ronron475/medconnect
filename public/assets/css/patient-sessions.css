@@ -5,11 +5,14 @@
 .psess-page {
   max-width: 100%;
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pt-page-gap, 12px);
 }
 
 .psess-lead {
-  margin: -4px 0 16px;
-  font-size: 1.02rem;
+  margin: 0;
+  font-size: var(--pt-font-helper, 0.75rem);
   color: #475569;
   line-height: 1.55;
   max-width: 62ch;
@@ -28,20 +31,21 @@
 /* Two-column layout */
 .psess-layout {
   grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
-  gap: 16px;
+  gap: var(--pt-space-lg, 16px);
+  margin: 0;
 }
 
 .psess-main {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: var(--pt-page-gap, 12px);
   min-width: 0;
 }
 
 .psess-side {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--pt-card-gap, 12px);
   position: sticky;
   top: 16px;
 }
@@ -50,13 +54,14 @@
 .psess-related {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 1px 3px rgba(2, 128, 144, 0.05);
+  border-radius: var(--pt-card-radius, 10px);
+  padding: var(--pt-card-pad, 14px);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
+  margin: 0;
 }
 
 .psess-related__title {
-  margin: 0 0 12px;
+  margin: 0 0 var(--pt-space-md, 12px);
   font-size: 0.88rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -67,7 +72,7 @@
 .psess-related__nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--pt-space-sm, 8px);
 }
 
 .psess-related__link {
@@ -176,10 +181,10 @@
 .psess-live-banner {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  margin-bottom: 16px;
-  border-radius: 12px;
+  gap: var(--pt-space-md, 12px);
+  padding: var(--pt-card-pad, 14px);
+  margin-bottom: 0;
+  border-radius: var(--pt-card-radius, 10px);
   border: 1px solid #fde68a;
   background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
 }
@@ -309,17 +314,17 @@
 
 /* Metrics */
 .psess-metrics {
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: var(--pt-stat-gap, 16px);
+  margin-bottom: 0;
 }
 
 .psess-metric {
-  padding: 12px;
+  padding: var(--pt-space-md, 12px) var(--pt-space-sm, 8px);
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: var(--pt-card-radius, 10px);
   text-align: center;
-  box-shadow: 0 1px 2px rgba(2, 128, 144, 0.05);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
 }
 
 .psess-metric--accent {
@@ -348,8 +353,8 @@
 /* Tabs */
 .psess-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: var(--pt-space-sm, 8px);
+  margin-bottom: 0;
 }
 
 .psess-tab {
@@ -388,7 +393,7 @@
 .psess-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--pt-card-gap, 12px);
   min-height: 80px;
 }
 
@@ -397,12 +402,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 18px;
-  gap: 14px;
+  padding: var(--pt-card-pad, 14px) var(--pt-space-lg, 16px);
+  gap: var(--pt-space-md, 12px);
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  box-shadow: 0 1px 3px rgba(2, 128, 144, 0.06);
+  border-radius: var(--pt-card-radius, 10px);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
@@ -629,10 +634,10 @@
 /* Empty state */
 .psess-empty {
   text-align: center;
-  padding: 36px 24px;
+  padding: var(--pt-space-xl, 20px) var(--pt-space-lg, 16px);
   background: #fff;
   border: 1px dashed #cbd5e1;
-  border-radius: 14px;
+  border-radius: var(--pt-card-radius, 10px);
   color: #64748b;
 }
 

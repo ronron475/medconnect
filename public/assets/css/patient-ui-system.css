@@ -81,19 +81,44 @@ body.patient-portal .pdash-page,
 body.patient-portal .psess-page,
 body.patient-portal .pmh-page,
 body.patient-portal .patient-settings-page,
-body.patient-portal .patient-health-summary-page {
+body.patient-portal .patient-health-summary-page,
+body.patient-portal .messages-page {
   display: flex;
   flex-direction: column;
   gap: var(--pt-page-gap);
 }
 
-/* Lead text — tight */
+/* Utility margins inside flex pages must not stack with page gap */
+body.patient-portal .patient-page > .mb-md,
+body.patient-portal .patient-page > .mc-card.mb-md,
+body.patient-portal .psess-page > .mb-md,
+body.patient-portal .patient-health-summary-page > .mb-md,
+body.patient-portal .patient-settings-page > .mb-md {
+  margin-bottom: 0;
+}
+
+body.patient-portal .patient-page > .mc-card,
+body.patient-portal .patient-page > .profile-grid,
+body.patient-portal .patient-page > .mc-alert {
+  margin-bottom: 0;
+}
+
+/* Identity / form cards use shared card pad */
+body.patient-portal .patient-page .mc-card {
+  padding: var(--pt-card-pad);
+}
+
+body.patient-portal .patient-page .text-h3.mb-md {
+  margin-bottom: var(--pt-space-md);
+}
+
+/* Lead text — page flex gap owns spacing below */
 body.patient-portal .pdash-lead,
 body.patient-portal .psess-lead,
 body.patient-portal .pmh-lead,
 body.patient-portal .pts-lead,
 body.patient-portal .phs-hero__sub {
-  margin: 0 0 var(--pt-space-md);
+  margin: 0;
   font-size: var(--pt-font-helper);
   color: var(--pt-color-muted);
   line-height: var(--pt-lh-body);
@@ -136,7 +161,7 @@ body.patient-portal .pts-layout {
 
 body.patient-portal .pts-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
   gap: var(--pt-space-lg);
   align-items: start;
 }
@@ -623,7 +648,9 @@ body.patient-portal .pdash-page > *,
 body.patient-portal .psess-page > *,
 body.patient-portal .pmh-page > *,
 body.patient-portal .patient-settings-page > *,
-body.patient-portal .patient-health-summary-page > * {
+body.patient-portal .patient-health-summary-page > *,
+body.patient-portal .patient-page > *,
+body.patient-portal .messages-page > * {
   margin-top: 0;
 }
 
@@ -637,7 +664,17 @@ body.patient-portal .pdash-page > #pdashPrimaryCard,
 body.patient-portal .pdash-main > .pdash-card,
 body.patient-portal .pdash-side > .pdash-card,
 body.patient-portal .psess-main > .psess-card,
-body.patient-portal .psess-side > .psess-card {
+body.patient-portal .psess-side > .psess-card,
+body.patient-portal .psess-page > .psess-metrics,
+body.patient-portal .psess-page > .psess-tabs,
+body.patient-portal .psess-page > .psess-layout,
+body.patient-portal .psess-page > .psess-lead,
+body.patient-portal .psess-main > .psess-metrics,
+body.patient-portal .psess-main > .psess-tabs,
+body.patient-portal .patient-settings-page .pts-card,
+body.patient-portal .patient-settings-page .pts-stats,
+body.patient-portal .patient-health-summary-page > .phs-panel,
+body.patient-portal .patient-health-summary-page > .phs-hero {
   margin-bottom: 0;
 }
 
