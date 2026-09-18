@@ -26,3 +26,6 @@ putenv('MEDCONNECT_AI_INTERPRETER=0');
 $_ENV['MEDCONNECT_AI_INTERPRETER'] = '0';
 putenv('MEDCONNECT_SKIP_ML_LAYER=1');
 $_ENV['MEDCONNECT_SKIP_ML_LAYER'] = '1';
+// CLI probes stay deterministic/fast; web path may still enrich when Python is up.
+putenv('MEDCONNECT_CLINICAL_PYTHON_ENRICH=0');
+$_ENV['MEDCONNECT_CLINICAL_PYTHON_ENRICH'] = '0';
