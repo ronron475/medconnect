@@ -455,6 +455,9 @@ final class ClinicalInterviewAdaptivePolicy
         if (self::locationIsMaterial($concepts, $facts) && $locs === []) {
             $gaps['location'] = true;
         }
+        if (!empty($facts['needs_location_clarification'])) {
+            $gaps['location'] = true;
+        }
         if (!$hasTiming && self::timingIsMaterial($concepts, $facts)) {
             $gaps['timing'] = true;
         }

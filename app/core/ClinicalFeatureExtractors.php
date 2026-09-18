@@ -473,32 +473,44 @@ final class ClinicalFeatureExtractors
         return null;
     }
 
-    /** @return list<string> */
+    /**
+     * Dataset-driven body locations (body_parts.csv + pain aliases + training compact).
+     * Preserves patient wording elsewhere; this returns canonical English sites only.
+     *
+     * @return list<string>
+     */
     public static function extractBodyLocations(string $text): array
     {
-        $low = strtolower($text);
-        if ($low === '') {
+        if (trim($text) === '') {
             return [];
         }
-        $map = [
-            'ulo' => 'head', 'head' => 'head', 'headache' => 'head',
-            'dughan' => 'chest', 'dibdib' => 'chest', 'chest' => 'chest',
-            'tiyan' => 'abdomen', 'abdomen' => 'abdomen', 'stomach' => 'abdomen', 'belly' => 'abdomen',
-            'ilong' => 'nose', 'nose' => 'nose',
-            'kamot' => 'hand', 'kamay' => 'hand', 'hand' => 'hand',
-            'tiil' => 'leg', 'paa' => 'leg', 'leg' => 'leg',
-            'likod' => 'back', 'back' => 'back',
-            'liog' => 'neck', 'leeg' => 'neck', 'neck' => 'neck',
-            'mata' => 'eye', 'eye' => 'eye',
-        ];
-        $found = [];
-        foreach ($map as $term => $canonical) {
-            if (preg_match('/\b' . preg_quote($term, '/') . '\b/u', $low) && !in_array($canonical, $found, true)) {
-                $found[] = $canonical;
-            }
+        if (class_exists('BodyLocationLexicon')) {
+            return BodyLocationLexicon::extractCanonical($text);
         }
 
-        return $found;
+        return [];
+    }
+
+    /**
+     * @return list<array{
+     *   original_term:string,
+     *   normalized_term:string,
+     *   canonical_body_location:string,
+     *   anatomical_region:string,
+     *   confidence:float,
+     *   source:string
+     * }>
+     */
+    public static function extractBodyLocationDetails(string $text, string $originalText = ''): array
+    {
+        if (trim($text) === '') {
+            return [];
+        }
+        if (class_exists('BodyLocationLexicon')) {
+            return BodyLocationLexicon::extractDetailed($text, $originalText !== '' ? $originalText : $text);
+        }
+
+        return [];
     }
 
     public static function deniedAssociatedSymptoms(string $text): bool
@@ -582,10 +594,7 @@ final class ClinicalFeatureExtractors
 
         // Universal: short health-related utterance without a specific clinical anchor is vague.
         // Driven by domain evidence + absence of site/symptom anchors — not fixed example phrases.
-        $hasBodyPart = (bool) preg_match(
-            '/\b(ulo|olo|head|tiyan|stomach|belly|abdomen|dughan|dibdib|chest|ilong|nose|mata|eye|likod|back|liog|neck|kamot|hand|tiil|leg|lawas|body|throat|tungol)\b/u',
-            $low
-        );
+        $hasBodyPart = ClinicalFeatureExtractors::extractBodyLocations($low) !== [];
         if ($hasBodyPart) {
             return false;
         }

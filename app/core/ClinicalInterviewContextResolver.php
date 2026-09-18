@@ -38,10 +38,7 @@ final class ClinicalInterviewContextResolver
 
         $hasPainToken = (bool) preg_match('/\b(sakit|masakit|pain|hurts|hapdi|discomfort)\b/u', mb_strtolower($transcript));
         $hasLocation = ($facts['body_locations'] ?? []) !== []
-            || (bool) preg_match(
-                '/\b(ulo|head|dughan|dibdib|chest|tiyan|ilong|nose|kamot|hand|tiil|leg|likod|back|liog|neck)\b/u',
-                mb_strtolower($transcript)
-            );
+            || ClinicalFeatureExtractors::extractBodyLocations($transcript) !== [];
 
         foreach ((array) ($config['fallback_complaints'] ?? []) as $row) {
             if (!is_array($row)) {

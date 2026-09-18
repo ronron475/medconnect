@@ -85,8 +85,17 @@ final class BodyPartsDataset
                 }
             }
         }
+        if (isset(self::$termSet[$key])) {
+            return true;
+        }
+        if (class_exists('BodyLocationLexicon')) {
+            $aliases = BodyLocationLexicon::knownAliasSet();
+            if (isset($aliases[$key])) {
+                return true;
+            }
+        }
 
-        return isset(self::$termSet[$key]);
+        return false;
     }
 
     public static function isEnglishBodyPart(string $term): bool
