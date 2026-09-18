@@ -126,7 +126,6 @@
       "complaint_id": "GENERAL_UNWELL",
       "label": "Unwell",
       "family_key": "general_unwell",
-      "requires_vague_complaint": true,
       "requires_no_pain_token": true,
       "requires_no_matched_complaint": true
     },

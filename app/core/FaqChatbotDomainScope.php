@@ -543,6 +543,8 @@ final class FaqChatbotDomainScope
             'pamatyag', 'first aid', 'self-care', 'nauseous', 'swollen', 'bleeding', 'hilanat', 'dughan', 'ginhawa',
             'triage', 'clinic', 'appointment', 'prescription', 'reseta', 'checkup', 'konsulta',
             'gapula', 'gakatol', 'gahabok', 'gahubag', 'ginaubo', 'ginasuka', 'hubag', 'katol', 'habok',
+            // General illness-state language (not site-specific) — still health-related, often vague.
+            'sick', 'unwell', 'ill', 'poorly', 'masama', 'lain',
         ];
         $hits = 0;
         foreach ($cues as $cue) {

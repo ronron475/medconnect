@@ -47,6 +47,23 @@ final class ClinicalInterviewEngine
                 if ($originalForDisplay === '') {
                     $originalForDisplay = $originalTurnForLanguage;
                 }
+
+                // Optional Hiligaynon meaning support (Ollama/local first). Never replaces original text.
+                $ollamaBridge = self::maybeHiligaynonMeaningBridge($originalForDisplay, (string) ($semantic['detected_language'] ?? ''));
+                if ($ollamaBridge !== []) {
+                    $bridgeMeaning = trim((string) ($ollamaBridge['english_interpretation'] ?? ''));
+                    $geminiConcept = trim((string) ($semantic['gemini_medical_concept'] ?? ''));
+                    if ($bridgeMeaning !== '' && $geminiConcept === '' && $nlpText !== '') {
+                        // Enrich NLP copy only; patient-facing chief complaint stays original.
+                        if (mb_stripos($nlpText, $bridgeMeaning) === false) {
+                            $nlpText = trim($nlpText . '. ' . $bridgeMeaning);
+                        }
+                    } elseif ($bridgeMeaning !== '' && $nlpText === $originalForDisplay) {
+                        $nlpText = trim($originalForDisplay . '. ' . $bridgeMeaning);
+                    }
+                    $semantic['ollama_bridge'] = $ollamaBridge;
+                }
+
                 if ($nlpText !== '') {
                     $turn = $nlpText;
                     $context['complaint_text_cleaner'] = [
@@ -58,8 +75,11 @@ final class ClinicalInterviewEngine
                     $context['semantic_bridge'] = [
                         'source' => (string) ($semantic['combine_reason'] ?? ''),
                         'gemini_concept' => (string) ($semantic['gemini_medical_concept'] ?? ''),
+                        'ollama_meaning' => (string) (($ollamaBridge['english_interpretation'] ?? '') ?: ''),
                         'nlp_text' => $nlpText,
                         'original' => $originalForDisplay,
+                        'domain_label' => (string) ($semantic['domain_label'] ?? ''),
+                        'clinically_vague' => !empty($semantic['clinically_vague']),
                     ];
                     if ($context['chief_complaint'] === '' && $originalForDisplay !== '') {
                         $context['chief_complaint'] = $originalForDisplay;
@@ -519,6 +539,10 @@ final class ClinicalInterviewEngine
         $bridgeConcept = trim((string) (($context['semantic_bridge']['gemini_concept'] ?? '') ?: ''));
         if ($bridgeConcept !== '') {
             $parts[] = $bridgeConcept;
+        }
+        $ollamaMeaning = trim((string) (($context['semantic_bridge']['ollama_meaning'] ?? '') ?: ''));
+        if ($ollamaMeaning !== '' && mb_stripos(implode(' ', $parts), $ollamaMeaning) === false) {
+            $parts[] = $ollamaMeaning;
         }
 
         return trim(implode('. ', array_values(array_unique($parts))));
@@ -1632,7 +1656,11 @@ final class ClinicalInterviewEngine
 
         $families = self::familyKeys($context['chief_complaints'], $transcript, $context['facts']);
         if ($families === []) {
-            $families = ['pain_unspecified'];
+            $hasPainToken = (bool) preg_match(
+                '/\b(sakit|masakit|pain|hurts|hapdi|discomfort|kasakit|gasakit)\b/u',
+                mb_strtolower($transcript)
+            );
+            $families = [$hasPainToken ? 'pain_unspecified' : 'general_unwell'];
         }
         $asked = array_map('strtoupper', $context['questions_asked']);
         $facts = $context['facts'];
@@ -2269,10 +2297,14 @@ final class ClinicalInterviewEngine
      */
     private static function wrapNeedsValidComplaint(array $semantic, string $utterance): array
     {
+        $domainLabel = (string) ($semantic['domain_label'] ?? ComplaintSemanticValidator::DOMAIN_NON_HEALTH);
         $message = trim((string) ($semantic['patient_message'] ?? ''));
         if ($message === '') {
             $message = class_exists('ComplaintSemanticValidator')
-                ? ComplaintSemanticValidator::clarificationMessage((string) ($semantic['detected_language'] ?? 'english'))
+                ? ComplaintSemanticValidator::patientGateMessage(
+                    (string) ($semantic['detected_language'] ?? 'english'),
+                    $domainLabel
+                )
                 : 'Please describe a health concern or symptom you are experiencing so we can continue.';
         }
 
@@ -2282,6 +2314,8 @@ final class ClinicalInterviewEngine
             'followup_question' => null,
             'patient_message' => $message,
             'needs_valid_complaint' => true,
+            'needs_clarification' => $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR,
+            'domain_label' => $domainLabel,
             'domain_skipped' => true,
             'domain_detection' => is_array($semantic['php_domain'] ?? null) ? $semantic['php_domain'] : ($semantic['domain_detection'] ?? []),
             'semantic_validation' => $semantic,
@@ -2297,15 +2331,72 @@ final class ClinicalInterviewEngine
                 'reason' => (string) ($semantic['combine_reason'] ?? 'Invalid medical input'),
                 'clinical_reasoning' => 'No clinical triage — input failed semantic medical-complaint validation.',
                 'needs_valid_complaint' => true,
+                'domain_label' => $domainLabel,
                 'domain_skipped' => true,
             ],
             'interview' => [
                 'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
                 'needs_valid_complaint' => true,
+                'needs_clarification' => $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR,
+                'domain_label' => $domainLabel,
                 'domain_skipped' => true,
             ],
             'engine' => 'clinical-interview-semantic-gate',
             'engine_version' => MedicalAssessmentEngine::VERSION,
         ];
+    }
+
+    /**
+     * Optional Ollama/local Hiligaynon meaning support. Fails soft to existing NLP.
+     * Never replaces the original patient wording and never sets triage class.
+     *
+     * @return array<string, mixed>
+     */
+    private static function maybeHiligaynonMeaningBridge(string $originalText, string $detectedLanguage): array
+    {
+        $originalText = trim($originalText);
+        if ($originalText === '' || !class_exists('MedicalAiInterpreter')) {
+            return [];
+        }
+        $lang = strtolower(trim($detectedLanguage));
+        $looksLocal = in_array($lang, ['hiligaynon', 'ilonggo', 'tagalog', 'filipino', 'mixed'], true);
+        if (!$looksLocal && class_exists('HiligaynonLanguageDetector')) {
+            try {
+                $detected = HiligaynonLanguageDetector::detect($originalText);
+                $primary = strtolower((string) ($detected['primary'] ?? ''));
+                $looksLocal = in_array($primary, ['hiligaynon', 'ilonggo', 'tagalog', 'filipino'], true)
+                    || !empty($detected['is_mixed']);
+            } catch (Throwable) {
+                $looksLocal = false;
+            }
+        }
+        if (!$looksLocal) {
+            return [];
+        }
+
+        try {
+            $result = MedicalAiInterpreter::interpretComplaintMeaning($originalText);
+            if (($result['status'] ?? '') !== 'complete') {
+                return [];
+            }
+            $meaning = trim((string) ($result['english_interpretation'] ?? ''));
+            if ($meaning === '' || mb_strlen($meaning) > 180) {
+                return [];
+            }
+            if (preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|diagnos|prescription)\b/iu', $meaning)) {
+                return [];
+            }
+
+            return [
+                'english_interpretation' => $meaning,
+                'provider' => (string) ($result['provider'] ?? ''),
+                'confidence_score' => (int) ($result['confidence_score'] ?? 0),
+                'concepts' => is_array($result['concepts'] ?? null) ? $result['concepts'] : [],
+            ];
+        } catch (Throwable $e) {
+            error_log('Hiligaynon meaning bridge fallback: ' . $e->getMessage());
+
+            return [];
+        }
     }
 }

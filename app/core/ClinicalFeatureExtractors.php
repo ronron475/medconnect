@@ -561,40 +561,44 @@ final class ClinicalFeatureExtractors
         if ($low === '') {
             return true;
         }
-        $genericExact = [
-            'sakit', 'masakit', 'pain', 'hurts', 'hurt', 'it hurts', 'something hurts',
-            'may sakit ako', 'indi ko maayo', 'indi ko maayo ang lawas ko',
-            'masama pakiramdam ko', 'i dont feel well', 'i don t feel well',
-            'not feeling well', 'lain lawas ko', 'may nararamdaman ako',
-            'masakit gid', 'something is wrong',
-        ];
-        if (in_array($low, $genericExact, true)) {
-            return true;
-        }
-        if (preg_match('/^(sakit|masakit|pain|hurts?|discomfort)( gid| lang| ko| ako)?$/u', $low)) {
-            return true;
-        }
-        if (preg_match('/\bi don\'t feel well\b|\bnot feeling well\b|\bindi maayo\b|\bhindi maganda (ang )?pakiramdam\b|\bsomething is wrong\b|\blain lawas\b/u', $low)
-            && !preg_match('/(ulo|dughan|dibdib|tiyan|ilong|chest|head|fever|lagnat|dugo|ginhawa|breath)/u', $low)
-        ) {
-            return true;
-        }
-        if (preg_match('/(fever|lagnat|hilanat|cough|ubo|sip-?on|chest|dughan|dibdib|breath|ginhawa|hinga|blood|dugo|suka|vomit|headache|ulo|tiyan|abdomen|ilong|nose|nause)/u', $low)) {
+
+        // Specific clinical anchors (symptom site / named presentation) → not vague.
+        if (preg_match('/(fever|lagnat|hilanat|cough|ubo|sip-?on|chest|dughan|dibdib|breath|ginhawa|hinga|blood|dugo|suka|vomit|headache|ulo|tiyan|abdomen|ilong|nose|nause|rash|hubag|dizzy|hilo|diarrhea|sipon)/u', $low)) {
             return false;
         }
-        // Random letters / nonsense are NOT "vague pain" — they must not enter triage.
+
+        // Random letters / nonsense are NOT "vague" — they must not enter triage.
         if (class_exists('FaqChatbotDomainScope')
             && (FaqChatbotDomainScope::looksUnclear($text) || FaqChatbotDomainScope::isLikelyNonsenseOrPrank($text))
             && !FaqChatbotDomainScope::isHealthcareRelated($text)
         ) {
             return false;
         }
+
         $words = preg_split('/\s+/u', $low) ?: [];
-        if (count($words) > 3) {
+        if (count($words) > 6) {
             return false;
         }
-        // Short text is "vague" only when it has a minimal health cue (pain/illness language).
-        return (bool) preg_match('/\b(sakit|masakit|pain|hurt|discomfort|lain|feel|bati|symptom|masakit)\b/u', $low);
+
+        // Universal: short health-related utterance without a specific clinical anchor is vague.
+        // Driven by domain evidence + absence of site/symptom anchors — not fixed example phrases.
+        $hasBodyPart = (bool) preg_match(
+            '/\b(ulo|olo|head|tiyan|stomach|belly|abdomen|dughan|dibdib|chest|ilong|nose|mata|eye|likod|back|liog|neck|kamot|hand|tiil|leg|lawas|body|throat|tungol)\b/u',
+            $low
+        );
+        if ($hasBodyPart) {
+            return false;
+        }
+
+        if (class_exists('FaqChatbotDomainScope') && FaqChatbotDomainScope::isHealthcareRelated($text)) {
+            return true;
+        }
+
+        // General illness / discomfort language without a named site or specific symptom.
+        return (bool) preg_match(
+            '/\b(sakit|masakit|pain|hurt|hurts|discomfort|lain|feel|feeling|bati|pamatyag|symptom|unwell|ill|sick|poorly|masama|maayo|weak|weird|strange|wrong)\b/u',
+            $low
+        );
     }
 
     /** Complaint text NLP cannot parse into a safe clinical picture. */
