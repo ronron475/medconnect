@@ -303,7 +303,7 @@ final class ClinicalInterviewAdaptivePolicy
     {
         if (array_intersect($concepts, [
             'pain', 'pain_unspecified', 'pain_no_location', 'headache', 'chest_pain',
-            'abdominal_pain', 'nose_pain', 'eye', 'eye_pain',
+            'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'dental_pain',
         ]) !== []) {
             return true;
         }

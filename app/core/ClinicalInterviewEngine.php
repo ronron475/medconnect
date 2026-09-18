@@ -9,6 +9,9 @@
  * clinical purpose; Gemini only phrases that one question (with bank fallback).
  * Optional Ollama meaning support enriches understanding for Hiligaynon/local
  * text but never replaces the original complaint or sets triage class.
+ *
+ * Multi-complaint: facts/Q&A stay per track; final urgency always comes from
+ * ClinicalTriageEngine on the COMPLETE accumulated case (never MAX of tracks).
  */
 
 final class ClinicalInterviewEngine
@@ -218,6 +221,10 @@ final class ClinicalInterviewEngine
         $context['facts'] = self::mergeFacts($context['facts'], $nlpFacts);
         $context = self::absorbAssessmentIntoCase($context, $assessment, $raw);
         $context['chief_complaints'] = ClinicalInterviewContextResolver::deriveComplaints($assessment, $clinicalText, $context['facts']);
+        if (class_exists('ClinicalInterviewMultiComplaint')) {
+            $context = ClinicalInterviewMultiComplaint::syncTracks($context, $assessment, $clinicalText);
+            $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
+        }
         $context['matched_dataset_entries'] = array_values(array_unique(array_filter(array_map(
             'strval',
             array_merge(
@@ -239,27 +246,71 @@ final class ClinicalInterviewEngine
             );
             $context['facts'] = self::mergeFacts($context['facts'], self::factsFromAssessment($assessment, $clinicalText));
             $context = self::absorbAssessmentIntoCase($context, $assessment, $raw);
+            if (class_exists('ClinicalInterviewMultiComplaint')) {
+                $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
+            }
         }
 
         $redFlags = self::redFlagNames($assessment);
         $trueEmergency = $redFlags !== [];
 
         if ($trueEmergency) {
+            // Emergency finalize from COMPLETE case through ClinicalTriageEngine (not MAX of tracks).
+            if (class_exists('ClinicalInterviewMultiComplaint')) {
+                $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
+                $caseText = ClinicalInterviewMultiComplaint::completeCaseHaystack(
+                    $context,
+                    self::clinicalTranscript($context)
+                );
+                if ($caseText !== '') {
+                    $raw = ClinicalTriageEngine::assess($caseText, $caseText);
+                    $assessment = self::assessmentFromEngine(
+                        $raw,
+                        $transcript,
+                        (string) ($raw['english_translation'] ?? $transcript),
+                        $checkboxSymptoms
+                    );
+                }
+                $context['complaint_provisionals'] = ClinicalInterviewMultiComplaint::provisionalTrackAssessments($context);
+                $context = ClinicalInterviewMultiComplaint::markTracksCompleted($context);
+            }
+
             return self::finalize($assessment, $context, 'EMERGENCY', $transcript);
         }
 
         $missing = null;
         if (self::needsFollowUpQuestion($assessment, $context, $clinicalText, $raw)) {
+            if (class_exists('ClinicalInterviewMultiComplaint')) {
+                $context = ClinicalInterviewMultiComplaint::prepareForNextQuestion($context, $assessment, $clinicalText);
+            }
             $missing = self::nextQuestion($context, $clinicalText, $assessment);
         }
-        $askedCount = count($context['questions_asked']);
+        $askedCount = count((array) ($context['_questions_asked_union'] ?? $context['questions_asked'] ?? []));
+        if ($askedCount === 0) {
+            $askedCount = count($context['questions_asked']);
+        }
+        $trackCount = count((array) ($context['complaints'] ?? []));
+        $maxQuestions = $trackCount > 1
+            ? min(12, self::MAX_QUESTIONS * $trackCount)
+            : self::MAX_QUESTIONS;
         $factsNow = is_array($context['facts'] ?? null) ? $context['facts'] : [];
         $mustKeepInterviewing = !empty($factsNow['needs_associated_detail'])
             || (($factsNow['has_other_symptoms'] ?? null) === true
                 && self::stringList($factsNow['associated_symptoms'] ?? []) === []
                 && empty($factsNow['denied_associated']));
         // Cap question count, but never finalize while a confirmed associated symptom is unnamed.
-        $sufficient = ($missing === null || $askedCount >= self::MAX_QUESTIONS) && !$mustKeepInterviewing;
+        $sufficient = ($missing === null || $askedCount >= $maxQuestions) && !$mustKeepInterviewing;
+        if (class_exists('ClinicalInterviewMultiComplaint')
+            && count((array) ($context['complaints'] ?? [])) > 1
+            && $sufficient
+            && !ClinicalInterviewMultiComplaint::allTracksSufficient($context, $clinicalText, $assessment)
+        ) {
+            $sufficient = false;
+            if ($missing === null) {
+                $context = ClinicalInterviewMultiComplaint::prepareForNextQuestion($context, $assessment, $clinicalText);
+                $missing = self::nextQuestion($context, $clinicalText, $assessment);
+            }
+        }
         if ($mustKeepInterviewing && $missing === null) {
             $missing = self::nextQuestion($context, $clinicalText, $assessment);
             if ($missing === null && class_exists('ClinicalFollowUpQuestionBank')) {
@@ -284,11 +335,46 @@ final class ClinicalInterviewEngine
             if ($qid !== '' && !in_array($qid, $context['questions_asked'], true)) {
                 $context['questions_asked'][] = $qid;
             }
+            // Keep a union for the global question cap across multi-complaint tracks.
+            $union = array_values(array_unique(array_filter(array_map(
+                'strval',
+                array_merge(
+                    (array) ($context['_questions_asked_union'] ?? []),
+                    (array) ($context['questions_asked'] ?? [])
+                )
+            ))));
+            $context['_questions_asked_union'] = $union;
             $context['awaiting_question_id'] = $qid;
-            $context['questions_already_asked'] = $context['questions_asked'];
+            $context['questions_already_asked'] = $union;
             $context['assessment_status'] = self::STATUS_IN_PROGRESS;
+            if (class_exists('ClinicalInterviewMultiComplaint')) {
+                $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
+                // Public interview should expose the union of asked slots.
+                $context['questions_asked'] = $union;
+            }
 
             return self::wrapInProgress($assessment, $context, $missing, $transcript);
+        }
+
+        // Sufficient: final class from COMPLETE-CASE ClinicalTriageEngine only (never MAX of tracks).
+        if (class_exists('ClinicalInterviewMultiComplaint')) {
+            $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
+            $caseText = ClinicalInterviewMultiComplaint::completeCaseHaystack(
+                $context,
+                self::clinicalTranscript($context)
+            );
+            if ($caseText === '') {
+                $caseText = self::clinicalContextText($context, self::clinicalTranscript($context));
+            }
+            $raw = ClinicalTriageEngine::assess($caseText, $caseText);
+            $assessment = self::assessmentFromEngine(
+                $raw,
+                $transcript,
+                (string) ($raw['english_translation'] ?? $transcript),
+                $checkboxSymptoms
+            );
+            $context['complaint_provisionals'] = ClinicalInterviewMultiComplaint::provisionalTrackAssessments($context);
+            $context = ClinicalInterviewMultiComplaint::markTracksCompleted($context);
         }
 
         $display = self::finalDisplayFromAssessment($assessment);
@@ -439,6 +525,8 @@ final class ClinicalInterviewEngine
             'assessment_status' => strtoupper((string) ($raw['assessment_status'] ?? self::STATUS_IN_PROGRESS)),
             'semantic_bridge' => is_array($raw['semantic_bridge'] ?? null) ? $raw['semantic_bridge'] : [],
             'complaint_text_cleaner' => is_array($raw['complaint_text_cleaner'] ?? null) ? $raw['complaint_text_cleaner'] : [],
+            'complaints' => is_array($raw['complaints'] ?? null) ? $raw['complaints'] : [],
+            'active_complaint_id' => (string) ($raw['active_complaint_id'] ?? ''),
         ];
     }
 
@@ -535,6 +623,14 @@ final class ClinicalInterviewEngine
         $factsHaystack = self::factsHaystack(is_array($context['facts'] ?? null) ? $context['facts'] : []);
         if ($factsHaystack !== '') {
             $parts[] = $factsHaystack;
+        }
+        if (class_exists('ClinicalInterviewMultiComplaint')) {
+            foreach (ClinicalInterviewMultiComplaint::multiFactsHaystackParts($context) as $chunk) {
+                $chunk = trim((string) $chunk);
+                if ($chunk !== '') {
+                    $parts[] = $chunk;
+                }
+            }
         }
         // Include Gemini lexical bridge concept so existing dataset NLP can match
         // without replacing the patient's original complaint wording.
@@ -1492,8 +1588,13 @@ final class ClinicalInterviewEngine
         }
 
         // Adaptive policy is the authority for "enough for triage?".
-        // Never finalize via confidence shortcuts while adaptive says incomplete.
+        // Multi-complaint: every track must be sufficient (facts stay isolated).
         try {
+            if (class_exists('ClinicalInterviewMultiComplaint')
+                && count((array) ($context['complaints'] ?? [])) > 1
+            ) {
+                return ClinicalInterviewMultiComplaint::allTracksSufficient($context, $transcript, $assessment);
+            }
             if (class_exists('ClinicalInterviewAdaptivePolicy')) {
                 $adaptiveReady = ClinicalInterviewAdaptivePolicy::isTriageSufficient($context, $transcript, $assessment);
                 if (!$adaptiveReady) {
@@ -2185,6 +2286,17 @@ final class ClinicalInterviewEngine
         $assessment['db_level'] = $assessment['triage']['db_level'];
         $assessment['urgency_label'] = $assessment['triage']['urgency_label'];
 
+        // Explicit authority: complete-case ClinicalTriageEngine decides final class.
+        // Per-complaint provisionals are supporting metadata only (never MAX-aggregated).
+        $assessment['triage']['final_authority'] = 'ClinicalTriageEngine';
+        $assessment['triage']['final_authority_scope'] = 'complete_accumulated_case';
+        $assessment['triage']['max_urgency_aggregation'] = false;
+        $provisionals = is_array($context['complaint_provisionals'] ?? null)
+            ? $context['complaint_provisionals']
+            : [];
+        $assessment['triage']['complaint_provisionals'] = $provisionals;
+        $assessment['complaint_provisionals'] = $provisionals;
+
         return $assessment;
     }
 
@@ -2203,6 +2315,11 @@ final class ClinicalInterviewEngine
                 ? 'TAGALOG'
                 : ($context['question_language'] === 'english' ? 'ENGLISH' : 'HILIGAYNON')),
             'normalized_complaints' => $context['chief_complaints'],
+            'complaints' => is_array($context['complaints'] ?? null) ? $context['complaints'] : [],
+            'active_complaint_id' => (string) ($context['active_complaint_id'] ?? ''),
+            'complaint_provisionals' => is_array($context['complaint_provisionals'] ?? null)
+                ? $context['complaint_provisionals']
+                : [],
             'body_locations' => $context['facts']['body_locations'] ?? [],
             'pain_score' => $context['facts']['pain_score'] ?? null,
             'onset' => $context['facts']['onset'] ?? '',

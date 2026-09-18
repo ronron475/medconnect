@@ -195,7 +195,7 @@
     {
       "question_id": "PAIN_SEVERITY",
       "clinical_purpose": "Collect numeric pain score as supporting information",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain", "eye"],
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "dental_pain"],
       "priority": 40,
       "red_flag_related": false,
       "english": "On a scale of 1 to 10, where 1 means very mild pain and 10 means the worst pain you can imagine, how severe is your pain?",
@@ -215,7 +215,7 @@
     {
       "question_id": "ONSET",
       "clinical_purpose": "Determine sudden versus gradual onset / timing",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding", "cough", "fever", "eye", "skin", "urinary", "breathing", "dizziness", "respiratory"],
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding", "cough", "fever", "eye", "skin", "urinary", "breathing", "dizziness", "respiratory", "dental_pain"],
       "priority": 50,
       "red_flag_related": false,
       "english": "When did this start, and did it begin suddenly or gradually?",
@@ -225,7 +225,7 @@
     {
       "question_id": "DURATION",
       "clinical_purpose": "Determine how long symptoms have lasted",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell", "cough", "fever", "eye", "skin", "urinary"],
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell", "cough", "fever", "eye", "skin", "urinary", "dental_pain"],
       "priority": 55,
       "red_flag_related": false,
       "english": "How long have you had these symptoms?",
