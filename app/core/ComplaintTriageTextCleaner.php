@@ -116,6 +116,10 @@ final class ComplaintTriageTextCleaner
             return ['keep' => true, 'value' => $low, 'correction' => null];
         }
 
+        if (self::isDictionaryClinicalToken($low)) {
+            return ['keep' => true, 'value' => $low, 'correction' => null];
+        }
+
         $fuzzy = self::fuzzyCorrect($low);
         if ($fuzzy !== null) {
             return [
@@ -123,6 +127,12 @@ final class ComplaintTriageTextCleaner
                 'value' => $fuzzy['to'],
                 'correction' => $fuzzy,
             ];
+        }
+
+        // Keep plausible local/colloquial content words (not keyboard smash).
+        // Downstream domain NLP / semantic fallback still decide health meaning.
+        if (self::looksPlausibleLocalContentToken($low)) {
+            return ['keep' => true, 'value' => $low, 'correction' => null];
         }
 
         return ['keep' => false, 'value' => $low, 'correction' => null];
@@ -151,12 +161,19 @@ final class ComplaintTriageTextCleaner
         if (class_exists('MedicalMisspellingsLoader')) {
             try {
                 $mapped = mb_strtolower(trim((string) MedicalMisspellingsLoader::applyCorrections($low)));
-                if ($mapped !== '' && $mapped !== $low && self::looksExactClinicalToken($mapped)) {
+                if ($mapped !== '' && $mapped !== $low
+                    && (self::looksExactClinicalToken($mapped) || self::isDictionaryClinicalToken($mapped))
+                ) {
                     return ['from' => $low, 'to' => $mapped, 'score' => 100.0];
                 }
             } catch (Throwable) {
                 // ignore
             }
+        }
+
+        $near = self::nearDictionaryMatch($low);
+        if ($near !== null) {
+            return $near;
         }
 
         return null;
@@ -224,9 +241,132 @@ final class ComplaintTriageTextCleaner
 
     private static function hasClinicalMeaning(string $cleaned): bool
     {
-        return (bool) preg_match(
+        $low = mb_strtolower($cleaned);
+        if (preg_match(
             '/\b(fever|hilanat|lagnat|cough|ubo|sipon|headache|pain|sakit|masakit|dizzy|hilo|nahilo|hurts?|hurt|aching|ache|chest|dughan|tiyan|ulo|head|vomit|vomiting|suka|nausea|diarrhea|breath|ginhawa|rash|bleed|dugo|hubag|sick|unwell|weak)\b/u',
-            mb_strtolower($cleaned)
+            $low
+        )) {
+            return true;
+        }
+
+        $tokens = preg_split('/[^\p{L}\p{N}\/\-]+/u', $low, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach ($tokens as $token) {
+            if (self::isDictionaryClinicalToken($token)) {
+                return true;
+            }
+        }
+
+        // Short local complaint with patient reference + content word (e.g. colloquial symptom + ko/ako).
+        $hasPatientRef = false;
+        $hasContent = false;
+        foreach ($tokens as $token) {
+            if (preg_match('/^(ko|akon|ako|aku|my|i)$/u', $token)) {
+                $hasPatientRef = true;
+            } elseif (self::looksPlausibleLocalContentToken($token)) {
+                $hasContent = true;
+            }
+        }
+
+        return $hasPatientRef && $hasContent && count($tokens) >= 2;
+    }
+
+    private static function isDictionaryClinicalToken(string $low): bool
+    {
+        if ($low === '' || !class_exists('MedicalDictionary')) {
+            return false;
+        }
+        try {
+            $entry = MedicalDictionary::lookup($low);
+        } catch (Throwable) {
+            return false;
+        }
+        if (!is_array($entry)) {
+            return false;
+        }
+
+        return self::dictionaryEntryLooksClinical($entry);
+    }
+
+    /** @param array<string, mixed> $entry */
+    private static function dictionaryEntryLooksClinical(array $entry): bool
+    {
+        $cat = strtolower((string) ($entry['category'] ?? ''));
+        $en = strtolower((string) ($entry['english_term'] ?? ''));
+        if ($cat !== '' && preg_match('/symptom|body|condition|complaint|sign|finding|anatomy/u', $cat)) {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/\b(pain|fever|cough|diarrhea|diarrhoea|vomit|nausea|dizzy|swell|bleed|breath|headache|stomach|abdomen|rash|weak|sick|unwell)\b/u',
+            $en
         );
+    }
+
+    /**
+     * One-edit dictionary near-match for colloquial / misspelled local terms.
+     * Universal — does not hardcode individual phrases.
+     *
+     * @return array{from:string,to:string,score:float}|null
+     */
+    private static function nearDictionaryMatch(string $low): ?array
+    {
+        if (!class_exists('MedicalDictionary')) {
+            return null;
+        }
+        $len = mb_strlen($low);
+        if ($len < 5 || $len > 20) {
+            return null;
+        }
+        try {
+            $terms = MedicalDictionary::termsByLength();
+        } catch (Throwable) {
+            return null;
+        }
+        if (!is_array($terms) || $terms === []) {
+            return null;
+        }
+
+        $best = null;
+        foreach ($terms as $term) {
+            $t = mb_strtolower(trim((string) $term));
+            if ($t === '' || str_contains($t, ' ') || mb_strlen($t) !== $len || $t === $low) {
+                continue;
+            }
+            if (levenshtein($low, $t) !== 1) {
+                continue;
+            }
+            try {
+                $entry = MedicalDictionary::lookup($t);
+            } catch (Throwable) {
+                $entry = null;
+            }
+            if (!is_array($entry) || !self::dictionaryEntryLooksClinical($entry)) {
+                continue;
+            }
+            $best = ['from' => $low, 'to' => $t, 'score' => 92.0];
+            break;
+        }
+
+        return $best;
+    }
+
+    private static function looksPlausibleLocalContentToken(string $low): bool
+    {
+        if ($low === '' || self::isNoiseToken($low) || self::isClinicalFunctionWord($low)) {
+            return false;
+        }
+        $len = mb_strlen($low);
+        if ($len < 4 || $len > 24) {
+            return false;
+        }
+        if (!preg_match('/^[\p{L}\-]+$/u', $low)) {
+            return false;
+        }
+        // Require a vowel so consonant smash (e.g. "zxcvb") is still dropped.
+        if (!preg_match('/[aeiouáéíóúàèìòùâêîôûäëïöü]/iu', $low)) {
+            return false;
+        }
+
+        return true;
     }
 }

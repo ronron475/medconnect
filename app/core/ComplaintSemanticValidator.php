@@ -36,7 +36,9 @@ final class ComplaintSemanticValidator
             ];
         $nlpText = trim((string) ($cleanedPack['cleaned'] ?? ''));
         $usable = !empty($cleanedPack['has_usable_clinical_text']);
-        $phpSource = $usable && $nlpText !== '' ? $nlpText : $raw;
+        // Prefer ORIGINAL for domain detection so cleaner corrections/discards cannot
+        // erase local clinical meaning. Cleaned text is still used for NLP enrichment.
+        $phpSource = $raw;
         $php = class_exists('HealthComplaintDomainDetector')
             ? HealthComplaintDomainDetector::detect($phpSource)
             : [
@@ -52,6 +54,16 @@ final class ComplaintSemanticValidator
                     : mb_strtolower($raw),
                 'reason' => 'Domain detector unavailable',
             ];
+        if ($usable && $nlpText !== '' && mb_strtolower($nlpText) !== mb_strtolower($raw)
+            && class_exists('HealthComplaintDomainDetector')
+        ) {
+            $phpClean = HealthComplaintDomainDetector::detect($nlpText);
+            $preferred = self::preferStrongerDomainPack($php, $phpClean);
+            if ($preferred === $phpClean) {
+                $phpSource = $nlpText;
+            }
+            $php = $preferred;
+        }
 
         $phpEvidence = self::phpEvidenceStrength($php, $phpSource);
         $incompleteJunk = !$usable && self::looksLikeIncompleteJunk($raw);
@@ -65,6 +77,28 @@ final class ComplaintSemanticValidator
 
         $decision = self::combine($phpEvidence, $php, $gemini);
         $lang = self::detectLanguageKey($raw);
+        $ollamaBridge = [];
+
+        // When Gemini is down/uncertain and PHP has no concept, try local Ollama meaning
+        // BEFORE hard reject. Does not triage; only health-domain understanding.
+        if (empty($decision['is_valid']) && !$incompleteJunk) {
+            $ollamaBridge = self::tryOllamaHealthMeaningBridge($raw, $php, $gemini);
+            if (!empty($ollamaBridge['is_health_related'])) {
+                $decision = [
+                    'is_valid' => true,
+                    'classification' => self::CLASS_VALID,
+                    'reason' => 'Ollama/local meaning support — health-related; Gemini unavailable or uncertain',
+                ];
+                $meaning = trim((string) ($ollamaBridge['english_interpretation'] ?? ''));
+                if ($meaning !== '') {
+                    $nlpText = trim($raw . '. ' . $meaning);
+                    $usable = true;
+                } elseif (trim($nlpText) === '') {
+                    $nlpText = $raw;
+                    $usable = true;
+                }
+            }
+        }
 
         $geminiCorrected = trim((string) ($gemini['corrected_text'] ?? ''));
         $geminiConcept = trim((string) ($gemini['medical_concept'] ?? ''));
@@ -194,6 +228,7 @@ final class ComplaintSemanticValidator
             'typo_corrections' => is_array($cleanedPack['corrections'] ?? null) ? $cleanedPack['corrections'] : [],
             'discarded_tokens' => is_array($cleanedPack['discarded'] ?? null) ? $cleanedPack['discarded'] : [],
             'kept_tokens' => is_array($cleanedPack['kept'] ?? null) ? $cleanedPack['kept'] : [],
+            'ollama_bridge' => $ollamaBridge,
         ];
 
         if (self::debugEnabled()) {
@@ -466,6 +501,123 @@ final class ComplaintSemanticValidator
         }
 
         return self::DOMAIN_NON_HEALTH;
+    }
+
+    /**
+     * Prefer the domain pack with clearer health evidence.
+     *
+     * @param array<string, mixed> $a
+     * @param array<string, mixed> $b
+     * @return array<string, mixed>
+     */
+    private static function preferStrongerDomainPack(array $a, array $b): array
+    {
+        $scoreA = (float) ($a['score'] ?? 0);
+        $scoreB = (float) ($b['score'] ?? 0);
+        $healthA = !empty($a['health_related']);
+        $healthB = !empty($b['health_related']);
+        if ($healthB && !$healthA) {
+            return $b;
+        }
+        if ($healthA && !$healthB) {
+            return $a;
+        }
+        if ($scoreB > $scoreA) {
+            return $b;
+        }
+
+        return $a;
+    }
+
+    /**
+     * Soft local meaning check before hard reject when Gemini failed/uncertain.
+     * Returns health-domain support only — never triage class.
+     *
+     * @param array<string, mixed> $php
+     * @param array<string, mixed> $gemini
+     * @return array<string, mixed>
+     */
+    private static function tryOllamaHealthMeaningBridge(string $raw, array $php, array $gemini): array
+    {
+        $empty = [
+            'is_health_related' => false,
+            'english_interpretation' => '',
+            'provider' => '',
+            'confidence_score' => 0,
+        ];
+        if (self::phpLooksHardNonMedical($php) || self::looksLikeIncompleteJunk($raw)) {
+            return $empty;
+        }
+        // Skip when Gemini already made a high-confidence non-health / prank call.
+        $geminiAvailable = !empty($gemini['available']);
+        $geminiInvalid = $geminiAvailable && $gemini['is_medical_complaint'] === false;
+        $geminiConf = isset($gemini['confidence']) && is_numeric($gemini['confidence'])
+            ? (float) $gemini['confidence']
+            : null;
+        $geminiClass = strtoupper(str_replace([' ', '-'], '_', (string) ($gemini['classification'] ?? '')));
+        $isPrank = in_array($geminiClass, [
+            'PRANK_OR_NON_MEDICAL', 'NONSENSE_OR_PRANK', 'PRANK', 'NONSENSE',
+        ], true);
+        if ($isPrank || ($geminiInvalid && $geminiConf !== null && $geminiConf >= 0.75)) {
+            return $empty;
+        }
+        if (!class_exists('MedicalAiInterpreter')) {
+            return $empty;
+        }
+
+        try {
+            $result = MedicalAiInterpreter::interpretComplaintMeaning($raw);
+        } catch (Throwable $e) {
+            error_log('ComplaintSemanticValidator Ollama bridge: ' . $e->getMessage());
+
+            return $empty;
+        }
+        if (($result['status'] ?? '') !== 'complete') {
+            return $empty;
+        }
+        $meaning = trim((string) ($result['english_interpretation'] ?? ''));
+        if ($meaning === '' || mb_strlen($meaning) > 180) {
+            return $empty;
+        }
+        if (preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|diagnos|prescription)\b/iu', $meaning)) {
+            return $empty;
+        }
+
+        $concepts = is_array($result['concepts'] ?? null) ? $result['concepts'] : [];
+        $hasClinicalConcept = false;
+        foreach ($concepts as $c) {
+            if (!is_array($c)) {
+                continue;
+            }
+            $type = strtolower((string) ($c['type'] ?? ''));
+            $term = strtolower((string) ($c['term'] ?? ''));
+            if (in_array($type, ['symptom', 'condition', 'body_part', 'finding', 'complaint'], true)) {
+                $hasClinicalConcept = true;
+                break;
+            }
+            if ($term !== '' && preg_match(
+                '/\b(pain|fever|cough|diarrhea|diarrhoea|vomit|nausea|dizzy|swell|bleed|breath|rash|weak|sick|unwell|peel|skin|stool|bowel|stomach|abdomen|headache)\b/u',
+                $term
+            )) {
+                $hasClinicalConcept = true;
+                break;
+            }
+        }
+        $meaningLooksClinical = (bool) preg_match(
+            '/\b(pain|fever|cough|diarrhea|diarrhoea|vomit|nausea|dizzy|swell|bleed|breath|rash|weak|sick|unwell|peeling|skin|stool|bowel|stomach|abdomen|headache|symptom|hurt|ache|illness|malaise)\b/iu',
+            $meaning
+        );
+        if (!$hasClinicalConcept && !$meaningLooksClinical) {
+            return $empty;
+        }
+
+        return [
+            'is_health_related' => true,
+            'english_interpretation' => $meaning,
+            'provider' => (string) ($result['provider'] ?? 'local'),
+            'confidence_score' => (int) ($result['confidence_score'] ?? 0),
+            'concepts' => $concepts,
+        ];
     }
 
     /**

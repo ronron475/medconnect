@@ -171,15 +171,30 @@ final class GeminiComplaintInputValidator
     private static function complete(string $complaintText): string
     {
         $payload = self::requestPayload($complaintText, true);
-        try {
-            return self::generateFromPayload($payload);
-        } catch (RuntimeException $e) {
-            if (!str_contains($e->getMessage(), 'Gemini HTTP 400')) {
+        $attempts = 0;
+        $last = null;
+        while ($attempts < 3) {
+            $attempts++;
+            try {
+                return self::generateFromPayload($payload);
+            } catch (RuntimeException $e) {
+                $last = $e;
+                $msg = $e->getMessage();
+                // Model rejects thinkingConfig — retry once without it.
+                if (str_contains($msg, 'Gemini HTTP 400') && $attempts === 1) {
+                    $payload = self::requestPayload($complaintText, false);
+                    continue;
+                }
+                // Transient Google overload / rate limit — brief backoff then retry.
+                if (preg_match('/Gemini HTTP (429|500|502|503)/', $msg) && $attempts < 3) {
+                    usleep(400000 * $attempts);
+
+                    continue;
+                }
                 throw $e;
             }
-
-            return self::generateFromPayload(self::requestPayload($complaintText, false));
         }
+        throw $last ?? new RuntimeException('Gemini validation failed');
     }
 
     /** @return array<string, mixed> */
@@ -594,9 +609,9 @@ PROMPT;
 
     private static function timeout(): int
     {
-        $raw = (int) self::envString('AI_TIMEOUT', '8');
+        $raw = (int) self::envString('AI_TIMEOUT', '15');
 
-        return max(3, min(10, $raw > 0 ? $raw : 8));
+        return max(3, min(25, $raw > 0 ? $raw : 15));
     }
 
     /**

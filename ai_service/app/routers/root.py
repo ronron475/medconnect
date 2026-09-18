@@ -15,7 +15,16 @@ def root() -> dict:
         "engine": "fastapi",
         "message": "AI service is running. Use /health to check status.",
         "endpoints": {
-            "GET": ["/health", "/api/health", "/groq_health", "/api/groq_health", "/docs", "/redoc"],
+            "GET": [
+                "/health",
+                "/api/health",
+                "/groq_health",
+                "/api/groq_health",
+                "/gemini_health",
+                "/api/gemini_health",
+                "/docs",
+                "/redoc",
+            ],
             "POST": [
                 "/analyze",
                 "/predict-disease",

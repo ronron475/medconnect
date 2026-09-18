@@ -56,6 +56,10 @@ def build_health_payload() -> dict[str, Any]:
     groq_status = "missing"
     groq_model = "openai/gpt-oss-120b"
     groq_error: str | None = None
+    gemini_status = "missing"
+    gemini_model = "gemini-3.5-flash"
+    gemini_error: str | None = None
+    ai_interpreter: dict[str, Any] = {"enabled": False, "note": "ai_interpreter_config not loaded"}
     try:
         from ai_interpreter_config import provider_status, GROQ_API_KEY, GROQ_MODEL
         from groq_client import _startup_health
@@ -73,6 +77,27 @@ def build_health_payload() -> dict[str, Any]:
     except Exception:
         ai_interpreter = {"enabled": False, "note": "ai_interpreter_config not loaded"}
 
+    try:
+        from gemini_client import (
+            _startup_health as _gemini_startup_health,
+            gemini_api_key,
+            gemini_model_name,
+        )
+
+        gemini_model = gemini_model_name()
+        gemini_cached = _gemini_startup_health
+        if gemini_cached is not None:
+            gemini_status = "connected" if gemini_cached.get("gemini") else "failed"
+            gemini_error = gemini_cached.get("error")
+        elif gemini_api_key():
+            gemini_status = "configured"
+        else:
+            gemini_status = "missing"
+    except Exception as exc:
+        logging.getLogger("medconnect.health").warning("Gemini health status unavailable: %s", exc)
+        gemini_status = "unavailable"
+        gemini_error = str(exc)
+
     port = int(os.environ.get("MEDCONNECT_AI_PORT", "8765"))
 
     return {
@@ -83,12 +108,16 @@ def build_health_payload() -> dict[str, Any]:
         "groq": groq_status,
         "groq_error": groq_error,
         "model": groq_model,
+        "gemini": gemini_status,
+        "gemini_error": gemini_error,
+        "gemini_model": gemini_model,
         "legacy_status": "ok",
         "ready_for": {
             "registration_nlp_validation": nlp_ready,
             "teleconsultation_transcription": tele.get("faster_whisper") == "available",
             "teleconsultation_transcript_nlp": tele.get("spacy") == "available",
             "disease_prediction_ml": model_available(),
+            "faq_gemini_fallback": gemini_status in {"connected", "configured"},
         },
         "disease_prediction": {
             "model_loaded": model_available(),
