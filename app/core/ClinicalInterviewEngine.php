@@ -9,6 +9,9 @@
  * clinical purpose; Gemini only phrases that one question (with bank fallback).
  * Optional Ollama meaning support enriches understanding for Hiligaynon/local
  * text but never replaces the original complaint or sets triage class.
+ * Optional Python ai_service enrichment (datasets / symptom matchers) may add
+ * English glosses and symptoms when the service is healthy; fail-open if offline.
+ * Python never sets triage class.
  *
  * Multi-complaint: facts/Q&A stay per track; final urgency always comes from
  * ClinicalTriageEngine on the COMPLETE accumulated case (never MAX of tracks).
@@ -211,6 +214,9 @@ final class ClinicalInterviewEngine
 
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
         $context = self::mergeExtractedFacts($context, $turn, $awaiting);
+
+        // Optional Python ai_service strengthen (symptoms/gloss only). PHP triage stays authority.
+        $context = self::maybePythonEnrichment($context, $turn, $isOpeningTurn);
 
         // Recalculate triage from the complete accumulated case (complaint + turns + structured facts).
         // Bare yes/no turns are excluded from the haystack; polarity lives in structured facts.
@@ -527,6 +533,7 @@ final class ClinicalInterviewEngine
             'complaint_text_cleaner' => is_array($raw['complaint_text_cleaner'] ?? null) ? $raw['complaint_text_cleaner'] : [],
             'complaints' => is_array($raw['complaints'] ?? null) ? $raw['complaints'] : [],
             'active_complaint_id' => (string) ($raw['active_complaint_id'] ?? ''),
+            'python_enrichment' => is_array($raw['python_enrichment'] ?? null) ? $raw['python_enrichment'] : [],
         ];
     }
 
@@ -641,6 +648,15 @@ final class ClinicalInterviewEngine
         $ollamaMeaning = trim((string) (($context['semantic_bridge']['ollama_meaning'] ?? '') ?: ''));
         if ($ollamaMeaning !== '' && mb_stripos(implode(' ', $parts), $ollamaMeaning) === false) {
             $parts[] = $ollamaMeaning;
+        }
+        $pythonGloss = trim((string) (($context['semantic_bridge']['python_gloss'] ?? '') ?: ''));
+        if ($pythonGloss !== '' && mb_stripos(implode(' ', $parts), $pythonGloss) === false) {
+            $parts[] = $pythonGloss;
+        }
+        foreach (self::stringList($context['semantic_bridge']['python_symptoms'] ?? []) as $pySymptom) {
+            if ($pySymptom !== '' && mb_stripos(implode(' ', $parts), $pySymptom) === false) {
+                $parts[] = $pySymptom;
+            }
         }
 
         return trim(implode('. ', array_values(array_unique($parts))));
@@ -2337,6 +2353,8 @@ final class ClinicalInterviewEngine
             'facts' => $context['facts'],
             'patient_turns' => $context['patient_turns'],
             'chief_complaints' => $context['chief_complaints'],
+            'semantic_bridge' => is_array($context['semantic_bridge'] ?? null) ? $context['semantic_bridge'] : [],
+            'python_enrichment' => is_array($context['python_enrichment'] ?? null) ? $context['python_enrichment'] : [],
         ];
     }
 
@@ -2463,6 +2481,63 @@ final class ClinicalInterviewEngine
             'engine' => 'clinical-interview-semantic-gate',
             'engine_version' => MedicalAssessmentEngine::VERSION,
         ];
+    }
+
+    /**
+     * Optional Python dataset/matcher enrichment. Fail-open; never sets triage class.
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private static function maybePythonEnrichment(array $context, string $turn, bool $isOpeningTurn): array
+    {
+        if (!class_exists('ClinicalInterviewPythonEnrichment')) {
+            return $context;
+        }
+        if (!ClinicalInterviewPythonEnrichment::enabled()) {
+            return $context;
+        }
+
+        $prior = is_array($context['python_enrichment'] ?? null) ? $context['python_enrichment'] : [];
+        // Opening: enrich full case text. Follow-ups: enrich new turn only when useful.
+        $seed = '';
+        if ($isOpeningTurn) {
+            $seed = trim((string) (($context['complaint_text_cleaner']['original'] ?? '') ?: ''));
+            if ($seed === '') {
+                $seed = trim((string) ($context['chief_complaint'] ?? ''));
+            }
+            if ($seed === '') {
+                $seed = $turn;
+            }
+        } else {
+            $seed = $turn;
+            // Skip tiny yes/no answers — PHP extractors already handle polarity.
+            if (mb_strlen($seed) < 4 || preg_match('/^(yes|no|oo|indi|hindi|oo\s*po)\.?$/iu', $seed)) {
+                return $context;
+            }
+        }
+        if ($seed === '') {
+            return $context;
+        }
+
+        try {
+            $enrichment = ClinicalInterviewPythonEnrichment::enrich($seed);
+            if (empty($enrichment['used']) && $prior !== [] && !empty($prior['used'])) {
+                // Keep prior successful enrichment when this turn had no signal.
+                $context['python_enrichment'] = $prior;
+
+                return $context;
+            }
+
+            return ClinicalInterviewPythonEnrichment::applyToContext($context, $enrichment);
+        } catch (Throwable $e) {
+            error_log('ClinicalInterview Python enrichment fallback: ' . $e->getMessage());
+            if ($prior !== []) {
+                $context['python_enrichment'] = $prior;
+            }
+
+            return $context;
+        }
     }
 
     /**

@@ -36,23 +36,25 @@ final class AiServiceClient
         return self::extractData($response);
     }
 
-    public static function recognizeSymptoms(string $text): ?array
+    public static function recognizeSymptoms(string $text, ?int $timeoutSeconds = null): ?array
     {
+        $timeout = max(2, (int) ($timeoutSeconds ?? AI_SERVICE_TIMEOUT_ANALYZE));
         $response = self::postJson(
             AI_SERVICE_BASE_URL . '/recognize-symptoms',
             ['text' => $text],
-            AI_SERVICE_TIMEOUT_ANALYZE
+            $timeout
         );
 
         return self::extractData($response);
     }
 
-    public static function analyzeMedicalText(string $text): ?array
+    public static function analyzeMedicalText(string $text, ?int $timeoutSeconds = null): ?array
     {
+        $timeout = max(2, (int) ($timeoutSeconds ?? AI_SERVICE_TIMEOUT_ANALYZE));
         $response = self::postJson(
             AI_SERVICE_BASE_URL . '/analyze-medical-text',
             ['text' => $text],
-            AI_SERVICE_TIMEOUT_ANALYZE
+            $timeout
         );
 
         return self::extractData($response);
@@ -258,11 +260,15 @@ final class AiServiceClient
         if (function_exists('curl_init')) {
             $curl = curl_init($url);
             if ($curl !== false) {
-                curl_setopt_array($curl, [
+                $opts = [
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_CONNECTTIMEOUT => min(2, $timeout),
                     CURLOPT_TIMEOUT        => $timeout,
-                ]);
+                ];
+                foreach (self::sslCurlOptions() as $k => $v) {
+                    $opts[$k] = $v;
+                }
+                curl_setopt_array($curl, $opts);
                 $body = curl_exec($curl);
                 $code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
                 curl_close($curl);
@@ -284,7 +290,7 @@ final class AiServiceClient
         if (function_exists('curl_init')) {
             $curl = curl_init($url);
             if ($curl !== false) {
-                curl_setopt_array($curl, [
+                $opts = [
                     CURLOPT_POST           => true,
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_CONNECTTIMEOUT => min(5, $timeout),
@@ -294,7 +300,11 @@ final class AiServiceClient
                         'Accept: application/json',
                     ],
                     CURLOPT_POSTFIELDS     => $jsonBody,
-                ]);
+                ];
+                foreach (self::sslCurlOptions() as $k => $v) {
+                    $opts[$k] = $v;
+                }
+                curl_setopt_array($curl, $opts);
                 $body = curl_exec($curl);
                 $code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
                 curl_close($curl);
@@ -305,6 +315,28 @@ final class AiServiceClient
         }
 
         return null;
+    }
+
+    /**
+     * Honor AI_SSL_VERIFY (false on local XAMPP without a CA bundle).
+     *
+     * @return array<int, mixed>
+     */
+    private static function sslCurlOptions(): array
+    {
+        $raw = getenv('AI_SSL_VERIFY');
+        if ($raw === false || $raw === '') {
+            $raw = $_ENV['AI_SSL_VERIFY'] ?? 'true';
+        }
+        $verify = !in_array(strtolower(trim((string) $raw)), ['0', 'false', 'no', 'off'], true);
+        if ($verify) {
+            return [];
+        }
+
+        return [
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
+        ];
     }
 
     private static function extractData(?array $response): ?array
