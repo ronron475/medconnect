@@ -528,13 +528,26 @@ PROMPT;
             throw new RuntimeException('curl_init failed');
         }
 
-        curl_setopt_array($ch, [
+        // Match Gemini/FAQ clients: local XAMPP may set AI_SSL_VERIFY=false when
+        // PHP curl lacks a CA bundle; keep true on Hostinger/production.
+        $verifySsl = self::envFlag('AI_SSL_VERIFY', true);
+
+        $opts = [
             CURLOPT_POST           => true,
             CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => AI_INTERPRETER_TIMEOUT,
-        ]);
+            CURLOPT_SSL_VERIFYPEER => $verifySsl,
+            CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
+        ];
+        if ($verifySsl) {
+            $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
+            if ($ca !== '' && is_readable($ca)) {
+                $opts[CURLOPT_CAINFO] = $ca;
+            }
+        }
+        curl_setopt_array($ch, $opts);
 
         $raw = curl_exec($ch);
         $errno = curl_errno($ch);
@@ -555,6 +568,19 @@ PROMPT;
         }
 
         return $decoded;
+    }
+
+    private static function envFlag(string $key, bool $default): bool
+    {
+        $raw = getenv($key);
+        if ($raw === false || $raw === '') {
+            $raw = $_ENV[$key] ?? null;
+        }
+        if ($raw === null || $raw === '') {
+            return $default;
+        }
+
+        return in_array(strtolower(trim((string) $raw)), ['1', 'true', 'yes', 'on'], true);
     }
 
     /** @return array<string, mixed> */

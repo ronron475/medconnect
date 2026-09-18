@@ -37,6 +37,7 @@ ai_service/
 |--------|------|-------------|
 | GET | `/health`, `/api/health` | Service health |
 | GET | `/groq_health`, `/api/groq_health` | Groq connectivity |
+| GET | `/gemini_health`, `/api/gemini_health` | Gemini connectivity |
 | POST | `/analyze` | Consultation transcript analysis |
 | POST | `/transcribe` | Audio/video transcription |
 | POST | `/analyze-medical-profile` | Registration allergies/medications |

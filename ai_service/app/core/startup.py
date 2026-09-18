@@ -1,4 +1,4 @@
-"""Application startup tasks — cache warming, Groq health probe."""
+"""Application startup tasks — cache warming, Groq/Gemini health probes."""
 
 from __future__ import annotations
 
@@ -60,6 +60,17 @@ def run_startup_tasks() -> None:
             target=test_groq_health, kwargs={"force": True}, daemon=True, name="groq-health"
         ).start()
     except Exception as exc:
-        logger.warning("AI interpreter config not loaded: %s", exc)
+        logger.warning("AI interpreter / Groq config not loaded: %s", exc)
+
+    try:
+        from gemini_client import gemini_api_key, gemini_model_name, log_startup_config, test_gemini_health
+
+        log_startup_config()
+        logger.info("Gemini configured=%s model=%s", bool(gemini_api_key()), gemini_model_name())
+        threading.Thread(
+            target=test_gemini_health, kwargs={"force": True}, daemon=True, name="gemini-health"
+        ).start()
+    except Exception as exc:
+        logger.warning("Gemini config not loaded: %s", exc)
 
     threading.Thread(target=warm_nlp_caches, daemon=True, name="nlp-cache-warm").start()

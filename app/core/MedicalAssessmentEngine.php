@@ -27,7 +27,8 @@ final class MedicalAssessmentEngine
 
         // Fast CDS path: ClinicalTriageEngine (+ WHO IITT) without the slow full
         // Hiligaynon pipeline / optional Python service. Default on when PHP NLP-only.
-        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+        // Default false so Gemini/AI fallbacks stay available unless explicitly PHP-only.
+        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '0', FILTER_VALIDATE_BOOLEAN);
         $fastCds = filter_var(getenv('MEDCONNECT_CDS_FAST_PATH') ?: ($phpOnly ? '1' : '0'), FILTER_VALIDATE_BOOLEAN);
         if ($phpOnly && $fastCds) {
             try {
@@ -409,7 +410,8 @@ final class MedicalAssessmentEngine
     private static function runNlpPipeline(string $text): array
     {
         // Rule-based PHP NLP is the default CDS path. Python is opt-in only.
-        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+        // Default false so Gemini/AI fallbacks stay available unless explicitly PHP-only.
+        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '0', FILTER_VALIDATE_BOOLEAN);
         if (!$phpOnly) {
             $serviceData = AiServiceClient::analyzeMedicalText($text);
             if ($serviceData) {
@@ -435,7 +437,8 @@ final class MedicalAssessmentEngine
     private static function runMlLayer(string $text, array $symptoms, array $nlpResult): array
     {
         // When PHP NLP-only mode is on, skip Python ML entirely (avoids 30–120s hangs).
-        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '1', FILTER_VALIDATE_BOOLEAN);
+        // Default false so Gemini/AI fallbacks stay available unless explicitly PHP-only.
+        $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '0', FILTER_VALIDATE_BOOLEAN);
         $skip = filter_var(getenv('MEDCONNECT_SKIP_ML_LAYER') ?: ($phpOnly ? '1' : '0'), FILTER_VALIDATE_BOOLEAN);
         if ($skip || $phpOnly) {
             return [

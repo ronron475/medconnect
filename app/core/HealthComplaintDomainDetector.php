@@ -602,24 +602,35 @@ final class HealthComplaintDomainDetector
             if (mb_strlen($w) < 3) {
                 continue;
             }
+            $origWord = $w;
             try {
                 $entry = MedicalDictionary::lookup($w);
             } catch (Throwable) {
                 $entry = null;
             }
             if (!is_array($entry)) {
+                // One-edit near-match against dictionary (colloquial / misspelled local terms).
+                $near = self::nearDictionaryToken($w);
+                if ($near !== null) {
+                    $entry = $near['entry'];
+                    $w = $near['term'];
+                }
+            }
+            if (!is_array($entry)) {
                 // Fuzzy token against dictionary via demo fuzzy lexicon when available.
                 if (class_exists('NlpStep3DemoAnswerFuzzy')) {
-                    $m = NlpStep3DemoAnswerFuzzy::bestMatch($w);
+                    $m = NlpStep3DemoAnswerFuzzy::bestMatch($origWord);
                     if (is_array($m) && ($m['to'] ?? '') !== '') {
                         $to = (string) $m['to'];
                         $entry = MedicalDictionary::lookup($to);
                         if ($entry === null && class_exists('MedicalDictionary')) {
                             // English-side clinical tokens from fuzzy lexicon.
-                            if (preg_match('/\b(pain|fever|cough|headache|stomach|eye|head|dizzy|vomit|swollen|swelling|breath)\b/u', $to)) {
+                            if (preg_match('/\b(pain|fever|cough|headache|stomach|eye|head|dizzy|vomit|swollen|swelling|breath|diarrhea|diarrhoea)\b/u', $to)) {
                                 $type = preg_match('/\b(eye|head|stomach|chest|back)\b/u', $to) ? 'body_part' : 'symptom';
-                                $hits[] = ['type' => $type, 'value' => $w . '→' . $to];
+                                $hits[] = ['type' => $type, 'value' => $origWord . '→' . $to];
                             }
+                        } elseif (is_array($entry)) {
+                            $w = mb_strtolower($to);
                         }
                     }
                 }
@@ -630,16 +641,68 @@ final class HealthComplaintDomainDetector
             $cat = strtolower((string) ($entry['category'] ?? ''));
             $en = (string) ($entry['english_term'] ?? $w);
             $type = 'dictionary';
-            if (str_contains($cat, 'body') || preg_match('/\b(eye|head|stomach|chest|back)\b/u', $en)) {
+            if (str_contains($cat, 'body') || preg_match('/\b(eye|head|stomach|chest|back|abdomen)\b/u', $en)) {
                 $type = 'body_part';
-            } elseif (str_contains($cat, 'symptom') || preg_match('/\b(pain|fever|cough|swell|vomit|dizzy)\b/u', $en)) {
+            } elseif (str_contains($cat, 'symptom') || preg_match('/\b(pain|fever|cough|swell|vomit|dizzy|diarrhea|diarrhoea)\b/u', $en)) {
                 $type = 'symptom';
             }
-            if (!self::signalExists($hits, $type, $w)) {
-                $hits[] = ['type' => $type, 'value' => $w . '→' . $en];
+            $label = $origWord === $w ? ($w . '→' . $en) : ($origWord . '→' . $en);
+            if (!self::signalExists($hits, $type, $label)) {
+                $hits[] = ['type' => $type, 'value' => $label];
             }
         }
         return $hits;
+    }
+
+    /**
+     * Universal one-edit dictionary near-match (no phrase hardcoding).
+     *
+     * @return array{term:string,entry:array<string,mixed>}|null
+     */
+    private static function nearDictionaryToken(string $word): ?array
+    {
+        $low = mb_strtolower(trim($word));
+        $len = mb_strlen($low);
+        if ($len < 5 || $len > 20 || !class_exists('MedicalDictionary')) {
+            return null;
+        }
+        try {
+            $terms = MedicalDictionary::termsByLength();
+        } catch (Throwable) {
+            return null;
+        }
+        if (!is_array($terms)) {
+            return null;
+        }
+        foreach ($terms as $term) {
+            $t = mb_strtolower(trim((string) $term));
+            if ($t === '' || str_contains($t, ' ') || mb_strlen($t) !== $len || $t === $low) {
+                continue;
+            }
+            if (levenshtein($low, $t) !== 1) {
+                continue;
+            }
+            try {
+                $entry = MedicalDictionary::lookup($t);
+            } catch (Throwable) {
+                $entry = null;
+            }
+            if (!is_array($entry)) {
+                continue;
+            }
+            $cat = strtolower((string) ($entry['category'] ?? ''));
+            $en = strtolower((string) ($entry['english_term'] ?? ''));
+            $clinical = str_contains($cat, 'symptom')
+                || str_contains($cat, 'body')
+                || (bool) preg_match('/\b(pain|fever|cough|diarrhea|diarrhoea|vomit|nausea|dizzy|swell|bleed|breath|rash|weak|sick)\b/u', $en);
+            if (!$clinical) {
+                continue;
+            }
+
+            return ['term' => $t, 'entry' => $entry];
+        }
+
+        return null;
     }
 
     private static function applyMisspellHints(string $hay): string

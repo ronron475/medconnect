@@ -23,3 +23,11 @@ def groq_health() -> dict:
     from groq_client import groq_health_payload
 
     return groq_health_payload()
+
+
+@router.get("/gemini_health", summary="Gemini API connectivity")
+@router.get("/api/gemini_health", summary="Gemini API connectivity (alias)")
+def gemini_health() -> dict:
+    from gemini_client import gemini_health_payload
+
+    return gemini_health_payload()
