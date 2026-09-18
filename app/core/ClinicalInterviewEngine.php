@@ -341,6 +341,16 @@ final class ClinicalInterviewEngine
             if ($qid !== '' && !in_array($qid, $context['questions_asked'], true)) {
                 $context['questions_asked'][] = $qid;
             }
+            $finding = strtolower(trim((string) ($missing['target_finding'] ?? '')));
+            if ($finding !== '') {
+                $askedFindings = array_map('strtolower', array_map('strval', (array) ($context['findings_asked'] ?? [])));
+                if (!in_array($finding, $askedFindings, true)) {
+                    $askedFindings[] = $finding;
+                }
+                $context['findings_asked'] = array_values($askedFindings);
+            }
+            $context['awaiting_target_finding'] = $finding;
+            $context['awaiting_parent_question_id'] = strtoupper(trim((string) ($missing['parent_question_id'] ?? '')));
             // Keep a union for the global question cap across multi-complaint tracks.
             $union = array_values(array_unique(array_filter(array_map(
                 'strval',
@@ -534,6 +544,9 @@ final class ClinicalInterviewEngine
             'complaints' => is_array($raw['complaints'] ?? null) ? $raw['complaints'] : [],
             'active_complaint_id' => (string) ($raw['active_complaint_id'] ?? ''),
             'python_enrichment' => is_array($raw['python_enrichment'] ?? null) ? $raw['python_enrichment'] : [],
+            'findings_asked' => self::stringList($raw['findings_asked'] ?? []),
+            'awaiting_target_finding' => strtolower(trim((string) ($raw['awaiting_target_finding'] ?? ''))),
+            'awaiting_parent_question_id' => strtoupper(trim((string) ($raw['awaiting_parent_question_id'] ?? ''))),
         ];
     }
 
@@ -715,6 +728,7 @@ final class ClinicalInterviewEngine
             'abdominal_associated' => $yesNo($seed['abdominal_associated'] ?? null),
             'has_other_symptoms' => $yesNo($seed['has_other_symptoms'] ?? null),
             'needs_associated_detail' => (bool) ($seed['needs_associated_detail'] ?? false),
+            'finding_status' => is_array($seed['finding_status'] ?? null) ? $seed['finding_status'] : [],
             'fever_confirmed' => $yesNo($seed['fever_confirmed'] ?? null),
             'blood_in_stool' => $yesNo($seed['blood_in_stool'] ?? null),
             'pregnancy' => $yesNo($seed['pregnancy'] ?? null),
@@ -1052,20 +1066,29 @@ final class ClinicalInterviewEngine
                 'FEVER_CONFIRM' => 'fever_confirmed',
                 'VISION_CHANGE' => 'vision_change',
             ];
-            if (isset($map[$awaiting])) {
-                $facts[$map[$awaiting]] = $yesNo;
+            $awaitingKey = $awaiting;
+            if (str_contains($awaiting, '__')) {
+                $awaitingKey = explode('__', $awaiting, 2)[0];
+            }
+            if (isset($map[$awaitingKey])) {
+                $facts[$map[$awaitingKey]] = $yesNo;
+            }
+            // Bind polarity to the active target finding (universal adaptive path).
+            $targetFinding = strtolower(trim((string) ($context['awaiting_target_finding'] ?? '')));
+            if ($targetFinding !== '') {
+                $facts = self::applyTargetFindingPolarity($facts, $targetFinding, $yesNo);
             }
             // Negative reply to associated/yes-no clinical probes is stored as a denial.
             if ($yesNo === false && (
-                $awaiting === 'ASSOCIATED_SYMPTOMS'
-                || str_contains($awaiting, 'ASSOCIATED')
-                || str_contains($awaiting, 'NEURO')
-                || str_contains($awaiting, 'BLEEDING')
-                || str_contains($awaiting, 'VISION')
-                || str_contains($awaiting, 'BREATHING')
-                || str_contains($awaiting, 'CHEST')
+                $awaitingKey === 'ASSOCIATED_SYMPTOMS'
+                || str_contains($awaitingKey, 'ASSOCIATED')
+                || str_contains($awaitingKey, 'NEURO')
+                || str_contains($awaitingKey, 'BLEEDING')
+                || str_contains($awaitingKey, 'VISION')
+                || str_contains($awaitingKey, 'BREATHING')
+                || str_contains($awaitingKey, 'CHEST')
             )) {
-                if ($awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED')) {
+                if ($awaitingKey === 'ASSOCIATED_SYMPTOMS' || str_contains($awaitingKey, 'ASSOCIATED')) {
                     $facts['denied_associated'] = true;
                     $facts['has_other_symptoms'] = false;
                 }
@@ -1295,14 +1318,26 @@ final class ClinicalInterviewEngine
                 'FEVER_CONFIRM' => 'fever_confirmed',
                 'VISION_CHANGE' => 'vision_change',
             ];
-            if ($yn !== null && isset($map[$awaiting])) {
-                $facts[$map[$awaiting]] = $yn;
+            $awaitingKey = $awaiting;
+            if (str_contains($awaiting, '__')) {
+                $awaitingKey = explode('__', $awaiting, 2)[0];
+            }
+            if ($yn !== null && isset($map[$awaitingKey])) {
+                $facts[$map[$awaitingKey]] = $yn;
+            }
+            $targetFinding = strtolower(trim((string) ($context['awaiting_target_finding'] ?? '')));
+            if ($yn !== null && $targetFinding !== '') {
+                $facts = self::applyTargetFindingPolarity($facts, $targetFinding, $yn);
+            } elseif ($yn === null && $polarity === 'uncertain' && $targetFinding !== '') {
+                $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+                $status[$targetFinding] = 'uncertain';
+                $facts['finding_status'] = $status;
             }
             // "Oo" to associated symptoms confirms extras exist but does NOT name them.
             if ($yn === true
-                && ($awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED'))
+                && ($awaitingKey === 'ASSOCIATED_SYMPTOMS' || str_contains($awaitingKey, 'ASSOCIATED'))
                 && $awaiting !== 'ASSOCIATED_DETAIL'
-                && $awaiting !== 'ABDOMINAL_ASSOCIATED'
+                && $awaitingKey !== 'ABDOMINAL_ASSOCIATED'
             ) {
                 $namedNow = self::stringList($extracted['named_symptoms'] ?? $extracted['associated_symptoms'] ?? []);
                 $existingAssoc = self::stringList($facts['associated_symptoms'] ?? []);
@@ -1462,6 +1497,11 @@ final class ClinicalInterviewEngine
             'blood_in_stool', 'pregnancy', 'needs_associated_detail',
         ];
         foreach ($right as $key => $value) {
+            if ($key === 'finding_status' && is_array($value)) {
+                $leftMap = is_array($out['finding_status'] ?? null) ? $out['finding_status'] : [];
+                $out['finding_status'] = array_merge($leftMap, $value);
+                continue;
+            }
             if (in_array($key, $listKeys, true) && is_array($value)) {
                 $out[$key] = array_values(array_unique(array_merge(
                     self::stringList($out[$key] ?? []),
@@ -1764,6 +1804,9 @@ final class ClinicalInterviewEngine
                         'clinical_purpose' => (string) ($adaptive['clinical_purpose'] ?? ''),
                         'red_flag_related' => (bool) ($adaptive['red_flag_related'] ?? false),
                         'priority' => (int) ($adaptive['priority'] ?? 99),
+                        'target_finding' => (string) ($adaptive['target_finding'] ?? strtolower((string) $adaptive['question_id'])),
+                        'parent_question_id' => (string) ($adaptive['parent_question_id'] ?? ''),
+                        'bank_template' => (string) ($adaptive['bank_template'] ?? ''),
                     ];
                 }
                 // Adaptive policy found no triage-relevant question → do not keep asking.
@@ -1815,19 +1858,49 @@ final class ClinicalInterviewEngine
      */
     private static function nextQuestion(array $context, string $transcript, array $assessment = []): ?array
     {
+        $lang = $context['question_language'] !== '' ? $context['question_language'] : 'english';
+        $language = strtoupper($lang === 'tagalog' ? 'TAGALOG' : ($lang === 'hiligaynon' ? 'HILIGAYNON' : 'ENGLISH'));
+
+        // 1) Universal Gemini select among PHP allow-list candidates (atomic findings).
+        try {
+            if (class_exists('ClinicalInterviewAdaptivePolicy')
+                && class_exists('ClinicalInterviewGeminiFollowUp')
+                && ClinicalInterviewGeminiFollowUp::enabled()
+            ) {
+                $candidates = ClinicalInterviewAdaptivePolicy::listCandidateSlots($context, $transcript, $assessment);
+                $picked = ClinicalInterviewGeminiFollowUp::selectNext($candidates, $context, $transcript);
+                if (is_array($picked) && trim((string) ($picked['text'] ?? '')) !== '') {
+                    $picked['language'] = (string) ($picked['language'] ?? $language);
+
+                    return $picked;
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Gemini adaptive select fallback: ' . $e->getMessage());
+        }
+
+        // 2) Deterministic bank/policy fallback (existing behavior).
         $slot = self::nextQuestionSlot($context, $transcript, $assessment);
         if ($slot === null) {
             return null;
         }
-
-        $lang = $context['question_language'] !== '' ? $context['question_language'] : 'english';
-        $language = strtoupper($lang === 'tagalog' ? 'TAGALOG' : ($lang === 'hiligaynon' ? 'HILIGAYNON' : 'ENGLISH'));
         $slot['language'] = $language;
 
         $bankText = '';
+        $bankQid = strtoupper((string) ($slot['question_id'] ?? ''));
+        $parent = '';
+        if (str_contains($bankQid, '__')) {
+            $parent = explode('__', $bankQid, 2)[0];
+        }
         foreach (ClinicalFollowUpQuestionBank::questions() as $question) {
-            if (strtoupper((string) ($question['question_id'] ?? '')) === strtoupper((string) ($slot['question_id'] ?? ''))) {
+            $qid = strtoupper((string) ($question['question_id'] ?? ''));
+            if ($qid === $bankQid || ($parent !== '' && $qid === $parent)) {
                 $bankText = ClinicalFollowUpQuestionBank::textForLanguage($question, $lang);
+                if ($parent !== '' && class_exists('ClinicalInterviewAdaptivePolicy')) {
+                    // Prefer a simple English atomic template when falling back without Gemini.
+                    $finding = strtolower((string) ($slot['target_finding'] ?? ''));
+                    $bankText = self::atomicFallbackText($finding, $lang, $bankText);
+                }
                 break;
             }
         }
@@ -1839,16 +1912,100 @@ final class ClinicalInterviewEngine
             ? ClinicalInterviewGeminiFollowUp::phrase($slot, $context, $transcript, $bankText)
             : '';
         $text = $geminiText !== '' ? $geminiText : $bankText;
+        if (self::questionLooksBundled($text)) {
+            $finding = strtolower((string) ($slot['target_finding'] ?? ''));
+            $atomic = self::atomicFallbackText($finding, $lang, '');
+            if ($atomic !== '') {
+                $text = $atomic;
+            } elseif ($bankText !== '' && !self::questionLooksBundled($bankText)) {
+                $text = $bankText;
+            }
+        }
 
         return [
             'question_id' => (string) ($slot['question_id'] ?? ''),
+            'target_finding' => (string) ($slot['target_finding'] ?? strtolower((string) ($slot['question_id'] ?? ''))),
             'clinical_purpose' => (string) ($slot['clinical_purpose'] ?? ''),
             'red_flag_related' => (bool) ($slot['red_flag_related'] ?? false),
             'priority' => (int) ($slot['priority'] ?? 99),
             'text' => $text,
             'language' => $language,
             'source' => $geminiText !== '' ? 'gemini' : 'question_bank',
+            'parent_question_id' => (string) ($slot['parent_question_id'] ?? $parent),
+            'complaint_id' => (string) ($context['active_complaint_id'] ?? ''),
         ];
+    }
+
+    private static function questionLooksBundled(string $text): bool
+    {
+        $low = mb_strtolower($text);
+        if (substr_count($text, '?') > 1) {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/\b(vomit|fever|bleed|suka|hilanat|lagnat|dugo).{0,40}\b(or|ukon|,).{0,40}\b(vomit|fever|bleed|suka|hilanat|lagnat|dugo)/u',
+            $low
+        );
+    }
+
+    private static function atomicFallbackText(string $finding, string $lang, string $fallback): string
+    {
+        $lang = strtolower($lang);
+        $map = [
+            'vomiting' => [
+                'english' => 'Are you vomiting?',
+                'tagalog' => 'Nagsusuka ka ba?',
+                'hiligaynon' => 'Nagasuka bala ikaw?',
+            ],
+            'fever_with_abdomen' => [
+                'english' => 'Do you have a fever with the abdominal pain?',
+                'tagalog' => 'May lagnat ka ba kasama ng sakit sa tiyan?',
+                'hiligaynon' => 'May hilanat bala ikaw upod sa sakit sang tiyan?',
+            ],
+            'bleeding_with_abdomen' => [
+                'english' => 'Is there any bleeding with the abdominal pain?',
+                'tagalog' => 'May pagdurugo ba kasama ng sakit sa tiyan?',
+                'hiligaynon' => 'May pagdugo bala upod sa sakit sang tiyan?',
+            ],
+            'sweating_with_chest' => [
+                'english' => 'Are you sweating a lot with the chest pain?',
+                'tagalog' => 'Pinagpapawisan ka ba nang malakas kasama ng sakit sa dibdib?',
+                'hiligaynon' => 'Naga singot bala gid ikaw upod sa sakit sang dughan?',
+            ],
+            'dizziness_with_chest' => [
+                'english' => 'Do you feel dizzy or like you might faint with the chest pain?',
+                'tagalog' => 'Nahihilo ka ba o para kang mahimatay kasama ng sakit sa dibdib?',
+                'hiligaynon' => 'Nalilipong bala ikaw ukon daw magapunaw upod sa sakit sang dughan?',
+            ],
+            'urinary_burning' => [
+                'english' => 'Does it burn or hurt when you urinate?',
+                'tagalog' => 'May hapdi o sakit ba kapag umiihi?',
+                'hiligaynon' => 'May hapdi ukon sakit bala kung mag-ihi?',
+            ],
+            'urinary_blood' => [
+                'english' => 'Is there blood in your urine?',
+                'tagalog' => 'May dugo ba sa ihi?',
+                'hiligaynon' => 'May dugo bala sa imo ihi?',
+            ],
+            'urinary_fever' => [
+                'english' => 'Do you have a fever with these urinary symptoms?',
+                'tagalog' => 'May lagnat ka ba kasama ng problema sa ihi?',
+                'hiligaynon' => 'May hilanat bala ikaw upod sa problema sa ihi?',
+            ],
+        ];
+        if (!isset($map[$finding])) {
+            return $fallback;
+        }
+        $row = $map[$finding];
+        if ($lang === 'tagalog' || $lang === 'filipino') {
+            return (string) $row['tagalog'];
+        }
+        if ($lang === 'hiligaynon' || $lang === 'ilonggo') {
+            return (string) $row['hiligaynon'];
+        }
+
+        return (string) $row['english'];
     }
 
     /**
@@ -2355,6 +2512,8 @@ final class ClinicalInterviewEngine
             'chief_complaints' => $context['chief_complaints'],
             'semantic_bridge' => is_array($context['semantic_bridge'] ?? null) ? $context['semantic_bridge'] : [],
             'python_enrichment' => is_array($context['python_enrichment'] ?? null) ? $context['python_enrichment'] : [],
+            'findings_asked' => self::stringList($context['findings_asked'] ?? []),
+            'awaiting_target_finding' => (string) ($context['awaiting_target_finding'] ?? ''),
         ];
     }
 
@@ -2481,6 +2640,75 @@ final class ClinicalInterviewEngine
             'engine' => 'clinical-interview-semantic-gate',
             'engine_version' => MedicalAssessmentEngine::VERSION,
         ];
+    }
+
+    /**
+     * Persist Yes/No against the active target finding (and related legacy fact keys).
+     *
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function applyTargetFindingPolarity(array $facts, string $finding, bool $yesNo): array
+    {
+        $finding = strtolower(trim($finding));
+        if ($finding === '') {
+            return $facts;
+        }
+        $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        $status[$finding] = $yesNo ? 'positive' : 'negative';
+        $facts['finding_status'] = $status;
+
+        // Direct mappings.
+        $direct = [
+            'weakness' => 'weakness',
+            'speech_difficulty' => 'speech_difficulty',
+            'vision_change' => 'vision_change',
+            'breathing_difficulty' => 'breathing_difficulty',
+            'bleeding_continuing' => 'bleeding_continuing',
+            'bleeding_heavy' => 'bleeding_heavy',
+            'dizziness' => 'dizziness',
+            'chest_radiation' => 'chest_radiation',
+            'sweating_with_chest' => 'sweating',
+            'dizziness_with_chest' => 'dizziness',
+            'fever_confirmed' => 'fever_confirmed',
+            'fever_with_abdomen' => 'fever_confirmed',
+            'has_other_symptoms' => 'has_other_symptoms',
+        ];
+        if (isset($direct[$finding])) {
+            $facts[$direct[$finding]] = $yesNo;
+        }
+
+        if ($finding === 'vomiting') {
+            $symptoms = self::stringList($facts['symptoms'] ?? []);
+            $neg = self::stringList($facts['negative_symptoms'] ?? []);
+            if ($yesNo) {
+                if (!in_array('Vomiting', $symptoms, true)) {
+                    $symptoms[] = 'Vomiting';
+                }
+                $neg = array_values(array_filter($neg, static fn (string $s): bool => !str_contains(mb_strtolower($s), 'vomit') && !str_contains(mb_strtolower($s), 'suka')));
+                $facts['abdominal_associated'] = true;
+            } else {
+                if (!in_array('vomiting', $neg, true)) {
+                    $neg[] = 'vomiting';
+                }
+                $symptoms = array_values(array_filter($symptoms, static fn (string $s): bool => !str_contains(mb_strtolower($s), 'vomit') && !str_contains(mb_strtolower($s), 'suka')));
+            }
+            $facts['symptoms'] = $symptoms;
+            $facts['negative_symptoms'] = $neg;
+        }
+
+        if ($finding === 'bleeding_with_abdomen') {
+            if ($yesNo) {
+                $facts['bleeding_continuing'] = true;
+                $facts['abdominal_associated'] = true;
+            }
+        }
+
+        if (in_array($finding, ['urinary_burning', 'urinary_blood', 'urinary_fever'], true) && $yesNo) {
+            $facts['has_other_symptoms'] = true;
+        }
+
+        return $facts;
     }
 
     /**

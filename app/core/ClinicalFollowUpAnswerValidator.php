@@ -324,6 +324,12 @@ final class ClinicalFollowUpAnswerValidator
 
     private static function expectedKind(string $qid): string
     {
+        if (str_contains($qid, '__')) {
+            $qid = explode('__', $qid, 2)[0];
+        }
+        if (str_starts_with($qid, 'FINDING_')) {
+            return 'ASSOCIATED_SYMPTOMS';
+        }
         if (str_contains($qid, 'SEVERITY') || $qid === 'PAIN_SEVERITY') {
             return 'PAIN_SEVERITY';
         }

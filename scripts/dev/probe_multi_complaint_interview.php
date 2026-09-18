@@ -41,8 +41,19 @@ ok(($r['assessment_status'] ?? '') === 'IN_PROGRESS', 'stays in progress');
 $s = ClinicalInterviewEngine::assess('My stomach hurts');
 $sn = count((array) ($s['interview']['complaints'] ?? []));
 ok($sn <= 1 || (($s['followup_question']['question_id'] ?? '') === 'ABDOMINAL_ASSOCIATED'), 'single abdomen path', 'tracks=' . $sn . ' q=' . ($s['followup_question']['question_id'] ?? ''));
-ok(($s['followup_question']['question_id'] ?? '') === 'ABDOMINAL_ASSOCIATED'
-    || str_contains(strtolower((string) ($s['followup_question']['text'] ?? '')), 'abdom'), 'abdomen-relevant question');
+$sq = strtoupper((string) ($s['followup_question']['question_id'] ?? ''));
+$st = strtolower((string) ($s['followup_question']['text'] ?? ''));
+ok(
+    str_starts_with($sq, 'ABDOMINAL_ASSOCIATED')
+    || str_contains($st, 'abdom')
+    || str_contains($st, 'tiyan')
+    || str_contains($st, 'vomit')
+    || str_contains($st, 'suka')
+    || str_contains($st, 'fever')
+    || str_contains($st, 'bleed'),
+    'abdomen-relevant atomic question',
+    'q=' . $sq . ' text=' . mb_substr($st, 0, 80)
+);
 
 // Hiligaynon multi
 $h = ClinicalInterviewEngine::assess('Masakit ang ulo ko kag masakit ang ngipon ko');

@@ -21,8 +21,32 @@ final class ClinicalInterviewAdaptivePolicy
      */
     public static function selectNextSlot(array $context, string $transcript, array $assessment = []): ?array
     {
+        $queue = self::listCandidateSlots($context, $transcript, $assessment);
+
+        return $queue[0] ?? null;
+    }
+
+    /**
+     * Ranked allow-list of next-question candidates (for Gemini adaptive select + fallback).
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $assessment
+     * @return list<array{
+     *   question_id:string,
+     *   clinical_purpose:string,
+     *   red_flag_related:bool,
+     *   priority:int,
+     *   source?:string,
+     *   target_finding?:string,
+     *   parent_question_id?:string,
+     *   bank_template?:string
+     * }>
+     */
+    public static function listCandidateSlots(array $context, string $transcript, array $assessment = []): array
+    {
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
         $asked = array_map('strtoupper', array_map('strval', (array) ($context['questions_asked'] ?? [])));
+        $findingsAsked = array_map('strtolower', array_map('strval', (array) ($context['findings_asked'] ?? [])));
         $complaints = is_array($context['chief_complaints'] ?? null) ? $context['chief_complaints'] : [];
         if ($complaints === [] && $assessment !== []) {
             $complaints = ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $facts);
@@ -69,17 +93,52 @@ final class ClinicalInterviewAdaptivePolicy
             if ($impact === null) {
                 continue;
             }
+
+            $lang = strtolower(trim((string) ($context['question_language'] ?? 'english')));
+            $bankTemplate = class_exists('ClinicalFollowUpQuestionBank')
+                ? ClinicalFollowUpQuestionBank::textForLanguage($question, $lang !== '' ? $lang : 'english')
+                : (string) ($question['english'] ?? '');
+
+            $atomic = self::atomicFindingCandidates(
+                $qid,
+                (string) ($question['clinical_purpose'] ?? ''),
+                (bool) ($question['red_flag_related'] ?? false),
+                $impact,
+                $bankTemplate,
+                $facts,
+                $caseHaystack,
+                $findingsAsked
+            );
+            if (self::isBundledQuestion($qid)) {
+                if ($atomic === []) {
+                    // All atomic findings known or asked — do not re-ask the OR-bundle.
+                    continue;
+                }
+                foreach ($atomic as $row) {
+                    $queue[] = $row;
+                }
+                continue;
+            }
+            if ($atomic !== []) {
+                foreach ($atomic as $row) {
+                    $queue[] = $row;
+                }
+                continue;
+            }
+
             $queue[] = [
                 'question_id' => $qid,
                 'clinical_purpose' => (string) ($question['clinical_purpose'] ?? ''),
                 'red_flag_related' => (bool) ($question['red_flag_related'] ?? false),
                 'priority' => $impact,
                 'source' => 'adaptive_policy',
+                'target_finding' => self::defaultTargetFinding($qid),
+                'bank_template' => $bankTemplate,
             ];
         }
 
         if ($queue === []) {
-            return null;
+            return [];
         }
 
         usort($queue, static function (array $a, array $b): int {
@@ -94,7 +153,140 @@ final class ClinicalInterviewAdaptivePolicy
             return $ra <=> $rb;
         });
 
-        return $queue[0];
+        return array_values($queue);
+    }
+
+    private static function isBundledQuestion(string $qid): bool
+    {
+        return in_array(strtoupper($qid), ['ABDOMINAL_ASSOCIATED', 'CHEST_SWEATING', 'URINARY_DETAIL'], true);
+    }
+
+    /**
+     * Split bundled bank purposes into one-finding candidates (Gemini picks one).
+     *
+     * @param list<string> $findingsAsked
+     * @param array<string, mixed> $facts
+     * @return list<array<string, mixed>>
+     */
+    private static function atomicFindingCandidates(
+        string $qid,
+        string $purpose,
+        bool $redFlag,
+        int $priority,
+        string $bankTemplate,
+        array $facts,
+        string $caseHaystack,
+        array $findingsAsked
+    ): array {
+        $bundles = [
+            'ABDOMINAL_ASSOCIATED' => [
+                ['finding' => 'vomiting', 'purpose' => 'Ask only whether the patient is vomiting', 'skip' => 'vomit|suka|nagsusuka'],
+                ['finding' => 'fever_with_abdomen', 'purpose' => 'Ask only whether the patient has fever with the abdominal pain', 'skip' => 'fever|lagnat|hilanat'],
+                ['finding' => 'bleeding_with_abdomen', 'purpose' => 'Ask only whether there is any bleeding with the abdominal pain', 'skip' => 'bleed|blood|dugo|nagadugo|dumudugo'],
+            ],
+            'CHEST_SWEATING' => [
+                ['finding' => 'sweating_with_chest', 'purpose' => 'Ask only whether the patient is sweating a lot with chest pain', 'skip' => 'sweat|singot|pinagpapawisan'],
+                ['finding' => 'dizziness_with_chest', 'purpose' => 'Ask only whether the patient feels dizzy or like fainting with chest pain', 'skip' => 'dizz|faint|lipong|hilo|punaw'],
+            ],
+            'URINARY_DETAIL' => [
+                ['finding' => 'urinary_burning', 'purpose' => 'Ask only whether urination burns or hurts', 'skip' => 'burn|hapdi|masakit.*(ihi|urine)'],
+                ['finding' => 'urinary_blood', 'purpose' => 'Ask only whether there is blood in the urine', 'skip' => 'blood|dugo'],
+                ['finding' => 'urinary_fever', 'purpose' => 'Ask only whether there is fever with urinary symptoms', 'skip' => 'fever|lagnat|hilanat'],
+            ],
+        ];
+        if (!isset($bundles[$qid])) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($bundles[$qid] as $i => $atom) {
+            $finding = strtolower((string) $atom['finding']);
+            if (in_array($finding, $findingsAsked, true)) {
+                continue;
+            }
+            if (self::findingAlreadyKnown($finding, $facts, $caseHaystack, (string) $atom['skip'])) {
+                continue;
+            }
+            $out[] = [
+                'question_id' => $qid . '__' . strtoupper($finding),
+                'parent_question_id' => $qid,
+                'target_finding' => $finding,
+                'clinical_purpose' => (string) $atom['purpose'],
+                'red_flag_related' => $redFlag,
+                'priority' => $priority + $i,
+                'source' => 'adaptive_policy_atomic',
+                'bank_template' => $bankTemplate,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function findingAlreadyKnown(string $finding, array $facts, string $hay, string $skipPattern): bool
+    {
+        $map = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        if (isset($map[$finding]) && $map[$finding] !== null && $map[$finding] !== '') {
+            return true;
+        }
+        if ($finding === 'vomiting'
+            && (self::symptomListHas($facts, 'vomit') || self::symptomListHas($facts, 'suka'))
+        ) {
+            return true;
+        }
+        if ($finding === 'sweating_with_chest' && ($facts['sweating'] ?? null) !== null) {
+            return true;
+        }
+        if ($finding === 'dizziness_with_chest' && ($facts['dizziness'] ?? null) !== null) {
+            return true;
+        }
+        if ($skipPattern !== '' && (bool) preg_match('/\b(?:' . $skipPattern . ')\b/iu', $hay)) {
+            // Affirmed or denied in free text — do not re-ask the same finding.
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function symptomListHas(array $facts, string $needle): bool
+    {
+        $needle = mb_strtolower($needle);
+        foreach (['symptoms', 'associated_symptoms', 'negative_symptoms'] as $key) {
+            foreach ((array) ($facts[$key] ?? []) as $item) {
+                if (str_contains(mb_strtolower((string) $item), $needle)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static function defaultTargetFinding(string $qid): string
+    {
+        return match (strtoupper($qid)) {
+            'PAIN_SEVERITY' => 'pain_severity',
+            'PAIN_LOCATION', 'UNWELL_WHAT', 'SPECIFIC_LOCATION' => 'pain_location',
+            'ONSET' => 'onset',
+            'DURATION' => 'duration',
+            'NEURO_WEAKNESS' => 'weakness',
+            'NEURO_SPEECH' => 'speech_difficulty',
+            'NEURO_VISION', 'EYE_VISION' => 'vision_change',
+            'BREATHING_SEVERITY' => 'breathing_difficulty',
+            'BLEEDING_CONTINUING' => 'bleeding_continuing',
+            'BLEEDING_HEAVY' => 'bleeding_heavy',
+            'BLEEDING_DIZZY' => 'dizziness',
+            'CHEST_RADIATION' => 'chest_radiation',
+            'FEVER_CONFIRM' => 'fever_confirmed',
+            'ASSOCIATED_SYMPTOMS' => 'has_other_symptoms',
+            'ASSOCIATED_DETAIL' => 'associated_detail',
+            default => strtolower($qid),
+        };
     }
 
     /**
@@ -667,8 +859,10 @@ final class ClinicalInterviewAdaptivePolicy
             'BLEEDING_HEAVY' => ($facts['bleeding_heavy'] ?? null) !== null || !empty($facts['denied_associated']),
             'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null || !empty($facts['denied_associated']),
             'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
-            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
-            'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null || $assocDone,
+            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null
+                || self::bundledAtomsResolved('CHEST_SWEATING', $facts, $caseHaystack),
+            'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null || $assocDone
+                || self::bundledAtomsResolved('ABDOMINAL_ASSOCIATED', $facts, $caseHaystack),
             'ASSOCIATED_SYMPTOMS' => ($facts['has_other_symptoms'] ?? null) !== null
                 || !empty($facts['denied_associated'])
                 || ($facts['weakness'] ?? null) !== null
@@ -680,9 +874,44 @@ final class ClinicalInterviewAdaptivePolicy
             'SKIN_SITE' => $locs !== [],
             'FEVER_CONFIRM' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $hay),
             'DIZZINESS_TYPE' => ($facts['dizziness'] ?? null) !== null,
-            'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat)\b/u', $hay),
+            'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat)\b/u', $hay)
+                || self::bundledAtomsResolved('URINARY_DETAIL', $facts, $caseHaystack),
             default => false,
         };
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function bundledAtomsResolved(string $qid, array $facts, string $caseHaystack): bool
+    {
+        $atoms = match (strtoupper($qid)) {
+            'ABDOMINAL_ASSOCIATED' => [
+                ['finding' => 'vomiting', 'skip' => 'vomit|suka|nagsusuka'],
+                ['finding' => 'fever_with_abdomen', 'skip' => 'fever|lagnat|hilanat'],
+                ['finding' => 'bleeding_with_abdomen', 'skip' => 'bleed|blood|dugo|nagadugo|dumudugo'],
+            ],
+            'CHEST_SWEATING' => [
+                ['finding' => 'sweating_with_chest', 'skip' => 'sweat|singot|pinagpapawisan'],
+                ['finding' => 'dizziness_with_chest', 'skip' => 'dizz|faint|lipong|hilo|punaw'],
+            ],
+            'URINARY_DETAIL' => [
+                ['finding' => 'urinary_burning', 'skip' => 'burn|hapdi'],
+                ['finding' => 'urinary_blood', 'skip' => 'blood|dugo'],
+                ['finding' => 'urinary_fever', 'skip' => 'fever|lagnat|hilanat'],
+            ],
+            default => [],
+        };
+        if ($atoms === []) {
+            return false;
+        }
+        foreach ($atoms as $atom) {
+            if (!self::findingAlreadyKnown((string) $atom['finding'], $facts, $caseHaystack, (string) $atom['skip'])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
