@@ -412,6 +412,8 @@
       var el = document.getElementById('mcPatientUrgencyModal');
       var extra = {
         facility: (apiPayload && apiPayload.facility) ? apiPayload.facility : null,
+        complaint: complaint || '',
+        apiPayload: apiPayload || null,
       };
       if (api && level === 'emergency' && typeof api.showEmergency === 'function') {
         try { api.showEmergency(message, extra); } catch (_) {}

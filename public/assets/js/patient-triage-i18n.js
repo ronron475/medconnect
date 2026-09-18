@@ -1,5 +1,5 @@
 /**
- * Patient-facing triage UI language (English / Filipino / Hiligaynon).
+ * Patient-facing triage UI language (English / Hiligaynon / Tagalog).
  * Presentation only — never changes triage classification or medical logic.
  */
 (function (global) {
@@ -8,7 +8,7 @@
   var LANG = { EN: 'en', FIL: 'fil', HIL: 'hil' };
   var STORAGE_LANG = 'mc_patient_ui_lang';
   var STORAGE_SOURCE = 'mc_patient_ui_lang_source';
-  var NAMES = { en: 'English', fil: 'Filipino', hil: 'Hiligaynon' };
+  var NAMES = { en: 'English', hil: 'Hiligaynon', fil: 'Tagalog' };
 
   var STRINGS = {
     en: {
@@ -306,10 +306,10 @@
 
   /**
    * Resolve display language for a new triage result.
-   * Manual preference wins. Otherwise API detection, then complaint text.
+   * Prefer API detection, then complaint wording, so defaults match what the patient used.
+   * Manual dropdown changes still update live via setLang(..., 'manual').
    */
   function resolveForComplaint(complaint, apiPayload) {
-    if (isManual()) return currentLang();
     var fromApi = langFromApi(apiPayload);
     if (fromApi) return setLang(fromApi, 'auto');
     var detected = detectFromText(complaint);
@@ -345,9 +345,13 @@
   function bindSelector(selectEl) {
     if (!selectEl || selectEl._mcLangBound) return;
     selectEl._mcLangBound = true;
+    selectEl.disabled = false;
+    selectEl.removeAttribute('disabled');
     selectEl.value = currentLang();
     selectEl.addEventListener('change', function () {
-      setLang(selectEl.value, 'manual');
+      var next = normalizeLang(selectEl.value) || LANG.EN;
+      selectEl.value = next;
+      setLang(next, 'manual');
     });
   }
 

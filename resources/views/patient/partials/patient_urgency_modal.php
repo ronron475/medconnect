@@ -29,8 +29,8 @@ $bookUrl = $asset . '/views/patient/triage.php';
       <span class="mc-urgency-lang__label" data-i18n="language">Language</span>
       <select id="mcPatientUrgencyLang" class="mc-urgency-lang__select" aria-label="Language">
         <option value="en">English</option>
-        <option value="fil">Filipino</option>
         <option value="hil">Hiligaynon</option>
+        <option value="fil">Tagalog</option>
       </select>
     </label>
     <p class="mc-urgency-modal__message" id="mcPatientUrgencyMessage">AI Assessment: NON-URGENT</p>

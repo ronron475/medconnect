@@ -1928,7 +1928,10 @@
                 const existingLevel = urgencyToLevel(failPayload.triage_level || failPayload.classification_label)
                   || (failPayload.emergency ? 'emergency' : (failPayload.urgent ? 'urgent' : 'non_urgent'));
                 if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
-                  window.mcPatientUrgencyModal.showTriageResult(existingLevel, CONTINUE_MSG);
+                  window.mcPatientUrgencyModal.showTriageResult(existingLevel, CONTINUE_MSG, {
+                    complaint: complaint,
+                    apiPayload: failPayload,
+                  });
                 }
               }
               showTriageAlert(alertEl, 'error', (json && json.message) || 'Could not analyze your complaint. Please try again.');
@@ -2018,7 +2021,10 @@
             setSubmitLabel(SUBMIT_COMPLAINT_LABEL);
             showBookingContinueUi(level, payload.classification_label || '');
             if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
-              window.mcPatientUrgencyModal.showTriageResult(level, CONTINUE_MSG);
+              window.mcPatientUrgencyModal.showTriageResult(level, CONTINUE_MSG, {
+                complaint: complaint,
+                apiPayload: payload,
+              });
             }
             var urgencyEl = document.getElementById('mcPatientUrgencyModal');
             if (urgencyEl) {
@@ -2041,7 +2047,10 @@
               const existingLevel = urgencyToLevel(failPayload.triage_level || failPayload.classification_label)
                 || (failPayload.emergency ? 'emergency' : (failPayload.urgent ? 'urgent' : 'non_urgent'));
               if (window.mcPatientUrgencyModal && typeof window.mcPatientUrgencyModal.showTriageResult === 'function') {
-                window.mcPatientUrgencyModal.showTriageResult(existingLevel, CONTINUE_MSG);
+                window.mcPatientUrgencyModal.showTriageResult(existingLevel, CONTINUE_MSG, {
+                  complaint: complaint,
+                  apiPayload: failPayload,
+                });
               }
             }
             showTriageAlert(alertEl, 'error', (contJson && contJson.message) || 'Could not continue. Please try again.');
