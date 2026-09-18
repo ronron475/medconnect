@@ -87,7 +87,14 @@ def build_health_payload() -> dict[str, Any]:
         gemini_model = gemini_model_name()
         gemini_cached = _gemini_startup_health
         if gemini_cached is not None:
-            gemini_status = "connected" if gemini_cached.get("gemini") else "failed"
+            if gemini_cached.get("gemini"):
+                gemini_status = "connected"
+            else:
+                cached_status = str(gemini_cached.get("status") or "")
+                if cached_status in {"quota_exceeded", "auth_failed", "missing_key"}:
+                    gemini_status = cached_status
+                else:
+                    gemini_status = "failed"
             gemini_error = gemini_cached.get("error")
         elif gemini_api_key():
             gemini_status = "configured"
