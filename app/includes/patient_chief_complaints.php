@@ -265,6 +265,23 @@ function patient_portal_active_chief_complaint(PDO $pdo, int $patientId): array
 
     $triageRow = patient_portal_find_active_triage_row($pdo, $patientId);
 
+    // In-progress interviews and first-click preliminary assessments use
+    // recommendation_status=hidden, so they are invisible to the booking-cycle
+    // active-triage query. Still treat them as the patient's current complaint.
+    if (!$triageRow) {
+        try {
+            require_once __DIR__ . '/patient_symptoms_review_submit.php';
+            if (function_exists('patient_find_preliminary_complaint_triage')) {
+                $prelimRow = patient_find_preliminary_complaint_triage($pdo, $patientId);
+                if ($prelimRow && trim((string) ($prelimRow['chief_complaint'] ?? '')) !== '') {
+                    $triageRow = $prelimRow;
+                }
+            }
+        } catch (Throwable $e) {
+            // non-fatal — fall through to PCC / registration
+        }
+    }
+
     $pccRow = null;
     try {
         // Walk recent rows until we find one still tied to an active cycle.

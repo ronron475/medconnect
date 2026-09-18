@@ -28,12 +28,10 @@ $active_chief_complaint_triage_id = (int) ($active_chief_complaint['triage_id'] 
 $force_new_concern = (string) ($_GET['new_concern'] ?? '') === '1';
 $requested_triage_id = (int) ($_GET['triage_id'] ?? 0);
 if ($force_new_concern) {
-    // Persist cancel so a browser refresh cannot restore the unfinished session.
+    // Cancel once, then redirect so refresh does not keep re-applying cancel.
     patient_cancel_active_triage_session($pdo, (int) $uid, 0);
-    $chief_complaint_locked = false;
-    $registration_chief_complaint = '';
-    $chief_complaint_source = '';
-    $active_chief_complaint_triage_id = 0;
+    header('Location: ' . ASSET_BASE . '/views/patient/triage.php', true, 303);
+    exit;
 } elseif ($requested_triage_id > 0) {
     require_once BASE_PATH . '/app/includes/patient_booking_status.php';
     try {
@@ -97,18 +95,7 @@ if ($pdo->query("SHOW TABLES LIKE 'users'")->rowCount()) {
 }
 
 $review_booking_ctx = triage_patient_review_booking_context($pdo, (int) $uid);
-if ($force_new_concern) {
-    $review_booking_ctx = [
-        'locked' => false,
-        'provider_id' => 0,
-        'provider_name' => '',
-        'triage_id' => 0,
-        'triage_level' => '',
-        'consultation_id' => 0,
-        'source' => '',
-    ];
-}
-$preliminary_complaint_triage = (empty($review_booking_ctx['locked']) && !$force_new_concern)
+$preliminary_complaint_triage = empty($review_booking_ctx['locked'])
     ? patient_find_preliminary_complaint_triage($pdo, (int) $uid)
     : null;
 $review_booking_slots = triage_patient_booking_slot_status($pdo, (int) $uid);
