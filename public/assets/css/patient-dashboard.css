@@ -1,5 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    Patient Health Dashboard
+   Spacing aligned to patient-ui-system.css (--pt-*) tokens.
    ═══════════════════════════════════════════════════════════════ */
 
 .pdash-page {
@@ -7,7 +8,20 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--pt-page-gap, 12px);
+}
+
+/* Primary-card mount: participate in page gap; no stacked child margins */
+#pdashPrimaryCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+#pdashPrimaryCard > .pdash-card {
+  margin-bottom: 0;
 }
 
 /* Hero */
@@ -16,12 +30,12 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
-  gap: 14px 20px;
-  border-radius: 16px;
+  padding: var(--pt-space-lg, 16px) var(--pt-space-xl, 18px);
+  gap: var(--pt-space-md, 12px) var(--pt-space-lg, 16px);
+  border-radius: var(--pt-card-radius, 10px);
   border: 1px solid #d7eef1;
   background: #fff;
-  box-shadow: 0 1px 8px rgba(2, 128, 144, 0.05);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
 }
 
 .pdash-hero--welcome {
@@ -249,17 +263,17 @@
 .pdash-metrics {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 12px;
+  gap: var(--pt-stat-gap, 16px);
+  margin-bottom: 0;
 }
 
 .pdash-metric {
-  padding: 12px;
+  padding: var(--pt-space-md, 12px) var(--pt-space-sm, 8px);
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: var(--pt-card-radius, 10px);
   text-align: center;
-  box-shadow: 0 1px 2px rgba(2, 128, 144, 0.05);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
 }
 
 .pdash-metric--accent {
@@ -294,17 +308,18 @@
 .pdash-quick {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 10px;
+  gap: var(--pt-card-gap, 12px);
+  margin-bottom: 0;
 }
 
 .pdash-quick__link {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--pt-space-sm, 8px);
+  padding: var(--pt-space-md, 12px) var(--pt-space-md, 12px);
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: var(--pt-card-radius, 10px);
   text-decoration: none;
   color: #334155;
   font-size: 0.82rem;
@@ -333,31 +348,33 @@
 /* Grid */
 .pdash-grid {
   grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
-  gap: 16px;
+  gap: var(--pt-space-lg, 16px);
+  margin: 0;
 }
 
 .pdash-main,
 .pdash-side {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--pt-card-gap, 12px);
 }
 
 /* Cards */
 .pdash-card {
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 18px 20px;
-  box-shadow: 0 1px 3px rgba(2, 128, 144, 0.05);
+  border-radius: var(--pt-card-radius, 10px);
+  padding: var(--pt-card-pad, 14px);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(2, 128, 144, 0.06));
+  margin-bottom: 0;
 }
 
 .pdash-card__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: var(--pt-space-md, 12px);
+  margin-bottom: var(--pt-space-md, 12px);
 }
 
 .pdash-card__title {
@@ -376,7 +393,7 @@
 }
 
 .pdash-card__sub {
-  margin: -8px 0 14px;
+  margin: calc(var(--pt-space-xs, 4px) * -1) 0 var(--pt-space-md, 12px);
   font-size: 0.82rem;
   color: #64748b;
 }
@@ -392,8 +409,8 @@
 }
 
 .pdash-card__foot {
-  margin-top: 14px;
-  padding-top: 12px;
+  margin-top: var(--pt-space-md, 12px);
+  padding-top: var(--pt-space-md, 12px);
   border-top: 1px solid #f1f5f9;
   text-align: center;
 }
@@ -579,11 +596,11 @@
 .pdash-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--pt-card-gap, 12px);
 }
 
 .pdash-followups__lead {
-  margin: 0 0 12px;
+  margin: 0 0 var(--pt-space-md, 12px);
   font-size: 0.82rem;
   color: #64748b;
   line-height: 1.45;
@@ -873,7 +890,7 @@
   }
 
   .pdash-page {
-    gap: 10px;
+    gap: var(--pt-page-gap, 12px);
   }
 
   .pdash-hero {
@@ -969,8 +986,8 @@
 
   .pdash-card--complaint,
   .pdash-card--review {
-    padding: 14px;
-    margin-bottom: 10px;
+    padding: var(--pt-card-pad, 14px);
+    margin-bottom: 0;
   }
 
   .pdash-care__top {
@@ -1094,7 +1111,7 @@
 }
 
 .pdash-card--review {
-  margin-bottom: 20px;
+  margin-bottom: 0;
   border: 1px solid rgba(14, 116, 144, 0.2);
   background: linear-gradient(165deg, rgba(240, 253, 250, 0.9) 0%, #fff 42%);
   box-shadow: 0 4px 24px rgba(15, 118, 110, 0.06);
@@ -1102,7 +1119,7 @@
 }
 
 .pdash-card--complaint {
-  margin-bottom: 20px;
+  margin-bottom: 0;
   scroll-margin-top: 88px;
 }
 
@@ -1111,8 +1128,8 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 18px;
+  gap: var(--pt-space-md, 12px);
+  margin-bottom: var(--pt-space-md, 12px);
 }
 
 .pdash-care__title-wrap {
@@ -1185,11 +1202,11 @@
 
 .pdash-care-steps {
   list-style: none;
-  margin: 0 0 18px;
+  margin: 0 0 var(--pt-space-md, 12px);
   padding: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: var(--pt-space-sm, 8px);
   counter-reset: care-step;
 }
 
@@ -1266,11 +1283,11 @@
 }
 
 .pdash-care-panel {
-  padding: 16px;
-  border-radius: 14px;
+  padding: var(--pt-card-pad, 14px);
+  border-radius: var(--pt-card-radius, 10px);
   background: #fff;
   border: 1px solid rgba(13, 148, 136, 0.15);
-  margin-bottom: 14px;
+  margin-bottom: var(--pt-space-md, 12px);
 }
 
 .pdash-care-panel__grid {
@@ -1491,14 +1508,14 @@
 }
 
 .pdash-care-form__hint {
-  margin: 4px 0 0;
+  margin: var(--pt-space-xs, 4px) 0 0;
   font-size: 0.75rem;
   color: #94a3b8;
   line-height: 1.4;
 }
 
 .pdash-care-form__new-consult {
-  margin: 6px 0 0;
+  margin: var(--pt-space-sm, 8px) 0 0;
   position: relative;
   z-index: 6;
   pointer-events: auto !important;
@@ -1512,7 +1529,7 @@
 }
 
 .pdash-care-form__submit {
-  margin-top: 8px;
+  margin-top: var(--pt-space-sm, 8px);
   width: 100%;
   max-width: 320px;
 }
@@ -1522,9 +1539,9 @@
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
-  margin: 8px 0 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  margin: var(--pt-space-sm, 8px) 0 var(--pt-space-md, 12px);
+  padding: var(--pt-space-sm, 8px) var(--pt-space-md, 12px);
+  border-radius: var(--pt-card-radius, 10px);
   border: 2px solid #0f766e;
   background: #ecfdf5;
   box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.1);
