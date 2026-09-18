@@ -498,12 +498,13 @@
     setSteps([]);
     setSafety('');
     setInstruction('');
-    var understandBtn = modal.querySelector('[data-mc-urgency-close]');
+    var understandBtn = modal.querySelector('.mc-urgency-modal__actions [data-mc-urgency-close]');
     if (understandBtn) understandBtn.hidden = false;
 
     var kind = normalizeKind(opts.kind);
     var triageResult = opts.mode === 'triage_result';
     var doctorReferral = opts.doctorReferral === true;
+    var skipFocus = opts.skipFocus === true;
 
     modal.classList.toggle('is-urgent', kind === 'urgent');
     modal.classList.toggle('is-emergency', kind === 'emergency');
@@ -511,6 +512,8 @@
     setIcon(kind);
 
     if (langSelect && window.McPatientTriageI18n) {
+      langSelect.disabled = false;
+      langSelect.removeAttribute('disabled');
       langSelect.value = window.McPatientTriageI18n.current();
     }
 
@@ -537,7 +540,7 @@
       }
     }
 
-    var closeBtn = modal.querySelector('[data-mc-urgency-close]');
+    var closeBtn = modal.querySelector('.mc-urgency-modal__actions [data-mc-urgency-close]');
     if (closeBtn) closeBtn.textContent = i18n('i_understand');
 
     if (kind === 'emergency') {
@@ -613,7 +616,7 @@
     modal.hidden = false;
     modal.removeAttribute('hidden');
     document.body.classList.add('mc-urgency-modal-open');
-    if (closeBtn) closeBtn.focus();
+    if (!skipFocus && closeBtn) closeBtn.focus();
   }
 
   function close() {
@@ -663,7 +666,10 @@
 
   window.addEventListener('medconnect:patient-ui-lang', function () {
     if (modal && !modal.hidden && lastOpts) {
-      open(lastOpts);
+      var refresh = {};
+      Object.keys(lastOpts).forEach(function (key) { refresh[key] = lastOpts[key]; });
+      refresh.skipFocus = true;
+      open(refresh);
     }
   });
 
@@ -710,6 +716,10 @@
     showTriageResult: function (urgency, message, extra) {
       extra = extra || {};
       var kind = normalizeKind(urgency);
+      if (extra.complaint && window.McPatientTriageI18n
+        && typeof window.McPatientTriageI18n.resolveForComplaint === 'function') {
+        window.McPatientTriageI18n.resolveForComplaint(extra.complaint, extra.apiPayload || {});
+      }
       open({
         kind: kind,
         mode: 'triage_result',
