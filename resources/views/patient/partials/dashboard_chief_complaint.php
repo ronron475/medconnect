@@ -32,7 +32,14 @@ $placeholder = $chief_complaint_locked
     : 'Describe your primary complaint...';
 $preliminary_complaint_triage = is_array($preliminary_complaint_triage ?? null) ? $preliminary_complaint_triage : null;
 $preliminary_payload = null;
-if ($preliminary_complaint_triage && empty($chief_complaint_locked)) {
+// Restore unfinished interview/preliminary UI whenever that session is the active
+// complaint (including when active_chief_complaint already locked the same row).
+$prelimTriageId = (int) ($preliminary_complaint_triage['id'] ?? 0);
+$restorePreliminaryUi = $preliminary_complaint_triage && (
+    empty($chief_complaint_locked)
+    || $prelimTriageId === (int) ($active_chief_complaint_triage_id ?? 0)
+);
+if ($restorePreliminaryUi) {
     $prelimLevel = (string) ($preliminary_complaint_triage['triage_level'] ?? '');
     $prelimClass = (string) ($preliminary_complaint_triage['triage_classification'] ?? '');
     $prelimOutcome = strtolower((string) ($preliminary_complaint_triage['outcome'] ?? ''));
@@ -82,7 +89,9 @@ $followup_is_pain_scale = (bool) preg_match(
 );
 $interview_complaint_locked = $chief_complaint_locked
     || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
-$show_start_new_consultation_btn = !$chief_complaint_locked;
+// Keep Start New available during unfinished interview/preliminary even when that
+// session locks the complaint field via patient_portal_active_chief_complaint.
+$show_start_new_consultation_btn = !$chief_complaint_locked || $preliminary_payload !== null;
 $show_start_new_consultation_wrap = $preliminary_payload !== null;
 $placeholder = $interview_complaint_locked
     ? 'Your submitted primary complaint…'
@@ -154,10 +163,10 @@ $placeholder = $interview_complaint_locked
       <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
     ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
     <p class="pdash-care-form__hint">
-      <?php if ($chief_complaint_locked): ?>
-      This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
-      <?php elseif ($preliminary_payload !== null): ?>
+      <?php if ($preliminary_payload !== null): ?>
       This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
+      <?php elseif ($chief_complaint_locked): ?>
+      This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
       <?php elseif ($is_new_consultation_flow): ?>
       Enter a <strong>new</strong> primary complaint for this consultation. Your previous complaints stay saved in My Sessions and will not be reused.
       <?php else: ?>
@@ -228,7 +237,7 @@ $placeholder = $interview_complaint_locked
         Please click &ldquo;Submit patient complaint&rdquo; again to continue.
       </p>
     </div>
-    <?php if (!$chief_complaint_locked): ?>
+    <?php if (!$chief_complaint_locked || $preliminary_payload !== null): ?>
     <button type="submit" class="pdash-btn pdash-btn--primary pdash-care-form__submit" id="pdashSymptomsReviewSubmit" data-submit-kind="<?= htmlspecialchars($submit_kind) ?>">
       <?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'Submit answer' : 'Submit patient complaint' ?>
     </button>

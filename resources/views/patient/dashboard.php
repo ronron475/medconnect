@@ -270,11 +270,13 @@ $symptoms_review_pending = patient_symptoms_review_pending_state($pdo, (int) $ui
 $care_tips_ready_to_schedule = patient_care_tips_ready_to_schedule_state($pdo, (int) $uid);
 $force_new_concern = (string) ($_GET['new_concern'] ?? '') === '1';
 if ($force_new_concern) {
+    // Cancel once, then redirect so a browser refresh cannot re-cancel a newly
+    // submitted interview that started while ?new_concern=1 was still in the URL.
     patient_cancel_active_triage_session($pdo, (int) $uid, 0);
+    header('Location: ' . ASSET_BASE . '/views/patient/dashboard.php', true, 303);
+    exit;
 }
-$preliminary_complaint_triage = $force_new_concern
-    ? null
-    : patient_find_preliminary_complaint_triage($pdo, (int) $uid);
+$preliminary_complaint_triage = patient_find_preliminary_complaint_triage($pdo, (int) $uid);
 $symptoms_review_booking = triage_patient_booking_slot_status($pdo, (int) $uid);
 patient_slot_waitlist_process_throttled($pdo);
 $slot_wait_state = patient_slot_waitlist_dashboard_state($pdo, (int) $uid);
@@ -284,12 +286,6 @@ $registration_chief_complaint = trim((string) ($active_chief_complaint['complain
 $chief_complaint_locked = !empty($active_chief_complaint['locked']) && $registration_chief_complaint !== '';
 $chief_complaint_source = (string) ($active_chief_complaint['source'] ?? '');
 $active_chief_complaint_triage_id = (int) ($active_chief_complaint['triage_id'] ?? 0);
-if ($force_new_concern) {
-    $registration_chief_complaint = '';
-    $chief_complaint_locked = false;
-    $chief_complaint_source = '';
-    $active_chief_complaint_triage_id = 0;
-}
 $portal_triage_urgency = (string) ($active_chief_complaint['urgency'] ?? '');
 if ($portal_triage_urgency === '') {
     $portal_triage_urgency = (string) ($pending_reg_complaint['urgency'] ?? '');

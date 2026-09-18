@@ -34,7 +34,12 @@ $consultation_already_assigned = !$urgent_open_choice && !$emergency_blocks_book
 );
 $preliminary_complaint_triage = is_array($preliminary_complaint_triage ?? null) ? $preliminary_complaint_triage : null;
 $preliminary_payload = null;
-if ($preliminary_complaint_triage && !$is_provider_locked && !$chief_complaint_locked) {
+$prelimTriageId = (int) ($preliminary_complaint_triage['id'] ?? 0);
+$restorePreliminaryUi = $preliminary_complaint_triage && !$is_provider_locked && (
+    !$chief_complaint_locked
+    || $prelimTriageId === (int) ($active_chief_complaint_triage_id ?? 0)
+);
+if ($restorePreliminaryUi) {
     $prelimLevel = (string) ($preliminary_complaint_triage['triage_level'] ?? '');
     $prelimClass = (string) ($preliminary_complaint_triage['triage_classification'] ?? '');
     $prelimOutcome = strtolower((string) ($preliminary_complaint_triage['outcome'] ?? ''));
@@ -232,10 +237,10 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
         <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
       <p class="text-xs text-muted" style="margin-top:4px;">
-        <?php if ($chief_complaint_locked): ?>
-        This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
-        <?php elseif ($preliminary_payload !== null): ?>
+        <?php if ($preliminary_payload !== null): ?>
         This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
+        <?php elseif ($chief_complaint_locked): ?>
+        This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php else: ?>
         Describe your primary complaint to start a new consultation. Previous complaints stay in My Sessions and are not reused.
         <?php endif; ?>
