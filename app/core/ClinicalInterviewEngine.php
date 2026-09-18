@@ -5,8 +5,10 @@
  * Does not replace HiligaynonMedicalNlpPipeline / ClinicalTriageEngine.
  * Uses those engines on the accumulated patient transcript, then decides
  * whether enough clinical information exists to finalize NON-URGENT / URGENT /
- * EMERGENCY. If not, existing NLP decides whether clarification is still required;
- * only then does Gemini (with question-bank fallback) ask one follow-up.
+ * EMERGENCY. Existing NLP (adaptive policy + question bank) selects the next
+ * clinical purpose; Gemini only phrases that one question (with bank fallback).
+ * Optional Ollama meaning support enriches understanding for Hiligaynon/local
+ * text but never replaces the original complaint or sets triage class.
  */
 
 final class ClinicalInterviewEngine
