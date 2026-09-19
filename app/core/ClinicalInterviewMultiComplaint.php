@@ -271,6 +271,21 @@ final class ClinicalInterviewMultiComplaint
             } elseif (($facts['breathing_difficulty'] ?? null) === false) {
                 $chunk[] = 'no difficulty breathing';
             }
+            if (($facts['bleeding_continuing'] ?? null) === true) {
+                $chunk[] = 'ongoing bleeding';
+            } elseif (($facts['bleeding_continuing'] ?? null) === false) {
+                $chunk[] = 'no ongoing bleeding';
+            }
+            if (($facts['bleeding_heavy'] ?? null) === true) {
+                $chunk[] = 'heavy bleeding';
+            } elseif (($facts['bleeding_heavy'] ?? null) === false) {
+                $chunk[] = 'no heavy bleeding';
+            }
+            if (($facts['dizziness'] ?? null) === true) {
+                $chunk[] = 'dizziness';
+            } elseif (($facts['dizziness'] ?? null) === false) {
+                $chunk[] = 'no dizziness';
+            }
             foreach ((array) ($track['questions_answered'] ?? []) as $qa) {
                 if (!is_array($qa)) {
                     continue;
@@ -319,6 +334,15 @@ final class ClinicalInterviewMultiComplaint
         $transcript = trim($transcript);
         if ($transcript !== '' && mb_stripos(implode(' ', $parts), $transcript) === false) {
             $parts[] = $transcript;
+        }
+        // Always include structured polarity facts (single- and multi-complaint).
+        // Bare yes/no turns are stripped from clinicalTranscript; WHO needs these phrases.
+        $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+        if ($facts !== [] && class_exists('ClinicalInterviewEngine')) {
+            $factsText = trim(ClinicalInterviewEngine::factsHaystack($facts));
+            if ($factsText !== '') {
+                $parts[] = $factsText;
+            }
         }
         foreach (self::multiFactsHaystackParts($context) as $chunk) {
             $chunk = trim((string) $chunk);
@@ -504,15 +528,20 @@ final class ClinicalInterviewMultiComplaint
         }
         $trackFacts = is_array($active['facts'] ?? null) ? $active['facts'] : [];
         $ctxFacts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
-        // Do not wipe freshly extracted opening facts with an empty new track.
-        if (!self::factsLookEmpty($trackFacts)) {
-            $context['facts'] = $trackFacts;
-        } elseif (!self::factsLookEmpty($ctxFacts)) {
-            foreach ($context['complaints'] as $i => $track) {
-                if (is_array($track) && (string) ($track['id'] ?? '') === (string) ($active['id'] ?? '')) {
-                    $context['complaints'][$i]['facts'] = $ctxFacts;
-                    break;
-                }
+        // Merge track + live context facts. Never wholesale-replace with a stale track:
+        // that wiped yes/no polarity (e.g. bleeding_continuing) needed by WHO/IITT.
+        $merged = class_exists('ClinicalInterviewEngine')
+            ? ClinicalInterviewEngine::mergeFacts($trackFacts, $ctxFacts)
+            : array_merge($trackFacts, array_filter(
+                $ctxFacts,
+                static fn ($v): bool => $v !== null && $v !== '' && $v !== []
+            ));
+        $context['facts'] = $merged;
+        $activeId = (string) ($active['id'] ?? '');
+        foreach ($context['complaints'] as $i => $track) {
+            if (is_array($track) && (string) ($track['id'] ?? '') === $activeId) {
+                $context['complaints'][$i]['facts'] = $merged;
+                break;
             }
         }
         if (($context['awaiting_question_id'] ?? '') === '' && ($active['awaiting_question_id'] ?? '') !== '') {
@@ -538,8 +567,13 @@ final class ClinicalInterviewMultiComplaint
                 return false;
             }
         }
-        foreach (['weakness', 'breathing_difficulty', 'has_other_symptoms', 'denied_associated'] as $key) {
-            if (($facts[$key] ?? null) !== null && $facts[$key] !== false) {
+        foreach ([
+            'weakness', 'speech_difficulty', 'vision_change', 'breathing_difficulty',
+            'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+            'sweating', 'abdominal_associated', 'has_other_symptoms', 'denied_associated',
+            'fever_confirmed', 'blood_in_stool', 'pregnancy',
+        ] as $key) {
+            if (($facts[$key] ?? null) !== null && $facts[$key] !== '') {
                 return false;
             }
         }

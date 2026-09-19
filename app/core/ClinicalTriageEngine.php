@@ -198,17 +198,22 @@ final class ClinicalTriageEngine
                 'source' => (string) ($whoMatch['source_reference'] ?? 'WHO IITT'),
             ];
 
-            // Without confirmed emergency_red_flags.csv hits, WHO sets the level.
-            // Confirmed red flags still win; WHO may only upgrade further.
-            if (!$hadConfirmedRedFlags
-                || self::displayPriority($whoDisplay) > self::displayPriority($display)
+            // WHO/IITT match is authoritative over CDS/context severity scoring.
+            // Confirmed emergency_red_flags.csv hits may only UPGRADE further (e.g. keep
+            // EMERGENCY if already higher than a YELLOW WHO match) — never block WHO
+            // from replacing a weaker non-WHO escalation.
+            $priorDisplay = $display;
+            $display = $whoDisplay;
+            if ($hadConfirmedRedFlags
+                && self::displayPriority($priorDisplay) > self::displayPriority($whoDisplay)
             ) {
-                $display = $whoDisplay;
-                $severityScore = max(
-                    $severityScore,
-                    $whoDisplay === 'EMERGENCY' ? 12 : ($whoDisplay === 'URGENT' ? 6 : $severityScore)
-                );
+                $display = $priorDisplay;
             }
+            $severityScore = max(
+                $severityScore,
+                $display === 'EMERGENCY' ? 12 : ($display === 'URGENT' ? 6 : $severityScore)
+            );
+            $factors['who_iitt_authority'] = true;
             if ($whoDisplay === 'EMERGENCY' && !empty($whoMatch['red_flag'])) {
                 $redFlags[] = [
                     'flag_id'          => (string) ($whoMatch['rule_id'] ?? 'WHO_IITT'),

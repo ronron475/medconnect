@@ -304,8 +304,55 @@ final class ClinicalInterviewEngine
             || (($factsNow['has_other_symptoms'] ?? null) === true
                 && self::stringList($factsNow['associated_symptoms'] ?? []) === []
                 && empty($factsNow['denied_associated']));
-        // Cap question count, but never finalize while a confirmed associated symptom is unnamed.
-        $sufficient = ($missing === null || $askedCount >= $maxQuestions) && !$mustKeepInterviewing;
+        // Adaptive policy still insufficient → do not treat "no next question" as complete
+        // (candidates may be empty while WHO-critical facts remain null).
+        $adaptiveReady = true;
+        if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+            try {
+                $adaptiveReady = ClinicalInterviewAdaptivePolicy::isTriageSufficient(
+                    $context,
+                    $clinicalText,
+                    $assessment
+                );
+            } catch (Throwable $e) {
+                error_log('isTriageSufficient during sufficient gate: ' . $e->getMessage());
+                $adaptiveReady = true;
+            }
+        }
+        if ($missing === null && !$adaptiveReady && $askedCount < $maxQuestions && !$mustKeepInterviewing) {
+            if (class_exists('ClinicalInterviewMultiComplaint')) {
+                $context = ClinicalInterviewMultiComplaint::prepareForNextQuestion($context, $assessment, $clinicalText);
+            }
+            $missing = self::nextQuestion($context, $clinicalText, $assessment);
+        }
+        // Cap question count, but never finalize solely because $missing === null when
+        // adaptive policy is not ready — and never let MAX_QUESTIONS alone force
+        // NON-URGENT while WHO-critical gaps remain.
+        $hitQuestionCap = $askedCount >= $maxQuestions;
+        $sufficient = ($missing === null && $adaptiveReady) && !$mustKeepInterviewing;
+        if (!$sufficient && $hitQuestionCap) {
+            if ($missing === null && !$adaptiveReady) {
+                if (class_exists('ClinicalInterviewMultiComplaint')) {
+                    $context = ClinicalInterviewMultiComplaint::prepareForNextQuestion(
+                        $context,
+                        $assessment,
+                        $clinicalText
+                    );
+                }
+                $missing = self::nextQuestion($context, $clinicalText, $assessment);
+            }
+            if ($missing !== null && !$adaptiveReady) {
+                // Soft over-cap: keep asking open WHO/adaptive slots.
+                $sufficient = false;
+            } elseif (!$adaptiveReady && $missing === null && !$mustKeepInterviewing) {
+                // No further askable slot — finalize on known facts only; flag incomplete
+                // (do not invent negatives for unanswered WHO criteria).
+                $sufficient = true;
+                $context['who_interview_incomplete'] = true;
+            } elseif ($adaptiveReady && !$mustKeepInterviewing) {
+                $sufficient = true;
+            }
+        }
         if (class_exists('ClinicalInterviewMultiComplaint')
             && count((array) ($context['complaints'] ?? [])) > 1
             && $sufficient
@@ -334,6 +381,14 @@ final class ClinicalInterviewEngine
                 }
             }
             $sufficient = $missing === null;
+        }
+
+        // Not ready and still no question: hold the last follow-up instead of false NON-URGENT.
+        if (!$sufficient && $missing === null && $askedCount < $maxQuestions) {
+            $held = self::questionSnapshot($context['last_followup_question'] ?? null);
+            if (($held['question_id'] ?? '') !== '') {
+                $missing = $held;
+            }
         }
 
         if (!$sufficient && $missing !== null) {
@@ -373,6 +428,7 @@ final class ClinicalInterviewEngine
         }
 
         // Sufficient: final class from COMPLETE-CASE ClinicalTriageEngine only (never MAX of tracks).
+        $whoInterviewIncomplete = !empty($context['who_interview_incomplete']);
         if (class_exists('ClinicalInterviewMultiComplaint')) {
             $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
             $caseText = ClinicalInterviewMultiComplaint::completeCaseHaystack(
@@ -394,6 +450,17 @@ final class ClinicalInterviewEngine
         }
 
         $display = self::finalDisplayFromAssessment($assessment);
+        if ($whoInterviewIncomplete) {
+            if (!isset($assessment['triage']) || !is_array($assessment['triage'])) {
+                $assessment['triage'] = [];
+            }
+            $assessment['triage']['needs_provider_review'] = true;
+            $assessment['triage']['interview_incomplete'] = true;
+            $assessment['triage']['confidence_accepted'] = false;
+            $assessment['triage']['who_interview_incomplete'] = true;
+            // Missing WHO slots are unknown — never treat them as negative findings.
+            $assessment['needs_provider_review'] = true;
+        }
         $display = self::applyInterviewSafetyOverride($display, $context, $assessment);
 
         return self::finalize($assessment, $context, $display, $transcript);
@@ -770,11 +837,12 @@ final class ClinicalInterviewEngine
     }
 
     /**
-     * Serialize accumulated interview facts into phrases ClinicalTriageEngine already understands.
+     * Serialize accumulated interview facts into phrases ClinicalTriageEngine / WHO IITT understand.
+     * Public so finalize haystacks (including single-complaint) include polarity facts.
      *
      * @param array<string, mixed> $facts
      */
-    private static function factsHaystack(array $facts): string
+    public static function factsHaystack(array $facts): string
     {
         $parts = [];
         if (($facts['pain_score'] ?? null) !== null && $facts['pain_score'] !== '') {
@@ -1489,7 +1557,14 @@ final class ClinicalInterviewEngine
      * @param array<string, mixed> $right
      * @return array<string, mixed>
      */
-    private static function mergeFacts(array $left, array $right): array
+    /**
+     * Public for multi-complaint track↔context merges (never lose newer polarity).
+     *
+     * @param array<string, mixed> $left
+     * @param array<string, mixed> $right
+     * @return array<string, mixed>
+     */
+    public static function mergeFacts(array $left, array $right): array
     {
         $out = $left;
         $listKeys = [
@@ -2133,6 +2208,15 @@ final class ClinicalInterviewEngine
             return 'EMERGENCY';
         }
 
+        // WHO/IITT match is final for interview handoff — do not downgrade URGENT→NON-URGENT.
+        $triage = is_array($assessment['triage'] ?? null) ? $assessment['triage'] : [];
+        $who = $triage['assessment_factors']['who_iitt']
+            ?? $assessment['assessment_factors']['who_iitt']
+            ?? null;
+        if (is_array($who) && trim((string) ($who['triage_level'] ?? '')) !== '') {
+            return $display;
+        }
+
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
         $ids = [];
         foreach ((array) ($context['chief_complaints'] ?? []) as $row) {
@@ -2516,6 +2600,13 @@ final class ClinicalInterviewEngine
         $assessment['triage']['final_authority'] = 'ClinicalTriageEngine';
         $assessment['triage']['final_authority_scope'] = 'complete_accumulated_case';
         $assessment['triage']['max_urgency_aggregation'] = false;
+        if (!empty($context['who_interview_incomplete']) || !empty($assessment['triage']['who_interview_incomplete'])) {
+            $assessment['triage']['needs_provider_review'] = true;
+            $assessment['triage']['interview_incomplete'] = true;
+            $assessment['triage']['who_interview_incomplete'] = true;
+            $assessment['triage']['confidence_accepted'] = false;
+            $assessment['needs_provider_review'] = true;
+        }
         $provisionals = is_array($context['complaint_provisionals'] ?? null)
             ? $context['complaint_provisionals']
             : [];
