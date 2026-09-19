@@ -130,21 +130,24 @@ body.admin-body {
   background: transparent;
 }
 
-/* Admin / Super Admin: keep menu and profile stacked (no large empty gap under last item) */
+/* Admin / Super Admin: pin profile to bottom; no dead space under the card */
 .adm-sidebar:not(.adm-sidebar--bhw) {
   overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
 }
 
 .adm-sidebar:not(.adm-sidebar--bhw) .adm-nav {
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: calc(100dvh - 9.25rem);
+  max-height: none;
   padding: 12px 12px 4px;
 }
 
 .adm-sidebar:not(.adm-sidebar--bhw) .adm-profile {
-  margin-top: 8px;
+  margin-top: auto;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .adm-nav-item {
