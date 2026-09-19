@@ -73,17 +73,6 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 
 <div data-live-dashboard="admin">
 
-<!-- Notification-driven metrics -->
-<section aria-label="Operations summary">
-    <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
-        <div>
-            <p class="adm-section-sub">Real-time counts from consultations, referrals, and alerts</p>
-        </div>
-        <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
-    </div>
-    <?php $notif_widget_mode = 'strip'; require VIEWS_PATH . '/partials/notification_widgets.php'; ?>
-</section>
-
 <?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
 
 <!-- Platform snapshot -->

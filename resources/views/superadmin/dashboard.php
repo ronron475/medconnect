@@ -42,16 +42,6 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     <?php endif; ?>
 </section>
 
-<section aria-label="Operations summary">
-    <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
-        <div>
-            <p class="adm-section-sub">Real-time platform activity</p>
-        </div>
-        <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
-    </div>
-    <?php $notif_widget_mode = 'strip'; require VIEWS_PATH . '/partials/notification_widgets.php'; ?>
-</section>
-
 <?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
 
 <section aria-label="Platform metrics">
