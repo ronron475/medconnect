@@ -1,6 +1,6 @@
 {
-  "version": "1.1",
-  "description": "Language-aware follow-up questions for the existing clinical triage interview. Clinical rules stay in ClinicalTriageEngine and datasets; this file only stores patient-facing question text. Selection is driven by required_when concept tags — expand tags/rows rather than hardcoding PHP flows.",
+  "version": "1.2",
+  "description": "Language-aware follow-up questions. Selection is driven by required_when concept tags aligned to precise clinical families (not coarse category aliases). Clinical rules stay in ClinicalTriageEngine.",
   "questions": [
     {
       "question_id": "SPECIFIC_LOCATION",
@@ -45,7 +45,7 @@
     {
       "question_id": "BREATHING_SEVERITY",
       "clinical_purpose": "Assess airway or breathing danger",
-      "required_when": ["breathing", "chest_pain", "cough", "respiratory"],
+      "required_when": ["breathing", "chest_pain"],
       "priority": 20,
       "red_flag_related": true,
       "english": "Are you having difficulty breathing, or is it hard to speak because you are breathless?",
@@ -175,7 +175,7 @@
     {
       "question_id": "SKIN_SITE",
       "clinical_purpose": "Locate skin findings",
-      "required_when": ["skin"],
+      "required_when": ["skin", "clinical_finding"],
       "priority": 36,
       "red_flag_related": false,
       "english": "Where on your skin is the problem, and is it spreading?",
@@ -195,7 +195,7 @@
     {
       "question_id": "PAIN_SEVERITY",
       "clinical_purpose": "Collect numeric pain score as supporting information",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "dental_pain"],
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "dental_pain", "ear"],
       "priority": 40,
       "red_flag_related": false,
       "english": "On a scale of 1 to 10, where 1 means very mild pain and 10 means the worst pain you can imagine, how severe is your pain?",
@@ -215,7 +215,7 @@
     {
       "question_id": "ONSET",
       "clinical_purpose": "Determine sudden versus gradual onset / timing",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding", "cough", "fever", "eye", "skin", "urinary", "breathing", "dizziness", "respiratory", "dental_pain"],
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "bleeding", "cough", "fever", "eye", "skin", "urinary", "breathing", "dizziness", "respiratory", "dental_pain", "gastrointestinal", "cardiovascular", "ear", "clinical_finding"],
       "priority": 50,
       "red_flag_related": false,
       "english": "When did this start, and did it begin suddenly or gradually?",
@@ -225,7 +225,7 @@
     {
       "question_id": "DURATION",
       "clinical_purpose": "Determine how long symptoms have lasted",
-      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell", "cough", "fever", "eye", "skin", "urinary", "dental_pain"],
+      "required_when": ["pain", "headache", "chest_pain", "abdominal_pain", "general_unwell", "cough", "fever", "eye", "skin", "urinary", "dental_pain", "respiratory", "breathing", "gastrointestinal", "cardiovascular", "ear", "clinical_finding"],
       "priority": 55,
       "red_flag_related": false,
       "english": "How long have you had these symptoms?",
@@ -245,7 +245,7 @@
     {
       "question_id": "ASSOCIATED_SYMPTOMS",
       "clinical_purpose": "Identify other associated symptoms without assuming negatives",
-      "required_when": ["headache", "chest_pain", "pain", "dizziness", "fever", "skin", "urinary", "eye", "cough", "bleeding"],
+      "required_when": ["headache", "chest_pain", "pain", "dizziness", "fever", "skin", "urinary", "eye", "cough", "bleeding", "respiratory", "breathing", "gastrointestinal", "cardiovascular", "abdominal_pain", "ear", "clinical_finding"],
       "priority": 70,
       "red_flag_related": false,
       "english": "Do you have any other symptoms besides what you already described?",

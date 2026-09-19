@@ -88,6 +88,10 @@ final class ClinicalInterviewAdaptivePolicy
             if ($when !== [] && array_intersect($when, $concepts) === []) {
                 continue;
             }
+            // Family tag match is not enough — purpose must have supporting clinical evidence.
+            if (!self::questionEvidenceAllows($qid, $concepts, $facts, $caseHaystack)) {
+                continue;
+            }
             if (self::alreadyAnswered($qid, $facts, $transcript, $concepts, $caseHaystack)) {
                 continue;
             }
@@ -159,6 +163,67 @@ final class ClinicalInterviewAdaptivePolicy
         });
 
         return array_values($queue);
+    }
+
+    /**
+     * Universal evidence gate: a bank slot is eligible only when supporting clinical
+     * evidence matches its purpose (not merely a broad medical category / coarse alias).
+     *
+     * @param list<string> $concepts
+     * @param array<string, mixed> $facts
+     */
+    private static function questionEvidenceAllows(
+        string $qid,
+        array $concepts,
+        array $facts,
+        string $caseHaystack
+    ): bool {
+        $qid = strtoupper(trim($qid));
+        if (str_contains($qid, '__')) {
+            $qid = explode('__', $qid, 2)[0];
+        }
+
+        // Pain location / severity require pain evidence (language or pain-class family).
+        if (in_array($qid, ['PAIN_LOCATION', 'PAIN_SEVERITY'], true)) {
+            return self::caseSuggestsPainIntensity($concepts, $facts, $caseHaystack);
+        }
+
+        // Chest radiation / associated chest danger signs require chest-pain evidence.
+        if (in_array($qid, ['CHEST_RADIATION', 'CHEST_SWEATING'], true)) {
+            return array_intersect($concepts, ['chest_pain']) !== []
+                || (bool) preg_match(
+                    '/\b(chest\s*pain|chest\s*discomfort|sakit\s+(?:sa\s+)?(?:dughan|dibdib)|angina|pleuritic)\b/iu',
+                    $caseHaystack
+                );
+        }
+
+        // Abdominal associated danger bundle requires abdominal-pain evidence.
+        if ($qid === 'ABDOMINAL_ASSOCIATED') {
+            return array_intersect($concepts, ['abdominal_pain']) !== []
+                || (bool) preg_match(
+                    '/\b(abdominal\s*pain|stomach\s*pain|belly\s*pain|sakit\s+(?:sa\s+|sang\s+)?(?:tiyan|tyan|tian))\b/iu',
+                    $caseHaystack
+                );
+        }
+
+        // Breathing severity requires dyspnea / airway evidence (not mild URI alone).
+        if ($qid === 'BREATHING_SEVERITY') {
+            if (($facts['breathing_difficulty'] ?? null) === true) {
+                return true;
+            }
+            if (array_intersect($concepts, ['breathing', 'chest_pain']) !== []) {
+                return true;
+            }
+
+            return (bool) preg_match(
+                '/\b(difficulty\s+breath|shortness\s+of\s+breath|dyspnea|cannot\s+breathe|can\'t\s+breathe|'
+                . 'budlay.{0,20}ginhawa|hirap.{0,24}huminga|makahinga|makaginhawa|wheez|stridor|cyanosis|'
+                . 'air\s+hunger|blue\s+lips)\b/iu',
+                $caseHaystack
+            );
+        }
+
+        return true;
     }
 
     private static function isBundledQuestion(string $qid): bool
@@ -523,6 +588,7 @@ final class ClinicalInterviewAdaptivePolicy
         // System-implied complaints already locate the problem clinically.
         if (array_intersect($concepts, [
             'urinary', 'cough', 'respiratory', 'breathing', 'fever', 'dizziness', 'bleeding',
+            'gastrointestinal', 'cardiovascular', 'clinical_finding',
         ]) !== []) {
             return false;
         }
@@ -568,6 +634,13 @@ final class ClinicalInterviewAdaptivePolicy
             return true;
         }
         if (array_intersect($concepts, ClinicalInterviewContextResolver::acuityRedFlagFamilies()) !== []) {
+            return true;
+        }
+        // Non-pain system complaints still benefit from one associated probe when unresolved.
+        if (array_intersect($concepts, [
+            'respiratory', 'cough', 'gastrointestinal', 'cardiovascular', 'fever', 'skin', 'urinary', 'ear',
+            'clinical_finding',
+        ]) !== []) {
             return true;
         }
         // After severity+timing known, one associated probe is still useful when none recorded.
@@ -724,6 +797,8 @@ final class ClinicalInterviewAdaptivePolicy
         }
 
         // Purpose keyword → evidence already present in the case haystack / facts.
+        // Scope generic "associated" to ASSOCIATED_* slots only — do not treat
+        // "Abdominal associated danger signs" as answered by denied_associated.
         $checks = [
             'pain score' => ($facts['pain_score'] ?? null) !== null,
             'numeric pain' => ($facts['pain_score'] ?? null) !== null,
@@ -743,12 +818,14 @@ final class ClinicalInterviewAdaptivePolicy
             'vision' => ($facts['vision_change'] ?? null) !== null
                 || (bool) preg_match('/\b(panulok|paningin|blurry|double vision|vision loss)\b/u', $caseHaystack),
             'other symptoms' => ($facts['has_other_symptoms'] ?? null) !== null || !empty($facts['denied_associated']),
-            'associated' => self::associatedSymptomsResolved($facts),
             'bleeding is ongoing' => ($facts['bleeding_continuing'] ?? null) !== null,
             'heavy' => ($facts['bleeding_heavy'] ?? null) !== null,
             'dizzy' => ($facts['dizziness'] ?? null) !== null,
             'fever' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $caseHaystack),
         ];
+        if ($qid === 'ASSOCIATED_SYMPTOMS' || $qid === 'ASSOCIATED_DETAIL') {
+            $checks['associated'] = self::associatedSymptomsResolved($facts);
+        }
 
         foreach ($checks as $needle => $known) {
             if ($known && str_contains($purpose, $needle)) {
@@ -791,12 +868,19 @@ final class ClinicalInterviewAdaptivePolicy
         $siteImplied = array_intersect($concepts, [
             'urinary', 'cough', 'respiratory', 'breathing', 'fever', 'skin', 'bleeding',
             'dizziness', 'eye', 'nose_pain', 'chest_pain', 'abdominal_pain', 'headache',
+            'gastrointestinal', 'cardiovascular', 'ear', 'dental_pain', 'clinical_finding',
         ]) !== [];
         $hasPainLanguage = (bool) preg_match('/\b(sakit|masakit|pain|hapdi|kasakit|gasakit|hurts?)\b/u', $low);
         if ($locs === [] && !$siteImplied && $hasPainLanguage) {
             $concepts[] = 'pain';
             $concepts[] = 'pain_unspecified';
             $concepts[] = 'pain_no_location';
+        }
+        // Ear / clinical finding with pain language → allow pain severity/location bank tags.
+        if ((in_array('ear', $concepts, true) || in_array('clinical_finding', $concepts, true))
+            && $hasPainLanguage
+        ) {
+            $concepts[] = 'pain';
         }
         // Health-related but no established symptom/site → clarify first (never assume pain).
         if (!$siteImplied && !$hasPainLanguage && (
@@ -839,6 +923,11 @@ final class ClinicalInterviewAdaptivePolicy
         $assocDone = self::associatedSymptomsResolved($facts);
         $assocYesPendingDetail = !empty($facts['needs_associated_detail'])
             || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === []);
+        $findingStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        $targetFinding = self::defaultTargetFinding($qid);
+        if (($findingStatus[$targetFinding] ?? '') === 'uncertain') {
+            return true;
+        }
         $locs = self::bodyLocations($facts);
         if ($locs === []) {
             $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
@@ -857,19 +946,23 @@ final class ClinicalInterviewAdaptivePolicy
             'PAIN_SEVERITY' => $hasSeverity,
             'ONSET', 'DURATION' => $hasTiming,
             'NEURO_WEAKNESS' => ($facts['weakness'] ?? null) !== null
-                || $assocDone
                 || (bool) preg_match('/\b(no|wala|hindi|indi|without)\s+(weakness|numbness|pamamanhid|numb|kaluya)\b/u', $hay)
                 || (bool) preg_match('/nangaluya|kaluya|one[- ]sided|wala nga kamot|weakness in one/u', $hay),
-            'NEURO_SPEECH' => ($facts['speech_difficulty'] ?? null) !== null || $assocDone || ($facts['weakness'] ?? null) !== null,
-            'NEURO_VISION', 'EYE_VISION' => ($facts['vision_change'] ?? null) !== null || $assocDone || ($facts['weakness'] ?? null) !== null,
-            'BREATHING_SEVERITY' => ($facts['breathing_difficulty'] ?? null) !== null || !empty($facts['denied_associated']),
+            // Each neuro probe is independent — answering weakness must not suppress speech/vision.
+            'NEURO_SPEECH' => ($facts['speech_difficulty'] ?? null) !== null
+                || (bool) preg_match('/\b(slurred|speech\s+difficult|indi\s+makahambal|hindi\s+makapagsalita|cannot\s+speak)\b/u', $hay),
+            'NEURO_VISION', 'EYE_VISION' => ($facts['vision_change'] ?? null) !== null
+                || (bool) preg_match('/\b(sudden\s+vision|vision\s+loss|double\s+vision|blurry\s+vision|nawala\s+panulok|malabo\s+(ang\s+)?paningin)\b/u', $hay),
+            'BREATHING_SEVERITY' => ($facts['breathing_difficulty'] ?? null) !== null,
             'BLEEDING_CONTINUING' => ($facts['bleeding_continuing'] ?? null) !== null,
-            'BLEEDING_HEAVY' => ($facts['bleeding_heavy'] ?? null) !== null || !empty($facts['denied_associated']),
-            'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null || !empty($facts['denied_associated']),
-            'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null,
-            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null || !empty($facts['denied_associated']) || ($facts['breathing_difficulty'] ?? null) !== null
+            'BLEEDING_HEAVY' => ($facts['bleeding_heavy'] ?? null) !== null,
+            'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null,
+            // Chest findings are independent of breathing answers and generic "no other symptoms".
+            'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null,
+            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null
                 || self::bundledAtomsResolved('CHEST_SWEATING', $facts, $caseHaystack),
-            'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null || $assocDone
+            // Abdominal RF atoms stay open after generic associated denial; only own fact/atoms close them.
+            'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null
                 || self::bundledAtomsResolved('ABDOMINAL_ASSOCIATED', $facts, $caseHaystack),
             'ASSOCIATED_SYMPTOMS' => ($facts['has_other_symptoms'] ?? null) !== null
                 || !empty($facts['denied_associated'])

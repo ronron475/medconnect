@@ -112,6 +112,17 @@ final class ClinicalFollowUpAnswerValidator
             return self::reject($qid, $kind, $corrected, false, 'unrelated', self::retryMessage($lang), 'UNRELATED');
         }
 
+        // Yes/no probes: short unknown polarity → clarify locally (do not invent POS/NEG via Gemini).
+        if ($kind === 'ASSOCIATED_SYMPTOMS'
+            && !self::looksYesNo($low)
+            && !self::looksAssociated($low)
+            && !self::hasNamedSymptomEvidence($corrected)
+            && !self::extractorUnderstands($kind, $corrected)
+            && mb_strlen(trim((string) preg_replace('/\s+/u', ' ', $low))) <= 16
+        ) {
+            return self::reject($qid, $kind, $corrected, false, 'unknown_polarity', self::retryMessage($lang), 'UNRELATED');
+        }
+
         $gemini = self::askGemini($raw, $corrected, $qid, $kind, $context);
         if (is_array($gemini) && !empty($gemini['available'])) {
             $relevant = !empty($gemini['is_relevant']) && !empty($gemini['answers_question']);
@@ -146,9 +157,29 @@ final class ClinicalFollowUpAnswerValidator
                     $polarity = $polarity ?: 'uncertain';
                     $extracted['patient_uncertain'] = true;
                 }
-                if (in_array($class, ['VALID_UNCERTAIN', 'VALID_UNKNOWN'], true)) {
+                // Local uncertainty on the raw/corrected answer always wins over Gemini POS/NEG invent.
+                $probeText = trim($raw !== '' ? $raw : $corrected);
+                if ($probeText === '') {
+                    $probeText = $use;
+                }
+                $rawUncertain = class_exists('ClinicalFeatureExtractors')
+                    && ClinicalFeatureExtractors::looksPatientUncertain($probeText);
+                if ($rawUncertain
+                    || in_array($class, ['VALID_UNCERTAIN', 'VALID_UNKNOWN'], true)
+                    || !empty($extracted['patient_uncertain'])
+                ) {
+                    $class = 'VALID_UNCERTAIN';
+                    $polarity = 'uncertain';
                     $extracted['patient_uncertain'] = true;
-                    $polarity = $polarity ?: 'uncertain';
+                    unset($extracted['yes_no'], $extracted['denied'], $extracted['denied_associated']);
+                    foreach ([
+                        'vision_change', 'weakness', 'speech_difficulty', 'breathing_difficulty',
+                        'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+                        'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
+                        'blood_in_stool',
+                    ] as $boolKey) {
+                        unset($extracted[$boolKey]);
+                    }
                 }
 
                 // Guard: Gemini must not treat bare yes/no as a timing or named-symptom answer.
@@ -221,6 +252,16 @@ final class ClinicalFollowUpAnswerValidator
         // Associated detail needs a named/descriptive symptom — not an unrelated medical history note.
         if ($kind === 'ASSOCIATED_DETAIL' && !self::hasNamedSymptomEvidence($corrected) && !self::looksAssociated($low)) {
             return self::reject($qid, $kind, $corrected, false, 'named_symptom_required', self::retryMessage($lang), 'UNRELATED');
+        }
+
+        // Yes/no clinical probes: do not invent polarity when local patterns found none.
+        if ($kind === 'ASSOCIATED_SYMPTOMS'
+            && !self::looksYesNo($low)
+            && !self::looksAssociated($low)
+            && !self::hasNamedSymptomEvidence($corrected)
+            && !self::extractorUnderstands($kind, $corrected)
+        ) {
+            return self::reject($qid, $kind, $corrected, false, 'unknown_polarity', self::retryMessage($lang), 'UNRELATED');
         }
 
         // Plausible short clinical reply that local rules didn't classify — do not reject.
@@ -328,6 +369,10 @@ final class ClinicalFollowUpAnswerValidator
             $qid = explode('__', $qid, 2)[0];
         }
         if (str_starts_with($qid, 'FINDING_')) {
+            return 'ASSOCIATED_SYMPTOMS';
+        }
+        // This is a yes/no danger finding, not the numeric pain-severity slot.
+        if ($qid === 'BREATHING_SEVERITY') {
             return 'ASSOCIATED_SYMPTOMS';
         }
         if (str_contains($qid, 'SEVERITY') || $qid === 'PAIN_SEVERITY') {
@@ -617,11 +662,19 @@ final class ClinicalFollowUpAnswerValidator
                 ],
                 default => [],
             };
-            $yn = ClinicalFeatureExtractors::extractYesNo($text);
-            if ($yn !== null) {
-                $payload['yes_no'] = $yn;
-                if ($yn === false) {
-                    $payload['denied'] = true;
+            // Timing / severity / location slots are not yes/no polarity fields.
+            // Avoid attaching yes_no (e.g. bare "wala") that would override location facts.
+            $attachYesNo = !in_array($kind, ['PAIN_SEVERITY', 'SYMPTOM_DURATION', 'PAIN_LOCATION'], true);
+            if ($attachYesNo && ClinicalFeatureExtractors::looksLateralityWala($text)) {
+                $attachYesNo = false;
+            }
+            if ($attachYesNo) {
+                $yn = ClinicalFeatureExtractors::extractYesNo($text);
+                if ($yn !== null) {
+                    $payload['yes_no'] = $yn;
+                    if ($yn === false) {
+                        $payload['denied'] = true;
+                    }
                 }
             }
             if ($kind === 'ASSOCIATED_SYMPTOMS' && ClinicalFeatureExtractors::deniedAssociatedSymptoms($text)) {
@@ -662,11 +715,21 @@ final class ClinicalFollowUpAnswerValidator
      */
     private static function classifyAnswer(string $kind, string $text, array $extracted): array
     {
+        if (!empty($extracted['patient_uncertain'])
+            || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($text))
+        ) {
+            return ['answer_class' => 'VALID_UNCERTAIN', 'polarity' => 'uncertain'];
+        }
+
         $yn = null;
-        if (array_key_exists('yes_no', $extracted)) {
-            $yn = (bool) $extracted['yes_no'];
-        } elseif (class_exists('ClinicalFeatureExtractors')) {
-            $yn = ClinicalFeatureExtractors::extractYesNo($text);
+        $allowYesNoClass = !in_array($kind, ['PAIN_SEVERITY', 'SYMPTOM_DURATION', 'PAIN_LOCATION'], true)
+            && !(class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksLateralityWala($text));
+        if ($allowYesNoClass) {
+            if (array_key_exists('yes_no', $extracted)) {
+                $yn = (bool) $extracted['yes_no'];
+            } elseif (class_exists('ClinicalFeatureExtractors')) {
+                $yn = ClinicalFeatureExtractors::extractYesNo($text);
+            }
         }
 
         if ($yn === true) {
@@ -674,11 +737,6 @@ final class ClinicalFollowUpAnswerValidator
         }
         if ($yn === false || !empty($extracted['denied']) || !empty($extracted['denied_associated'])) {
             return ['answer_class' => 'VALID_NEGATIVE', 'polarity' => 'negative'];
-        }
-        if (!empty($extracted['patient_uncertain'])
-            || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($text))
-        ) {
-            return ['answer_class' => 'VALID_UNCERTAIN', 'polarity' => 'uncertain'];
         }
 
         $hasFact = false;

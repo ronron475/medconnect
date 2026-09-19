@@ -1,40 +1,56 @@
 {
-  "version": "1.1",
-  "description": "Dataset-driven complaint and follow-up family signals for the universal clinical interview gate. Expand rows here without PHP interview-flow changes.",
+  "version": "1.4",
+  "description": "Dataset-driven complaint/family signals. Precise keys (gastrointestinal, cardiovascular, clinical_finding, respiratory). Dictionary findings promote via concept pipeline — not coarse pain aliases.",
   "complaints": [
     {
       "complaint_id": "HEADACHE",
       "label": "Headache",
       "family_key": "headache",
-      "symptom_name_contains": ["headache", "head pain", "headech"],
-      "symptom_ids": ["headache"],
+      "symptom_name_contains": ["headache", "head pain", "headech", "migraine"],
+      "symptom_ids": ["headache", "migraine_severe", "pregnancy_headache_severe"],
       "body_parts": ["head"],
-      "text_regex": ["headache", "headech", "hedache", "sakit ulo", "masakit ulo", "kasakit ulo", "sakit sang ulo", "saket olo", "msk ulo", "sumasakit.{0,12}ulo", "sakit ng ulo", "\\bulo\\b", "\\bolo\\b"]
+      "text_regex": ["headache", "headech", "hedache", "migraine", "sakit ulo", "masakit ulo", "kasakit ulo", "sakit sang ulo", "saket olo", "msk ulo", "sumasakit.{0,12}ulo", "sakit ng ulo", "\\bulo\\b", "\\bolo\\b"]
     },
     {
       "complaint_id": "CHEST_PAIN",
       "label": "Chest pain",
       "family_key": "chest_pain",
-      "symptom_name_contains": ["chest pain", "chest discomfort"],
-      "symptom_ids": ["chest_pain"],
+      "symptom_name_contains": ["chest pain", "chest discomfort", "angina"],
+      "symptom_ids": ["chest_pain", "angina", "pleuritic_chest_pain"],
       "body_parts": ["chest"],
-      "text_regex": ["chest pain", "sakit dughan", "masakit dughan", "sakit sa dibdib", "masakit.{0,12}dibdib", "msk dughan", "msk dibdib", "sumasakit.{0,12}dibdib", "\\bdughan\\b", "\\bdibdib\\b", "\\bchest\\b"]
+      "text_regex": ["chest\\s*pain", "chest\\s*discomfort", "sakit\\s+dughan", "masakit\\s+dughan", "sakit\\s+sa\\s+dibdib", "masakit.{0,12}dibdib", "msk\\s+dughan", "msk\\s+dibdib", "sumasakit.{0,12}dibdib", "\\bangina\\b"]
     },
     {
       "complaint_id": "ABDOMINAL_PAIN",
       "label": "Abdominal pain",
       "family_key": "abdominal_pain",
-      "symptom_name_contains": ["abdominal", "stomach pain"],
-      "symptom_ids": ["abdominal_pain", "acute_abdomen"],
+      "symptom_name_contains": ["abdominal pain", "stomach pain", "belly pain"],
+      "symptom_ids": [
+        "abdominal_pain", "acute_abdomen", "appendicitis_pain", "pancreatitis_pain",
+        "gallbladder_pain", "hernia_pain", "rectal_pain"
+      ],
       "body_parts": ["abdomen", "stomach"],
-      "text_regex": ["abdominal", "sakit tiyan", "masakit tiyan", "saket tyan", "msk tiyan", "\\btiyan\\b", "\\btyan\\b", "\\btian\\b", "stomach", "belly"]
+      "text_regex": ["abdominal\\s*pain", "sakit\\s+tiyan", "masakit\\s+tiyan", "saket\\s+tyan", "msk\\s+tiyan", "sakit.{0,12}(tiyan|tyan|tian)", "stomach\\s*pain", "belly\\s*pain"]
+    },
+    {
+      "complaint_id": "GASTROINTESTINAL",
+      "label": "Gastrointestinal symptoms",
+      "family_key": "gastrointestinal",
+      "symptom_name_contains": ["vomiting", "diarrhea", "nausea", "constipation", "bloating"],
+      "symptom_ids": [
+        "vomiting", "persistent_vomiting", "nausea", "diarrhea", "constipation", "bloating",
+        "reflux", "indigestion", "food_poisoning", "melena", "hematochezia", "vomiting_blood",
+        "dysphagia", "odynophagia", "jaundice", "anorexia", "chemotherapy_nausea"
+      ],
+      "medical_categories": ["gastrointestinal"],
+      "text_regex": ["\\bvomit", "nagsusuka", "ginasuka", "\\bsuka\\b", "\\bdiarrhea\\b", "pagtatae", "\\bnausea\\b", "nasusuka", "\\bconstipation\\b", "\\bbloating\\b"]
     },
     {
       "complaint_id": "DENTAL_PAIN",
       "label": "Dental / tooth pain",
       "family_key": "dental_pain",
-      "symptom_name_contains": ["toothache", "tooth pain", "dental pain"],
-      "symptom_ids": ["toothache", "tooth_pain"],
+      "symptom_name_contains": ["toothache", "tooth pain", "dental pain", "dental abscess"],
+      "symptom_ids": ["toothache", "tooth_pain", "dental_pain", "dental_abscess", "tooth_abscess", "jaw_pain"],
       "body_parts": ["tooth", "teeth", "gum"],
       "text_regex": ["toothache", "tooth\\s*pain", "dental\\s*pain", "sakit\\s+(ng\\s+)?ngipon", "masakit.{0,12}ngipon", "\\bngipon\\b", "\\btooth\\b", "\\bteeth\\b"]
     },
@@ -42,84 +58,182 @@
       "complaint_id": "BLEEDING",
       "label": "Bleeding",
       "family_key": "bleeding",
-      "symptom_name_contains": ["bleeding", "hemorrhage"],
-      "symptom_ids": ["bleeding"],
-      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "bleeding", "\\bdugo\\b"]
+      "symptom_name_contains": ["bleeding", "hemorrhage", "epistaxis", "hematuria"],
+      "symptom_ids": [
+        "bleeding", "severe_bleeding", "epistaxis", "severe_epistaxis", "hematuria",
+        "melena", "hematochezia", "vaginal_bleeding", "pregnancy_bleeding", "mouth_bleeding",
+        "coughing_blood", "vomiting_blood", "hemoptysis", "anticoagulant_bleeding",
+        "warfarin_bleeding", "postpartum_hemorrhage", "circumcision_bleeding"
+      ],
+      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "bleeding", "\\bdugo\\b", "hemorrhage", "epistaxis", "hematuria"]
     },
     {
       "complaint_id": "NOSE_PAIN",
       "label": "Nose pain",
       "family_key": "nose_pain",
       "symptom_name_contains": ["nose pain", "nasal pain"],
+      "symptom_ids": ["sinus_pain"],
       "body_parts": ["nose"],
-      "text_regex": ["sakit ilong", "masakit.{0,12}ilong", "nose pain", "\\bilong\\b", "\\bnose\\b"]
+      "body_parts_require_pain_token": true,
+      "text_regex": ["sakit\\s+(?:sa\\s+|sang\\s+|ng\\s+)?ilong", "masakit.{0,12}ilong", "nose\\s*pain", "pain.{0,12}nose", "sakit.{0,12}ilong"],
+      "text_regex_exclude": ["sip-?on", "runny\\s+nose", "nasal\\s+congest", "barado\\s+ilong", "ginapanuhot", "panuhot"]
     },
     {
       "complaint_id": "DIFFICULTY_BREATHING",
       "label": "Difficulty breathing",
       "family_key": "breathing",
-      "symptom_name_contains": ["difficulty breathing", "shortness of breath", "dyspnea"],
-      "symptom_ids": ["difficulty_breathing"],
-      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap.{0,20}huminga", "hirap huminga", "di ako makahinga", "shortness of breath", "ginhwa"]
+      "symptom_name_contains": ["difficulty breathing", "shortness of breath", "dyspnea", "wheezing", "stridor"],
+      "symptom_ids": [
+        "difficulty_breathing", "wheezing", "asthma_exacerbation", "stridor", "cyanosis",
+        "air_hunger", "throat_swelling", "severe_allergic_reaction", "smoke_inhalation",
+        "foreign_body_aspiration", "pediatric_breathing_distress", "cannot_speak_full_sentences",
+        "copd_exacerbation", "pneumonia_symptoms", "blue_lips", "neonatal_distress"
+      ],
+      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap.{0,20}huminga", "hirap huminga", "di ako makahinga", "shortness of breath", "ginhwa", "\\bwheez", "\\bstridor\\b", "\\bcyanosis\\b"]
     },
     {
       "complaint_id": "COUGH",
       "label": "Cough",
       "family_key": "cough",
       "symptom_name_contains": ["cough", "ubo"],
-      "symptom_ids": ["cough"],
-      "text_regex": ["\\bginaubo\\b", "\\bginauubo\\b", "\\bnagaubo\\b", "\\bnagauubo\\b", "\\bcough(?:ing)?\\b", "\\bcought\\b", "\\bcouph\\b", "\\bubo\\b"]
+      "symptom_ids": ["cough", "bronchitis", "croup", "hemoptysis", "coughing_blood", "tuberculosis_symptoms"],
+      "text_regex": ["\\bginaubo\\b", "\\bginauubo\\b", "\\bnagaubo\\b", "\\bnagauubo\\b", "\\bgahika\\b", "\\bcough(?:ing)?\\b", "\\bcought\\b", "\\bcouph\\b", "\\bubo\\b"]
+    },
+    {
+      "complaint_id": "RESPIRATORY",
+      "label": "Respiratory symptoms",
+      "family_key": "respiratory",
+      "symptom_name_contains": ["runny nose", "sore throat", "nasal congestion", "sipon"],
+      "symptom_ids": [
+        "runny_nose", "nasal_congestion", "sore_throat", "sore_throat_with_fever",
+        "sinus_pain", "hoarseness", "sleep_apnea_symptoms", "aspiration", "croup"
+      ],
+      "medical_categories": ["respiratory"],
+      "text_regex": ["sip-?on", "runny\\s+nose", "sore\\s+throat", "masakit.{0,16}(lalamunan|tutunlan|throat)", "nasal\\s+congest", "barado\\s+ilong", "ginapanuhot"]
     },
     {
       "complaint_id": "FEVER",
       "label": "Fever",
       "family_key": "fever",
-      "symptom_name_contains": ["fever", "lagnat", "hilanat"],
-      "symptom_ids": ["fever"],
-      "text_regex": ["\\bhilanat\\b", "\\blagnat\\b", "\\bfever\\b", "\\bpyrexia\\b", "\\bnilalagnat\\b", "\\blgnt\\b", "\\bhlnt\\b"],
+      "symptom_name_contains": ["fever", "lagnat", "hilanat", "chills", "rigors"],
+      "symptom_ids": [
+        "fever", "infant_fever", "chills", "rigors", "night_sweats",
+        "dengue_symptoms", "malaria_symptoms", "sepsis_symptoms", "rash_with_fever"
+      ],
+      "text_regex": ["\\bhilanat\\b", "\\blagnat\\b", "\\bfever\\b", "\\bpyrexia\\b", "\\bnilalagnat\\b", "\\blgnt\\b", "\\bhlnt\\b", "\\bchills?\\b", "\\brigors?\\b"],
       "text_regex_exclude": ["\\b(wala|indi|hindi|no|without|walang)\\s+(?:ko\\s+)?(?:sang\\s+)?(hilanat|lagnat|fever)\\b"]
     },
     {
       "complaint_id": "EYE",
       "label": "Eye complaint",
       "family_key": "eye",
-      "symptom_name_contains": ["eye pain", "eye", "mata"],
-      "symptom_ids": ["eye_pain", "eye_redness"],
+      "symptom_name_contains": ["eye pain", "eye", "mata", "red eye", "vision"],
+      "symptom_ids": [
+        "eye_pain", "eye_redness", "red_eye", "eye_discharge", "foreign_body_eye",
+        "photophobia", "vision_change", "vision_loss", "sudden_vision_loss", "double_vision"
+      ],
+      "medical_categories": ["ophthalmology"],
       "body_parts": ["eye"],
-      "text_regex": ["eye pain", "sakit.{0,12}mata", "masakit.{0,12}mata", "\\bmata\\b", "\\beye\\b"]
+      "text_regex": ["eye pain", "sakit.{0,12}mata", "masakit.{0,12}mata", "\\bmata\\b", "\\beye\\b", "red\\s+eye", "photophobia"]
     },
     {
       "complaint_id": "SKIN",
       "label": "Skin complaint",
       "family_key": "skin",
-      "symptom_name_contains": ["rash", "itch", "skin"],
-      "symptom_ids": ["rash", "pruritus"],
+      "symptom_name_contains": ["rash", "itch", "skin", "hives", "burn", "swelling"],
+      "symptom_ids": [
+        "rash", "pruritus", "itching", "hives", "cellulitis", "abscess", "burns",
+        "burn_mild", "burn_severe", "laceration", "wound_infection", "insect_bite_reaction",
+        "purpuric_rash", "skin_infection_spreading", "petechiae", "swelling", "swelling_face",
+        "facial_swelling", "diaper_rash_severe", "bedsore_infection"
+      ],
+      "medical_categories": ["dermatological"],
       "text_regex": ["\\brash\\b", "\\bitch(?:y|ing)?\\b", "\\bkati\\b", "\\bkatal\\b", "\\bpamaga\\b", "\\bswelling\\b", "\\bhubag\\b", "\\bgahabok\\b", "\\bgahubag\\b", "\\bpamamaga\\b", "\\blesion\\b", "\\bhives\\b", "\\burticaria\\b", "\\bskin\\b", "\\bpanit\\b", "\\bnasunog\\b", "\\bburn(?:s|ed)?\\b", "\\bpaso\\b"]
     },
     {
       "complaint_id": "URINARY",
       "label": "Urinary symptoms",
       "family_key": "urinary",
-      "symptom_name_contains": ["dysuria", "urinary", "uti"],
-      "symptom_ids": ["dysuria", "urinary_frequency"],
-      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi"]
+      "symptom_name_contains": ["dysuria", "urinary", "uti", "hematuria"],
+      "symptom_ids": [
+        "dysuria", "urinary_frequency", "urinary_symptoms", "urinary_retention",
+        "hematuria", "incontinence", "flank_pain", "kidney_stone_pain", "renal_colic",
+        "scrotal_pain", "testicular_pain", "testicular_torsion", "prostatitis",
+        "bph_symptoms", "penile_discharge", "urinary_catheter_issue"
+      ],
+      "medical_categories": ["urinary", "urology"],
+      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi", "hematuria"]
     },
     {
       "complaint_id": "DIZZINESS",
       "label": "Dizziness",
       "family_key": "dizziness",
-      "symptom_name_contains": ["dizziness", "vertigo", "lightheaded"],
-      "symptom_ids": ["dizziness"],
-      "text_regex": ["\\bhilo\\b", "nahilo", "nahihilo", "dizzy", "dizziness", "malipong", "nalipong", "lingin"]
+      "symptom_name_contains": ["dizziness", "vertigo", "lightheaded", "syncope", "fainting"],
+      "symptom_ids": ["dizziness", "vertigo", "syncope", "fainting"],
+      "text_regex": ["\\bhilo\\b", "nahilo", "nahihilo", "dizzy", "dizziness", "malipong", "nalipong", "lingin", "\\bvertigo\\b", "\\bsyncope\\b", "\\bfaint"]
     },
     {
       "complaint_id": "NEURO",
       "label": "Neurological symptoms",
       "family_key": "neuro",
-      "symptom_name_contains": ["weakness", "numbness", "neurological"],
-      "symptom_ids": ["stroke_symptoms", "weakness"],
-      "text_regex": ["weakness", "nangaluya", "kaluya", "numb", "pamamanhid", "nanlalata", "kombulsiyon", "seizure", "slurred"],
+      "symptom_name_contains": ["weakness", "numbness", "neurological", "seizure", "stroke"],
+      "symptom_ids": [
+        "stroke_symptoms", "weakness", "numbness", "tingling", "paralysis", "seizure",
+        "confusion", "loss_of_consciousness", "facial_weakness", "facial_droop",
+        "slurred_speech", "one_sided_weakness", "meningism", "stiff_neck",
+        "gait_disturbance", "memory_loss_acute", "meningitis_symptoms", "febrile_seizure",
+        "withdrawal_seizure"
+      ],
+      "text_regex": ["weakness", "nangaluya", "kaluya", "numb", "pamamanhid", "nanlalata", "kombulsiyon", "seizure", "slurred", "stroke", "paralysis", "tingling"],
       "text_regex_exclude": ["\\b(no|wala|hindi|indi|without)\\s+(weakness|numbness|pamamanhid|numb)\\b"]
+    },
+    {
+      "complaint_id": "MUSCULOSKELETAL",
+      "label": "Musculoskeletal symptoms",
+      "family_key": "pain",
+      "symptom_name_contains": ["back pain", "joint", "sprain", "fracture", "body pain"],
+      "symptom_ids": [
+        "back_pain", "body_pain", "neck_pain", "shoulder_pain", "hip_pain", "knee_pain",
+        "ankle_pain", "wrist_pain", "joint_swelling", "sprain", "suspected_fracture",
+        "dislocation", "muscle_cramps", "muscle_weakness", "chronic_pain", "night_pain"
+      ],
+      "medical_categories": ["musculoskeletal"],
+      "text_regex": ["back\\s*pain", "sakit\\s+likod", "joint\\s*pain", "\\bsprain\\b", "\\bfracture\\b", "body\\s*pain"]
+    },
+    {
+      "complaint_id": "EAR",
+      "label": "Ear complaint",
+      "family_key": "ear",
+      "symptom_name_contains": ["ear pain", "earache", "tinnitus"],
+      "symptom_ids": ["ear_pain", "tinnitus", "hearing_loss", "hearing_change"],
+      "medical_categories": ["sensory"],
+      "body_parts": ["ear"],
+      "text_regex": ["ear\\s*pain", "earache", "sakit.{0,12}(tenga|dulunggan|dalunggan)", "\\btinnitus\\b"]
+    },
+    {
+      "complaint_id": "CARDIOVASCULAR",
+      "label": "Cardiovascular symptoms",
+      "family_key": "cardiovascular",
+      "symptom_name_contains": ["palpitation", "arrhythmia", "heart racing"],
+      "symptom_ids": [
+        "palpitations", "arrhythmia", "heart_failure_symptoms", "hypertension_severe",
+        "hypotension", "claudication", "leg_swelling_unilateral", "cold_extremities",
+        "cardiac_arrest_symptoms", "shock_symptoms"
+      ],
+      "medical_categories": ["cardiovascular"],
+      "text_regex": ["palpitation", "\\barrhythmia\\b", "heart\\s+racing", "kibot\\s+sang\\s+tagipusuon"]
+    },
+    {
+      "complaint_id": "CLINICAL_FINDING",
+      "label": "Clinical finding",
+      "family_key": "clinical_finding",
+      "symptom_name_contains": ["mass", "lump", "lesion", "nodule", "swelling", "cyst", "abscess"],
+      "symptom_ids": [
+        "swelling", "rash", "lymph_node_swelling", "breast_lump", "abscess", "cellulitis",
+        "joint_swelling", "facial_swelling", "swelling_face", "hives", "insect_bite_reaction"
+      ],
+      "medical_categories": ["finding"],
+      "text_regex": ["\\bmass\\b", "\\blump\\b", "\\blesion\\b", "\\bnodule\\b", "\\bcyst\\b", "\\babscess\\b", "\\bbukol\\b", "\\bhubag\\b", "\\bpamamaga\\b", "\\bgahubag\\b", "\\bgahabok\\b"]
     }
   ],
   "fallback_complaints": [
@@ -136,7 +250,8 @@
       "label": "Unwell",
       "family_key": "general_unwell",
       "requires_no_pain_token": true,
-      "requires_no_matched_complaint": true
+      "requires_no_matched_complaint": true,
+      "requires_healthcare_signal": true
     },
     {
       "complaint_id": "PAIN",
@@ -154,7 +269,7 @@
     },
     {
       "key": "respiratory",
-      "add_when_family_any": ["cough", "breathing", "chest_pain"]
+      "add_when_family_any": ["cough", "breathing", "chest_pain", "respiratory"]
     },
     {
       "key": "pain_no_location",

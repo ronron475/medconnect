@@ -531,6 +531,12 @@ final class ClinicalFeatureExtractors
         if ($low === '') {
             return null;
         }
+
+        // Uncertain meaning must never become POS/NEG (shared callers rely on this).
+        if (self::looksPatientUncertain($low)) {
+            return null;
+        }
+
         // Strip discourse particles so "wala man", "oo gid", "hindi naman" keep polarity.
         $norm = (string) preg_replace(
             '/\b(man|gid|lang|naman|po|ba|ya|ra|kay|kasi|talaga|gyud|jud|lagi|pls|please)\b/u',
@@ -542,14 +548,27 @@ final class ClinicalFeatureExtractors
             $norm = $low;
         }
 
+        // "wala nga ulo" / laterality: do not treat that wala as existential negation.
+        $negProbe = $norm;
+        if (self::looksLateralityWala($low) || self::looksLateralityWala($norm)) {
+            $negProbe = trim((string) preg_replace('/\bwala\b/u', ' ', $negProbe));
+            $negProbe = trim((string) preg_replace('/\s+/u', ' ', $negProbe));
+        }
+
         $hasPos = (bool) preg_match(
-            '/\b(yes|yeah|yep|oo|opo|hoo|hu-o|huo|tama|correct|meron|may|mayroon|naa|positive)\b/u',
+            '/\b(yes|yeah|yep|yup|oo|opo|hoo|hu-o|huo|tama|correct|meron|mayroon|naa|positive|ara)\b/u',
             $norm
-        );
+        ) || (bool) preg_match('/\bmay\s+ara\b/u', $norm)
+            || (bool) preg_match('/\bi\s+(do|have)(?:\s+it)?\b/u', $norm)
+            || (bool) preg_match('/^o\.?$/u', $norm);
+
         $hasNeg = (bool) preg_match(
-            '/\b(no|nope|none|wala|walay|hindi|indi|dili|nothing|never|negative|not really|walaay)\b/u',
-            $norm
-        );
+            '/\b(no|nope|none|wala|walay|walang|hindi|indi|dili|nothing|never|negative|not really|walaay)\b/u',
+            $negProbe
+        ) || (bool) preg_match('/\bi\s+(don\'?t|dont|do\s+not|haven\'?t|havent|have\s+not)\b/u', $norm);
+
+        // Bare English modal "may" alone is not an affirmation.
+        // (Existential may ara / mayroon / meron / ara handled above.)
 
         if ($hasPos && !$hasNeg) {
             return true;
@@ -557,12 +576,30 @@ final class ClinicalFeatureExtractors
         if ($hasNeg && !$hasPos) {
             return false;
         }
-        // "wala ... oo" style mixed → prefer explicit negation of the asked symptom.
+        // Mixed POS+NEG (e.g. "oo, wala…") → prefer explicit negation.
         if ($hasNeg) {
             return false;
         }
 
         return null;
+    }
+
+    /**
+     * True when "wala" is used as Hiligaynon laterality (left), not existential "none/no".
+     */
+    public static function looksLateralityWala(string $text): bool
+    {
+        $low = strtolower(trim($text));
+        if ($low === '' || !preg_match('/\bwala\b/u', $low)) {
+            return false;
+        }
+
+        return (bool) preg_match(
+            '/\bwala\s+(nga\s+)?(ulo|olo|head|forehead|temple|dughan|chest|dibdib|tiyan|stomach|'
+            . 'abdomen|belly|likod|back|mata|eye|neck|liog|leeg|ilong|nose|kamot|hand|tiil|leg|'
+            . 'side|bahin|parte|part|portion|shoulder|abaga)\b/u',
+            $low
+        );
     }
 
     public static function isVagueComplaint(string $text): bool
@@ -674,24 +711,38 @@ final class ClinicalFeatureExtractors
         $low = (string) preg_replace('/\bdi\s*ko\b/u', 'di ko', $low);
         $low = (string) preg_replace('/\bindi\s*ko\b/u', 'indi ko', $low);
         $low = (string) preg_replace('/\bhindi\s*ko\b/u', 'hindi ko', $low);
+        $low = (string) preg_replace('/\bindi\s*ako\b/u', 'indi ako', $low);
+        $low = (string) preg_replace('/\bhindi\s*ako\b/u', 'hindi ako', $low);
         if ($low === '') {
             return false;
         }
-        if (preg_match('/\b(ambot|ewan|dunno|unsure|uncertain)\b/u', $low)) {
-            return true;
-        }
-        if (preg_match('/\b(not\s+sure|not\s+certain|no\s+idea|i\s+don\'?t\s+know|dont\s+know|do\s+not\s+know)\b/u', $low)) {
-            return true;
-        }
-        // "di/indi/hindi/dili/wala ko ..." + know/sure/remember family
+        // Soft hedges / can't-say family (not bare indi/hindi/no/wala).
         if (preg_match(
-            '/\b((di|indi|hindi|dili|wala)\s*(ko|ako)?|(i\s+)?(don\'?t|dont|do\s+not))\s*'
-            . '(sure|kabalo|kibaluan|alam|matandaan|mahinumduman|hinumduman|tandaan|know|remember|certain)\b/u',
+            '/\b(ambot|ewan|dunno|unsure|uncertain|siguro|baka|maybe|perhaps|possibly)\b/u',
             $low
         )) {
             return true;
         }
-        if (preg_match('/\bdaw\b.+\b(sure|kabalo|alam)\b/u', $low) && preg_match('/\b(indi|hindi|di|dili|wala)\b/u', $low)) {
+        if (preg_match(
+            '/\b(not\s+sure|not\s+certain|no\s+idea|i\s+don\'?t\s+know|dont\s+know|do\s+not\s+know|'
+            . 'can\'?t\s+say|cannot\s+say|hard\s+to\s+say|can\'?t\s+tell|cannot\s+tell|i\s+forget)\b/u',
+            $low
+        )) {
+            return true;
+        }
+        // "di/indi/hindi/dili/wala ko|ako ..." + know/sure/remember family (includes sigurado/maalala).
+        // Bare "indi"/"hindi"/"wala" alone do NOT match — a know/sure/remember token is required.
+        if (preg_match(
+            '/\b((di|indi|hindi|dili|wala)\s*(ko|ako)?|(i\s+)?(don\'?t|dont|do\s+not))\s*'
+            . '(sure|sigurado|kabalo|kibaluan|alam|matandaan|mahinumduman|hinumduman|tandaan|'
+            . 'maalala|know|remember|certain)\b/u',
+            $low
+        )) {
+            return true;
+        }
+        if (preg_match('/\bdaw\b.+\b(sure|sigurado|kabalo|alam)\b/u', $low)
+            && preg_match('/\b(indi|hindi|di|dili|wala)\b/u', $low)
+        ) {
             return true;
         }
 
