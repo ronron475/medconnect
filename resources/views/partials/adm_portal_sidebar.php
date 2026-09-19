@@ -19,7 +19,7 @@ $portal_configs = [
     'admin' => [
         'nav_file' => 'admin_nav.php',
         'views_segment' => 'admin',
-        'logo_em' => 'Admin',
+        'logo_em' => 'System Administrator',
         'profile_href' => ASSET_BASE . '/views/admin/profile.php',
         'profile_title' => 'Administrator profile settings',
         'profile_role' => 'System Administrator',
@@ -31,7 +31,7 @@ $portal_configs = [
     'superadmin' => [
         'nav_file' => 'superadmin_nav.php',
         'views_segment' => 'superadmin',
-        'logo_em' => 'Super',
+        'logo_em' => 'Super Administrator',
         'profile_href' => ASSET_BASE . '/views/superadmin/profile.php',
         'profile_title' => 'Super Administrator profile',
         'profile_role' => 'Super Administrator',
@@ -118,6 +118,24 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
         [$file, $label, $icon_path] = $item;
         $itemQuery = $item[3] ?? null;
         $navGroup = $item[4] ?? null;
+
+        // Logout is a control, not a routed page (Admin / Super Admin only).
+        if ($file === 'logout') {
+            if ($adm_sidebar_portal === 'bhw') {
+                continue;
+            }
+    ?>
+    <button type="button" class="adm-nav-item" data-logout-trigger>
+      <svg class="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <?= $icon_path ?>
+      </svg>
+      <span class="adm-label"><?= htmlspecialchars($label) ?></span>
+    </button>
+    <?php
+            continue;
+        }
+
         $href = $views_base . '/' . $file . ($itemQuery ? '?' . $itemQuery : '');
         if ($adm_sidebar_portal === 'bhw') {
             $is_active = portal_nav_bhw_is_active((string) $file, $current);
