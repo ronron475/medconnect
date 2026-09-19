@@ -171,6 +171,15 @@
     setKpi('admKpiRegTotal', Number(reg.total || 0).toLocaleString());
     setKpi('admKpiUsersTotal', roles.reduce(function (s, r) { return s + (r.count || 0); }, 0).toLocaleString());
 
+    var periodLabel = data.period_label || (T().periodLabel ? T().periodLabel(data.days) : 'Month');
+    var periodRange = data.period_range_label || (T().periodRangeLabel ? T().periodRangeLabel(data.days) : 'this month');
+    var consultSub = document.getElementById('admChartConsultSub');
+    if (consultSub) consultSub.textContent = 'Daily volume — ' + periodLabel;
+    var regSub = document.getElementById('admChartRegSub');
+    if (regSub) regSub.textContent = 'User sign-ups — ' + periodLabel;
+    var regKpiLabel = document.getElementById('admKpiRegLabel');
+    if (regKpiLabel) regKpiLabel.textContent = 'Period total';
+
     var statusTotal = status.reduce(function (s, r) { return s + (r.count || 0); }, 0);
     var fourthTitle = document.getElementById('admChartFourthTitle');
     var fourthSub = document.getElementById('admChartFourthSub');
@@ -192,7 +201,7 @@
     } else {
       if (fourthTitle) fourthTitle.textContent = 'AI Triage Volume';
       if (fourthSub) {
-        fourthSub.textContent = 'Daily assessments — ' + (T().periodRangeLabel ? T().periodRangeLabel(data.days) : ('last ' + (data.days || 30) + ' days'));
+        fourthSub.textContent = 'Daily assessments — ' + periodRange;
       }
       if (fourthKpi) fourthKpi.textContent = Number(triage.total || 0).toLocaleString();
       if (fourthKpiLabel) fourthKpiLabel.textContent = 'Period total';
