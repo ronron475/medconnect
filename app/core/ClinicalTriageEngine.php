@@ -81,6 +81,12 @@ final class ClinicalTriageEngine
 
         $negatedConcepts = NegationDetector::detectNegatedConcepts($original . ' ' . $english);
         $features = ClinicalFeatureExtractors::extractAll($original, $english, $negatedConcepts);
+        foreach ((array) ($features['body_locations'] ?? []) as $loc) {
+            $loc = strtolower(trim((string) $loc));
+            if ($loc !== '' && !self::listHasCaseInsensitive($bodyParts, $loc)) {
+                $bodyParts[] = $loc;
+            }
+        }
         $kbSymptoms = SymptomKnowledgeBase::matchSymptoms(
             $original,
             $english,

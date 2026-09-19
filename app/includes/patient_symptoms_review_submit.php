@@ -323,18 +323,44 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
  */
 function patient_symptoms_review_needs_valid_payload(array $assessment): array
 {
+    $domainLabel = trim((string) ($assessment['domain_label'] ?? ''));
+    if ($domainLabel === '' && is_array($assessment['triage'] ?? null)) {
+        $domainLabel = trim((string) ($assessment['triage']['domain_label'] ?? ''));
+    }
+    if ($domainLabel === '' && is_array($assessment['interview'] ?? null)) {
+        $domainLabel = trim((string) ($assessment['interview']['domain_label'] ?? ''));
+    }
+    $isUnclear = !empty($assessment['needs_clarification'])
+        || $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR;
+    if ($domainLabel === '') {
+        $domainLabel = $isUnclear
+            ? ComplaintSemanticValidator::DOMAIN_UNCLEAR
+            : ComplaintSemanticValidator::DOMAIN_NON_HEALTH;
+    }
+
     $message = trim((string) ($assessment['patient_message'] ?? ''));
     if ($message === '' && class_exists('ComplaintSemanticValidator')) {
-        $message = ComplaintSemanticValidator::clarificationMessage(
-            (string) ($assessment['detected_language'] ?? 'english')
+        $message = ComplaintSemanticValidator::patientGateMessage(
+            (string) ($assessment['detected_language'] ?? 'english'),
+            $domainLabel
         );
     }
     if ($message === '') {
-        $message = 'Please describe a health concern or symptom you are experiencing so we can continue.';
+        $message = $isUnclear
+            ? 'Please clarify or rephrase your health concern so we can understand.'
+            : 'Please describe a health concern or symptom you are experiencing so we can continue.';
     }
 
+    // NEEDS_VALID_COMPLAINT only when confirmed non-health; UNCLEAR uses clarification flags.
+    $needsValid = !$isUnclear && (
+        !empty($assessment['needs_valid_complaint'])
+        || $domainLabel === ComplaintSemanticValidator::DOMAIN_NON_HEALTH
+    );
+
     return [
-        'needs_valid_complaint' => true,
+        'needs_valid_complaint' => $needsValid,
+        'needs_clarification' => $isUnclear,
+        'domain_label' => $domainLabel,
         'domain_skipped' => true,
         'assessment_status' => ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT,
         'triage_status' => 'NOT_READY',
@@ -818,14 +844,39 @@ function patient_submit_symptoms_for_review(
     }
 
     $label = (string) ($assessment['triage']['urgency_label'] ?? $assessment['urgency_label'] ?? 'Routine');
-    $needsValidComplaint = !empty($assessment['needs_valid_complaint'])
-        || !empty($assessment['domain_skipped'])
-        || strtoupper((string) ($assessment['assessment_status'] ?? '')) === ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT;
+    $domainLabel = trim((string) ($assessment['domain_label'] ?? ''));
+    if ($domainLabel === '' && is_array($assessment['triage'] ?? null)) {
+        $domainLabel = trim((string) ($assessment['triage']['domain_label'] ?? ''));
+    }
+    if ($domainLabel === '' && is_array($assessment['interview'] ?? null)) {
+        $domainLabel = trim((string) ($assessment['interview']['domain_label'] ?? ''));
+    }
+    $needsClarification = !empty($assessment['needs_clarification'])
+        || $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR;
+    // Confirmed non-health only — do not treat UNCLEAR / weak local NLP as NEEDS_VALID.
+    $needsValidComplaint = (
+        !empty($assessment['needs_valid_complaint'])
+        || (
+            !$needsClarification
+            && strtoupper((string) ($assessment['assessment_status'] ?? '')) === ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT
+            && $domainLabel === ComplaintSemanticValidator::DOMAIN_NON_HEALTH
+        )
+    ) && !$needsClarification;
+    // Opening hold: confirmed non-health OR clarification request (UI still uses domain_skipped).
+    $openingBlocked = $needsValidComplaint || $needsClarification
+        || (
+            !empty($assessment['domain_skipped'])
+            && (
+                !empty($assessment['needs_valid_complaint'])
+                || !empty($assessment['needs_clarification'])
+                || strtoupper((string) ($assessment['assessment_status'] ?? '')) === ClinicalInterviewEngine::STATUS_NEEDS_VALID_COMPLAINT
+            )
+        );
     $triageLevel = TriageLevelService::fromAssessment($assessment);
-    if ($needsValidComplaint) {
+    if ($openingBlocked) {
         $triageLevel = '';
     }
-    if ($reuseExisting && $prelim && !$needsValidComplaint) {
+    if ($reuseExisting && $prelim && !$openingBlocked) {
         $storedLevel = (string) ($prelim['triage_level'] ?? '');
         if (TriageLevelService::isValid($storedLevel)) {
             $triageLevel = $storedLevel;
@@ -835,7 +886,7 @@ function patient_submit_symptoms_for_review(
     $isEmergency = $triageLevel === TriageLevelService::EMERGENCY
         || strtoupper((string) ($assessment['triage']['triage_classification'] ?? '')) === 'EMERGENCY';
     $interviewInProgress = ClinicalInterviewEngine::isInProgress($assessment);
-    if ($interviewInProgress || $needsValidComplaint) {
+    if ($interviewInProgress || $openingBlocked) {
         $isEmergency = false;
         $triageLevel = '';
     }
@@ -888,8 +939,8 @@ function patient_submit_symptoms_for_review(
             ];
         }
 
-        if ($needsValidComplaint) {
-            // Do not persist a fake NON-URGENT preliminary assessment for nonsense / greetings.
+        if ($openingBlocked) {
+            // Do not persist a fake NON-URGENT preliminary assessment for nonsense / greetings / unclear.
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
