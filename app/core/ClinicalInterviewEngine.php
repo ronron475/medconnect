@@ -1151,11 +1151,10 @@ final class ClinicalInterviewEngine
                 'FEVER_CONFIRM' => 'fever_confirmed',
                 'VISION_CHANGE' => 'vision_change',
             ];
-            $awaitingKey = $awaiting;
-            if (str_contains($awaiting, '__')) {
-                $awaitingKey = explode('__', $awaiting, 2)[0];
-            }
-            if (isset($map[$awaitingKey])) {
+            // Atomic PARENT__ATOM answers must not write the parent bundle boolean.
+            $isAtomic = str_contains($awaiting, '__');
+            $awaitingKey = $isAtomic ? explode('__', $awaiting, 2)[0] : $awaiting;
+            if (!$isAtomic && isset($map[$awaitingKey])) {
                 $facts[$map[$awaitingKey]] = $yesNo;
             }
             // Bind polarity to the active target finding (universal adaptive path).
@@ -1436,11 +1435,10 @@ final class ClinicalInterviewEngine
                 'FEVER_CONFIRM' => 'fever_confirmed',
                 'VISION_CHANGE' => 'vision_change',
             ];
-            $awaitingKey = $awaiting;
-            if (str_contains($awaiting, '__')) {
-                $awaitingKey = explode('__', $awaiting, 2)[0];
-            }
-            if ($yn !== null && isset($map[$awaitingKey])) {
+            // Atomic PARENT__ATOM answers persist the atom only — not the parent bundle boolean.
+            $isAtomic = str_contains($awaiting, '__');
+            $awaitingKey = $isAtomic ? explode('__', $awaiting, 2)[0] : $awaiting;
+            if (!$isAtomic && $yn !== null && isset($map[$awaitingKey])) {
                 $facts[$map[$awaitingKey]] = $yn;
             }
             $targetFinding = strtolower(trim((string) ($context['awaiting_target_finding'] ?? '')));
@@ -1924,7 +1922,14 @@ final class ClinicalInterviewEngine
                 if ($stillQid === 'ASSOCIATED_DETAIL' || $stillQid === 'ASSOCIATED_SYMPTOMS') {
                     return false;
                 }
-                // Lower-priority leftover slots do not block safe classification.
+                $stillParent = str_contains($stillQid, '__')
+                    ? explode('__', $stillQid, 2)[0]
+                    : $stillQid;
+                // Clinically relevant clarify must not be treated as optional leftover.
+                if ($stillParent === 'URINARY_DETAIL' || $stillParent === 'FEVER_CONFIRM') {
+                    return false;
+                }
+                // Lower-priority leftover slots (e.g. COUGH_TYPE, DIZZINESS_TYPE) do not block.
                 return true;
             }
         } catch (Throwable $e) {
@@ -2319,7 +2324,9 @@ final class ClinicalInterviewEngine
             'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null,
             // Independent of breathing answers and generic denied_associated.
             'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null,
-            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null,
+            // Parent bundle completion is adaptive-policy atom resolution; sweating alone
+            // (from sweating_with_chest) must not suppress the sibling dizziness atom here.
+            'CHEST_SWEATING' => false,
             'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null,
             'ASSOCIATED_SYMPTOMS' => (
                 !empty($facts['denied_associated'])
@@ -3028,6 +3035,8 @@ final class ClinicalInterviewEngine
             'bleeding_heavy' => 'bleeding_heavy',
             'dizziness' => 'dizziness',
             'chest_radiation' => 'chest_radiation',
+            // Persist sweating/dizziness clinical facts from chest atoms without implying
+            // the full CHEST_SWEATING parent bundle is complete (see alreadyAnswered).
             'sweating_with_chest' => 'sweating',
             'dizziness_with_chest' => 'dizziness',
             'fever_confirmed' => 'fever_confirmed',
@@ -3046,7 +3055,6 @@ final class ClinicalInterviewEngine
                     $symptoms[] = 'Vomiting';
                 }
                 $neg = array_values(array_filter($neg, static fn (string $s): bool => !str_contains(mb_strtolower($s), 'vomit') && !str_contains(mb_strtolower($s), 'suka')));
-                $facts['abdominal_associated'] = true;
             } else {
                 if (!in_array('vomiting', $neg, true)) {
                     $neg[] = 'vomiting';
@@ -3060,7 +3068,6 @@ final class ClinicalInterviewEngine
         if ($finding === 'bleeding_with_abdomen') {
             if ($yesNo) {
                 $facts['bleeding_continuing'] = true;
-                $facts['abdominal_associated'] = true;
             }
         }
 

@@ -397,6 +397,10 @@ final class ClinicalInterviewAdaptivePolicy
         if (!empty($gaps['associated']) && self::associatedIsMaterial($concepts, $facts, $transcript)) {
             return false;
         }
+        // Clinically relevant clarify (urinary atoms / fever confirm) — not optional enrichment.
+        if (!empty($gaps['clarify'])) {
+            return false;
+        }
 
         return true;
     }
@@ -555,6 +559,21 @@ final class ClinicalInterviewAdaptivePolicy
             }
             $gaps['red_flag'] = true;
             break;
+        }
+
+        // Narrow clinically relevant clarify only (not COUGH_TYPE / DIZZINESS_TYPE).
+        // Urinary atoms remain material until the full bundle is resolved.
+        if (in_array('urinary', $concepts, true)
+            && !self::bundledAtomsResolved('URINARY_DETAIL', $facts, $caseHaystack)
+        ) {
+            $gaps['clarify'] = true;
+        }
+        // Fever confirmation when domain-eligible and not yet answered.
+        if (!$gaps['clarify']
+            && array_intersect($concepts, ['fever', 'cough', 'respiratory']) !== []
+            && !self::alreadyAnswered('FEVER_CONFIRM', $facts, $transcript, $concepts, $caseHaystack)
+        ) {
+            $gaps['clarify'] = true;
         }
 
         return $gaps;
@@ -958,9 +977,11 @@ final class ClinicalInterviewAdaptivePolicy
             'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null,
             // Chest findings are independent of breathing answers and generic "no other symptoms".
             'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null,
-            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null
-                || self::bundledAtomsResolved('CHEST_SWEATING', $facts, $caseHaystack),
-            // Abdominal RF atoms stay open after generic associated denial; only own fact/atoms close them.
+            // CHEST_SWEATING completes only when every atom is known — a lone sweating fact
+            // (e.g. from sweating_with_chest) must not suppress dizziness_with_chest.
+            'CHEST_SWEATING' => self::bundledAtomsResolved('CHEST_SWEATING', $facts, $caseHaystack),
+            // Abdominal RF atoms: parent boolean only when set by a non-atomic answer;
+            // otherwise require every atom (atomic answers no longer set the parent flag).
             'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null
                 || self::bundledAtomsResolved('ABDOMINAL_ASSOCIATED', $facts, $caseHaystack),
             'ASSOCIATED_SYMPTOMS' => ($facts['has_other_symptoms'] ?? null) !== null
