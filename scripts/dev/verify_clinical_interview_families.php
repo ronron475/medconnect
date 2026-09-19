@@ -35,6 +35,18 @@ $cases = [
     ['masakit ang ngipin', ['DENTAL_PAIN'], ['dental_pain', 'pain']],
     ['may pagdurugo', ['BLEEDING'], ['bleeding']],
 
+    // False-family / false-track regressions (EN / Hil / Tag)
+    ['I have stomach pain.', ['ABDOMINAL_PAIN'], ['abdominal_pain', 'pain']],
+    ['I have a fever', ['FEVER'], ['fever']],
+    ['weakness in left arm', ['NEURO'], ['neuro']],
+    ['gasakit tiyan ko', ['ABDOMINAL_PAIN'], ['abdominal_pain', 'pain']],
+    ['may hilanat ako', ['FEVER'], ['fever']],
+    ['nangaluya ang wala nga kamot', ['NEURO'], ['neuro']],
+    ['masakit ang tiyan ko', ['ABDOMINAL_PAIN'], ['abdominal_pain', 'pain']],
+    ['may lagnat ako', ['FEVER'], ['fever']],
+    ['nanghihina ang kaliwang braso', ['NEURO'], ['neuro']],
+    ['Masakit ang tiyan kag dughan ko', ['ABDOMINAL_PAIN', 'CHEST_PAIN'], ['abdominal_pain', 'chest_pain', 'pain']],
+
     // Non-health / greeting must not invent medical families
     ['hello how are you', [], []],
     ['i want pizza', [], []],

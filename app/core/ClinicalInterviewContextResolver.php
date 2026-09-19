@@ -487,7 +487,12 @@ final class ClinicalInterviewContextResolver
         }
 
         // 3) Body location may refine a clinically supported complaint — never create one alone.
-        if ($clinicalEvidence && self::matchesBodyPartEvidence($row, $facts, $triage)) {
+        // Require the anatomical site to appear in the patient transcript (not only in facts that
+        // may contain false laterality→site aliases such as left/wala/fever → abdomen).
+        if ($clinicalEvidence
+            && self::matchesBodyPartEvidence($row, $facts, $triage)
+            && self::bodyPartMentionedInTranscript($row, $transcript)
+        ) {
             return true;
         }
 
@@ -532,7 +537,7 @@ final class ClinicalInterviewContextResolver
             . 'fever|lagnat|hilanat|pyrexia|cough|ubo|gahika|sip-?on|'
             . 'bleed|dugo|hemorrhag|vomit|suka|nausea|diarrh|tae|pagtatae|'
             . 'dizzy|dizziness|hilo|malipong|rash|itch|kati|hubag|swell|'
-            . 'weak(?:ness)?|numb|pamamanhid|seizure|kombulsiyon|'
+            . 'weak(?:ness)?|nangaluya|nanghihina|panghihina|numb|pamamanhid|nanlalata|seizure|kombulsiyon|'
             . 'breath|ginhawa|hinga|wheez|dyspn|burn|paso|dysuria|'
             . 'headache|migraine|palpitation|arrhythmia)\b/u',
             $low
@@ -594,6 +599,46 @@ final class ClinicalInterviewContextResolver
         $residual = trim((string) preg_replace('/\s+/u', ' ', $residual));
 
         return $residual === '';
+    }
+
+    /**
+     * True when the patient transcript mentions an anatomical token for this complaint's body_parts.
+     *
+     * @param array<string, mixed> $row
+     */
+    private static function bodyPartMentionedInTranscript(array $row, string $transcript): bool
+    {
+        $low = mb_strtolower($transcript);
+        if ($low === '') {
+            return false;
+        }
+        $aliases = [
+            'abdomen' => ['abdomen', 'abdominal', 'stomach', 'belly', 'tummy', 'tiyan', 'tyan', 'tian', 'pusod', 'sikmura'],
+            'stomach' => ['stomach', 'belly', 'tummy', 'tiyan', 'tyan', 'tian', 'sikmura', 'abdomen'],
+            'chest' => ['chest', 'dughan', 'dibdib', 'thorax', 'breastbone'],
+            'head' => ['head', 'ulo', 'olo', 'forehead', 'temple', 'cranial'],
+            'eye' => ['eye', 'eyes', 'mata', 'panulok', 'paningin'],
+            'ear' => ['ear', 'ears', 'dulunggan', 'tenga'],
+            'nose' => ['nose', 'ilong', 'nasal'],
+            'tooth' => ['tooth', 'teeth', 'ngipon', 'ngipin', 'gum', 'gums'],
+            'teeth' => ['tooth', 'teeth', 'ngipon', 'ngipin'],
+            'gum' => ['gum', 'gums', 'gilang'],
+        ];
+        foreach ((array) ($row['body_parts'] ?? []) as $part) {
+            $part = mb_strtolower(trim((string) $part));
+            if ($part === '') {
+                continue;
+            }
+            $tokens = $aliases[$part] ?? [$part];
+            foreach ($tokens as $token) {
+                $token = trim((string) $token);
+                if ($token !== '' && preg_match('/\b' . preg_quote($token, '/') . '\b/u', $low)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

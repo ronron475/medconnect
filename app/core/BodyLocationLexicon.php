@@ -671,6 +671,14 @@ final class BodyLocationLexicon
             'gina', 'naga', 'nag', 'ang', 'mga', 'sa', 'ng', 'ko', 'akon', 'ako',
             'my', 'i', 'have', 'a', 'the', 'of', 'and', 'with', 'for', 'gid', 'man',
             'na', 'yung', 'ung', 'nang', 'kay', 'daw', 'basin', 'feel', 'feeling',
+            // Laterality / qualifiers must not become body-site aliases (e.g. "left" → abdomen
+            // from "left lower abdominal pain", "wala" → abdomen from LLQ Hiligaynon rows).
+            'left', 'right', 'upper', 'lower', 'mid', 'middle', 'side', 'quadrant',
+            'tuo', 'wala', 'kaliwa', 'kanan', 'idalom', 'ibabaw',
+            'chronic', 'acute', 'severe', 'mild', 'moderate',
+            // Symptom words that are not anatomical sites.
+            'fever', 'lagnat', 'hilanat', 'weakness', 'numbness', 'numb', 'dizzy',
+            'dizziness', 'cough', 'ubo', 'vomit', 'nausea', 'diarrhea',
         ];
         $canonicals = [];
         foreach (self::$aliasIndex ?? [] as $meta) {
