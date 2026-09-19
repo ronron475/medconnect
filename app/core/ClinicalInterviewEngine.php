@@ -135,6 +135,14 @@ final class ClinicalInterviewEngine
                 $context['last_followup_validation'] = $validation;
                 $context = self::applyFollowUpValidationFacts($context, $validation, $awaiting);
                 $correctedFromValidation = trim((string) ($validation['corrected_answer'] ?? ''));
+                if (self::shouldRetryUncertainYesNo($context, $validation, $awaiting)) {
+                    $uncertainTurn = $correctedFromValidation !== ''
+                        ? $correctedFromValidation
+                        : $originalTurnForLanguage;
+                    $context = self::appendPatientTurn($context, $uncertainTurn);
+
+                    return self::wrapRetryCurrentQuestion($context, $validation);
+                }
                 if ($correctedFromValidation !== '') {
                     $turn = $correctedFromValidation;
                 }
@@ -1345,20 +1353,50 @@ final class ClinicalInterviewEngine
         $class = strtoupper((string) ($validation['answer_class'] ?? ''));
         $polarity = strtolower((string) ($validation['polarity'] ?? ''));
         $awaiting = strtoupper(trim($awaiting));
+        $answerText = trim((string) ($validation['corrected_answer'] ?? ''));
 
-        if (!empty($extracted['denied_associated']) || ($class === 'VALID_NEGATIVE' && (
-            $awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED')
-        ))) {
+        // Uncertainty blocks inventing POS/NEG clinical booleans (including Gemini-derived).
+        $locallyUncertain = $answerText !== ''
+            && class_exists('ClinicalFeatureExtractors')
+            && ClinicalFeatureExtractors::looksPatientUncertain($answerText);
+        $isUncertain = $locallyUncertain
+            || !empty($extracted['patient_uncertain'])
+            || in_array($class, ['VALID_UNCERTAIN', 'VALID_UNKNOWN'], true)
+            || $polarity === 'uncertain'
+            || $polarity === 'unknown';
+
+        if ($isUncertain) {
+            $class = 'VALID_UNCERTAIN';
+            $polarity = 'uncertain';
+            $extracted['patient_uncertain'] = true;
+            unset($extracted['yes_no'], $extracted['denied'], $extracted['denied_associated']);
+            foreach ([
+                'vision_change', 'weakness', 'speech_difficulty', 'breathing_difficulty',
+                'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+                'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
+                'blood_in_stool',
+            ] as $boolKey) {
+                unset($extracted[$boolKey]);
+            }
+        }
+
+        if (!$isUncertain && (
+            !empty($extracted['denied_associated']) || ($class === 'VALID_NEGATIVE' && (
+                $awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED')
+            ))
+        )) {
             $facts['denied_associated'] = true;
             $facts['has_other_symptoms'] = false;
         }
 
-        if (!empty($extracted['patient_uncertain'])
-            || in_array($class, ['VALID_UNCERTAIN', 'VALID_UNKNOWN'], true)
-            || $polarity === 'uncertain'
-            || $polarity === 'unknown'
-        ) {
+        if ($isUncertain) {
             $facts['patient_uncertain'] = true;
+            $targetFinding = strtolower(trim((string) ($context['awaiting_target_finding'] ?? '')));
+            if ($targetFinding !== '') {
+                $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+                $status[$targetFinding] = 'uncertain';
+                $facts['finding_status'] = $status;
+            }
             // Mark timing slot resolved when the patient cannot answer onset/duration.
             if (($awaiting === 'ONSET' || $awaiting === 'DURATION' || str_contains($awaiting, 'ONSET') || str_contains($awaiting, 'DURATION'))
                 && trim((string) ($facts['onset'] ?? '')) === ''
@@ -1376,7 +1414,10 @@ final class ClinicalInterviewEngine
             $facts['patient_conditional'] = true;
         }
 
-        if (array_key_exists('yes_no', $extracted) || $polarity === 'positive' || $polarity === 'negative') {
+        // Never persist yes_no / polarity booleans for uncertain answers.
+        if (!$isUncertain
+            && (array_key_exists('yes_no', $extracted) || $polarity === 'positive' || $polarity === 'negative')
+        ) {
             $yn = array_key_exists('yes_no', $extracted)
                 ? (bool) $extracted['yes_no']
                 : ($polarity === 'positive' ? true : ($polarity === 'negative' ? false : null));
@@ -1405,10 +1446,6 @@ final class ClinicalInterviewEngine
             $targetFinding = strtolower(trim((string) ($context['awaiting_target_finding'] ?? '')));
             if ($yn !== null && $targetFinding !== '') {
                 $facts = self::applyTargetFindingPolarity($facts, $targetFinding, $yn);
-            } elseif ($yn === null && $polarity === 'uncertain' && $targetFinding !== '') {
-                $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
-                $status[$targetFinding] = 'uncertain';
-                $facts['finding_status'] = $status;
             }
             // "Oo" to associated symptoms confirms extras exist but does NOT name them.
             if ($yn === true
@@ -1457,7 +1494,7 @@ final class ClinicalInterviewEngine
             if ($assoc !== [] || self::stringList($extracted['named_symptoms'] ?? []) !== []) {
                 $facts['needs_associated_detail'] = false;
                 $facts['has_other_symptoms'] = true;
-            } elseif ($class === 'VALID_NEGATIVE' || !empty($extracted['denied_associated'])) {
+            } elseif (!$isUncertain && ($class === 'VALID_NEGATIVE' || !empty($extracted['denied_associated']))) {
                 $facts['needs_associated_detail'] = false;
                 $facts['has_other_symptoms'] = false;
                 $facts['denied_associated'] = true;
@@ -1487,15 +1524,17 @@ final class ClinicalInterviewEngine
             $facts['body_locations'] = $locs;
         }
 
-        // Gemini may return named clinical booleans (negations included).
-        foreach ([
-            'vision_change', 'weakness', 'speech_difficulty', 'breathing_difficulty',
-            'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
-            'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
-            'blood_in_stool',
-        ] as $key) {
-            if (array_key_exists($key, $extracted) && $extracted[$key] !== null && $extracted[$key] !== '') {
-                $facts[$key] = is_bool($extracted[$key]) ? (bool) $extracted[$key] : $extracted[$key];
+        // Named clinical booleans (incl. Gemini) — never for uncertain answers.
+        if (!$isUncertain) {
+            foreach ([
+                'vision_change', 'weakness', 'speech_difficulty', 'breathing_difficulty',
+                'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+                'sweating', 'abdominal_associated', 'has_other_symptoms', 'fever_confirmed',
+                'blood_in_stool',
+            ] as $key) {
+                if (array_key_exists($key, $extracted) && $extracted[$key] !== null && $extracted[$key] !== '') {
+                    $facts[$key] = is_bool($extracted[$key]) ? (bool) $extracted[$key] : $extracted[$key];
+                }
             }
         }
 
@@ -2240,6 +2279,24 @@ final class ClinicalInterviewEngine
     private static function questionAlreadyAnswered(string $qid, array $facts, string $transcript, array $families): bool
     {
         $low = mb_strtolower($transcript);
+        $findingStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        $uncertainFinding = match ($qid) {
+            'NEURO_WEAKNESS' => 'weakness',
+            'NEURO_SPEECH' => 'speech_difficulty',
+            'NEURO_VISION' => 'vision_change',
+            'BREATHING_SEVERITY' => 'breathing_difficulty',
+            'BLEEDING_CONTINUING' => 'bleeding_continuing',
+            'BLEEDING_HEAVY' => 'bleeding_heavy',
+            'BLEEDING_DIZZY' => 'dizziness',
+            'CHEST_RADIATION' => 'chest_radiation',
+            'FEVER_CONFIRM' => 'fever_confirmed',
+            'ASSOCIATED_SYMPTOMS' => 'has_other_symptoms',
+            default => '',
+        };
+        if ($uncertainFinding !== '' && ($findingStatus[$uncertainFinding] ?? '') === 'uncertain') {
+            return true;
+        }
+
         return match ($qid) {
             'PAIN_LOCATION', 'UNWELL_WHAT' => $facts['body_locations'] !== []
                 || (bool) preg_match('/\b(ulo|head|dughan|dibdib|chest|tiyan|ilong|nose|kamot|hand)\b/u', $low)
@@ -2252,16 +2309,18 @@ final class ClinicalInterviewEngine
             // Numeric 0–10 only — qualitative intensifiers must not skip the pain scale.
             'PAIN_SEVERITY' => $facts['pain_score'] !== null,
             'ONSET', 'DURATION' => ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts),
-            'NEURO_WEAKNESS' => $facts['weakness'] !== null || $facts['denied_associated'],
-            'NEURO_SPEECH' => $facts['speech_difficulty'] !== null || $facts['denied_associated'] || $facts['weakness'] !== null,
-            'NEURO_VISION' => $facts['vision_change'] !== null || $facts['denied_associated'] || $facts['weakness'] !== null,
-            'BREATHING_SEVERITY' => $facts['breathing_difficulty'] !== null || $facts['denied_associated'],
+            'NEURO_WEAKNESS' => $facts['weakness'] !== null,
+            // Independent neuro findings — do not couple speech/vision to weakness.
+            'NEURO_SPEECH' => $facts['speech_difficulty'] !== null,
+            'NEURO_VISION' => $facts['vision_change'] !== null,
+            'BREATHING_SEVERITY' => $facts['breathing_difficulty'] !== null,
             'BLEEDING_CONTINUING' => $facts['bleeding_continuing'] !== null,
-            'BLEEDING_HEAVY' => $facts['bleeding_heavy'] !== null || $facts['denied_associated'],
-            'BLEEDING_DIZZY' => $facts['dizziness'] !== null || $facts['denied_associated'],
-            'CHEST_RADIATION' => $facts['chest_radiation'] !== null || $facts['denied_associated'] || $facts['breathing_difficulty'] !== null,
-            'CHEST_SWEATING' => $facts['sweating'] !== null || $facts['denied_associated'] || $facts['breathing_difficulty'] !== null,
-            'ABDOMINAL_ASSOCIATED' => $facts['abdominal_associated'] !== null || $facts['denied_associated'],
+            'BLEEDING_HEAVY' => $facts['bleeding_heavy'] !== null,
+            'BLEEDING_DIZZY' => $facts['dizziness'] !== null,
+            // Independent of breathing answers and generic denied_associated.
+            'CHEST_RADIATION' => $facts['chest_radiation'] !== null,
+            'CHEST_SWEATING' => $facts['sweating'] !== null,
+            'ABDOMINAL_ASSOCIATED' => $facts['abdominal_associated'] !== null,
             'ASSOCIATED_SYMPTOMS' => (
                 $facts['denied_associated']
                 || (($facts['has_other_symptoms'] ?? null) === false)
@@ -2507,6 +2566,8 @@ final class ClinicalInterviewEngine
     {
         $question = self::heldFollowUpQuestion($context);
         $transcript = self::transcript($context);
+        $acceptedUncertain = !empty($validation['accept'])
+            && strtoupper((string) ($validation['answer_class'] ?? '')) === 'VALID_UNCERTAIN';
         $assessment = [
             'detected_symptoms' => is_array($context['matched_dataset_entries'] ?? null)
                 ? $context['matched_dataset_entries']
@@ -2526,10 +2587,10 @@ final class ClinicalInterviewEngine
         if ($wrapped['patient_message'] === '' && class_exists('ClinicalFollowUpAnswerValidator')) {
             $wrapped['patient_message'] = ClinicalFollowUpAnswerValidator::retryMessage($langKey);
         }
-        $wrapped['answer_rejected'] = true;
+        $wrapped['answer_rejected'] = !$acceptedUncertain;
         $wrapped['retry_current_question'] = true;
         $wrapped['followup_answer_validation'] = [
-            'accept' => false,
+            'accept' => $acceptedUncertain,
             'reason' => (string) ($validation['reason'] ?? 'unrelated'),
             'expected_field' => (string) ($validation['expected_field'] ?? ''),
             'corrected_answer' => (string) ($validation['corrected_answer'] ?? ''),
@@ -2537,11 +2598,53 @@ final class ClinicalInterviewEngine
             'answer_class' => (string) ($validation['answer_class'] ?? 'UNRELATED'),
             'polarity' => $validation['polarity'] ?? null,
         ];
-        $wrapped['interview']['answer_rejected'] = true;
+        $wrapped['interview']['answer_rejected'] = !$acceptedUncertain;
         $wrapped['interview']['retry_current_question'] = true;
         $wrapped['interview']['last_followup_question'] = self::questionSnapshot($question);
 
         return $wrapped;
+    }
+
+    /**
+     * Required yes/no uncertainty gets one clarification using the held question.
+     * A repeated uncertain answer falls through to the existing unresolved/incomplete flow.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $validation
+     */
+    private static function shouldRetryUncertainYesNo(
+        array $context,
+        array $validation,
+        string $awaiting
+    ): bool {
+        if (strtoupper((string) ($validation['answer_class'] ?? '')) !== 'VALID_UNCERTAIN'
+            || strtolower((string) ($validation['polarity'] ?? '')) !== 'uncertain'
+            || strtoupper((string) ($validation['expected_field'] ?? '')) !== 'ASSOCIATED_SYMPTOMS'
+        ) {
+            return false;
+        }
+
+        $qid = strtoupper(trim($awaiting));
+        if ($qid === '') {
+            return false;
+        }
+
+        foreach ((array) ($context['questions_answered'] ?? []) as $row) {
+            if (!is_array($row)
+                || strtoupper(trim((string) ($row['question_id'] ?? ''))) !== $qid
+            ) {
+                continue;
+            }
+            $prior = trim((string) ($row['answer'] ?? ''));
+            if ($prior !== ''
+                && class_exists('ClinicalFeatureExtractors')
+                && ClinicalFeatureExtractors::looksPatientUncertain($prior)
+            ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

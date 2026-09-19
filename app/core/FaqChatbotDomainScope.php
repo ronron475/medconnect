@@ -543,6 +543,8 @@ final class FaqChatbotDomainScope
             'pamatyag', 'first aid', 'self-care', 'nauseous', 'swollen', 'bleeding', 'hilanat', 'dughan', 'ginhawa',
             'triage', 'clinic', 'appointment', 'prescription', 'reseta', 'checkup', 'konsulta',
             'gapula', 'gakatol', 'gahabok', 'gahubag', 'ginaubo', 'ginasuka', 'hubag', 'katol', 'habok',
+            // Physical findings (category-level; dictionary maps local synonyms such as bukol→mass).
+            'mass', 'lump', 'lesion', 'nodule', 'cyst', 'abscess', 'swelling', 'swollen', 'bukol',
             // General illness-state language (not site-specific) — still health-related, often vague.
             'sick', 'unwell', 'ill', 'poorly', 'masama', 'lain',
         ];
@@ -556,7 +558,63 @@ final class FaqChatbotDomainScope
             $score += ($hits >= 2) ? 2.0 : 2.2;
         }
 
+        // Dictionary-backed clinical findings/conditions (mass, lump, swelling, …).
+        // Uses medical dictionary categories — not complaint-specific phrases.
+        $score += self::dictionaryFindingEvidence($hay);
+
         return $score;
+    }
+
+    /**
+     * Score from medical-dictionary clinical findings/conditions present in text.
+     * Body-part-only rows do not count; ultra-generic words do not count.
+     */
+    private static function dictionaryFindingEvidence(string $hay): float
+    {
+        if ($hay === '' || !class_exists('MedicalDictionary')) {
+            return 0.0;
+        }
+        $tokens = preg_split('/[^\p{L}\p{N}\-]+/u', mb_strtolower($hay), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $findingRe = '/\b(mass|lump|swelling|swollen|swell|lesion|nodule|abscess|cyst|tumor|tumour|'
+            . 'goiter|goitre|wart|ulcer|bruise|hematoma|rash|hives|boil|bump|growth)\b/u';
+        $reject = ['pain', 'hello', 'hi', 'sick', 'ill', 'unwell', 'condition', 'symptom', 'feeling', 'feel'];
+        foreach ($tokens as $token) {
+            if (mb_strlen($token) < 3) {
+                continue;
+            }
+            try {
+                $entry = MedicalDictionary::lookup($token);
+                if (!is_array($entry)) {
+                    $entry = MedicalDictionary::lookupByEnglish($token);
+                }
+            } catch (Throwable) {
+                continue;
+            }
+            if (!is_array($entry)) {
+                continue;
+            }
+            $cat = strtolower((string) ($entry['category'] ?? ''));
+            $en = strtolower(trim((string) ($entry['english_term'] ?? '')));
+            if ($en === '' || in_array($en, $reject, true)) {
+                continue;
+            }
+            if (str_contains($cat, 'body') && !preg_match($findingRe, $en)) {
+                continue;
+            }
+            $clinicalCat = str_contains($cat, 'condition')
+                || str_contains($cat, 'finding')
+                || str_contains($cat, 'sign')
+                || str_contains($cat, 'symptom')
+                || str_contains($cat, 'disease');
+            if (!$clinicalCat && !preg_match($findingRe, $en)) {
+                continue;
+            }
+            if (preg_match($findingRe, $en) || ($clinicalCat && preg_match($findingRe, $en . ' ' . $token))) {
+                return 2.6;
+            }
+        }
+
+        return 0.0;
     }
 
     private static function medicalScore(string $hay, string $raw): float
