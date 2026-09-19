@@ -145,6 +145,16 @@ body.admin-body {
   transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
 }
 
+button.adm-nav-item {
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .adm-label {
   display: inline;
   min-width: 0;
