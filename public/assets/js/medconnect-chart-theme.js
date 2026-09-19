@@ -443,14 +443,22 @@
 
   function periodLabel(days) {
     var n = parseInt(days, 10);
-    if (!n || n < 1) n = 7;
-    return n === 1 ? 'Today' : ('Last ' + n + ' days');
+    if (n === 1) return 'Today';
+    if (n === 7) return 'Week';
+    if (n === 30) return 'Month';
+    if (n === 365) return 'Year';
+    if (!n || n < 1) n = 30;
+    return 'Last ' + n + ' days';
   }
 
   function periodRangeLabel(days) {
     var n = parseInt(days, 10);
-    if (!n || n < 1) n = 7;
-    return n === 1 ? 'today' : ('last ' + n + ' days');
+    if (n === 1) return 'today';
+    if (n === 7) return 'this week';
+    if (n === 30) return 'this month';
+    if (n === 365) return 'this year';
+    if (!n || n < 1) n = 30;
+    return 'last ' + n + ' days';
   }
 
   global.McChartTheme = {

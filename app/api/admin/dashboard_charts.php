@@ -2,6 +2,7 @@
 /**
  * Live dashboard chart data (Admin + Super Admin).
  * GET /app/api/admin/dashboard_charts.php?days=30
+ * Allowed days: 1 (Today), 7 (Week), 30 (Month), 365 (Year).
  */
 header('Content-Type: application/json; charset=utf-8');
 

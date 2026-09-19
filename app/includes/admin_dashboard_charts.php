@@ -34,16 +34,59 @@ function admin_chart_normalize_date(mixed $value): ?string
     return $ts ? date('Y-m-d', $ts) : null;
 }
 
+/** Allowed Analytics period lengths: Today, Week, Month, Year. */
+function admin_chart_normalize_period_days(int $days): int
+{
+    return match ($days) {
+        1, 7, 30, 365 => $days,
+        default => 30,
+    };
+}
+
+function admin_chart_period_label(int $days): string
+{
+    return match (admin_chart_normalize_period_days($days)) {
+        1 => 'Today',
+        7 => 'Week',
+        30 => 'Month',
+        365 => 'Year',
+        default => 'Month',
+    };
+}
+
+function admin_chart_period_range_label(int $days): string
+{
+    return match (admin_chart_normalize_period_days($days)) {
+        1 => 'today',
+        7 => 'this week',
+        30 => 'this month',
+        365 => 'this year',
+        default => 'this month',
+    };
+}
+
 /** @return list<array{date:string,label:string,count:int,is_today:bool}> */
 function admin_chart_last_n_days(int $days = 7): array
 {
     $series = [];
-    $days = max(1, min(90, $days));
+    $days = admin_chart_normalize_period_days($days);
     for ($i = $days - 1; $i >= 0; $i--) {
         $ts = strtotime("-{$i} days");
+        if ($days === 1) {
+            $label = 'Today';
+        } elseif ($days <= 7) {
+            $label = date('D', $ts);
+        } elseif ($days <= 30) {
+            $label = date('M j', $ts);
+        } else {
+            // Year: month ticks keep the axis readable
+            $label = ((int) date('j', $ts) === 1 || $i === $days - 1 || $i === 0)
+                ? date('M', $ts)
+                : '';
+        }
         $series[] = [
             'date'     => date('Y-m-d', $ts),
-            'label'    => $days === 1 ? 'Today' : ($days <= 14 ? date('D', $ts) : date('M j', $ts)),
+            'label'    => $label,
             'count'    => 0,
             'is_today' => $i === 0,
         ];
@@ -147,9 +190,9 @@ function admin_chart_triage_daily(PDO $pdo, int $days = 30): array
 /** @return array<string, mixed> */
 function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
 {
-    $days = max(1, min(90, $days));
+    $days = admin_chart_normalize_period_days($days);
     $consultations = admin_chart_consultations_daily($pdo, $days);
-    $registrations = admin_chart_registrations_daily($pdo, min(14, $days));
+    $registrations = admin_chart_registrations_daily($pdo, $days);
     $triage        = admin_chart_triage_daily($pdo, $days);
     $roles         = admin_chart_user_roles($pdo);
     $status        = admin_chart_consult_status($pdo);
@@ -157,6 +200,8 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
     return [
         'generated_at' => date('c'),
         'days'         => $days,
+        'period_label' => admin_chart_period_label($days),
+        'period_range_label' => admin_chart_period_range_label($days),
         'consultations' => [
             'series' => $consultations,
             'total'  => admin_chart_series_total($consultations),

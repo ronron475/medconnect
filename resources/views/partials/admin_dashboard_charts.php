@@ -9,9 +9,8 @@ if (!isset($pdo)) {
 
 require_once BASE_PATH . '/app/includes/admin_dashboard_charts.php';
 
-$chart_days = (int) ($chart_days ?? 30);
-$chart_days = max(1, min(90, $chart_days));
-$chart_period_label = $chart_days === 1 ? 'Today' : ('last ' . $chart_days . ' days');
+$chart_days = admin_chart_normalize_period_days((int) ($chart_days ?? 30));
+$chart_period_label = admin_chart_period_label($chart_days);
 $chart_api = ASSET_BASE . '/app/api/admin/dashboard_charts.php?days=' . $chart_days;
 $chart_js_ver = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-charts.js');
 $chart_theme_js_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
@@ -30,11 +29,9 @@ $chart_theme_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.cs
       <label class="mc-chart-filters__label" for="admChartsDays">Period</label>
       <select id="admChartsDays" class="form-select mc-chart-filters__control" aria-label="Chart date range">
         <option value="1"<?= $chart_days === 1 ? ' selected' : '' ?>>Today</option>
-        <option value="7"<?= $chart_days === 7 ? ' selected' : '' ?>>7 days</option>
-        <option value="14"<?= $chart_days === 14 ? ' selected' : '' ?>>14 days</option>
-        <option value="30"<?= $chart_days === 30 ? ' selected' : '' ?>>30 days</option>
-        <option value="60"<?= $chart_days === 60 ? ' selected' : '' ?>>60 days</option>
-        <option value="90"<?= $chart_days === 90 ? ' selected' : '' ?>>90 days</option>
+        <option value="7"<?= $chart_days === 7 ? ' selected' : '' ?>>Week</option>
+        <option value="30"<?= $chart_days === 30 ? ' selected' : '' ?>>Month</option>
+        <option value="365"<?= $chart_days === 365 ? ' selected' : '' ?>>Year</option>
       </select>
       <span id="admChartsUpdated" class="text-xs text-muted mc-chart-filters__status">Loading…</span>
     </div>
@@ -45,7 +42,7 @@ $chart_theme_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.cs
       <div class="adm-chart-card__head">
         <div>
           <h3 class="adm-chart-card__title">Consultations</h3>
-          <p class="adm-chart-card__sub">Daily volume — <?= htmlspecialchars($chart_period_label) ?></p>
+          <p class="adm-chart-card__sub" id="admChartConsultSub">Daily volume — <?= htmlspecialchars($chart_period_label) ?></p>
         </div>
         <div class="adm-chart-kpi">
           <strong id="admKpiConsultTotal">—</strong>
@@ -61,11 +58,11 @@ $chart_theme_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.cs
       <div class="adm-chart-card__head">
         <div>
           <h3 class="adm-chart-card__title">New Registrations</h3>
-          <p class="adm-chart-card__sub">User sign-ups — last 14 days</p>
+          <p class="adm-chart-card__sub" id="admChartRegSub">User sign-ups — <?= htmlspecialchars($chart_period_label) ?></p>
         </div>
         <div class="adm-chart-kpi">
           <strong id="admKpiRegTotal">—</strong>
-          <span>14-day total</span>
+          <span id="admKpiRegLabel">Period total</span>
         </div>
       </div>
       <div class="adm-chart-canvas-wrap">
