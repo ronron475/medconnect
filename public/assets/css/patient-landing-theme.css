@@ -30,6 +30,7 @@ body.patient-portal {
 }
 
 /* ── Sidebar (matches provider portal light sidebar) ── */
+/* Pin profile to bottom; no dead space under the card (match Admin spacing) */
 body.patient-portal .sidebar {
   width: 260px;
   background: #fff;
@@ -40,6 +41,9 @@ body.patient-portal .sidebar {
   padding: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 body.patient-portal .sb-logo {
@@ -69,10 +73,11 @@ body.patient-portal .sb-logo-img {
 }
 
 body.patient-portal .sb-nav {
-  flex: 1;
-  padding: 10px 16px;
+  flex: 1 1 auto;
+  padding: 10px 16px 4px;
   gap: 2px;
   min-height: 0;
+  max-height: none;
   overflow-y: auto;
 }
 
@@ -91,7 +96,7 @@ body.patient-portal .sb-nav {
   }
 
   body.patient-portal.mc-sidebar-mini .sb-nav {
-    padding: 10px 8px;
+    padding: 10px 8px 4px;
   }
 
   body.patient-portal.mc-sidebar-mini .sb-item {
@@ -175,7 +180,7 @@ body.patient-portal .sb-item.active svg {
 
 body.patient-portal .sb-footer {
   flex-shrink: 0;
-  padding: 0 12px 12px;
+  padding: 0 12px;
   margin-top: auto;
 }
 
@@ -184,7 +189,7 @@ body.patient-portal .sb-profile {
   border: 1px solid var(--mc-border-thin);
   border-radius: 12px;
   padding: 12px 13px;
-  margin: 6px 0 8px;
+  margin: 0 0 12px;
   display: block;
 }
 
@@ -300,14 +305,20 @@ body.patient-portal .sb-logout:hover {
 }
 
 @media (max-width: 1024px) {
+  /* Keep profile pinned via flex (like Admin); avoid sticky + spacer gap */
   body.patient-portal .sidebar .sb-footer {
+    position: static;
     background: #fff;
     border-top: 1px solid var(--mc-border-thin);
-    padding: 12px;
+    padding: 0 12px;
   }
 
   body.patient-portal .sb-nav {
-    padding-bottom: 16px;
+    padding-bottom: 4px;
+  }
+
+  body.patient-portal .sb-profile {
+    margin-bottom: 12px;
   }
 }
 
