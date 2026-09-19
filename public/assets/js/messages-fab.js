@@ -143,7 +143,11 @@
   const VIEW_MARGIN = 12;
   const PANEL_GAP = 18;
 
+  /** Last known FAB viewport box — used when the FAB is hidden while the panel is open. */
+  let lastFabBox = null;
+
   function clamp(value, min, max) {
+    if (max < min) return min;
     return Math.min(max, Math.max(min, value));
   }
 
@@ -159,11 +163,32 @@
     };
   }
 
+  function readFabBox(fab) {
+    if (!fab) return lastFabBox;
+    const rect = fab.getBoundingClientRect();
+    // While the panel is open the FAB is visibility-hidden/scaled — still keep a usable box.
+    if (rect.width >= 8 && rect.height >= 8) {
+      lastFabBox = {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+      };
+    }
+    return lastFabBox;
+  }
+
+  /**
+   * Anchor the quick panel to the Messages FAB using right/bottom so it cannot
+   * fall back to the fixed element's static (far-left) position.
+   */
   function syncQuickPanelToFab(fab) {
     const panel = document.querySelector('[data-msgqp]');
     if (!panel || !fab) return;
 
-    if (isMobileViewport() || (!fab.classList.contains('is-positioned') && fab.dataset.customPos !== 'true')) {
+    if (isMobileViewport()) {
       panel.classList.remove('is-fab-anchored');
       panel.style.left = '';
       panel.style.right = '';
@@ -173,31 +198,48 @@
       return;
     }
 
-    const fabRect = fab.getBoundingClientRect();
-    const panelW = panel.offsetWidth || 380;
-    const panelH = panel.offsetHeight || 560;
+    const fabBox = readFabBox(fab);
+    if (!fabBox) return;
+
+    const vw = global.innerWidth;
+    const vh = global.innerHeight;
     const margin = VIEW_MARGIN;
     const gap = PANEL_GAP;
 
-    let left = fabRect.right - panelW;
-    left = clamp(left, margin, global.innerWidth - panelW - margin);
+    const panelW = Math.min(
+      panel.offsetWidth || 380,
+      Math.max(200, vw - margin * 2)
+    );
+    const panelH = Math.min(
+      panel.offsetHeight || 560,
+      Math.max(200, vh - margin * 2)
+    );
 
-    let top = fabRect.top - panelH - gap;
-    if (top < margin) {
-      top = fabRect.bottom + gap;
-      if (top + panelH > global.innerHeight - margin) {
-        top = clamp(fabRect.top - panelH - gap, margin, global.innerHeight - panelH - margin);
+    // Keep the panel's right edge aligned with the FAB's right edge.
+    let right = vw - fabBox.right;
+    right = clamp(right, margin, Math.max(margin, vw - panelW - margin));
+
+    // Prefer opening above the FAB; fall back below / clamped if needed.
+    let bottom = vh - fabBox.top + gap;
+    const topIfAbove = vh - bottom - panelH;
+    if (topIfAbove < margin) {
+      bottom = vh - fabBox.bottom - gap - panelH;
+      if (bottom < margin) {
+        bottom = clamp(vh - fabBox.top + gap, margin, Math.max(margin, vh - panelH - margin));
       }
     }
+    bottom = clamp(bottom, margin, Math.max(margin, vh - panelH - margin));
 
     panel.classList.add('is-fab-anchored');
-    panel.style.left = left + 'px';
-    panel.style.right = 'auto';
-    panel.style.top = top + 'px';
-    panel.style.bottom = 'auto';
+    panel.style.left = 'auto';
+    panel.style.right = right + 'px';
+    panel.style.top = 'auto';
+    panel.style.bottom = bottom + 'px';
 
-    const originX = clamp(fabRect.left + fabRect.width / 2 - left, 0, panelW);
-    const originY = top < fabRect.top ? panelH : 0;
+    const panelLeft = vw - right - panelW;
+    const originX = clamp(fabBox.left + fabBox.width / 2 - panelLeft, 0, panelW);
+    const panelTop = vh - bottom - panelH;
+    const originY = panelTop + panelH <= fabBox.top + 1 ? panelH : 0;
     panel.style.transformOrigin = originX + 'px ' + originY + 'px';
   }
 
@@ -341,11 +383,17 @@
 
     bindFabClickOnce();
     bindFabDrag(fab);
+    readFabBox(fab);
 
     // MedConnectDraggableFab restores position; legacy path uses restoreFabPosition.
     if (fab.dataset.customPos !== 'true') {
       restoreFabPosition(fab);
     }
+    readFabBox(fab);
+    global.addEventListener('resize', () => {
+      readFabBox(fab);
+      syncQuickPanelToFab(fab);
+    });
 
     const initial = parseInt(fab.getAttribute('data-unread') || '0', 10) || 0;
     applyUnread(initial);
