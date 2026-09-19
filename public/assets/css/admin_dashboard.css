@@ -130,6 +130,23 @@ body.admin-body {
   background: transparent;
 }
 
+/* Admin / Super Admin: keep menu and profile stacked (no large empty gap under last item) */
+.adm-sidebar:not(.adm-sidebar--bhw) {
+  overflow: hidden;
+}
+
+.adm-sidebar:not(.adm-sidebar--bhw) .adm-nav {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(100dvh - 9.25rem);
+  padding: 12px 12px 4px;
+}
+
+.adm-sidebar:not(.adm-sidebar--bhw) .adm-profile {
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
 .adm-nav-item {
   display: flex;
   align-items: center;
@@ -143,16 +160,6 @@ body.admin-body {
   border: 1px solid transparent;
   position: relative;
   transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
-}
-
-button.adm-nav-item {
-  width: 100%;
-  background: transparent;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  -webkit-appearance: none;
-  appearance: none;
 }
 
 .adm-label {
