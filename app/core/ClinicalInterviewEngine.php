@@ -910,6 +910,14 @@ final class ClinicalInterviewEngine
                 $parts[] = 'no ' . $phrase;
             }
         }
+        // Chest-atom presence is scoped in finding_status; still surface for WHO/IITT haystack
+        // without writing shared dizziness that would close DIZZINESS_TYPE.
+        $findingStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        if (($findingStatus['dizziness_with_chest'] ?? '') === 'positive'
+            && ($facts['dizziness'] ?? null) !== true
+        ) {
+            $parts[] = 'dizziness';
+        }
         foreach (self::stringList($facts['negative_symptoms'] ?? []) as $neg) {
             $parts[] = 'no ' . $neg;
             $parts[] = 'wala ko ' . $neg;
@@ -1162,20 +1170,13 @@ final class ClinicalInterviewEngine
             if ($targetFinding !== '') {
                 $facts = self::applyTargetFindingPolarity($facts, $targetFinding, $yesNo);
             }
-            // Negative reply to associated/yes-no clinical probes is stored as a denial.
+            // Negative reply to generic associated probes only (not ABDOMINAL_ASSOCIATED__*).
             if ($yesNo === false && (
                 $awaitingKey === 'ASSOCIATED_SYMPTOMS'
-                || str_contains($awaitingKey, 'ASSOCIATED')
-                || str_contains($awaitingKey, 'NEURO')
-                || str_contains($awaitingKey, 'BLEEDING')
-                || str_contains($awaitingKey, 'VISION')
-                || str_contains($awaitingKey, 'BREATHING')
-                || str_contains($awaitingKey, 'CHEST')
+                || $awaitingKey === 'ASSOCIATED_DETAIL'
             )) {
-                if ($awaitingKey === 'ASSOCIATED_SYMPTOMS' || str_contains($awaitingKey, 'ASSOCIATED')) {
-                    $facts['denied_associated'] = true;
-                    $facts['has_other_symptoms'] = false;
-                }
+                $facts['denied_associated'] = true;
+                $facts['has_other_symptoms'] = false;
             }
         }
 
@@ -1254,7 +1255,6 @@ final class ClinicalInterviewEngine
                 if ($addedNamed && (
                     $awaitingUpper === 'ASSOCIATED_DETAIL'
                     || $awaitingUpper === 'ASSOCIATED_SYMPTOMS'
-                    || str_contains($awaitingUpper, 'ASSOCIATED')
                     || !empty($facts['needs_associated_detail'])
                 )) {
                     $facts['has_other_symptoms'] = true;
@@ -1381,7 +1381,7 @@ final class ClinicalInterviewEngine
 
         if (!$isUncertain && (
             !empty($extracted['denied_associated']) || ($class === 'VALID_NEGATIVE' && (
-                $awaiting === 'ASSOCIATED_SYMPTOMS' || str_contains($awaiting, 'ASSOCIATED')
+                $awaiting === 'ASSOCIATED_SYMPTOMS' || $awaiting === 'ASSOCIATED_DETAIL'
             ))
         )) {
             $facts['denied_associated'] = true;
@@ -1445,11 +1445,10 @@ final class ClinicalInterviewEngine
             if ($yn !== null && $targetFinding !== '') {
                 $facts = self::applyTargetFindingPolarity($facts, $targetFinding, $yn);
             }
-            // "Oo" to associated symptoms confirms extras exist but does NOT name them.
+            // "Oo" to generic associated symptoms confirms extras exist but does NOT name them.
             if ($yn === true
-                && ($awaitingKey === 'ASSOCIATED_SYMPTOMS' || str_contains($awaitingKey, 'ASSOCIATED'))
+                && $awaitingKey === 'ASSOCIATED_SYMPTOMS'
                 && $awaiting !== 'ASSOCIATED_DETAIL'
-                && $awaitingKey !== 'ABDOMINAL_ASSOCIATED'
             ) {
                 $namedNow = self::stringList($extracted['named_symptoms'] ?? $extracted['associated_symptoms'] ?? []);
                 $existingAssoc = self::stringList($facts['associated_symptoms'] ?? []);
@@ -3035,10 +3034,11 @@ final class ClinicalInterviewEngine
             'bleeding_heavy' => 'bleeding_heavy',
             'dizziness' => 'dizziness',
             'chest_radiation' => 'chest_radiation',
-            // Persist sweating/dizziness clinical facts from chest atoms without implying
-            // the full CHEST_SWEATING parent bundle is complete (see alreadyAnswered).
+            // Persist sweating from chest atoms without implying the full CHEST_SWEATING
+            // parent bundle is complete (see alreadyAnswered). Chest dizziness stays scoped
+            // to finding_status['dizziness_with_chest'] — do not write shared dizziness
+            // (that would incorrectly close DIZZINESS_TYPE characterization).
             'sweating_with_chest' => 'sweating',
-            'dizziness_with_chest' => 'dizziness',
             'fever_confirmed' => 'fever_confirmed',
             'fever_with_abdomen' => 'fever_confirmed',
             'has_other_symptoms' => 'has_other_symptoms',
@@ -3065,11 +3065,8 @@ final class ClinicalInterviewEngine
             $facts['negative_symptoms'] = $neg;
         }
 
-        if ($finding === 'bleeding_with_abdomen') {
-            if ($yesNo) {
-                $facts['bleeding_continuing'] = true;
-            }
-        }
+        // bleeding_with_abdomen is presence only — never map to bleeding_continuing
+        // (continuation is a separate BLEEDING_CONTINUING fact / QID).
 
         if (in_array($finding, ['urinary_burning', 'urinary_blood', 'urinary_fever'], true) && $yesNo) {
             $facts['has_other_symptoms'] = true;

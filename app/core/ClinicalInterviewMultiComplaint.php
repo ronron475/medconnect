@@ -80,6 +80,7 @@ final class ClinicalInterviewMultiComplaint
      */
     public static function prepareForNextQuestion(array $context, array $assessment, string $clinicalText): array
     {
+        $previousActiveId = (string) ($context['active_complaint_id'] ?? '');
         $context = self::persistActiveFacts($context);
         $tracks = is_array($context['complaints'] ?? null) ? $context['complaints'] : [];
         if ($tracks === []) {
@@ -87,7 +88,14 @@ final class ClinicalInterviewMultiComplaint
         }
 
         $context['active_complaint_id'] = self::pickActiveId($tracks, $clinicalText, $assessment, $context);
-        $context = self::hydrateActiveFacts($context);
+        $newActiveId = (string) ($context['active_complaint_id'] ?? '');
+        // Track switch: load B.facts only. Never merge prior live context.facts into B
+        // (that permanently contaminated answered-state polarity across complaints).
+        // Same-track: keep merge so mid-turn / seed updates still accumulate.
+        $switched = $previousActiveId !== ''
+            && $newActiveId !== ''
+            && $previousActiveId !== $newActiveId;
+        $context = self::hydrateActiveFacts($context, $switched);
 
         $active = self::findTrack($context['complaints'], (string) ($context['active_complaint_id'] ?? ''));
         if (is_array($active)) {
@@ -514,10 +522,16 @@ final class ClinicalInterviewMultiComplaint
     }
 
     /**
+     * Expose the active track's facts on context for adaptive policy.
+     *
      * @param array<string, mixed> $context
+     * @param bool $isolateFromContext When true (track switch), replace context.facts
+     *        with the active track's stored facts only — do not merge prior-track polarity.
+     *        When false (same track / initial seed), merge live context into the track so
+     *        same-track accumulation and opening-message seeding keep working.
      * @return array<string, mixed>
      */
-    private static function hydrateActiveFacts(array $context): array
+    private static function hydrateActiveFacts(array $context, bool $isolateFromContext = false): array
     {
         $active = self::findTrack(
             is_array($context['complaints'] ?? null) ? $context['complaints'] : [],
@@ -527,23 +541,30 @@ final class ClinicalInterviewMultiComplaint
             return $context;
         }
         $trackFacts = is_array($active['facts'] ?? null) ? $active['facts'] : [];
-        $ctxFacts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
-        // Merge track + live context facts. Never wholesale-replace with a stale track:
-        // that wiped yes/no polarity (e.g. bleeding_continuing) needed by WHO/IITT.
-        $merged = class_exists('ClinicalInterviewEngine')
-            ? ClinicalInterviewEngine::mergeFacts($trackFacts, $ctxFacts)
-            : array_merge($trackFacts, array_filter(
-                $ctxFacts,
-                static fn ($v): bool => $v !== null && $v !== '' && $v !== []
-            ));
-        $context['facts'] = $merged;
         $activeId = (string) ($active['id'] ?? '');
-        foreach ($context['complaints'] as $i => $track) {
-            if (is_array($track) && (string) ($track['id'] ?? '') === $activeId) {
-                $context['complaints'][$i]['facts'] = $merged;
-                break;
+
+        if ($isolateFromContext) {
+            // Track switch: B must not inherit A's live polarity / finding_status.
+            $context['facts'] = $trackFacts;
+        } else {
+            $ctxFacts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+            // Same-track / seed: merge live context into the active track so mid-turn
+            // polarity and opening NLP facts are not wiped.
+            $merged = class_exists('ClinicalInterviewEngine')
+                ? ClinicalInterviewEngine::mergeFacts($trackFacts, $ctxFacts)
+                : array_merge($trackFacts, array_filter(
+                    $ctxFacts,
+                    static fn ($v): bool => $v !== null && $v !== '' && $v !== []
+                ));
+            $context['facts'] = $merged;
+            foreach ($context['complaints'] as $i => $track) {
+                if (is_array($track) && (string) ($track['id'] ?? '') === $activeId) {
+                    $context['complaints'][$i]['facts'] = $merged;
+                    break;
+                }
             }
         }
+
         if (($context['awaiting_question_id'] ?? '') === '' && ($active['awaiting_question_id'] ?? '') !== '') {
             $context['awaiting_question_id'] = (string) $active['awaiting_question_id'];
         }

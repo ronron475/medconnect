@@ -30,6 +30,11 @@ $cases = [
     ['masakit mata', ['EYE'], ['eye', 'pain']],
     ['sakit ngipon', ['DENTAL_PAIN'], ['dental_pain', 'pain']],
 
+    // Lexicon synonym gaps (EN pee / Tagalog ngipin / Tagalog pagdurugo)
+    ['pain when I pee', ['URINARY'], ['urinary']],
+    ['masakit ang ngipin', ['DENTAL_PAIN'], ['dental_pain', 'pain']],
+    ['may pagdurugo', ['BLEEDING'], ['bleeding']],
+
     // Non-health / greeting must not invent medical families
     ['hello how are you', [], []],
     ['i want pizza', [], []],
