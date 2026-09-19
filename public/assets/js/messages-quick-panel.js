@@ -396,8 +396,11 @@
       activeCid = 0;
       lastConvKey = '';
       setThreadView(false);
+      // Measure FAB while it is still visible, then re-sync after open layout.
+      syncPanelToFab();
       setOpen(panel, overlay, true);
       syncPanelToFab();
+      window.requestAnimationFrame(() => syncPanelToFab());
       loadConversations(true);
       pollTimer = window.setInterval(() => {
         if (document.hidden) return;
