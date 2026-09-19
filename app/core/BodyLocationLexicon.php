@@ -444,6 +444,8 @@ final class BodyLocationLexicon
         self::loadBodyPartsCsv();
         self::loadPainAliases();
         self::loadTrainingUniquePairs();
+        self::loadDictionaryBodyAliases();
+        self::loadSymptomDatasetBodyAliases();
 
         return self::$aliasIndex;
     }
@@ -482,18 +484,37 @@ final class BodyLocationLexicon
                 array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
                 array_map(static fn ($v) => trim((string) $v), $row)
             ) ?: [];
-            $hil = (string) ($data['hiligaynon_term'] ?? '');
             $eng = self::canonicalizeEnglish((string) ($data['english_term'] ?? ''));
-            if ($hil === '' || $eng === '') {
+            if ($eng === '') {
                 continue;
             }
             $region = (string) ($data['anatomy_category'] ?? $data['body_system'] ?? 'general');
-            $normHil = self::normalizeKey($hil);
-            self::registerAlias($normHil, $eng, $region, self::SOURCE_BODY_PARTS, 0.97, true);
-            // Also register English form for mixed/English complaints.
+            // Multilingual local columns (Hiligaynon / Filipino / Tagalog / generic alias).
+            $locals = [];
+            foreach (['hiligaynon_term', 'filipino_term', 'tagalog_term', 'local_term', 'alias'] as $col) {
+                $v = trim((string) ($data[$col] ?? ''));
+                if ($v !== '') {
+                    foreach (preg_split('/[|;,]+/u', $v) ?: [] as $piece) {
+                        $piece = trim((string) $piece);
+                        if ($piece !== '') {
+                            $locals[] = $piece;
+                        }
+                    }
+                }
+            }
+            if ($locals === []) {
+                continue;
+            }
             self::registerAlias($eng, $eng, $region, self::SOURCE_BODY_PARTS, 0.95, true);
-            foreach (self::possessiveBases($normHil) as $base) {
-                self::registerAlias($base, $eng, $region, self::SOURCE_BODY_PARTS, 0.96, true);
+            foreach ($locals as $hil) {
+                $normHil = self::normalizeKey($hil);
+                if ($normHil === '') {
+                    continue;
+                }
+                self::registerAlias($normHil, $eng, $region, self::SOURCE_BODY_PARTS, 0.97, true);
+                foreach (self::possessiveBases($normHil) as $base) {
+                    self::registerAlias($base, $eng, $region, self::SOURCE_BODY_PARTS, 0.96, true);
+                }
             }
         }
         fclose($handle);
@@ -523,7 +544,7 @@ final class BodyLocationLexicon
                 continue;
             }
             $notes = (string) ($data['notes'] ?? '');
-            if (preg_match('/Hiligaynon part alias:\s*([a-z0-9\-]+)/iu', $notes, $m)) {
+            if (preg_match('/(?:Hiligaynon|Filipino|Tagalog|local)\s+part alias:\s*([a-z0-9\-]+)/iu', $notes, $m)) {
                 self::registerAlias($m[1], $bodyPart, $bodyPart, self::SOURCE_PAIN, 0.9, false);
             }
             $alias = self::normalizeKey((string) ($data['english_alias'] ?? ''));
@@ -590,6 +611,144 @@ final class BodyLocationLexicon
             self::registerAlias($hil, $eng, $eng, self::SOURCE_TRAINING, 0.86, false);
         }
         fclose($handle);
+    }
+
+    /**
+     * Register MedicalDictionary single-token locals whose English gloss maps to an
+     * already-known body canonical (EN/HIL/Tagalog via the same lexicon architecture).
+     */
+    private static function loadDictionaryBodyAliases(): void
+    {
+        if (!class_exists('MedicalDictionary')) {
+            return;
+        }
+        $canonicals = [];
+        foreach (self::$aliasIndex ?? [] as $meta) {
+            $c = self::canonicalizeEnglish((string) ($meta['canonical'] ?? ''));
+            if ($c !== '') {
+                $canonicals[$c] = true;
+            }
+        }
+        if ($canonicals === []) {
+            return;
+        }
+        try {
+            $rows = MedicalDictionary::rows();
+        } catch (Throwable) {
+            return;
+        }
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $local = self::normalizeKey((string) ($row['local_term'] ?? ''));
+            $eng = self::canonicalizeEnglish((string) ($row['english_term'] ?? ''));
+            if ($local === '' || $eng === '' || str_contains($local, ' ')) {
+                continue;
+            }
+            if (!isset($canonicals[$eng])) {
+                continue;
+            }
+            self::registerAlias($local, $eng, $eng, self::SOURCE_BODY_PARTS, 0.93, false);
+            self::registerAlias($local . ' ko', $eng, $eng, self::SOURCE_BODY_PARTS, 0.92, false);
+            self::registerAlias('sa ' . $local, $eng, $eng, self::SOURCE_BODY_PARTS, 0.92, false);
+        }
+    }
+
+    /**
+     * From symptom CSVs that declare body_part, register non-qualifier local tokens
+     * as aliases to that canonical site (dataset-driven multilingual coverage).
+     */
+    private static function loadSymptomDatasetBodyAliases(): void
+    {
+        $paths = [
+            BASE_PATH . '/data/nlp/hiligaynon_medical_symptoms.csv',
+            BASE_PATH . '/data/nlp/filipino_medical_terms.csv',
+            BASE_PATH . '/data/nlp/body_part_pain_symptoms.csv',
+        ];
+        $stop = [
+            'sakit', 'masakit', 'pain', 'ache', 'may', 'mayron', 'mayroon', 'meron',
+            'gina', 'naga', 'nag', 'ang', 'mga', 'sa', 'ng', 'ko', 'akon', 'ako',
+            'my', 'i', 'have', 'a', 'the', 'of', 'and', 'with', 'for', 'gid', 'man',
+            'na', 'yung', 'ung', 'nang', 'kay', 'daw', 'basin', 'feel', 'feeling',
+        ];
+        $canonicals = [];
+        foreach (self::$aliasIndex ?? [] as $meta) {
+            $c = self::canonicalizeEnglish((string) ($meta['canonical'] ?? ''));
+            if ($c !== '') {
+                $canonicals[$c] = true;
+            }
+        }
+        foreach ($paths as $path) {
+            if (!is_readable($path)) {
+                continue;
+            }
+            $handle = fopen($path, 'r');
+            if ($handle === false) {
+                continue;
+            }
+            $header = fgetcsv($handle);
+            $count = 0;
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine(
+                    array_map(static fn ($h) => strtolower(trim((string) $h)), $header ?: []),
+                    array_map(static fn ($v) => trim((string) $v), $row)
+                ) ?: [];
+                $bodyRaw = (string) (
+                    ($data['body_part'] ?? '')
+                    ?: ($data['body'] ?? '')
+                    ?: ($data['confidence_keywords'] ?? '')
+                    ?: ($data['medical_term'] ?? '')
+                );
+                // body_part / keywords may be "shoulder;joint;pain" — take first known anatomy canonical.
+                $bodyParts = preg_split('/[|;,]+/u', strtolower($bodyRaw)) ?: [];
+                $canonical = '';
+                foreach ($bodyParts as $bp) {
+                    $bp = self::canonicalizeEnglish(trim((string) $bp));
+                    if ($bp !== '' && isset($canonicals[$bp])) {
+                        $canonical = $bp;
+                        break;
+                    }
+                }
+                if ($canonical === '') {
+                    continue;
+                }
+                $phrases = [];
+                foreach ([
+                    'hiligaynon_term', 'hiligaynon_complaint', 'term', 'local_term',
+                    'english_alias', 'normalized_symptom', 'synonyms', 'alternative_spellings',
+                    'english_translation',
+                ] as $col) {
+                    $v = trim((string) ($data[$col] ?? ''));
+                    if ($v === '') {
+                        continue;
+                    }
+                    foreach (preg_split('/[|;]+/u', $v) ?: [] as $piece) {
+                        $piece = trim((string) $piece);
+                        if ($piece !== '') {
+                            $phrases[] = $piece;
+                        }
+                    }
+                }
+                foreach ($phrases as $phrase) {
+                    $tokens = preg_split('/\s+/u', self::normalizeKey($phrase), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                    foreach ($tokens as $token) {
+                        if (mb_strlen($token) < 3 || in_array($token, $stop, true)) {
+                            continue;
+                        }
+                        if (isset($canonicals[$token])) {
+                            continue; // already an english canonical token
+                        }
+                        self::registerAlias($token, $canonical, $canonical, self::SOURCE_PAIN, 0.88, false);
+                    }
+                }
+                $count++;
+                if ($count >= 8000) {
+                    break;
+                }
+            }
+            fclose($handle);
+        }
     }
 
     private static function registerAlias(

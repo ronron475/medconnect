@@ -47,7 +47,9 @@ final class ClinicalInterviewEngine
                 && class_exists('ComplaintSemanticValidator')
             ) {
                 $semantic = ComplaintSemanticValidator::validateOpeningComplaint($turn);
-                if (!empty($semantic['needs_valid_complaint'])) {
+                // Block only after validation: confirmed non-health → NEEDS_VALID;
+                // UNCLEAR → clarification path (not treated as non-health proof).
+                if (!empty($semantic['needs_valid_complaint']) || !empty($semantic['needs_clarification'])) {
                     return self::wrapNeedsValidComplaint($semantic, $turn);
                 }
                 $nlpText = trim((string) ($semantic['nlp_text'] ?? ''));
@@ -1662,13 +1664,99 @@ final class ClinicalInterviewEngine
             $body
         ))));
 
+        // Domain-detector clinical findings → structured symptom facts (category-driven).
+        $findingSymptoms = [];
+        if (class_exists('HealthComplaintDomainDetector')) {
+            try {
+                $domain = HealthComplaintDomainDetector::detect($transcript);
+                foreach ((array) ($domain['signals'] ?? []) as $sig) {
+                    if (!is_array($sig)) {
+                        continue;
+                    }
+                    $type = (string) ($sig['type'] ?? '');
+                    $value = trim((string) ($sig['value'] ?? ''));
+                    if ($value === '') {
+                        continue;
+                    }
+                    if ($type === 'body_part') {
+                        $canon = class_exists('BodyLocationLexicon')
+                            ? BodyLocationLexicon::extractCanonical($value)
+                            : [];
+                        foreach ($canon as $c) {
+                            $c = strtolower(trim((string) $c));
+                            if ($c !== '' && !in_array($c, $body, true)) {
+                                $body[] = $c;
+                            }
+                        }
+                        continue;
+                    }
+                    if (!in_array($type, [
+                        'symptom', 'physical_change', 'finding', 'condition',
+                        'injury', 'bleeding', 'breathing', 'malaise', 'dataset_symptom',
+                    ], true)) {
+                        continue;
+                    }
+                    // Prefer English gloss after "→" when present (dictionary hits).
+                    $label = $value;
+                    if (str_contains($value, '→')) {
+                        $parts = explode('→', $value, 2);
+                        $label = trim((string) ($parts[1] ?? $value));
+                    }
+                    if ($label !== '') {
+                        $findingSymptoms[] = $label;
+                    }
+                }
+            } catch (Throwable) {
+                // keep prior body/symptoms
+            }
+        }
+
+        // Gemini normalized concept assists extraction when local body/findings are thin —
+        // additive only; never replaces original complaint; never sets triage class.
+        $bridgeConcept = '';
+        // Prefer concept already present on assessment semantic bridge when available.
+        if (is_array($assessment['semantic_bridge'] ?? null)) {
+            $bridgeConcept = trim((string) ($assessment['semantic_bridge']['gemini_concept'] ?? ''));
+        }
+        if ($bridgeConcept === '' && is_array($assessment['semantic_validation'] ?? null)) {
+            $bridgeConcept = trim((string) ($assessment['semantic_validation']['gemini_medical_concept'] ?? ''));
+        }
+        if ($bridgeConcept !== '') {
+            if ($body === [] && class_exists('BodyLocationLexicon')) {
+                foreach (BodyLocationLexicon::extractCanonical($bridgeConcept) as $c) {
+                    $c = strtolower(trim((string) $c));
+                    if ($c !== '' && !in_array($c, $body, true)) {
+                        $body[] = $c;
+                    }
+                }
+            }
+            if ($findingSymptoms === [] && class_exists('SymptomKnowledgeBase')) {
+                foreach (SymptomKnowledgeBase::matchSymptoms($bridgeConcept, $bridgeConcept) as $row) {
+                    $name = trim((string) ($row['symptom_name'] ?? ''));
+                    if ($name !== '') {
+                        $findingSymptoms[] = $name;
+                    }
+                }
+            }
+            if ($findingSymptoms === []) {
+                $findingSymptoms[] = $bridgeConcept;
+            }
+        }
+
         $onset = ClinicalFeatureExtractors::extractOnset($transcript);
         if ($onset === '' && $duration !== '') {
             $onset = ClinicalFeatureExtractors::onsetFromDuration(['label' => $duration]);
         }
 
+        $detectedSymptoms = self::stringList($assessment['detected_symptoms'] ?? []);
+        $symptoms = array_values(array_unique(array_filter(array_merge(
+            $detectedSymptoms,
+            $findingSymptoms
+        ))));
+
         $facts = self::blankFacts([
             'body_locations' => $body,
+            'symptoms' => $symptoms,
             'pain_score' => $pain['score'] ?? null,
             'pain_qualifier' => ClinicalFeatureExtractors::extractPainQualifier($transcript),
             'onset' => $onset,
@@ -2240,7 +2328,8 @@ final class ClinicalInterviewEngine
         $denied = ($facts['denied_associated'] ?? false) === true || ($facts['has_other_symptoms'] ?? null) === false;
         $pain = $facts['pain_score'] ?? null;
         $hasTiming = ($facts['duration_label'] ?? '') !== '' || ($facts['onset'] ?? '') === 'gradual';
-        $mildPain = $pain === null || (is_int($pain) && $pain <= 4);
+        // Unknown pain (null) must not count as mild — only a known score 1–4 does.
+        $mildPain = is_int($pain) && $pain <= 4;
 
         if ($display === 'URGENT' && $denied && $hasTiming && $mildPain) {
             return 'NON-URGENT';
@@ -2549,6 +2638,9 @@ final class ClinicalInterviewEngine
         if (!in_array($display, self::FINAL_CLASSES, true)) {
             $display = 'NON-URGENT';
         }
+        $interviewIncomplete = !empty($context['who_interview_incomplete'])
+            || !empty($assessment['triage']['who_interview_incomplete'])
+            || !empty($assessment['triage']['interview_incomplete']);
         $context['red_flags'] = self::redFlagNames($assessment);
         $context['assessment_status'] = self::STATUS_COMPLETED;
         $context['awaiting_question_id'] = '';
@@ -2563,7 +2655,7 @@ final class ClinicalInterviewEngine
             'URGENT' => '🟡',
             default => '🟢',
         };
-        $patientMessage = self::patientMessage($display);
+        $patientMessage = self::patientMessage($display, $interviewIncomplete);
 
         if (!isset($assessment['triage']) || !is_array($assessment['triage'])) {
             $assessment['triage'] = [];
@@ -2578,9 +2670,11 @@ final class ClinicalInterviewEngine
             'URGENT' => '2',
             default => '3',
         };
-        $assessment['triage']['urgency_label'] = match ($display) {
-            'EMERGENCY' => 'Emergency (Immediate)',
-            'URGENT' => 'Urgent (Priority)',
+        // Incomplete interviews keep the engine class/db_level but must not read as routine clearance.
+        $assessment['triage']['urgency_label'] = match (true) {
+            $display === 'EMERGENCY' => 'Emergency (Immediate)',
+            $display === 'URGENT' => 'Urgent (Priority)',
+            $interviewIncomplete => 'Needs Provider Review (Incomplete Assessment)',
             default => 'Non-Urgent (Routine)',
         };
 
@@ -2600,7 +2694,7 @@ final class ClinicalInterviewEngine
         $assessment['triage']['final_authority'] = 'ClinicalTriageEngine';
         $assessment['triage']['final_authority_scope'] = 'complete_accumulated_case';
         $assessment['triage']['max_urgency_aggregation'] = false;
-        if (!empty($context['who_interview_incomplete']) || !empty($assessment['triage']['who_interview_incomplete'])) {
+        if ($interviewIncomplete) {
             $assessment['triage']['needs_provider_review'] = true;
             $assessment['triage']['interview_incomplete'] = true;
             $assessment['triage']['who_interview_incomplete'] = true;
@@ -2660,8 +2754,16 @@ final class ClinicalInterviewEngine
         ];
     }
 
-    public static function patientMessage(string $display): string
+    public static function patientMessage(string $display, bool $interviewIncomplete = false): string
     {
+        if ($interviewIncomplete) {
+            return match ($display) {
+                'EMERGENCY' => "🔴 EMERGENCY\n\nYour reported symptoms may require immediate medical attention. Please seek emergency care immediately.\n\nThis assessment is incomplete and needs provider review. Unanswered information was not assumed to be negative.",
+                'URGENT' => "🟡 URGENT\n\nYour symptoms should be assessed by a healthcare professional promptly.\n\nThis assessment is incomplete and needs provider review. Unanswered information was not assumed to be negative.",
+                default => "Assessment incomplete — needs provider review\n\nThis assessment could not be completed with the information available. A healthcare provider should review your case. Unanswered questions were not assumed to be negative, and this is not a routine clearance.",
+            };
+        }
+
         return match ($display) {
             'EMERGENCY' => "🔴 EMERGENCY\n\nYour reported symptoms may require immediate medical attention. Please seek emergency care immediately.",
             'URGENT' => "🟡 URGENT\n\nYour symptoms should be assessed by a healthcare professional promptly.",
@@ -2737,24 +2839,33 @@ final class ClinicalInterviewEngine
     private static function wrapNeedsValidComplaint(array $semantic, string $utterance): array
     {
         $domainLabel = (string) ($semantic['domain_label'] ?? ComplaintSemanticValidator::DOMAIN_NON_HEALTH);
+        $isUnclear = $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR
+            || !empty($semantic['needs_clarification']);
+        // NEEDS_VALID_COMPLAINT only for confirmed non-health / prank.
+        $needsValid = !$isUnclear && (
+            !empty($semantic['needs_valid_complaint'])
+            || $domainLabel === ComplaintSemanticValidator::DOMAIN_NON_HEALTH
+        );
         $message = trim((string) ($semantic['patient_message'] ?? ''));
         if ($message === '') {
             $message = class_exists('ComplaintSemanticValidator')
                 ? ComplaintSemanticValidator::patientGateMessage(
                     (string) ($semantic['detected_language'] ?? 'english'),
-                    $domainLabel
+                    $isUnclear ? ComplaintSemanticValidator::DOMAIN_UNCLEAR : $domainLabel
                 )
                 : 'Please describe a health concern or symptom you are experiencing so we can continue.';
         }
 
+        $status = self::STATUS_NEEDS_VALID_COMPLAINT;
+
         return [
-            'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
+            'assessment_status' => $status,
             'followup_required' => false,
             'followup_question' => null,
             'patient_message' => $message,
-            'needs_valid_complaint' => true,
-            'needs_clarification' => $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR,
-            'domain_label' => $domainLabel,
+            'needs_valid_complaint' => $needsValid,
+            'needs_clarification' => $isUnclear,
+            'domain_label' => $isUnclear ? ComplaintSemanticValidator::DOMAIN_UNCLEAR : $domainLabel,
             'domain_skipped' => true,
             'domain_detection' => is_array($semantic['php_domain'] ?? null) ? $semantic['php_domain'] : ($semantic['domain_detection'] ?? []),
             'semantic_validation' => $semantic,
@@ -2766,18 +2877,23 @@ final class ClinicalInterviewEngine
                 'triage_classification' => '',
                 'triage_display' => '',
                 'triage_status' => 'NOT_READY',
-                'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
-                'reason' => (string) ($semantic['combine_reason'] ?? 'Invalid medical input'),
-                'clinical_reasoning' => 'No clinical triage — input failed semantic medical-complaint validation.',
-                'needs_valid_complaint' => true,
-                'domain_label' => $domainLabel,
+                'assessment_status' => $status,
+                'reason' => (string) ($semantic['combine_reason'] ?? (
+                    $isUnclear ? 'Health concern unclear — ask to clarify' : 'Invalid medical input'
+                )),
+                'clinical_reasoning' => $isUnclear
+                    ? 'No clinical triage — opening complaint needs clarification (not confirmed non-health).'
+                    : 'No clinical triage — input failed semantic medical-complaint validation.',
+                'needs_valid_complaint' => $needsValid,
+                'needs_clarification' => $isUnclear,
+                'domain_label' => $isUnclear ? ComplaintSemanticValidator::DOMAIN_UNCLEAR : $domainLabel,
                 'domain_skipped' => true,
             ],
             'interview' => [
-                'assessment_status' => self::STATUS_NEEDS_VALID_COMPLAINT,
-                'needs_valid_complaint' => true,
-                'needs_clarification' => $domainLabel === ComplaintSemanticValidator::DOMAIN_UNCLEAR,
-                'domain_label' => $domainLabel,
+                'assessment_status' => $status,
+                'needs_valid_complaint' => $needsValid,
+                'needs_clarification' => $isUnclear,
+                'domain_label' => $isUnclear ? ComplaintSemanticValidator::DOMAIN_UNCLEAR : $domainLabel,
                 'domain_skipped' => true,
             ],
             'engine' => 'clinical-interview-semantic-gate',

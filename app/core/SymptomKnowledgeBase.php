@@ -196,11 +196,8 @@ final class SymptomKnowledgeBase
                 continue;
             }
             foreach ($symptom['_match_terms'] as $term) {
-                if ($term === '' || (strlen($term) < 5 && !str_contains($term, ' '))) {
-        $allowShort = ['ubo', 'sipon', 'lagnat', 'hilo', 'tae', 'dugo', 'hapdi', 'kapoy', 'luya', 'ulon', 'mata', 'dughan', 'suka', 'ulo'];
-                    if (!in_array($term, $allowShort, true)) {
-                        continue;
-                    }
+                if ($term === '' || !self::allowMatchTerm($term)) {
+                    continue;
                 }
                 if (!self::termMatchesWithContext($hay, $term, $symptom)) {
                     continue;
@@ -222,10 +219,140 @@ final class SymptomKnowledgeBase
                 break;
             }
         }
+
+        // Dictionary-backed clinical findings/conditions (category-driven, not phrase rules).
+        foreach (self::dictionaryClinicalHits($hay) as $hit) {
+            $sid = (string) ($hit['id'] ?? '');
+            if ($sid === '' || isset($seen[$sid])) {
+                continue;
+            }
+            $seen[$sid] = true;
+            $matched[] = $hit;
+        }
+
         usort($matched, static fn (array $a, array $b): int => ($b['severity_weight'] <=> $a['severity_weight']));
 
         // Cap overly broad multi-symptom extraction (prevents score inflation)
         return array_slice($matched, 0, 8);
+    }
+
+    /**
+     * Short single-token terms are allowed only when dictionary/clinical categories
+     * (or the legacy short clinical allow-list) confirm they are medical — not by
+     * hardcoding individual complaint examples.
+     */
+    private static function allowMatchTerm(string $term): bool
+    {
+        if ($term === '' || str_contains($term, ' ') || strlen($term) >= 5) {
+            return true;
+        }
+        $legacyShort = [
+            'ubo', 'sipon', 'lagnat', 'hilo', 'tae', 'dugo', 'hapdi', 'kapoy',
+            'luya', 'ulon', 'mata', 'dughan', 'suka', 'ulo',
+        ];
+        if (in_array($term, $legacyShort, true)) {
+            return true;
+        }
+
+        return self::isDictionaryClinicalTerm($term);
+    }
+
+    private static function isDictionaryClinicalTerm(string $term): bool
+    {
+        if (!class_exists('MedicalDictionary')) {
+            return false;
+        }
+        try {
+            $entry = MedicalDictionary::lookup($term);
+            if (!is_array($entry)) {
+                $entry = MedicalDictionary::lookupByEnglish($term);
+            }
+        } catch (Throwable) {
+            return false;
+        }
+        if (!is_array($entry)) {
+            return false;
+        }
+        $cat = strtolower((string) ($entry['category'] ?? ''));
+        $en = strtolower((string) ($entry['english_term'] ?? ''));
+
+        if (str_contains($cat, 'symptom')
+            || str_contains($cat, 'condition')
+            || str_contains($cat, 'finding')
+            || str_contains($cat, 'sign')
+            || str_contains($cat, 'disease')
+            || str_contains($cat, 'body')
+        ) {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/\b(pain|fever|cough|vomit|nausea|dizzy|swell|swelling|mass|rash|bleed|breath|weak|itch|lesion|nodule|abscess)\b/u',
+            $en
+        );
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private static function dictionaryClinicalHits(string $hay): array
+    {
+        if ($hay === '' || !class_exists('MedicalDictionary')) {
+            return [];
+        }
+        $hits = [];
+        $seen = [];
+        $tokens = preg_split('/[^\p{L}\p{N}\-]+/u', mb_strtolower($hay), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        foreach ($tokens as $token) {
+            if (mb_strlen($token) < 3 || isset($seen[$token])) {
+                continue;
+            }
+            try {
+                $entry = MedicalDictionary::lookup($token);
+                if (!is_array($entry)) {
+                    $entry = MedicalDictionary::lookupByEnglish($token);
+                }
+            } catch (Throwable) {
+                continue;
+            }
+            if (!is_array($entry) || !self::isDictionaryClinicalTerm($token)) {
+                continue;
+            }
+            $cat = strtolower((string) ($entry['category'] ?? ''));
+            // Body-only dictionary rows are handled by BodyLocationLexicon — skip here.
+            $en = strtolower(trim((string) ($entry['english_term'] ?? $token)));
+            if ($en === '') {
+                continue;
+            }
+            if (
+                (str_contains($cat, 'body') || preg_match('/\b(eye|head|stomach|chest|back|abdomen|shoulder|neck|throat|arm|leg|hand|foot|skin)\b/u', $en))
+                && !preg_match('/\b(pain|fever|cough|swell|swelling|mass|rash|vomit|bleed|weak|itch|lesion)\b/u', $en)
+            ) {
+                continue;
+            }
+            $seen[$token] = true;
+            $label = trim((string) ($entry['english_term'] ?? $token));
+            if ($label === strtolower($label)) {
+                $label = ucwords($label);
+            }
+            $hits[] = [
+                'id'                 => 'dict_' . preg_replace('/\s+/u', '_', mb_strtolower($en)),
+                'symptom_name'       => $label,
+                'medical_category'   => $cat !== '' ? $cat : 'finding',
+                'severity_weight'     => 1,
+                'emergency_weight'   => 0,
+                'urgent_weight'      => 0,
+                'danger_sign'        => false,
+                'recommended_action' => 'Clinician review recommended if persistent.',
+                'matched_term'       => $token,
+                'source'             => 'medical_dictionary',
+            ];
+            if (count($hits) >= 5) {
+                break;
+            }
+        }
+
+        return $hits;
     }
 
     /**

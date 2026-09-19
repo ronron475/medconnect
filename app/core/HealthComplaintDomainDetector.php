@@ -301,6 +301,7 @@ final class HealthComplaintDomainDetector
             if (in_array($s['type'], [
                 'symptom', 'body_part', 'duration', 'physical_change', 'injury',
                 'bleeding', 'breathing', 'malaise', 'medication',
+                'finding', 'condition',
             ], true)) {
                 return true;
             }
@@ -338,6 +339,7 @@ final class HealthComplaintDomainDetector
             if (!in_array($type, [
                 'symptom', 'body_part', 'duration', 'physical_change', 'injury',
                 'bleeding', 'breathing', 'malaise', 'medication',
+                'finding', 'condition',
             ], true)) {
                 continue;
             }
@@ -367,6 +369,8 @@ final class HealthComplaintDomainDetector
                 'SYMPTOM+BODY_PART+PATIENT_REFERENCE',
                 'SYMPTOM+DURATION',
                 'PHYSICAL_CHANGE+BODY_PART',
+                'FINDING+BODY_PART',
+                'CONDITION+BODY_PART',
                 'INJURY+BODY_PART',
                 'DURATION+SYMPTOM+BODY_PART',
             ], true)) {
@@ -518,6 +522,9 @@ final class HealthComplaintDomainDetector
         if ($has('physical_change') && $has('body_part')) {
             $rels[] = 'PHYSICAL_CHANGE+BODY_PART';
         }
+        if (($has('finding') || $has('condition')) && $has('body_part')) {
+            $rels[] = $has('finding') ? 'FINDING+BODY_PART' : 'CONDITION+BODY_PART';
+        }
         if ($has('injury') && $has('body_part')) {
             $rels[] = 'INJURY+BODY_PART';
         }
@@ -542,6 +549,8 @@ final class HealthComplaintDomainDetector
             'body_part' => 1.0,
             'duration' => 1.1,
             'physical_change' => 1.3,
+            'finding' => 1.4,
+            'condition' => 1.4,
             'malaise' => 1.5,
             'patient_reference' => 0.35,
             'breathing' => 2.2,
@@ -572,6 +581,8 @@ final class HealthComplaintDomainDetector
             'SYMPTOM+DURATION' => 1.5,
             'DURATION+SYMPTOM+BODY_PART' => 2.2,
             'PHYSICAL_CHANGE+BODY_PART' => 1.8,
+            'FINDING+BODY_PART' => 1.8,
+            'CONDITION+BODY_PART' => 1.8,
             'INJURY+BODY_PART' => 1.8,
             'BREATHING_DIFFICULTY' => 2.0,
             'BLEEDING+BODY_PART' => 1.8,
@@ -664,12 +675,9 @@ final class HealthComplaintDomainDetector
             }
             $cat = strtolower((string) ($entry['category'] ?? ''));
             $en = (string) ($entry['english_term'] ?? $w);
-            $type = 'dictionary';
-            if (str_contains($cat, 'body') || preg_match('/\b(eye|head|stomach|chest|back|abdomen)\b/u', $en)) {
-                $type = 'body_part';
-            } elseif (str_contains($cat, 'symptom') || preg_match('/\b(pain|fever|cough|swell|vomit|dizzy|diarrhea|diarrhoea)\b/u', $en)) {
-                $type = 'symptom';
-            }
+            // Map dictionary categories to clinical signal types so findings/conditions
+            // count as evidence (dataset miss of a phrase ≠ non-clinical).
+            $type = self::dictionaryCategoryToSignalType($cat, $en);
             $label = $origWord === $w ? ($w . '→' . $en) : ($origWord . '→' . $en);
             if (!self::signalExists($hits, $type, $label)) {
                 $hits[] = ['type' => $type, 'value' => $label];
@@ -718,6 +726,10 @@ final class HealthComplaintDomainDetector
             $en = strtolower((string) ($entry['english_term'] ?? ''));
             $clinical = str_contains($cat, 'symptom')
                 || str_contains($cat, 'body')
+                || str_contains($cat, 'finding')
+                || str_contains($cat, 'condition')
+                || str_contains($cat, 'sign')
+                || str_contains($cat, 'disease')
                 || (bool) preg_match('/\b(pain|fever|cough|diarrhea|diarrhoea|vomit|nausea|dizzy|swell|bleed|breath|rash|weak|sick)\b/u', $en);
             if (!$clinical) {
                 continue;
@@ -727,6 +739,39 @@ final class HealthComplaintDomainDetector
         }
 
         return null;
+    }
+
+    /**
+     * Map MedicalDictionary category (+ English gloss) onto clinical signal types.
+     * Findings/conditions are first-class clinical evidence, not weak "dictionary" noise.
+     */
+    private static function dictionaryCategoryToSignalType(string $category, string $english): string
+    {
+        $cat = strtolower(trim($category));
+        $en = strtolower(trim($english));
+
+        if (str_contains($cat, 'body') || preg_match('/\b(eye|head|stomach|chest|back|abdomen|shoulder|neck|throat|arm|leg|hand|foot|skin)\b/u', $en)) {
+            return 'body_part';
+        }
+        if (str_contains($cat, 'symptom') || preg_match('/\b(pain|fever|cough|vomit|dizzy|dizziness|nausea|diarrhea|diarrhoea|itch|weak|fatigue|malaise)\b/u', $en)) {
+            return 'symptom';
+        }
+        if (str_contains($cat, 'finding') || str_contains($cat, 'sign')) {
+            return 'finding';
+        }
+        if (str_contains($cat, 'condition') || str_contains($cat, 'disease') || str_contains($cat, 'diagnosis')) {
+            // Physical-change style glosses stay under physical_change for relationship detection.
+            if (preg_match('/\b(swell|swelling|mass|rash|lesion|nodule|abscess|goiter|bruis|redness)\b/u', $en)) {
+                return 'physical_change';
+            }
+
+            return 'condition';
+        }
+        if (preg_match('/\b(swell|swelling|mass|rash|lesion)\b/u', $en)) {
+            return 'physical_change';
+        }
+
+        return 'dictionary';
     }
 
     private static function applyMisspellHints(string $hay): string
