@@ -71,11 +71,16 @@ final class ClinicalInterviewAdaptivePolicy
                 continue;
             }
             // Keep re-asking associated detail until a named symptom is captured.
+            // Also re-ask any slot that was posed but never persisted as a clinical fact
+            // (e.g. bleeding_continuing wiped before save) — "asked" ≠ "answered".
             $askedBlock = in_array($qid, $asked, true);
-            if ($askedBlock && !($qid === 'ASSOCIATED_DETAIL' && (
+            $assocDetailPending = $qid === 'ASSOCIATED_DETAIL' && (
                 !empty($facts['needs_associated_detail'])
                 || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === [])
-            ))) {
+            );
+            if ($askedBlock && !$assocDetailPending
+                && self::alreadyAnswered($qid, $facts, $transcript, $concepts, $caseHaystack)
+            ) {
                 continue;
             }
             $when = array_map('strtolower', (array) ($question['required_when'] ?? []));

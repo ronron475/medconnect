@@ -245,7 +245,7 @@
     {
       "question_id": "ASSOCIATED_SYMPTOMS",
       "clinical_purpose": "Identify other associated symptoms without assuming negatives",
-      "required_when": ["headache", "chest_pain", "pain", "dizziness", "fever", "skin", "urinary", "eye", "cough"],
+      "required_when": ["headache", "chest_pain", "pain", "dizziness", "fever", "skin", "urinary", "eye", "cough", "bleeding"],
       "priority": 70,
       "red_flag_related": false,
       "english": "Do you have any other symptoms besides what you already described?",
