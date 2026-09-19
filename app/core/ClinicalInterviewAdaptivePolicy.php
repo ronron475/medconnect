@@ -309,9 +309,8 @@ final class ClinicalInterviewAdaptivePolicy
         if ($finding === 'sweating_with_chest' && ($facts['sweating'] ?? null) !== null) {
             return true;
         }
-        if ($finding === 'dizziness_with_chest' && ($facts['dizziness'] ?? null) !== null) {
-            return true;
-        }
+        // dizziness_with_chest is scoped via finding_status only — shared dizziness
+        // (e.g. from BLEEDING_DIZZY or free text) must not suppress the chest atom.
         if ($skipPattern !== '' && (bool) preg_match('/\b(?:' . $skipPattern . ')\b/iu', $hay)) {
             // Affirmed or denied in free text — do not re-ask the same finding.
             return true;
@@ -839,7 +838,8 @@ final class ClinicalInterviewAdaptivePolicy
             'other symptoms' => ($facts['has_other_symptoms'] ?? null) !== null || !empty($facts['denied_associated']),
             'bleeding is ongoing' => ($facts['bleeding_continuing'] ?? null) !== null,
             'heavy' => ($facts['bleeding_heavy'] ?? null) !== null,
-            'dizzy' => ($facts['dizziness'] ?? null) !== null,
+            // Presence of dizziness must not satisfy DIZZINESS_TYPE ("Clarify dizziness character").
+            'dizzy' => $qid !== 'DIZZINESS_TYPE' && ($facts['dizziness'] ?? null) !== null,
             'fever' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $caseHaystack),
         ];
         if ($qid === 'ASSOCIATED_SYMPTOMS' || $qid === 'ASSOCIATED_DETAIL') {
@@ -992,7 +992,12 @@ final class ClinicalInterviewAdaptivePolicy
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $hay),
             'SKIN_SITE' => $locs !== [],
             'FEVER_CONFIRM' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $hay),
-            'DIZZINESS_TYPE' => ($facts['dizziness'] ?? null) !== null,
+            // Character/type only — shared dizziness presence (incl. chest atom) is not enough.
+            'DIZZINESS_TYPE' => ($findingStatus['dizziness_type'] ?? '') !== ''
+                || (bool) preg_match(
+                    '/\b(spin(?:ning)?|vertigo|tuyok|light[- ]?headed|gaan\s+(ang\s+)?ulo|unsteady|indi\s+ka\s+stabile|room\s+spin)\b/u',
+                    $hay
+                ),
             // Bundle completes only when every urinary atom is known (per-atom haystack/status).
             'URINARY_DETAIL' => self::bundledAtomsResolved('URINARY_DETAIL', $facts, $caseHaystack),
             default => false,

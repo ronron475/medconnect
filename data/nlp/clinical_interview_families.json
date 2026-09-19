@@ -52,7 +52,7 @@
       "symptom_name_contains": ["toothache", "tooth pain", "dental pain", "dental abscess"],
       "symptom_ids": ["toothache", "tooth_pain", "dental_pain", "dental_abscess", "tooth_abscess", "jaw_pain"],
       "body_parts": ["tooth", "teeth", "gum"],
-      "text_regex": ["toothache", "tooth\\s*pain", "dental\\s*pain", "sakit\\s+(ng\\s+)?ngipon", "masakit.{0,12}ngipon", "\\bngipon\\b", "\\btooth\\b", "\\bteeth\\b"]
+      "text_regex": ["toothache", "tooth\\s*pain", "dental\\s*pain", "sakit\\s+(ng\\s+)?ngipon", "masakit.{0,12}ngipon", "\\bngipon\\b", "sakit\\s+(ng\\s+)?ngipin", "masakit.{0,12}ngipin", "\\bngipin\\b", "\\btooth\\b", "\\bteeth\\b"]
     },
     {
       "complaint_id": "BLEEDING",
@@ -65,7 +65,7 @@
         "coughing_blood", "vomiting_blood", "hemoptysis", "anticoagulant_bleeding",
         "warfarin_bleeding", "postpartum_hemorrhage", "circumcision_bleeding"
       ],
-      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "bleeding", "\\bdugo\\b", "hemorrhage", "epistaxis", "hematuria"]
+      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "\\bpagdurugo\\b", "bleeding", "\\bdugo\\b", "hemorrhage", "epistaxis", "hematuria"]
     },
     {
       "complaint_id": "NOSE_PAIN",
@@ -162,7 +162,7 @@
         "bph_symptoms", "penile_discharge", "urinary_catheter_issue"
       ],
       "medical_categories": ["urinary", "urology"],
-      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi", "hematuria"]
+      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bpee(?:ing)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi", "hematuria"]
     },
     {
       "complaint_id": "DIZZINESS",
