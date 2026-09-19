@@ -26,7 +26,10 @@ final class ClinicalInterviewMultiComplaint
 
         $existing = is_array($context['complaints'] ?? null) ? $context['complaints'] : [];
         if ($existing === []) {
-            $context['complaints'] = self::buildTracks($assessment, $hay, $original, $context);
+            // Detect tracks from the patient utterance, not triage-enriched clinicalText
+            // (enrichment synonyms/misspellings invent false families, e.g. kaliwang→kalibang→GI).
+            $detectText = $original !== '' ? $original : $hay;
+            $context['complaints'] = self::buildTracks($assessment, $detectText, $original, $context);
         } else {
             $context['complaints'] = self::refreshFamilies($existing, $assessment, $hay, $context);
         }
@@ -703,7 +706,7 @@ final class ClinicalInterviewMultiComplaint
             }
             $span = trim((string) ($track['text_span'] ?? $hay));
             $facts = is_array($track['facts'] ?? null) ? $track['facts'] : [];
-            $derived = ClinicalInterviewContextResolver::deriveComplaints($assessment, $span, $facts);
+            $derived = ClinicalInterviewContextResolver::deriveComplaints([], $span, $facts);
             $keys = [];
             foreach ($derived as $row) {
                 $fk = strtolower((string) ($row['family_key'] ?? ''));
@@ -740,7 +743,11 @@ final class ClinicalInterviewMultiComplaint
             if ($span === '' || mb_strlen($span) < 2) {
                 continue;
             }
-            $derived = ClinicalInterviewContextResolver::deriveComplaints($assessment, $span, $facts);
+            // Family detection must follow the patient span evidence — do not invent tracks
+            // from enriched assessment KB hits (e.g. stomach pain → chest_pain/respiratory).
+            $spanFacts = $facts;
+            $spanFacts['body_locations'] = ClinicalFeatureExtractors::extractBodyLocations($span);
+            $derived = ClinicalInterviewContextResolver::deriveComplaints([], $span, $spanFacts);
             $keys = [];
             foreach ($derived as $row) {
                 $fk = strtolower((string) ($row['family_key'] ?? ''));
@@ -775,12 +782,29 @@ final class ClinicalInterviewMultiComplaint
             ];
         }
 
-        if (count($units) >= 2) {
-            return $units;
+        $clinicalUnits = array_values(array_filter(
+            $units,
+            static function (array $u): bool {
+                $keys = array_map('strtolower', array_map('strval', (array) ($u['family_keys'] ?? [])));
+                $keys = array_values(array_diff(
+                    $keys,
+                    ['general_unwell', 'pain', 'pain_no_location', 'pain_unspecified']
+                ));
+
+                return $keys !== [];
+            }
+        ));
+        // Two+ clinically distinct spans (e.g. "ubo kag sakit ulo") → keep them.
+        // Incomplete fragments after split (e.g. "dughan ko" from "Masakit … tiyan kag dughan")
+        // must not block full-utterance multi-family detection when the pain verb is shared.
+        if (count($clinicalUnits) >= 2) {
+            return $clinicalUnits;
         }
 
         // Fallback: multiple families on the full utterance → one unit per family.
-        $derivedAll = ClinicalInterviewContextResolver::deriveComplaints($assessment, $hay, $facts);
+        $hayFacts = $facts;
+        $hayFacts['body_locations'] = ClinicalFeatureExtractors::extractBodyLocations($hay);
+        $derivedAll = ClinicalInterviewContextResolver::deriveComplaints([], $hay, $hayFacts);
         $byFamily = [];
         foreach ($derivedAll as $row) {
             $fk = strtolower((string) ($row['family_key'] ?? ''));

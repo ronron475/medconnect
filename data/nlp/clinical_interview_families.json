@@ -184,8 +184,12 @@
         "gait_disturbance", "memory_loss_acute", "meningitis_symptoms", "febrile_seizure",
         "withdrawal_seizure"
       ],
-      "text_regex": ["weakness", "nangaluya", "kaluya", "numb", "pamamanhid", "nanlalata", "kombulsiyon", "seizure", "slurred", "stroke", "paralysis", "tingling"],
-      "text_regex_exclude": ["\\b(no|wala|hindi|indi|without)\\s+(weakness|numbness|pamamanhid|numb)\\b"]
+      "text_regex": [
+        "weakness", "nangaluya", "kaluya", "galuya", "naluya",
+        "nanghihina", "panghihina", "humihina", "nanlalata",
+        "numb", "pamamanhid", "kombulsiyon", "seizure", "slurred", "stroke", "paralysis", "tingling"
+      ],
+      "text_regex_exclude": ["\\b(no|wala|hindi|indi|without)\\s+(weakness|numbness|pamamanhid|numb|nanghihina|panghihina)\\b"]
     },
     {
       "complaint_id": "MUSCULOSKELETAL",
