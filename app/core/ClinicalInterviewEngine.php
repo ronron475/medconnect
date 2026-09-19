@@ -2298,7 +2298,7 @@ final class ClinicalInterviewEngine
         }
 
         return match ($qid) {
-            'PAIN_LOCATION', 'UNWELL_WHAT' => $facts['body_locations'] !== []
+            'PAIN_LOCATION', 'UNWELL_WHAT' => (is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : []) !== []
                 || (bool) preg_match('/\b(ulo|head|dughan|dibdib|chest|tiyan|ilong|nose|kamot|hand)\b/u', $low)
                 || (
                     !in_array('pain_unspecified', $families, true)
@@ -2307,30 +2307,28 @@ final class ClinicalInterviewEngine
                 ),
             'NOSE_PAIN_WHERE' => (bool) preg_match('/\b(bridge|tip|nostril|tuod|pungos)\b/u', $low),
             // Numeric 0–10 only — qualitative intensifiers must not skip the pain scale.
-            'PAIN_SEVERITY' => $facts['pain_score'] !== null,
+            'PAIN_SEVERITY' => ($facts['pain_score'] ?? null) !== null,
             'ONSET', 'DURATION' => ClinicalFeatureExtractors::hasTimingInformation($transcript, $facts),
-            'NEURO_WEAKNESS' => $facts['weakness'] !== null,
+            'NEURO_WEAKNESS' => ($facts['weakness'] ?? null) !== null,
             // Independent neuro findings — do not couple speech/vision to weakness.
-            'NEURO_SPEECH' => $facts['speech_difficulty'] !== null,
-            'NEURO_VISION' => $facts['vision_change'] !== null,
-            'BREATHING_SEVERITY' => $facts['breathing_difficulty'] !== null,
-            'BLEEDING_CONTINUING' => $facts['bleeding_continuing'] !== null,
-            'BLEEDING_HEAVY' => $facts['bleeding_heavy'] !== null,
-            'BLEEDING_DIZZY' => $facts['dizziness'] !== null,
+            'NEURO_SPEECH' => ($facts['speech_difficulty'] ?? null) !== null,
+            'NEURO_VISION' => ($facts['vision_change'] ?? null) !== null,
+            'BREATHING_SEVERITY' => ($facts['breathing_difficulty'] ?? null) !== null,
+            'BLEEDING_CONTINUING' => ($facts['bleeding_continuing'] ?? null) !== null,
+            'BLEEDING_HEAVY' => ($facts['bleeding_heavy'] ?? null) !== null,
+            'BLEEDING_DIZZY' => ($facts['dizziness'] ?? null) !== null,
             // Independent of breathing answers and generic denied_associated.
-            'CHEST_RADIATION' => $facts['chest_radiation'] !== null,
-            'CHEST_SWEATING' => $facts['sweating'] !== null,
-            'ABDOMINAL_ASSOCIATED' => $facts['abdominal_associated'] !== null,
+            'CHEST_RADIATION' => ($facts['chest_radiation'] ?? null) !== null,
+            'CHEST_SWEATING' => ($facts['sweating'] ?? null) !== null,
+            'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null,
             'ASSOCIATED_SYMPTOMS' => (
-                $facts['denied_associated']
+                !empty($facts['denied_associated'])
                 || (($facts['has_other_symptoms'] ?? null) === false)
                 || (
                     ($facts['has_other_symptoms'] ?? null) === true
                     && self::stringList($facts['associated_symptoms'] ?? []) !== []
                     && empty($facts['needs_associated_detail'])
                 )
-                || $facts['weakness'] !== null
-                || $facts['breathing_difficulty'] !== null
             ),
             'ASSOCIATED_DETAIL' => empty($facts['needs_associated_detail'])
                 && (

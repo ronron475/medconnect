@@ -920,7 +920,6 @@ final class ClinicalInterviewAdaptivePolicy
             || ClinicalFeatureExtractors::hasTimingInformation($hay, $facts);
         // Numeric 1–10 only completes severity — intensifiers alone do not.
         $hasSeverity = ($facts['pain_score'] ?? null) !== null;
-        $assocDone = self::associatedSymptomsResolved($facts);
         $assocYesPendingDetail = !empty($facts['needs_associated_detail'])
             || (($facts['has_other_symptoms'] ?? null) === true && self::associatedSymptomNames($facts) === []);
         $findingStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
@@ -965,9 +964,7 @@ final class ClinicalInterviewAdaptivePolicy
             'ABDOMINAL_ASSOCIATED' => ($facts['abdominal_associated'] ?? null) !== null
                 || self::bundledAtomsResolved('ABDOMINAL_ASSOCIATED', $facts, $caseHaystack),
             'ASSOCIATED_SYMPTOMS' => ($facts['has_other_symptoms'] ?? null) !== null
-                || !empty($facts['denied_associated'])
-                || ($facts['weakness'] ?? null) !== null
-                || ($facts['breathing_difficulty'] ?? null) !== null,
+                || !empty($facts['denied_associated']),
             'ASSOCIATED_DETAIL' => !$assocYesPendingDetail,
             'EYE_LATERALITY' => (bool) preg_match('/\b(left|right|tuo|wala|both|duha|kaliwa|kanan)\b/u', $hay) || $locs !== [],
             'SPECIFIC_LOCATION' => (bool) preg_match('/\b(upper|lower|tuo|wala|left|right|pusod|center|tunga)\b/u', $hay),
@@ -975,8 +972,8 @@ final class ClinicalInterviewAdaptivePolicy
             'SKIN_SITE' => $locs !== [],
             'FEVER_CONFIRM' => (bool) preg_match('/\b(fever|lagnat|hilanat|wala\s+(sang\s+)?(lagnat|hilanat)|no fever)\b/u', $hay),
             'DIZZINESS_TYPE' => ($facts['dizziness'] ?? null) !== null,
-            'URINARY_DETAIL' => $assocDone || (bool) preg_match('/\b(burning|hapdi|dugo|blood|fever|hilanat)\b/u', $hay)
-                || self::bundledAtomsResolved('URINARY_DETAIL', $facts, $caseHaystack),
+            // Bundle completes only when every urinary atom is known (per-atom haystack/status).
+            'URINARY_DETAIL' => self::bundledAtomsResolved('URINARY_DETAIL', $facts, $caseHaystack),
             default => false,
         };
     }
