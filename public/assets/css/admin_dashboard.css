@@ -1040,7 +1040,7 @@ body.admin-body {
 [data-live-dashboard] {
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 16px;
   width: 100%;
   min-width: 0;
 }
@@ -1055,7 +1055,7 @@ body.admin-body {
 [data-live-dashboard] > section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
 }
 
 [data-live-dashboard] .adm-section-head {
@@ -1063,24 +1063,24 @@ body.admin-body {
 }
 
 [data-live-dashboard] .adm-section-title {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
 [data-live-dashboard] .adm-section-sub {
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 [data-live-dashboard] .mc-notif-widgets--dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 16px;
+  gap: 12px;
   margin: 0;
 }
 
 [data-live-dashboard] .mc-notif-widget {
-  padding: 18px;
-  min-height: 88px;
+  padding: 14px;
+  min-height: 0;
   box-sizing: border-box;
 }
 
@@ -1089,18 +1089,18 @@ body.admin-body {
 }
 
 [data-live-dashboard] .mc-notif-widget-label {
-  margin-top: 6px;
+  margin-top: 4px;
   line-height: 1.35;
 }
 
 [data-live-dashboard] .adm-metrics {
-  gap: 18px;
+  gap: 12px;
 }
 
 [data-live-dashboard] .adm-charts-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 10px;
 }
 
 [data-live-dashboard] .adm-charts-section > .adm-section-head {
@@ -1109,19 +1109,19 @@ body.admin-body {
 
 @media (min-width: 769px) and (max-width: 1200px) {
   [data-live-dashboard] {
-    gap: 32px;
-  }
-
-  [data-live-dashboard] > section {
-    gap: 18px;
-  }
-
-  [data-live-dashboard] .mc-notif-widgets--dashboard {
     gap: 14px;
   }
 
+  [data-live-dashboard] > section {
+    gap: 8px;
+  }
+
+  [data-live-dashboard] .mc-notif-widgets--dashboard {
+    gap: 10px;
+  }
+
   [data-live-dashboard] .adm-charts-section {
-    gap: 18px;
+    gap: 8px;
   }
 }
 

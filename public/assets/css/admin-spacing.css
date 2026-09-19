@@ -10,29 +10,85 @@ body.admin-body .portal-page-body {
   gap: 16px !important;
 }
 
+/* Dashboard pages only — compact header → charts → cards rhythm */
+body.admin-body:has([data-live-dashboard]) .portal-page-body {
+  padding: 12px 20px 18px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 10px) !important;
+  gap: 12px !important;
+}
+
 body.admin-body [data-live-dashboard] {
-  gap: 22px !important;
+  gap: 14px !important;
 }
 
 body.admin-body [data-live-dashboard] > section {
-  gap: 12px !important;
+  gap: 8px !important;
 }
 
 body.admin-body [data-live-dashboard] .adm-charts-section {
-  gap: 12px !important;
+  gap: 8px !important;
+}
+
+body.admin-body [data-live-dashboard] .adm-section-title {
+  margin: 0 0 2px;
+}
+
+body.admin-body [data-live-dashboard] .adm-section-sub {
+  line-height: 1.4;
 }
 
 body.admin-body [data-live-dashboard] .adm-metrics {
-  gap: 12px;
+  gap: 10px;
 }
 
 body.admin-body [data-live-dashboard] .mc-notif-widgets--dashboard {
-  gap: 12px;
+  gap: 10px;
 }
 
 body.admin-body [data-live-dashboard] .mc-notif-widget {
-  padding: 14px;
+  padding: 12px;
   min-height: 0;
+}
+
+body.admin-body [data-live-dashboard] .adm-grid {
+  gap: 12px;
+}
+
+body.admin-body [data-live-dashboard] .adm-grid-main,
+body.admin-body [data-live-dashboard] .adm-grid-side {
+  gap: 12px;
+}
+
+body.admin-body [data-live-dashboard] .adm-charts-grid {
+  gap: 10px;
+}
+
+body.admin-body [data-live-dashboard] .adm-charts-section > .adm-section-head {
+  gap: 8px;
+}
+
+body.admin-body [data-live-dashboard] .adm-charts-filters {
+  margin-bottom: 0;
+  padding: 8px 10px;
+  gap: 8px 10px;
+}
+
+body.admin-body [data-live-dashboard] .superadmin-stat-grid,
+body.admin-body [data-live-dashboard] .superadmin-stat-grid--compact {
+  gap: 10px;
+}
+
+body.admin-body [data-live-dashboard] .superadmin-stat-card {
+  padding: 12px;
+}
+
+body.admin-body [data-live-dashboard] .superadmin-approval-strip {
+  gap: 10px;
+}
+
+body.admin-body [data-live-dashboard] .adm-card-head {
+  padding: 12px 14px;
+  gap: 10px;
 }
 
 body.admin-body .adm-banner {
@@ -248,11 +304,15 @@ body.admin-body .pagination {
 
 @media (min-width: 769px) and (max-width: 1200px) {
   body.admin-body [data-live-dashboard] {
-    gap: 18px;
+    gap: 12px !important;
   }
 
   body.admin-body [data-live-dashboard] > section {
-    gap: 10px;
+    gap: 8px !important;
+  }
+
+  body.admin-body [data-live-dashboard] .adm-charts-section {
+    gap: 8px !important;
   }
 }
 
@@ -262,7 +322,7 @@ body.admin-body .pagination {
     --mob-adm-pad: 12px;
     --mob-adm-gap: 12px;
     --mob-adm-card-gap: 10px;
-    --mob-adm-section-gap: 16px;
+    --mob-adm-section-gap: 12px;
   }
 
   body.admin-body .portal-page-body {
@@ -273,16 +333,30 @@ body.admin-body .pagination {
     gap: var(--mob-adm-gap) !important;
   }
 
+  body.admin-body:has([data-live-dashboard]) .portal-page-body {
+    padding-top: calc(var(--mc-header-offset, 64px) + 6px) !important;
+    gap: 10px !important;
+  }
+
   body.admin-body [data-live-dashboard] {
     gap: var(--mob-adm-section-gap) !important;
   }
 
   body.admin-body [data-live-dashboard] > section {
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   body.admin-body [data-live-dashboard] .adm-charts-section {
-    gap: 10px !important;
+    gap: 8px !important;
+  }
+
+  body.admin-body [data-live-dashboard] .adm-grid {
+    gap: 10px;
+  }
+
+  body.admin-body [data-live-dashboard] .adm-grid-main,
+  body.admin-body [data-live-dashboard] .adm-grid-side {
+    gap: 10px;
   }
 
   body.admin-body .adm-banner {
@@ -364,7 +438,7 @@ body.admin-body .pagination {
   body.admin-body {
     --mob-adm-pad: 10px;
     --mob-adm-gap: 10px;
-    --mob-adm-section-gap: 14px;
+    --mob-adm-section-gap: 10px;
   }
 
   body.admin-body .adm-chart-canvas-wrap,
