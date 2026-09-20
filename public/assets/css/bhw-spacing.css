@@ -119,7 +119,7 @@ body.bhw-body .bhw-activity-table-card {
   margin-bottom: 0;
 }
 
-/* ── Dashboard ── */
+/* ── Dashboard (match Admin compact chart + table rhythm) ── */
 body.bhw-body .bhw-dash {
   gap: 10px !important;
 }
@@ -131,8 +131,8 @@ body.bhw-body .bhw-dash-header {
 
 body.bhw-body .bhw-dash-panel__head,
 body.bhw-body .bhw-dash-recent .adm-card-head {
-  padding: 14px 18px;
-  gap: 10px;
+  padding: 10px 12px !important;
+  gap: 8px !important;
 }
 
 body.bhw-body .bhw-dash-stats {
@@ -149,46 +149,63 @@ body.bhw-body .bhw-dash .mc-notif-widget {
 }
 
 body.bhw-body .bhw-dash-panel__toolbar {
-  padding: 12px 16px;
-  gap: 10px;
+  padding: 8px 12px !important;
+  gap: 8px !important;
 }
 
 body.bhw-body .bhw-dash-charts,
 body.bhw-body .bhw-dash-charts-grid {
-  gap: 14px;
+  gap: 8px !important;
+}
+
+body.bhw-body .bhw-dash-charts-grid {
+  padding: 8px 12px 12px !important;
 }
 
 body.bhw-body .bhw-dash .bhw-chart-card,
 body.bhw-body .bhw-dash .mc-chart-card {
-  min-height: 280px !important;
-  padding: 16px 18px 14px !important;
+  min-height: 0 !important;
+  height: auto !important;
+  padding: 10px 12px 8px !important;
+  gap: 0 !important;
 }
 
-/* Match Admin chart canvas scale (was crushed to ~110–150px). */
+/* Match Admin chart canvas scale */
 body.bhw-body .bhw-dash .mc-chart-canvas-wrap,
 body.bhw-body .bhw-dash .bhw-chart-wrap,
 body.bhw-body .bhw-dash .bhw-chart-wrap--line,
 body.bhw-body .bhw-dash .bhw-chart-wrap--bar {
   flex: 0 0 auto !important;
-  min-height: 240px !important;
-  height: 260px !important;
+  min-height: 110px !important;
+  height: clamp(110px, 16vh, 150px) !important;
   max-height: none !important;
 }
 
+body.bhw-body .bhw-dash .bhw-chart-wrap--ring {
+  min-height: 120px !important;
+  height: clamp(120px, 16vh, 150px) !important;
+}
+
+body.bhw-body .bhw-dash .bhw-chart-wrap--bar-tall {
+  min-height: 130px !important;
+  height: clamp(130px, 18vh, 170px) !important;
+}
+
 body.bhw-body .bhw-dash .bhw-chart-card h4 {
-  font-size: 1rem !important;
-  margin-bottom: 12px !important;
+  font-size: 0.875rem !important;
+  margin-bottom: 6px !important;
 }
 
 body.bhw-body .bhw-dash-charts-toolbar {
-  padding: 12px 18px 0 !important;
+  padding: 8px 12px 0 !important;
+  gap: 6px 8px !important;
 }
 
 body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__control {
-  min-height: 38px !important;
-  min-width: 120px !important;
+  min-height: 34px !important;
+  min-width: 110px !important;
   font-size: 13px !important;
-  padding: 6px 28px 6px 10px !important;
+  padding: 4px 28px 4px 8px !important;
 }
 
 body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__label {
@@ -201,29 +218,33 @@ body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__status {
 
 body.bhw-body .bhw-dash-panel__head h3,
 body.bhw-body .bhw-dash-queue-title {
-  font-size: 0.9375rem !important;
+  font-size: 0.875rem !important;
 }
 
-body.bhw-body .bhw-dash-queue-table th,
+body.bhw-body .bhw-dash-queue-table th {
+  padding: 8px 12px !important;
+  font-size: 0.6875rem;
+}
+
 body.bhw-body .bhw-dash-queue-table td {
-  padding: 12px 16px;
-  font-size: 0.9375rem;
+  padding: 9px 12px !important;
+  font-size: 0.875rem;
 }
 
 body.bhw-body .bhw-dash-resident-name {
-  font-size: 0.975rem !important;
+  font-size: 0.875rem !important;
 }
 
 body.bhw-body .bhw-dash-search input {
-  min-height: 40px !important;
-  font-size: 0.9375rem !important;
-  padding: 8px 12px 8px 38px !important;
+  min-height: 34px !important;
+  font-size: 0.8125rem !important;
+  padding: 7px 10px 7px 34px !important;
 }
 
 body.bhw-body .bhw-btn-teal {
-  min-height: 36px;
-  padding: 8px 14px !important;
-  font-size: 0.875rem !important;
+  min-height: 32px;
+  padding: 6px 12px !important;
+  font-size: 0.8125rem !important;
 }
 
 /* ── Patient List ── */
@@ -468,15 +489,15 @@ body.bhw-body .mc-chart-filters {
   }
 
   body.bhw-body .bhw-dash {
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   body.bhw-body .bhw-dash .mc-chart-canvas-wrap,
   body.bhw-body .bhw-dash .bhw-chart-wrap,
   body.bhw-body .bhw-dash .bhw-chart-wrap--line,
   body.bhw-body .bhw-dash .bhw-chart-wrap--bar {
-    min-height: 200px !important;
-    height: 220px !important;
+    min-height: 100px !important;
+    height: clamp(100px, 22vh, 140px) !important;
   }
 
   body.bhw-body .adm-nav-item {
