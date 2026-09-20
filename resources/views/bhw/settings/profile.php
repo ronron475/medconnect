@@ -146,7 +146,9 @@ $profile_role_label = 'Barangay Health Worker';
 
   </div>
 </div>
-<script>
+<?php
+ob_start();
+?>
 (function () {
   var savedProfile = null;
 
@@ -257,5 +259,7 @@ $profile_role_label = 'Barangay Health Worker';
 
   loadProfile();
 })();
-</script>
-<?php require __DIR__ . '/../partials/layout_close.php'; ?>
+<?php
+$bhw_inline_script = ob_get_clean();
+require __DIR__ . '/../partials/layout_close.php';
+?>
