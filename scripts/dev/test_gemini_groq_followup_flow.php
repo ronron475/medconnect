@@ -121,6 +121,106 @@ ok('redundant ONSET not open', !in_array('ONSET', $candIds, true));
 $none = ClinicalInterviewGeminiFollowUp::selectNext([], $ctxKnown, 'gahubag tiil ko');
 ok('empty candidates → no Gemini question', $none === null);
 
+// --- Audit fix: select context, filtered WHO, finish vs fallback ---
+$refFu = new ReflectionClass('ClinicalInterviewGeminiFollowUp');
+
+$selectPrompt = $refFu->getMethod('selectUserPrompt');
+$selectPrompt->setAccessible(true);
+$ctxSelect = [
+    'chief_complaint' => 'gahubag tiil ko',
+    'patient_turns' => ['gahubag tiil ko', '2 days na'],
+    'question_language' => 'hiligaynon',
+    'active_complaint_id' => 'c1',
+    'complaints' => [[
+        'id' => 'c1',
+        'text_span' => 'gahubag tiil ko',
+        'family_keys' => ['skin', 'needs_specific_location'],
+    ]],
+    'questions_asked' => ['PAIN_LOCATION'],
+    'questions_answered' => [
+        ['question_id' => 'PAIN_LOCATION', 'answer' => 'tiil'],
+    ],
+    'facts' => [
+        'body_locations' => ['tiil', 'foot'],
+        'symptoms_patient' => ['swelling'],
+        'symptoms' => ['edema'],
+        'associated_symptoms' => [],
+        'pain_score' => 6,
+        'onset' => 'sudden',
+        'symptoms_ai' => ['peripheral edema'],
+    ],
+    'semantic_bridge' => [
+        'original' => 'gahubag tiil ko',
+        'ollama_meaning' => 'swollen foot AI gloss',
+        'gemini_concept' => 'edema',
+    ],
+];
+$candSample = [[
+    'index' => 0,
+    'question_id' => 'DURATION',
+    'target_finding' => 'duration',
+    'clinical_purpose' => 'Clarify how long the swelling has been present',
+    'red_flag_related' => false,
+    'priority' => 3,
+    'parent_question_id' => '',
+    'bank_template' => 'San-o ni nagsugod?',
+]];
+$prompt = (string) $selectPrompt->invoke(null, $candSample, $ctxSelect, 'gahubag tiil ko');
+ok('select prompt has active complaint span', str_contains($prompt, 'gahubag tiil ko'));
+ok('select prompt has active complaint id', str_contains($prompt, 'Active complaint id: c1'));
+ok('select prompt has families', str_contains($prompt, 'skin'));
+ok('select prompt has known locations', str_contains($prompt, 'tiil'));
+ok('select prompt has known symptoms', str_contains($prompt, 'swelling'));
+ok('select prompt has prior answers', str_contains($prompt, 'PAIN_LOCATION=tiil'));
+ok('select prompt has eligible candidates', str_contains($prompt, 'DURATION'));
+ok('select prompt uses Hiligaynon language', str_contains($prompt, 'Hiligaynon'));
+ok('select prompt labels filtered WHO section', str_contains($prompt, 'Filtered WHO/IITT'));
+ok('select prompt does not dump unrestricted WHO header', !str_contains($prompt, 'WHO/IITT information needs still worth clarifying'));
+ok('select prompt keeps AI meaning separate', str_contains($prompt, 'NOT patient-authored'));
+ok('patient evidence excludes AI gloss in known block',
+    str_contains($prompt, 'gahubag tiil ko') && !str_contains(
+        preg_replace('/AI-derived meaning[\s\S]*$/u', '', $prompt) ?? $prompt,
+        'swollen foot AI gloss'
+    ));
+
+$whoFn = $refFu->getMethod('whoInformationNeeds');
+$whoFn->setAccessible(true);
+$whoUnfilteredStyle = (string) $whoFn->invoke(
+    null,
+    'gahubag tiil ko swelling foot',
+    [],
+    [],
+    ''
+);
+$whoFiltered = (string) $whoFn->invoke(
+    null,
+    'gahubag tiil ko swelling foot',
+    $candSample,
+    ['skin'],
+    'gahubag tiil ko'
+);
+ok('WHO with empty relevance is empty (no unrestricted dump)', $whoUnfilteredStyle === '');
+ok('WHO filtered path does not exceed 5 hints', $whoFiltered === '' || substr_count($whoFiltered, "\n") <= 4);
+
+// Finish sentinel must be distinguishable for Engine (no bank fallthrough).
+$errProp = $refFu->getProperty('lastError');
+$errProp->setAccessible(true);
+$errProp->setValue(null, 'continue_interview_false');
+ok('isFinishDecision true for continue_interview_false', ClinicalInterviewGeminiFollowUp::isFinishDecision());
+$errProp->setValue(null, 'invalid_select_json: bad');
+ok('isFinishDecision false for invalid output', !ClinicalInterviewGeminiFollowUp::isFinishDecision());
+$errProp->setValue(null, 'select_not_in_allow_list');
+ok('isFinishDecision false for unusable selection', !ClinicalInterviewGeminiFollowUp::isFinishDecision());
+$errProp->setValue(null, '');
+
+// Outside allow-list cannot be resolved by Gemini helper.
+$resolve = $refFu->getMethod('resolveSelectedCandidate');
+$resolve->setAccessible(true);
+$outside = $resolve->invoke(null, ['index' => 99, 'question_id' => 'NOT_A_SLOT'], $candSample);
+ok('Gemini cannot resolve outside allow-list', $outside === null);
+$inside = $resolve->invoke(null, ['index' => 0, 'question_id' => 'DURATION'], $candSample);
+ok('Gemini can resolve allow-listed candidate', is_array($inside) && ($inside['question_id'] ?? '') === 'DURATION');
+
 // Clear follow-up answer: PHP validator path remains authoritative
 if (class_exists('ClinicalFollowUpAnswerValidator')) {
     $v = ClinicalFollowUpAnswerValidator::validate('7', 'PAIN_SEVERITY', $ctxKnown);

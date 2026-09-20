@@ -24,6 +24,12 @@ final class ClinicalInterviewGeminiFollowUp
         return self::$lastError;
     }
 
+    /** True when Gemini validly chose to end the interview (do not use bank fallback). */
+    public static function isFinishDecision(): bool
+    {
+        return self::$lastError === 'continue_interview_false';
+    }
+
     /**
      * Select ONE next question from PHP allow-list candidates.
      *
@@ -93,16 +99,16 @@ final class ClinicalInterviewGeminiFollowUp
                 return null;
             }
 
-            $pick = self::resolveSelectedCandidate($parsed, $indexed);
-            if ($pick === null) {
-                self::$lastError = 'select_not_in_allow_list';
+            // Explicit finish: honor before allow-list resolution so bank fallback is skipped.
+            if (array_key_exists('continue_interview', $parsed) && $parsed['continue_interview'] === false) {
+                self::$lastError = 'continue_interview_false';
 
                 return null;
             }
 
-            // Explicit finish signal from Gemini when nothing clinically useful remains.
-            if (array_key_exists('continue_interview', $parsed) && $parsed['continue_interview'] === false) {
-                self::$lastError = 'continue_interview_false';
+            $pick = self::resolveSelectedCandidate($parsed, $indexed);
+            if ($pick === null) {
+                self::$lastError = 'select_not_in_allow_list';
 
                 return null;
             }
@@ -529,15 +535,20 @@ PROMPT;
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => self::timeout(),
             CURLOPT_CONNECTTIMEOUT => min(6, self::timeout()),
+            // Windows/libcurl: honor TIMEOUT during DNS/SSL (avoids multi-minute hangs).
+            CURLOPT_NOSIGNAL => true,
             CURLOPT_SSL_VERIFYPEER => $verifySsl,
             CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
         ]);
-        $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
-        if (!is_readable($ca)) {
-            $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
-        }
-        if ($ca !== '' && is_readable($ca)) {
-            curl_setopt($ch, CURLOPT_CAINFO, $ca);
+        // Only attach a CA bundle when verification is on — avoid forcing bundled CAINFO when verify is off.
+        if ($verifySsl) {
+            $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+            if (!is_readable($ca)) {
+                $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
+            }
+            if ($ca !== '' && is_readable($ca)) {
+                curl_setopt($ch, CURLOPT_CAINFO, $ca);
+            }
         }
         $raw = curl_exec($ch);
         $errno = curl_errno($ch);
@@ -591,36 +602,106 @@ PROMPT;
             default => 'Hiligaynon/Ilonggo',
         };
         $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
-        $known = '';
-        if (class_exists('ClinicalInterviewAdaptivePolicy')) {
-            $known = ClinicalInterviewAdaptivePolicy::fullCaseHaystack($context, $transcript, $facts);
-        }
-        $whoNeeds = self::whoInformationNeeds($known);
-        $activeId = trim((string) ($context['active_complaint_id'] ?? ''));
+        $active = self::activeComplaintContext($context);
+        $whoNeeds = self::whoInformationNeeds(
+            class_exists('ClinicalInterviewAdaptivePolicy')
+                ? ClinicalInterviewAdaptivePolicy::fullCaseHaystack($context, $transcript, $facts)
+                : mb_strtolower(trim($transcript)),
+            $indexed,
+            $active['families'],
+            $active['span']
+        );
         $candidatesJson = json_encode($indexed, JSON_UNESCAPED_UNICODE);
         $findingStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
 
         return "Select ONE next follow-up question for medConnect preliminary triage.\n"
             . "Language for the spoken question: {$langLine} only.\n"
+            . "Decision order (mandatory):\n"
+            . "1) Review the ACTIVE COMPLAINT (id/span/families).\n"
+            . "2) Review patient-authored evidence, structured facts, symptoms, locations, prior answers.\n"
+            . "3) Identify only genuinely MISSING clinical information for that active complaint.\n"
+            . "4) Choose ONE candidate from the eligible allow-list that targets that missing information.\n"
             . "You MUST pick exactly one candidate from this allow-list (JSON):\n{$candidatesJson}\n"
-            . "Active complaint id: " . ($activeId !== '' ? $activeId : '(single)') . "\n"
+            . 'Active complaint id: ' . ($active['id'] !== '' ? $active['id'] : '(single)') . "\n"
+            . 'Active complaint span (focus ONLY on this): '
+            . ($active['span'] !== '' ? mb_substr($active['span'], 0, 240) : '(full case)') . "\n"
+            . 'Active complaint families/concepts: '
+            . ($active['families'] !== [] ? implode(', ', $active['families']) : '(none)') . "\n"
             . self::knownInformationBlock($context, $transcript, $facts)
             . "Finding status map: " . json_encode($findingStatus, JSON_UNESCAPED_UNICODE) . "\n"
-            . "WHO/IITT information needs still worth clarifying (NOT a triage decision):\n"
-            . ($whoNeeds !== '' ? $whoNeeds : '(none listed)') . "\n"
-            . "Accumulated patient/case text: " . mb_substr(trim($transcript), 0, 700) . "\n\n"
+            . "Filtered WHO/IITT information hints (only missing + relevant to active complaint/candidates; NOT triage):\n"
+            . ($whoNeeds !== '' ? $whoNeeds : '(none — rely on allow-list + known facts)') . "\n"
+            . "Accumulated case text (may include enrichment; patient-authored evidence above is authoritative):\n"
+            . mb_substr(trim($transcript), 0, 700) . "\n\n"
             . "Return ONLY compact JSON with keys:\n"
             . "{\"index\":0,\"question_id\":\"...\",\"target_finding\":\"...\",\"complaint_id\":\"...\",\"question\":\"...\",\"continue_interview\":true}\n"
             . "Rules:\n"
-            . "- FIRST review Already known / patient-authored evidence / prior answers. Do not re-ask those.\n"
-            . "- index must match one allow-list item whose information is still genuinely missing.\n"
+            . "- FIRST review active complaint + known facts + prior answers. Do not re-ask known information.\n"
+            . "- Prefer the candidate most clinically relevant to the ACTIVE complaint and still genuinely missing.\n"
+            . "- Do not pick an unrelated generic screening question when a more complaint-relevant open candidate exists.\n"
+            . "- index must match one allow-list item. Never invent a new question_id.\n"
             . "- question_id and target_finding must match that same allow-list item.\n"
             . "- Ask exactly ONE atomic question for that one finding only.\n"
             . "- Never ask A or B or C in one question.\n"
             . "- Never diagnose. Never say EMERGENCY, URGENT, or NON-URGENT.\n"
             . "- Never invent symptoms the patient did not state.\n"
-            . "- If nothing important is missing, set continue_interview=false and pick index 0 with an empty question.\n"
+            . "- Question relevance to the active complaint is required; repeating the patient's exact words is optional.\n"
+            . "- If nothing important is missing for this case, set continue_interview=false (finish interview).\n"
             . "- Output JSON only.";
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @return array{id:string,span:string,families:list<string>}
+     */
+    private static function activeComplaintContext(array $context): array
+    {
+        $activeId = trim((string) ($context['active_complaint_id'] ?? ''));
+        $activeSpan = '';
+        $activeFamilies = [];
+        foreach ((array) ($context['complaints'] ?? []) as $track) {
+            if (!is_array($track)) {
+                continue;
+            }
+            if ($activeId !== '' && (string) ($track['id'] ?? '') !== $activeId) {
+                continue;
+            }
+            $activeSpan = trim((string) ($track['text_span'] ?? ''));
+            $activeFamilies = array_values(array_filter(array_map('strval', (array) ($track['family_keys'] ?? []))));
+            if ($activeId === '') {
+                $activeId = trim((string) ($track['id'] ?? ''));
+            }
+            break;
+        }
+        if ($activeSpan === '') {
+            $activeSpan = trim((string) ($context['_active_complaint_span'] ?? ''));
+        }
+        if ($activeSpan === '') {
+            $activeSpan = trim((string) ($context['chief_complaint'] ?? ''));
+        }
+        if ($activeFamilies === [] && class_exists('ClinicalInterviewContextResolver')) {
+            try {
+                $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+                $complaints = is_array($context['chief_complaints'] ?? null) ? $context['chief_complaints'] : [];
+                $derived = ClinicalInterviewContextResolver::deriveFamilies(
+                    $complaints,
+                    $activeSpan !== '' ? $activeSpan : (string) ($context['chief_complaint'] ?? ''),
+                    $facts
+                );
+                $activeFamilies = array_values(array_filter(array_map(
+                    static fn ($c): string => strtolower(trim((string) $c)),
+                    is_array($derived) ? $derived : []
+                )));
+            } catch (Throwable) {
+                $activeFamilies = [];
+            }
+        }
+
+        return [
+            'id' => $activeId,
+            'span' => $activeSpan,
+            'families' => $activeFamilies,
+        ];
     }
 
     /**
@@ -684,11 +765,24 @@ PROMPT;
         if (trim((string) ($facts['duration_label'] ?? '')) !== '') {
             $structured[] = 'duration=' . trim((string) $facts['duration_label']);
         }
+
+        $locations = [];
         foreach ((array) ($facts['body_locations'] ?? []) as $loc) {
             if (is_string($loc) && trim($loc) !== '') {
+                $locations[] = trim($loc);
                 $structured[] = 'location=' . trim($loc);
             }
         }
+
+        $symptoms = [];
+        foreach (['symptoms_patient', 'symptoms', 'associated_symptoms'] as $symKey) {
+            foreach ((array) ($facts[$symKey] ?? []) as $s) {
+                if (is_string($s) && trim($s) !== '') {
+                    $symptoms[] = trim($s);
+                }
+            }
+        }
+        $symptoms = array_values(array_unique($symptoms));
 
         $answered = [];
         foreach ((array) ($context['questions_answered'] ?? []) as $qa) {
@@ -714,6 +808,10 @@ PROMPT;
 
         return 'Original patient complaint / patient-authored evidence (do not treat AI gloss as patient speech): '
             . mb_substr($patientEvidence !== '' ? $patientEvidence : '(none)', 0, 500) . "\n"
+            . 'Known body locations: '
+            . ($locations !== [] ? implode(', ', $locations) : '(none)') . "\n"
+            . 'Known symptoms (patient/structured; not AI-only): '
+            . ($symptoms !== [] ? implode(', ', $symptoms) : '(none)') . "\n"
             . 'Structured clinical facts already known: '
             . ($structured !== [] ? implode('; ', $structured) : '(none)') . "\n"
             . 'Structured polarity already known: '
@@ -811,13 +909,52 @@ PROMPT;
     }
 
     /**
-     * WHO/IITT signs as information-need hints only (never a triage decision).
+     * Filtered WHO/IITT information hints only (never triage).
+     * Keeps signs that appear still missing, relevant to active complaint/families,
+     * and compatible with the current eligible candidate set. Does not change WHO rules.
+     *
+     * @param list<array<string, mixed>> $candidates
+     * @param list<string> $activeFamilies
      */
-    private static function whoInformationNeeds(string $caseHaystack): string
-    {
-        if ($caseHaystack === '' || !class_exists('WhoIittTriageRulesLoader')) {
+    private static function whoInformationNeeds(
+        string $caseHaystack,
+        array $candidates = [],
+        array $activeFamilies = [],
+        string $activeSpan = ''
+    ): string {
+        if (!class_exists('WhoIittTriageRulesLoader')) {
             return '';
         }
+
+        $relevanceParts = [];
+        foreach ($activeFamilies as $fam) {
+            $fam = strtolower(trim((string) $fam));
+            if ($fam !== '') {
+                $relevanceParts[] = $fam;
+            }
+        }
+        $spanLow = mb_strtolower(trim($activeSpan));
+        if ($spanLow !== '') {
+            $relevanceParts[] = $spanLow;
+        }
+        foreach ($candidates as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            foreach (['target_finding', 'clinical_purpose', 'question_id', 'bank_template'] as $k) {
+                $v = strtolower(trim((string) ($row[$k] ?? '')));
+                if ($v !== '') {
+                    $relevanceParts[] = $v;
+                }
+            }
+        }
+        $relevanceBlob = trim(implode(' ', $relevanceParts));
+        // No active/candidate relevance context → do not dump unrestricted WHO signs.
+        if ($relevanceBlob === '') {
+            return '';
+        }
+
+        $hay = mb_strtolower($caseHaystack);
         try {
             $lines = [];
             foreach (WhoIittTriageRulesLoader::rules() as $rule) {
@@ -830,12 +967,20 @@ PROMPT;
                 if ($sign === '' || $id === '') {
                     continue;
                 }
-                // Only surface RED/YELLOW as gatherable needs; skip if text already matches pattern weakly via keyword.
                 if (!in_array($level, ['EMERGENCY', 'URGENT'], true)) {
                     continue;
                 }
+                $signLow = mb_strtolower($sign);
+                // Already reflected in known case text → not "still missing".
+                if ($hay !== '' && self::whoSignAlreadyKnown($signLow, $hay)) {
+                    continue;
+                }
+                // Must relate to active complaint/families or an open candidate purpose.
+                if (!self::whoSignRelevantToContext($signLow, $relevanceBlob)) {
+                    continue;
+                }
                 $lines[] = $id . ' [' . ($level === 'EMERGENCY' ? 'RED info' : 'YELLOW info') . ']: ' . $sign;
-                if (count($lines) >= 10) {
+                if (count($lines) >= 5) {
                     break;
                 }
             }
@@ -844,5 +989,62 @@ PROMPT;
         } catch (Throwable) {
             return '';
         }
+    }
+
+    private static function whoSignAlreadyKnown(string $signLow, string $hayLow): bool
+    {
+        $tokens = preg_split('/[^a-z0-9]+/u', $signLow) ?: [];
+        $meaningful = [];
+        foreach ($tokens as $t) {
+            $t = trim((string) $t);
+            if (mb_strlen($t) < 4) {
+                continue;
+            }
+            if (in_array($t, ['with', 'without', 'from', 'that', 'this', 'have', 'been', 'severe', 'acute'], true)) {
+                continue;
+            }
+            $meaningful[] = $t;
+        }
+        if ($meaningful === []) {
+            return false;
+        }
+        $hits = 0;
+        foreach ($meaningful as $t) {
+            if (str_contains($hayLow, $t)) {
+                $hits++;
+            }
+        }
+
+        return $hits >= max(1, (int) ceil(count($meaningful) * 0.5));
+    }
+
+    private static function whoSignRelevantToContext(string $signLow, string $relevanceBlob): bool
+    {
+        $tokens = preg_split('/[^a-z0-9_]+/u', $signLow) ?: [];
+        foreach ($tokens as $t) {
+            $t = trim((string) $t);
+            if (mb_strlen($t) < 4) {
+                continue;
+            }
+            if (in_array($t, ['with', 'without', 'from', 'that', 'this', 'have', 'been', 'severe', 'acute', 'pain'], true)) {
+                continue;
+            }
+            if (str_contains($relevanceBlob, $t)) {
+                return true;
+            }
+        }
+        // Family/candidate tokens that appear inside the sign text.
+        $relTokens = preg_split('/[^a-z0-9_]+/u', $relevanceBlob) ?: [];
+        foreach ($relTokens as $t) {
+            $t = trim((string) $t);
+            if (mb_strlen($t) < 4) {
+                continue;
+            }
+            if (str_contains($signLow, $t)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -2302,12 +2302,17 @@ final class ClinicalInterviewEngine
                         return $picked;
                     }
                 }
+                // Valid Gemini finish: do NOT fall through to the generic bank.
+                if (ClinicalInterviewGeminiFollowUp::isFinishDecision()) {
+                    return null;
+                }
+                // Otherwise Gemini failed/unavailable/invalid/unusable → PHP bank fallback below.
             }
         } catch (Throwable $e) {
             error_log('Gemini adaptive select fallback: ' . $e->getMessage());
         }
 
-        // 2) Deterministic bank/policy fallback (existing behavior).
+        // 2) Deterministic bank/policy fallback (Gemini error/disabled/invalid only).
         $slot = self::nextQuestionSlot($context, $transcript, $assessment);
         if ($slot === null) {
             return null;
