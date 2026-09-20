@@ -59,6 +59,8 @@ body.patient-portal .topbar {
 
     right: auto !important;
 
+    padding: 0 20px 0 12px !important;
+
     padding-top: var(--mc-safe-top) !important;
 
     height: auto !important;
@@ -74,6 +76,38 @@ body.patient-portal .topbar {
     overflow: visible;
 
     flex-wrap: nowrap;
+
+    justify-content: flex-start !important;
+
+    align-items: center !important;
+
+    gap: 12px !important;
+
+}
+
+body.admin-body .topbar .topbar-left,
+
+body.bhw-body .topbar .topbar-left,
+
+body.patient-portal .topbar .topbar-left {
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+
+    align-items: center;
+
+}
+
+body.admin-body .topbar .topbar-right,
+
+body.bhw-body .topbar .topbar-right,
+
+body.patient-portal .topbar .topbar-right {
+
+    margin-left: auto;
+
+    flex-shrink: 0;
 
 }
 

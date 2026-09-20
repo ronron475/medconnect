@@ -223,18 +223,33 @@ body {
 .topbar {
   background: var(--h-white);
   height: 64px;
-  padding: 0 28px;
+  padding: 0 20px 0 12px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   border-bottom: 1px solid var(--h-border);
   position: sticky;
   top: 0;
   z-index: 50;
-  gap: 16px;
+  gap: 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  box-sizing: border-box;
 }
-.topbar-left { display: flex; flex-direction: column; gap: 1px; }
+.topbar-left {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
 .topbar-eyebrow {
   display: flex; align-items: center; gap: 5px;
   font-size: 10.5px; font-weight: 700;
@@ -244,7 +259,6 @@ body {
   font-size: 18px; font-weight: 800;
   color: var(--h-text); letter-spacing: -0.3px; line-height: 1;
 }
-.topbar-right { display: flex; align-items: center; gap: 8px; }
 .topbar-datetime { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; margin-right: 6px; }
 .topbar-date { font-size: 12px; color: var(--h-text-muted); font-weight: 500; }
 .topbar-time { font-size: 11px; color: var(--h-text-faint); }

@@ -5,21 +5,23 @@
   background: var(--mc-white);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 28px;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 0 20px 0 12px;
   position: sticky;
   top: 0;
   z-index: 90;
   border-bottom: 1px solid var(--mc-border-thin);
   box-shadow: 0 1px 0 rgba(13,33,55,0.04), 0 2px 12px rgba(13,33,55,0.04);
   transition: box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 /* ── Left ── */
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -50,8 +52,10 @@
 .topbar-title-block {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 1px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .topbar-eyebrow {
@@ -75,6 +79,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
 }
 
 /* ── Right ── */
@@ -83,6 +88,7 @@
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 /* Divider */
@@ -197,7 +203,7 @@
   outline-offset: 3px;
 }
 
-/* Hamburger / nav toggle */
+/* Hamburger / nav toggle — sits at the main/sidebar edge of the header */
 .mc-nav-toggle {
   width: 38px;
   height: 38px;
@@ -211,6 +217,7 @@
   cursor: pointer;
   transition: background 0.18s ease, color 0.18s ease;
   flex-shrink: 0;
+  margin: 0;
 }
 .mc-nav-toggle:hover {
   background: var(--mc-ice-blue);
@@ -258,8 +265,9 @@
   .topbar {
     height: auto;
     min-height: 60px;
-    padding: 0 14px;
+    padding: 0 14px 0 10px;
     flex-wrap: nowrap;
+    gap: 10px;
   }
 
   .topbar-datetime,
@@ -279,10 +287,10 @@
   }
 }
 
-/* Desktop / laptop typography uplift */
+/* Desktop / laptop typography uplift — keep left edge aligned with menu */
 @media (min-width: 1025px) {
   .topbar {
-    padding: 0 40px;
+    padding: 0 24px 0 12px;
   }
 
   .topbar-title {

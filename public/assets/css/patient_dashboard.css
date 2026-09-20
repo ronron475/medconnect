@@ -809,20 +809,29 @@ body, html {
   border-bottom: 1px solid var(--pd-border) !important;
   display: flex !important;
   align-items: center !important;
-  justify-content: space-between !important;
-  padding: 0 28px !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 0 20px 0 12px !important;
   position: sticky !important;
   top: 0;
   z-index: 90;
   box-shadow: 0 4px 20px rgba(0, 180, 216, 0.08) !important; /* translucent aqua drop shadow */
 }
 
-/* Topbar left */
+/* Topbar left — keep menu + title on one horizontal row */
 .topbar-left, .pd-topbar-left {
   display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  gap: 4px !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+.topbar-right, .pd-topbar-right {
+  margin-left: auto !important;
+  flex-shrink: 0 !important;
 }
 
 .topbar-eyebrow, .pd-topbar-eyebrow {

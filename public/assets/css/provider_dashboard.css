@@ -270,15 +270,16 @@ body.provider-body .provider-page-body {
 .pd-header {
     background: var(--card-bg);
     height: var(--provider-header-h);
-    padding: 0 28px;
+    padding: 0 20px 0 12px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     border-bottom: 1px solid #e2e8f0;
-    gap: 16px;
+    gap: 12px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.04);
     flex-shrink: 0;
     overflow: visible;
+    box-sizing: border-box;
 }
 
 .pd-brand {
@@ -327,8 +328,8 @@ body.provider-body .provider-page-body {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-left: auto;
     flex-shrink: 0;
+    margin-left: auto;
 }
 .pd-header-clock {
     font-size: 13px; font-weight: 600; color: #64748b;
