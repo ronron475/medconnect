@@ -756,17 +756,43 @@ final class BhwWorkflows
         consultation_followup_ensure_schema($pdo);
 
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
-        $join = bhw_pr_user_join('pr', 'p');
+        // Same coverage as Dashboard triage + Patient List: user_id or email link.
+        $prJoin = '(' . bhw_pr_user_join('pr', 'p')
+            . ' OR LOWER(TRIM(COALESCE(pr.email, \'\'))) = LOWER(TRIM(COALESCE(p.email, \'\'))))';
         $rows = [];
+        $seenPatientKeys = [];
 
-        // Consultations / appointments for sector patients (recent past → upcoming window).
+        $pushRow = static function (array $row) use (&$rows, &$seenPatientKeys): void {
+            $key = (int) ($row['patient_id'] ?? 0)
+                . '|' . (string) ($row['source'] ?? '')
+                . '|' . (string) ($row['sort_key'] ?? '');
+            if (isset($seenPatientKeys[$key])) {
+                return;
+            }
+            $seenPatientKeys[$key] = true;
+            $rows[] = $row;
+        };
+
+        $patientAlreadyQueued = static function (int $pid) use (&$rows): bool {
+            if ($pid <= 0) {
+                return false;
+            }
+            foreach ($rows as $existing) {
+                if ((int) ($existing['patient_id'] ?? 0) === $pid) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        // 1) Consultations / appointments for this BHW's barangay patients.
         try {
             $sql = "
                 SELECT c.id, c.patient_id, c.consult_date, c.consult_time, c.status,
                        CONCAT(p.first_name, ' ', p.last_name) AS patient_name
                 FROM consultations c
                 INNER JOIN users p ON p.id = c.patient_id AND p.role = 'patient'
-                INNER JOIN patient_registrations pr ON {$join}
+                INNER JOIN patient_registrations pr ON {$prJoin}
                 WHERE {$clause}
                   AND c.consult_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
                   AND c.consult_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
@@ -776,7 +802,16 @@ final class BhwWorkflows
             ";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
+            $seenConsultIds = [];
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $c) {
+                $cid = (int) ($c['id'] ?? 0);
+                if ($cid > 0 && isset($seenConsultIds[$cid])) {
+                    continue;
+                }
+                if ($cid > 0) {
+                    $seenConsultIds[$cid] = true;
+                }
+                $pid = (int) ($c['patient_id'] ?? 0);
                 $date = trim((string) ($c['consult_date'] ?? ''));
                 $time = trim((string) ($c['consult_time'] ?? ''));
                 $raw = strtolower(trim((string) ($c['status'] ?? '')));
@@ -789,8 +824,8 @@ final class BhwWorkflows
                     default => $raw !== '' ? ucwords(str_replace('_', ' ', $raw)) : 'Scheduled',
                 };
                 $sortTime = $time !== '' ? $time : '00:00:00';
-                $rows[] = [
-                    'patient_id' => (int) ($c['patient_id'] ?? 0),
+                $pushRow([
+                    'patient_id' => $pid,
                     'patient_name' => trim((string) ($c['patient_name'] ?? '')) ?: '—',
                     'appointment_date' => $date !== '' ? date('M j, Y', strtotime($date)) : '—',
                     'appointment_time' => $time !== '' ? date('g:i A', strtotime('1970-01-01 ' . $time)) : '—',
@@ -798,43 +833,165 @@ final class BhwWorkflows
                     'status_key' => $statusKey,
                     'source' => 'consultation',
                     'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime,
-                ];
+                ]);
             }
         } catch (Throwable $e) {
             // Keep queue usable if consultations query fails.
         }
 
-        // Doctor follow-ups for the same barangay patients.
-        $followups = self::listFollowups($pdo, $ctx, null);
-        foreach ($followups as $f) {
-            $rawKey = (string) ($f['display_status_key'] ?? 'unknown');
-            if (in_array($rawKey, ['completed', 'cancelled'], true)) {
-                // Still show recent completed? User wants queue — skip completed/cancelled to keep lean.
-                continue;
+        // 2) Doctor follow-ups (loose join so every BHW barangay patient is covered).
+        try {
+            $hasSlots = false;
+            try {
+                $hasSlots = (bool) $pdo->query("SHOW TABLES LIKE 'appointment_slots'")->rowCount();
+            } catch (Throwable $e) {
+                $hasSlots = false;
             }
-            $date = trim((string) ($f['followup_date'] ?? ''));
-            $start = trim((string) ($f['slot_start_time'] ?? ''));
-            $statusLabel = (string) ($f['display_status'] ?? 'Follow-up');
-            if ($rawKey === 'upcoming' || $rawKey === 'scheduled') {
-                $statusLabel = 'Follow-up';
-                $rawKey = 'follow_up';
-            } elseif ($rawKey === 'unscheduled') {
-                $statusLabel = 'Pending';
-                $rawKey = 'pending';
-            } elseif ($rawKey === 'missed') {
-                $statusLabel = 'Missed';
+            $slotSelect = $hasSlots
+                ? ', s.start_time AS slot_start_time'
+                : ', NULL AS slot_start_time';
+            $slotJoin = $hasSlots ? 'LEFT JOIN appointment_slots s ON s.id = f.slot_id' : '';
+
+            $fuSql = "
+                SELECT f.id, f.patient_id, f.followup_date, f.status,
+                       CONCAT(p.first_name, ' ', p.last_name) AS patient_name
+                       {$slotSelect}
+                FROM followups f
+                INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
+                INNER JOIN patient_registrations pr ON {$prJoin}
+                {$slotJoin}
+                WHERE {$clause}
+                  AND LOWER(COALESCE(f.status, '')) NOT IN ('completed', 'cancelled', 'canceled')
+                ORDER BY (f.followup_date IS NULL) ASC, f.followup_date ASC, f.id DESC
+                LIMIT 300
+            ";
+            $fuStmt = $pdo->prepare($fuSql);
+            $fuStmt->execute($params);
+            $seenFollowupIds = [];
+            foreach ($fuStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $f) {
+                $fid = (int) ($f['id'] ?? 0);
+                if ($fid > 0 && isset($seenFollowupIds[$fid])) {
+                    continue;
+                }
+                if ($fid > 0) {
+                    $seenFollowupIds[$fid] = true;
+                }
+                $pid = (int) ($f['patient_id'] ?? 0);
+                $raw = strtolower(trim((string) ($f['status'] ?? '')));
+                $date = trim((string) ($f['followup_date'] ?? ''));
+                $start = trim((string) ($f['slot_start_time'] ?? ''));
+                $isPast = $date !== '' && strtotime($date) < strtotime('today');
+                if ($raw === 'missed' || ($raw === 'scheduled' && $isPast)) {
+                    $statusLabel = 'Missed';
+                    $rawKey = 'missed';
+                } elseif ($raw === 'unscheduled' || $date === '') {
+                    $statusLabel = 'Pending';
+                    $rawKey = 'pending';
+                } else {
+                    $statusLabel = 'Follow-up';
+                    $rawKey = 'follow_up';
+                }
+                $sortTime = $start !== '' ? $start : '00:00:00';
+                $pushRow([
+                    'patient_id' => $pid,
+                    'patient_name' => trim((string) ($f['patient_name'] ?? '')) ?: '—',
+                    'appointment_date' => $date !== '' ? date('M j, Y', strtotime($date)) : 'Date TBD',
+                    'appointment_time' => $start !== '' ? date('g:i A', strtotime('1970-01-01 ' . $start)) : '—',
+                    'status' => $statusLabel,
+                    'status_key' => $rawKey,
+                    'source' => 'followup',
+                    'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime,
+                ]);
             }
-            $sortTime = $start !== '' ? $start : '00:00:00';
-            $rows[] = [
-                'patient_id' => (int) ($f['patient_id'] ?? 0),
-                'patient_name' => trim((string) ($f['patient_name'] ?? '')) ?: '—',
-                'appointment_date' => $date !== '' ? date('M j, Y', strtotime($date)) : 'Date TBD',
-                'appointment_time' => $start !== '' ? date('g:i A', strtotime('1970-01-01 ' . $start)) : '—',
-                'status' => $statusLabel,
-                'status_key' => $rawKey,
-                'source' => 'followup',
-                'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime,
-            ];
+        } catch (Throwable $e) {
+            // Keep queue usable if follow-ups query fails.
+        }
+
+        // 3) Same Triage & Scheduling Queue as Dashboard — every BHW barangay, one row per patient.
+        try {
+            foreach (self::getTriageQueue($pdo, $ctx, 200) as $t) {
+                $pid = (int) ($t['patient_id'] ?? 0);
+                if ($pid <= 0 || $patientAlreadyQueued($pid)) {
+                    continue;
+                }
+                $rawStatus = strtolower(trim((string) ($t['status'] ?? 'pending')));
+                if (in_array($rawStatus, ['completed', 'cancelled', 'canceled'], true)) {
+                    continue;
+                }
+                $statusLabel = $rawStatus === '' || $rawStatus === 'pending' || $rawStatus === 'reviewed'
+                    ? 'Pending'
+                    : ($rawStatus === 'accepted' ? 'Scheduled' : ucwords(str_replace('_', ' ', $rawStatus)));
+                $statusKey = ($rawStatus === '' || $rawStatus === 'reviewed') ? 'pending' : $rawStatus;
+                $pushRow([
+                    'patient_id' => $pid,
+                    'patient_name' => trim(
+                        trim((string) ($t['first_name'] ?? '')) . ' ' . trim((string) ($t['last_name'] ?? ''))
+                    ) ?: '—',
+                    'appointment_date' => 'Date TBD',
+                    'appointment_time' => '—',
+                    'status' => $statusLabel,
+                    'status_key' => $statusKey,
+                    'source' => 'triage',
+                    'sort_key' => '9999-99-99 00:00:00',
+                ]);
+            }
+        } catch (Throwable $e) {
+            // Keep queue usable if triage query fails.
+        }
+
+        // 4) Sector patients still awaiting scheduling (workflow) even without a triage row yet.
+        try {
+            $wfSql = "
+                SELECT p.id AS patient_id,
+                       CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
+                       COALESCE(NULLIF(pr.workflow_status, ''), 'registered') AS workflow_status
+                FROM users p
+                INNER JOIN patient_registrations pr ON {$prJoin}
+                WHERE p.role = 'patient' AND {$clause}
+                  AND COALESCE(NULLIF(pr.workflow_status, ''), 'registered') IN (
+                      'non_urgent', 'urgent', 'emergency',
+                      'appointment_scheduled', 'follow_up_monitoring',
+                      'awaiting_complaint', 'ai_processing'
+                  )
+                ORDER BY p.last_name, p.first_name
+                LIMIT 300
+            ";
+            $wfStmt = $pdo->prepare($wfSql);
+            $wfStmt->execute($params);
+            $seenWfPatients = [];
+            foreach ($wfStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $w) {
+                $pid = (int) ($w['patient_id'] ?? 0);
+                if ($pid <= 0 || isset($seenWfPatients[$pid]) || $patientAlreadyQueued($pid)) {
+                    continue;
+                }
+                $seenWfPatients[$pid] = true;
+                $wf = strtolower(trim((string) ($w['workflow_status'] ?? '')));
+                if ($wf === 'appointment_scheduled') {
+                    $statusLabel = 'Scheduled';
+                    $statusKey = 'scheduled';
+                } elseif ($wf === 'follow_up_monitoring') {
+                    $statusLabel = 'Follow-up';
+                    $statusKey = 'follow_up';
+                } elseif (in_array($wf, ['urgent', 'emergency'], true)) {
+                    $statusLabel = 'Pending';
+                    $statusKey = 'pending';
+                } else {
+                    $statusLabel = 'Pending';
+                    $statusKey = 'pending';
+                }
+                $pushRow([
+                    'patient_id' => $pid,
+                    'patient_name' => trim((string) ($w['patient_name'] ?? '')) ?: '—',
+                    'appointment_date' => 'Date TBD',
+                    'appointment_time' => '—',
+                    'status' => $statusLabel,
+                    'status_key' => $statusKey,
+                    'source' => 'workflow',
+                    'sort_key' => '9999-99-98 00:00:00',
+                ]);
+            }
+        } catch (Throwable $e) {
+            // Keep queue usable if workflow query fails.
         }
 
         usort($rows, static function (array $a, array $b): int {
@@ -1424,20 +1581,36 @@ final class BhwWorkflows
     public static function getTriageQueue(PDO $pdo, array $ctx, int $limit = 15, array $filters = []): array
     {
         [$clause, $params] = self::patientScopeWhere($pdo, $ctx, $filters);
+        $prJoin = '(' . bhw_pr_user_join('pr', 'p')
+            . ' OR LOWER(TRIM(COALESCE(pr.email, \'\'))) = LOWER(TRIM(COALESCE(p.email, \'\'))))';
         $sql = "
             SELECT p.id AS patient_id, p.first_name, p.last_name, pr.purok,
                    tr.urgency_label, tr.status, tr.id AS triage_id
             FROM triage_results tr
-            JOIN users p ON p.id = tr.patient_id
-            JOIN patient_registrations pr ON pr.email = p.email
+            INNER JOIN users p ON p.id = tr.patient_id AND p.role = 'patient'
+            INNER JOIN patient_registrations pr ON {$prJoin}
             WHERE {$clause}
             ORDER BY CASE WHEN LOWER(tr.urgency_label) IN ('high', 'urgent') THEN 1
                           WHEN LOWER(tr.urgency_label) = 'moderate' THEN 2 ELSE 3 END,
                      tr.assessed_at DESC
-            LIMIT " . (int) $limit;
+            LIMIT " . max(1, (int) $limit * 3);
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $seen = [];
+        $out = [];
+        foreach ($rows as $row) {
+            $pid = (int) ($row['patient_id'] ?? 0);
+            if ($pid <= 0 || isset($seen[$pid])) {
+                continue;
+            }
+            $seen[$pid] = true;
+            $out[] = $row;
+            if (count($out) >= max(1, (int) $limit)) {
+                break;
+            }
+        }
+        return $out;
     }
 
     private static function referralDestColumn(PDO $pdo): string
