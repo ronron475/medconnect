@@ -110,6 +110,15 @@ $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'prof
         <span class="sb-patient-verified<?= $sidebar_patient_verified ? '' : ' sb-patient-verified--pending' ?>"><?= $sidebar_patient_verified ? 'VERIFIED' : 'PENDING' ?></span>
       </div>
     </div>
+    <button id="sb-logout-btn" class="sb-logout" type="button" data-logout-trigger>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      <span class="sb-label">Logout</span>
+    </button>
   </div>
   <?php endif; ?>
 

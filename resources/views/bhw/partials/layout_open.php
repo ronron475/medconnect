@@ -269,7 +269,7 @@
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
 </head>
 <body
-  class="bhw-body"
+  class="bhw-body<?= !empty($mc_dashboard_topbar) ? ' bhw-body--dashboard' : '' ?>"
   data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
   data-portal="bhw"
