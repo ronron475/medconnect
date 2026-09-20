@@ -301,6 +301,10 @@ final class ClinicalInterviewContextResolver
         $rejectExact = [
             'pain', 'hello', 'hi', 'thanks', 'thank you', 'sick', 'ill', 'unwell', 'condition',
             'symptom', 'disease', 'problem', 'issue', 'feeling', 'feel',
+            // Bare organ / anatomy nouns are location evidence, not clinical findings.
+            // (dict_heart / "Heart" must not promote heart_failure_symptoms → CARDIOVASCULAR)
+            'heart', 'lung', 'lungs', 'kidney', 'kidneys', 'liver', 'stomach', 'bladder',
+            'brain', 'bone', 'bones', 'muscle', 'muscles', 'skin', 'blood', 'urine',
         ];
         if (in_array($en, $rejectExact, true)) {
             return null;
@@ -422,15 +426,10 @@ final class ClinicalInterviewContextResolver
         }
 
         $conceptIds = [];
-        $conceptCategories = [];
         foreach ($concepts as $concept) {
             $cid = strtolower((string) ($concept['id'] ?? ''));
             if ($cid !== '') {
                 $conceptIds[] = $cid;
-            }
-            $cat = strtolower((string) ($concept['medical_category'] ?? ''));
-            if ($cat !== '') {
-                $conceptCategories[] = $cat;
             }
         }
 
@@ -438,27 +437,18 @@ final class ClinicalInterviewContextResolver
         foreach ((array) ($triage['kb_matched_symptoms'] ?? []) as $sym) {
             if (is_array($sym)) {
                 $conceptIds[] = mb_strtolower((string) ($sym['id'] ?? ''));
-                $cat = mb_strtolower((string) ($sym['medical_category'] ?? ''));
-                if ($cat !== '') {
-                    $conceptCategories[] = $cat;
-                }
             }
         }
         $conceptIds = array_values(array_unique(array_filter($conceptIds)));
-        $conceptCategories = array_values(array_unique(array_filter($conceptCategories)));
 
         $clinicalEvidence = self::hasClinicalFindingEvidence($transcript, $concepts, $assessment);
 
-        // 1) Concept / category — sufficient on their own (canonical clinical findings).
+        // 1) Concept IDs — complaint-specific findings only.
+        // Broad medical_categories alone must NOT promote sibling families
+        // (e.g. eye_pain/sensory → EAR, nausea/GI → false GI with dizziness).
         foreach ((array) ($row['symptom_ids'] ?? []) as $sid) {
             $sid = mb_strtolower(trim((string) $sid));
             if ($sid !== '' && in_array($sid, $conceptIds, true)) {
-                return true;
-            }
-        }
-        foreach ((array) ($row['medical_categories'] ?? []) as $cat) {
-            $cat = mb_strtolower(trim((string) $cat));
-            if ($cat !== '' && in_array($cat, $conceptCategories, true)) {
                 return true;
             }
         }
@@ -539,7 +529,9 @@ final class ClinicalInterviewContextResolver
             . 'dizzy|dizziness|hilo|malipong|rash|itch|kati|hubag|swell|'
             . 'weak(?:ness)?|nangaluya|nanghihina|panghihina|numb|pamamanhid|nanlalata|seizure|kombulsiyon|'
             . 'breath|ginhawa|hinga|wheez|dyspn|burn|paso|dysuria|'
-            . 'headache|migraine|palpitation|arrhythmia)\b/u',
+            . 'headache|migraine|palpitation|arrhythmia|'
+            . 'broken|fractured?|fracture|snapped|cracked|broke|nabali|bali|'
+            . 'injury|injured|samad|wound|trauma|napilasan|naligli)\b/u',
             $low
         )) {
             return true;

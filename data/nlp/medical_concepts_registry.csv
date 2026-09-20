@@ -273,7 +273,7 @@ nausea,Nausea,gastrointestinal,2,0,1,no,"gana magasuka",synonym,active
 nausea,Nausea,gastrointestinal,2,0,1,no,"daw masuka ako",synonym,active
 nausea,Nausea,gastrointestinal,2,0,1,no,"ginasuka-suka ang pamatyagan",synonym,active
 nausea,Nausea,gastrointestinal,2,0,1,no,"daw masuka",synonym,active
-nausea,Nausea,gastrointestinal,2,0,1,no,nahilo,synonym,active
+nausea,Nausea,gastrointestinal,2,0,1,no,nahilo,synonym,inactive
 nausea,Nausea,gastrointestinal,2,0,1,no,nauseous,synonym,active
 nausea,Nausea,gastrointestinal,2,0,1,no,ginasuka-suka,synonym,active
 nausea,Nausea,gastrointestinal,2,0,1,no,"daw magkasuka",synonym,active
@@ -1734,9 +1734,9 @@ angina,Angina,cardiovascular,10,10,0,yes,"may angina",synonym,active
 angina,Angina,cardiovascular,10,10,0,yes,"masakit angina",synonym,active
 angina,Angina,cardiovascular,10,10,0,yes,"masakit ang angina",synonym,active
 heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,"heart failure symptoms",canonical,active
-heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,heart,synonym,active
-heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,failure,synonym,active
-heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,symptoms,synonym,active
+heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,heart,synonym,inactive
+heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,failure,synonym,inactive
+heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,symptoms,synonym,inactive
 heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,"may heart failure symptoms",synonym,active
 heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,"masakit heart failure symptoms",synonym,active
 heart_failure_symptoms,"Heart Failure Symptoms",cardiovascular,8,8,0,yes,"masakit ang heart failure symptoms",synonym,active
@@ -2459,6 +2459,13 @@ suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,"may suspected 
 suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,"masakit suspected fracture",synonym,active
 suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,"masakit ang suspected fracture",synonym,active
 suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,suspected_fracture,concept_id,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,broken,synonym,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,fractured,synonym,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,snapped,synonym,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,cracked,synonym,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,broke,synonym,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,nabali,synonym,active
+suspected_fracture,"Suspected Fracture",musculoskeletal,6,0,6,no,bali,synonym,active
 dislocation,Dislocation,musculoskeletal,6,0,6,no,dislocation,canonical,active
 dislocation,Dislocation,musculoskeletal,6,0,6,no,"may dislocation",synonym,active
 dislocation,Dislocation,musculoskeletal,6,0,6,no,"masakit dislocation",synonym,active

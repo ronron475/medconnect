@@ -120,6 +120,10 @@ final class ClinicalFeatureExtractors
         if (preg_match('/\b(kanina pa|kanina|earlier today)\b/u', $low, $m)) {
             return ['raw' => $m[0], 'label' => 'Earlier today', 'bucket' => 'acute_hours', 'days' => null, 'hours' => 6];
         }
+        // Bare "earlier" after more specific earlier-today patterns.
+        if (preg_match('/\bearlier\b/u', $low, $m)) {
+            return ['raw' => $m[0], 'label' => 'Started earlier', 'bucket' => 'unknown', 'days' => null, 'hours' => null];
+        }
         // Soft / approximate timing — clinically known enough to skip re-asking ONSET/DURATION.
         if (preg_match(
             '/\b(ligad\s*-?\s*ligad\s+pa(?:\s+gid)?|sang\s+ligad\s+pa|ligad\s+pa(?:\s+gid)?|'

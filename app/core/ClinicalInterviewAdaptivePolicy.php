@@ -586,13 +586,14 @@ final class ClinicalInterviewAdaptivePolicy
     {
         if (array_intersect($concepts, [
             'pain', 'pain_unspecified', 'pain_no_location', 'headache', 'chest_pain',
-            'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'dental_pain',
+            'abdominal_pain', 'nose_pain', 'eye', 'eye_pain', 'dental_pain', 'musculoskeletal',
         ]) !== []) {
             return true;
         }
         // Universal: complaint language indicates pain/discomfort without relying on one disease label.
         return (bool) preg_match(
-            '/\b(sakit|masakit|kasakit|gasakit|hapdi|pain|hurt|aching|cramp|cramping|throbbing|stinging)\b/u',
+            '/\b(sakit|masakit|kasakit|gasakit|hapdi|pain|hurt|aching|cramp|cramping|throbbing|stinging|'
+            . 'broken|fractured?|fracture|snapped|cracked|broke|nabali|bali|injury|injured|samad)\b/u',
             $caseHaystack
         );
     }

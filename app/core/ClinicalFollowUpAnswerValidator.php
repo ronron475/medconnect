@@ -36,6 +36,31 @@ final class ClinicalFollowUpAnswerValidator
             return self::reject($qid, $kind, '', true, 'empty', self::emptyMessage($lang), 'UNCLEAR');
         }
 
+        // Timing slots: accept recognized relative-time answers on the ORIGINAL text
+        // BEFORE generic fuzzy correction (which can destroy phrases, e.g. night→eight).
+        $kindEarly = self::expectedKind($qid);
+        if ($kindEarly === 'SYMPTOM_DURATION') {
+            $rawLow = mb_strtolower(trim($raw));
+            if (self::looksTiming($rawLow) || self::looksOnsetStyle($rawLow)
+                || (class_exists('ClinicalFeatureExtractors') && (
+                    trim((string) (ClinicalFeatureExtractors::extractDuration($raw)['label'] ?? '')) !== ''
+                    || ClinicalFeatureExtractors::extractOnset($raw) !== ''
+                ))
+            ) {
+                $extracted = self::extractPayload('SYMPTOM_DURATION', $raw);
+                $classMeta = self::classifyAnswer('SYMPTOM_DURATION', $raw, $extracted);
+                return self::accept(
+                    $qid,
+                    'SYMPTOM_DURATION',
+                    $raw,
+                    'timing_protected_original',
+                    $extracted,
+                    $classMeta['answer_class'],
+                    $classMeta['polarity']
+                );
+            }
+        }
+
         $corrected = self::correctTypos($raw, $qid);
         $low = mb_strtolower($corrected);
 
@@ -843,6 +868,7 @@ final class ClinicalFollowUpAnswerValidator
         }
         if (preg_match(
             '/\b(yesterday|yesturday|today|tonight|last\s+night|this\s+morning|this\s+afternoon|this\s+evening|'
+            . 'earlier(?:\s+today)?|recently|a\s+while\s+ago|some\s+time\s+ago|'
             . 'kanina|gahapon|kahapon|kagapon|kagab-i|kagabi|subong|ngayon|halin|since|'
             . 'ligad|dugay|matagal|bag-o\s+lang|just\s+(now|started)|last\s+week|last\s+month|'
             . 'a\s+few\s+days|couple\s+of\s+days|almost\s+a\s+week|about\s+a\s+week|for\s+a\s+week|'
