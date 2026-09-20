@@ -81,6 +81,27 @@ final class AnnouncementService
 
     $pdo->exec('UPDATE announcements SET content = message WHERE (content IS NULL OR content = "") AND message IS NOT NULL');
 
+    // One-time: clear banner/attachment paths so public cards never embed Acrobat/PDF viewers.
+    // Keeps announcement records; does not delete files from disk.
+    try {
+      $pdo->exec("CREATE TABLE IF NOT EXISTS app_meta (
+        meta_key VARCHAR(64) NOT NULL PRIMARY KEY,
+        meta_value VARCHAR(255) NOT NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+      $cleared = $pdo->query("SELECT meta_value FROM app_meta WHERE meta_key = 'ann_clear_files_20260920' LIMIT 1")->fetchColumn();
+      if (!$cleared) {
+        $pdo->exec("UPDATE announcements
+                    SET banner_image = NULL, attachment = NULL
+                    WHERE deleted_at IS NULL
+                      AND (banner_image IS NOT NULL OR attachment IS NOT NULL)");
+        $ins = $pdo->prepare("INSERT INTO app_meta (meta_key, meta_value) VALUES ('ann_clear_files_20260920', '1')");
+        $ins->execute();
+      }
+    } catch (PDOException $e) {
+      error_log('Announcement media clear: ' . $e->getMessage());
+    }
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS announcement_barangays (
       announcement_id BIGINT UNSIGNED NOT NULL,
       barangay_id INT UNSIGNED NOT NULL,
@@ -573,10 +594,39 @@ final class AnnouncementService
     $row['target_audience'] = json_decode($row['target_audience'] ?? '[]', true) ?: $row['target_roles'];
     $row['content'] = $row['content'] ?? $row['message'] ?? '';
     $row['short_description'] = $row['short_description'] ?? '';
-    $row['banner_url'] = self::publicUrl($row['banner_image'] ?? null);
+
+    $bannerPath = trim((string) ($row['banner_image'] ?? ''));
+    // Public card media: never expose PDF/non-image as banner_url (Acrobat embeds in <img>).
+    // Keep banner_image path intact for admin editing.
+    if ($bannerPath !== '' && self::isPdfOrNonImagePath($bannerPath)) {
+      $row['banner_url'] = null;
+    } else {
+      $row['banner_url'] = self::publicUrl($bannerPath !== '' ? $bannerPath : null);
+    }
+
     $row['attachment_url'] = self::publicUrl($row['attachment'] ?? null);
     $row['category_label'] = self::CATEGORIES[$row['category'] ?? 'general'] ?? 'General Announcement';
     return $row;
+  }
+
+  /** True when path is a PDF or the stored file is not a raster image. */
+  private static function isPdfOrNonImagePath(string $relativePath): bool
+  {
+    $safe = ltrim(str_replace(['..', '\\'], ['', '/'], $relativePath), '/');
+    if (preg_match('/\.pdf$/i', $safe)) {
+      return true;
+    }
+    $full = STORAGE_PATH . '/' . $safe;
+    if (!is_file($full)) {
+      // Remote/missing file: still block obvious PDF-looking names in query URLs upstream.
+      return false;
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($full) ?: '';
+    if ($mime === 'application/pdf') {
+      return true;
+    }
+    $imageMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    return $mime !== '' && !in_array($mime, $imageMimes, true);
   }
 
   /** @return array<int> */
