@@ -258,13 +258,32 @@
 }
 
 .landing-page .ann-slideshow__panel--empty {
-  background: rgba(1, 42, 74, 0.5);
-  backdrop-filter: blur(var(--ann-glass-blur));
-  -webkit-backdrop-filter: blur(var(--ann-glass-blur));
-  border: 1px solid var(--ann-glass-border);
-  box-shadow:
-    0 22px 56px rgba(1, 42, 74, 0.32),
-    inset 0 1px 0 var(--ann-glass-highlight);
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  width: min(100%, 720px);
+}
+
+/* Soften header glow when empty so no white/gray band appears */
+.landing-page .ann-slideshow:has(.ann-slideshow__panel--empty) .ann-slideshow__header {
+  padding-bottom: clamp(8px, 2vw, 14px);
+}
+
+.landing-page .ann-slideshow:has(.ann-slideshow__panel--empty) .ann-slideshow__header::before {
+  width: min(100%, 520px);
+  height: calc(100% + 12px);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(1, 42, 74, 0.45) 0%,
+    rgba(1, 42, 74, 0.18) 55%,
+    transparent 85%
+  );
+}
+
+.landing-page .ann-slideshow:has(.ann-slideshow__panel--empty) .ann-slideshow__content {
+  padding-bottom: 0;
 }
 
 .landing-page .ann-carousel--empty .ann-carousel__viewport {
@@ -780,10 +799,10 @@
   right: clamp(2px, 0.8vw, 8px);
 }
 
-/* ── Empty state ── */
+/* ── Empty state — blends into page (no white/gray box) ── */
 .landing-page .ann-slideshow__panel--empty .ann-empty-state {
   text-align: center;
-  padding: clamp(44px, 8vw, 72px) clamp(28px, 5vw, 48px);
+  padding: clamp(20px, 4vw, 36px) clamp(16px, 4vw, 28px) clamp(8px, 2vw, 16px);
   border-radius: 0;
   background: transparent;
   border: none;
@@ -794,51 +813,55 @@
 
 .landing-page .ann-empty-state {
   text-align: center;
-  padding: clamp(36px, 6vw, 56px) clamp(24px, 4vw, 40px);
-  border-radius: var(--ann-feature-radius);
-  background: rgba(1, 42, 74, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: clamp(20px, 4vw, 36px) clamp(16px, 4vw, 28px);
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
 }
 
 .landing-page .ann-slideshow__panel--empty .ann-empty-state__icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-  border-radius: 22px;
-  background: linear-gradient(145deg, rgba(6, 147, 150, 0.32) 0%, rgba(14, 165, 233, 0.2) 100%);
-  border: 1px solid rgba(94, 234, 212, 0.32);
-  box-shadow: 0 10px 28px rgba(6, 147, 150, 0.22);
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(6, 147, 150, 0.28) 0%, rgba(14, 165, 233, 0.16) 100%);
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  box-shadow: 0 8px 22px rgba(6, 147, 150, 0.18);
+  color: #5eead4;
 }
 
 .landing-page .ann-empty-state__icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 16px;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 14px;
   border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ann-accent);
-  background: rgba(6, 147, 150, 0.2);
-  border: 1px solid rgba(94, 234, 212, 0.28);
+  color: #5eead4;
+  background: rgba(6, 147, 150, 0.22);
+  border: 1px solid rgba(94, 234, 212, 0.3);
 }
 
 .landing-page .ann-empty-state__title {
   margin: 0 0 8px;
-  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
   font-weight: 800;
-  color: #fff;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 12px rgba(1, 42, 74, 0.45);
 }
 
 .landing-page .ann-empty-state__desc {
   margin: 0;
-  max-width: 460px;
+  max-width: 420px;
   margin-inline: auto;
-  font-size: 0.95rem;
-  line-height: 1.65;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: rgba(226, 242, 247, 0.82);
 }
 
 /* ── View all CTA ── */
@@ -1013,6 +1036,10 @@
 .landing-page .ann-carousel--empty .ann-carousel__viewport,
 .ann-carousel--empty .ann-carousel__viewport {
   margin: 0;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .ann-carousel__track {
@@ -1022,6 +1049,13 @@
 
 .landing-page .ann-carousel--empty .ann-carousel__track {
   min-height: 0;
+}
+
+.landing-page .ann-carousel--empty .ann-slide {
+  display: flex;
+  padding: 0;
+  min-height: 0;
+  justify-content: center;
 }
 
 .ann-carousel__slide {
@@ -1060,12 +1094,6 @@
   gap: clamp(16px, 3vw, 28px);
   padding: 12px 8px 20px;
   min-height: 132px;
-}
-
-.landing-page .ann-carousel--empty .ann-slide {
-  display: flex;
-  padding: 0;
-  min-height: auto;
 }
 
 .landing-page .ann-slide--has-thumb {
@@ -1685,17 +1713,38 @@ body.landing-page.landing-bg--light .ann-slideshow__kicker {
 }
 
 body.landing-page.landing-bg--light .ann-slideshow__panel--empty {
-  background: rgba(255, 255, 255, 0.84);
-  border-color: rgba(6, 147, 150, 0.16);
-  box-shadow: 0 18px 48px rgba(1, 42, 74, 0.1);
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-body.landing-page.landing-bg--light .ann-empty-state__title {
-  color: #0f172a;
+body.landing-page.landing-bg--light .ann-empty-state,
+body.landing-page.landing-bg--light .ann-slideshow__panel--empty .ann-empty-state {
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-body.landing-page.landing-bg--light .ann-empty-state__desc {
-  color: #475569;
+/* Announcements empty state stays light-on-navy (section canvas is always dark) */
+body.landing-page.landing-bg--light .ann-slideshow .ann-empty-state__title,
+body.landing-page.landing-bg--light .ann-slideshow .ann-slideshow__title {
+  color: #f8fafc;
+}
+
+body.landing-page.landing-bg--light .ann-slideshow .ann-empty-state__desc {
+  color: rgba(226, 242, 247, 0.82);
+}
+
+body.landing-page.landing-bg--light .ann-slideshow .ann-slideshow__kicker {
+  color: #5eead4;
+}
+
+body.landing-page.landing-bg--light .ann-empty-state__icon,
+body.landing-page.landing-bg--light .ann-slideshow__panel--empty .ann-empty-state__icon {
+  color: #5eead4;
+  background: rgba(6, 147, 150, 0.22);
+  border-color: rgba(94, 234, 212, 0.35);
+  box-shadow: 0 8px 22px rgba(6, 147, 150, 0.18);
 }
 
 @media (prefers-reduced-motion: reduce) {
