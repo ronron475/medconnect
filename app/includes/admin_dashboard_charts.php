@@ -225,7 +225,10 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
 /**
  * Live user counts by role for Admin + Super Admin User Distribution chart.
  * Always returns every tracked role (including BHW) so the chart never omits a category.
- * Counts every matching users-table row once — no barangay filter, no demo values.
+ *
+ * Source of truth: users.id + users.role (lowercase role key 'bhw').
+ * Counts every matching account once across ALL barangays — no barangay/admin/session filter,
+ * no LIMIT 1, no JOINs that could drop or duplicate rows.
  *
  * @return list<array{role:string,label:string,count:int,color:string}>
  */
@@ -247,33 +250,67 @@ function admin_chart_user_roles(PDO $pdo): array
         'superadmin' => 'Super Admins',
     ];
 
-    $counts = array_fill_keys($order, 0);
-    try {
-        $stmt = $pdo->query("
-            SELECT role, COUNT(*) AS cnt
-            FROM users
-            WHERE role IN ('patient','provider','bhw','admin','superadmin')
-            GROUP BY role
-        ");
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $role = (string) ($row['role'] ?? '');
-            if (array_key_exists($role, $counts)) {
-                $counts[$role] = (int) $row['cnt'];
-            }
-        }
-    } catch (Throwable $e) {}
+    $counts = admin_chart_role_counts_map($pdo);
 
     $out = [];
     foreach ($order as $role) {
         $out[] = [
             'role'  => $role,
             'label' => $labels[$role],
-            'count' => $counts[$role],
+            'count' => (int) ($counts[$role] ?? 0),
             'color' => $palette[$role],
         ];
     }
 
     return $out;
+}
+
+/**
+ * Distinct user counts keyed by canonical role.
+ * BHW uses role value 'bhw' in the users table (not a separate BHW accounts table).
+ *
+ * @return array<string, int>
+ */
+function admin_chart_role_counts_map(PDO $pdo): array
+{
+    $order = ['patient', 'provider', 'bhw', 'admin', 'superadmin'];
+    $counts = array_fill_keys($order, 0);
+
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $hasArchivedAt = in_array('archived_at', $cols, true);
+        $hasAccountStatus = in_array('account_status', $cols, true);
+
+        // Exclude archived accounts only (same idea as staff "All" lists). Do NOT
+        // filter by barangay_id, is_active alone, or the current session user.
+        $where = [
+            "LOWER(TRIM(role)) IN ('patient','provider','bhw','admin','superadmin')",
+        ];
+        if ($hasArchivedAt) {
+            $where[] = 'archived_at IS NULL';
+        }
+        if ($hasAccountStatus) {
+            $where[] = "account_status <> 'archived'";
+        }
+
+        $sql = '
+            SELECT LOWER(TRIM(role)) AS role_key, COUNT(DISTINCT id) AS cnt
+            FROM users
+            WHERE ' . implode(' AND ', $where) . '
+            GROUP BY LOWER(TRIM(role))
+        ';
+        $stmt = $pdo->query($sql);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $role = (string) ($row['role_key'] ?? '');
+            if (array_key_exists($role, $counts)) {
+                $counts[$role] = (int) ($row['cnt'] ?? 0);
+            }
+        }
+    } catch (Throwable $e) {
+        // Fall through with zeros rather than a wrong singleton count.
+    }
+
+    return $counts;
 }
 
 /** @return list<array{label:string,count:int,color:string}> */

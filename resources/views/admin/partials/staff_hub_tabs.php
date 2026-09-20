@@ -45,7 +45,9 @@ if (!isset($hub_views_base)) {
     $hub_views_base = portal_views_base();
 }
 ?>
-<nav class="staff-mgmt-tabs" aria-label="<?= $hub_kind === 'doctor' ? 'Doctor' : 'BHW' ?> management views">
+<div class="staff-mgmt-filter-group">
+  <div class="staff-mgmt-filter-group__label" id="staffMgmtAccountStatusLabel">Account Status</div>
+  <nav class="staff-mgmt-tabs" aria-labelledby="staffMgmtAccountStatusLabel">
     <?php foreach ($hub_tabs as $tabKey => $tabLabel):
         $isTabActive = ($hub_tab === $tabKey);
         $href = $hub_views_base . '/' . $hub_base . ($tabKey === 'all' ? '' : '?tab=' . urlencode($tabKey));
@@ -56,4 +58,5 @@ if (!isset($hub_views_base)) {
         <?= htmlspecialchars($tabLabel) ?>
     </a>
     <?php endforeach; ?>
-</nav>
+  </nav>
+</div>

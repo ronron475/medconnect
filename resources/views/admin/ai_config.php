@@ -15,12 +15,7 @@ require_once BASE_PATH . '/app/includes/portal_auth.php';
 require_once BASE_PATH . '/app/includes/nlp_inventory.php';
 require_once __DIR__ . '/_portal_access.php';
 
-if (!portal_is_superadmin()) {
-    header('Location: ' . ASSET_BASE . '/views/admin/dashboard.php');
-    exit;
-}
-
-$page_title = 'System Settings & AI Configuration';
+$page_title = 'Triage & System Settings';
 $rules = $pdo->query("SELECT * FROM triage_rules ORDER BY base_level ASC, symptom_name ASC")->fetchAll();
 $stored = system_settings_get_all($pdo);
 $triageApi = ASSET_BASE . '/app/api/superadmin/triage_rules.php';

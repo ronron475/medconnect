@@ -214,7 +214,20 @@
           y: {
             grid: { display: false },
             border: { display: false },
-            ticks: { font: { size: 11, weight: '500' }, color: T().colors.text },
+            ticks: {
+              font: { size: 11, weight: '500' },
+              color: T().colors.text,
+              // Show live count beside each role so BHW cannot be misread from bar length alone.
+              callback: function (value) {
+                var chart = charts[canvasId];
+                var rowsLocal = (chart && chart.$mcRoleRows) || normalized;
+                var i = typeof value === 'number' ? value : labels.indexOf(String(value));
+                if (i < 0 || !rowsLocal[i]) {
+                  return typeof value === 'number' && labels[value] != null ? labels[value] : String(value);
+                }
+                return rowsLocal[i].label + '  ' + Number(rowsLocal[i].count || 0).toLocaleString();
+              },
+            },
           },
         },
       }),

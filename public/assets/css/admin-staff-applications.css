@@ -837,11 +837,35 @@ a.staff-apps-action {
 }
 
 /* ── Management hub tabs (Doctor / BHW) ── */
+.staff-mgmt-filter-group {
+  margin: 0 0 20px;
+}
+
+.staff-mgmt-filter-group__label {
+  display: block;
+  margin: 0 0 8px;
+  padding: 0 2px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.staff-mgmt-filter-group--prc {
+  margin: 0;
+}
+
+.staff-mgmt-filter-group--prc .staff-mgmt-filter-group__label {
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+
 .staff-mgmt-tabs {
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 4px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -913,8 +937,11 @@ a.staff-apps-action {
 }
 
 @media (max-width: 640px) {
-  .staff-mgmt-tabs {
+  .staff-mgmt-filter-group {
     margin-bottom: 16px;
+  }
+
+  .staff-mgmt-tabs {
     flex-wrap: wrap;
   }
 
@@ -925,6 +952,10 @@ a.staff-apps-action {
 
   .staff-mgmt-accounts-panel__head {
     padding: 16px 16px 0;
+  }
+
+  .staff-mgmt-filter-group--prc .staff-mgmt-filter-group__label {
+    padding: 0 16px;
   }
 
   .staff-mgmt-subfilters {
