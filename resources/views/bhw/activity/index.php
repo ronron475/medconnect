@@ -2,11 +2,11 @@
 $page_title = 'My Activity Log';
 $bhw_current_file = 'activity/index.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
-require __DIR__ . '/../partials/layout_open.php';
 $reports_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-reports.css');
 $activity_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-activity.js');
+$bhw_head_css = ASSET_BASE . '/assets/css/bhw-reports.css?v=' . $reports_css_ver;
+require __DIR__ . '/../partials/layout_open.php';
 ?>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-reports.css?v=<?= $reports_css_ver ?>">
 <script src="<?= ASSET_BASE ?>/assets/js/bhw-activity.js?v=<?= $activity_js_ver ?>" defer></script>
 
 <div class="bhw-activity-page" id="bhwActivityRoot">

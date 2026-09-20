@@ -2,13 +2,13 @@
 $page_title = 'Records';
 $bhw_current_file = 'records/index.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
-require __DIR__ . '/../partials/layout_open.php';
 $preselect = (int) ($_GET['patient_id'] ?? 0);
 $barangay_label = htmlspecialchars($bhw_barangay_name);
 $records_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-records.css');
 $records_js_ver = (int) @filemtime(ASSETS_PATH . '/js/bhw-records.js');
+$bhw_head_css = ASSET_BASE . '/assets/css/bhw-records.css?v=' . $records_css_ver;
+require __DIR__ . '/../partials/layout_open.php';
 ?>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-records.css?v=<?= $records_css_ver ?>">
 <script src="<?= ASSET_BASE ?>/assets/js/bhw-records.js?v=<?= $records_js_ver ?>" defer></script>
 
 <div class="bhw-records-page" id="bhwRecordsView" data-preselect="<?= $preselect ?>">
