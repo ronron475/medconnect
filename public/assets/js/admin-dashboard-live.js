@@ -51,9 +51,8 @@
   function updateAdmin(payload) {
     var m = payload.metrics || {};
     setText('[data-live-metric="patients"]', m.patients || 0);
-    setText('[data-live-metric="total_users"]', (m.total_users || 0) + ' total users');
     setText('[data-live-metric="providers"]', m.providers || 0);
-    setText('[data-live-metric="bhw"]', (m.bhw || 0) + ' BHW active');
+    setText('[data-live-metric="bhw"]', m.bhw || 0);
     setText('[data-live-metric="consults_today"]', m.consults_today || 0);
     setText('[data-live-metric="active_sessions"]', (m.active_sessions || 0) + ' in session now');
     setText('[data-live-metric="urgent_triage"]', m.urgent_triage || 0);
