@@ -57,8 +57,15 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
             All Announcements
           </a>
           <div class="ann-list-detail__card">
-            <?php if ($detail['banner_url']): ?>
-            <img class="ann-detail__banner" src="<?= htmlspecialchars($detail['banner_url']) ?>" alt="<?= htmlspecialchars($detail['title']) ?>">
+            <?php
+              $detailBanner = (string)($detail['banner_url'] ?? '');
+              $detailBannerPath = (string)($detail['banner_image'] ?? '');
+              $showDetailBanner = $detailBanner !== ''
+                && !preg_match('/\.pdf($|[?#])/i', $detailBanner)
+                && !preg_match('/\.pdf$/i', $detailBannerPath);
+            ?>
+            <?php if ($showDetailBanner): ?>
+            <img class="ann-detail__banner" src="<?= htmlspecialchars($detailBanner) ?>" alt="<?= htmlspecialchars($detail['title']) ?>">
             <?php endif; ?>
             <span class="ann-detail__badge"><?= htmlspecialchars($detail['category_label']) ?></span>
             <?php if (!empty($detail['is_pinned'])): ?>
@@ -74,7 +81,7 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
             <?php endif; ?>
             <div class="ann-detail__body"><?= nl2br(htmlspecialchars($detail['content'])) ?></div>
             <?php if ($detail['attachment_url']): ?>
-            <a class="ann-detail__attach" href="<?= htmlspecialchars($detail['attachment_url']) ?>" target="_blank" rel="noopener">Download attachment (PDF)</a>
+            <a class="ann-detail__attach" href="<?= htmlspecialchars($detail['attachment_url'] . (str_contains($detail['attachment_url'], '?') ? '&' : '?') . 'dl=1') ?>" download rel="noopener">Download attachment (PDF)</a>
             <?php endif; ?>
           </div>
         </article>
@@ -97,15 +104,20 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
             $pubDate = date('M j, Y', strtotime($ann['publish_at'] ?? $ann['created_at']));
             $excerpt = $ann['short_description'] ?: mb_substr(strip_tags($ann['content']), 0, 180);
             if (mb_strlen(strip_tags($ann['content'])) > 180) $excerpt .= '…';
+            $listBanner = (string)($ann['banner_url'] ?? '');
+            $listBannerPath = (string)($ann['banner_image'] ?? '');
+            $showListBanner = $listBanner !== ''
+              && !preg_match('/\.pdf($|[?#])/i', $listBanner)
+              && !preg_match('/\.pdf$/i', $listBannerPath);
           ?>
           <article class="ann-list-card">
-            <?php if (!empty($ann['banner_url'])): ?>
+            <?php if ($showListBanner): ?>
             <button type="button"
                     class="ann-list-card__media-btn"
-                    data-image-url="<?= htmlspecialchars($ann['banner_url']) ?>"
+                    data-image-url="<?= htmlspecialchars($listBanner) ?>"
                     aria-label="View full-size image for <?= htmlspecialchars($ann['title']) ?>">
               <img class="ann-list-card__img"
-                   src="<?= htmlspecialchars($ann['banner_url']) ?>"
+                   src="<?= htmlspecialchars($listBanner) ?>"
                    alt="<?= htmlspecialchars($ann['title']) ?>"
                    loading="lazy"
                    decoding="async"

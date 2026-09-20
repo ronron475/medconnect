@@ -1190,7 +1190,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 
 
-<script src="<?= $asset ?>/assets/js/landing-announcements.js?v=5"></script>
+<script src="<?= $asset ?>/assets/js/landing-announcements.js?v=6"></script>
 <script src="<?= $asset ?>/assets/js/landing-location.js?v=1"></script>
 <?php $landingDownloadJsVer = (int) @filemtime(ASSETS_PATH . '/js/landing-download-app.js'); ?>
 <script src="<?= $asset ?>/assets/js/landing-download-app.js?v=<?= $landingDownloadJsVer ?>"></script>
