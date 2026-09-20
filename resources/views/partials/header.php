@@ -20,26 +20,6 @@ if ($user_role === 'admin') {
     $breadcrumb = 'Patient Care';
 }
 
-$first    = htmlspecialchars($_SESSION['first_name'] ?? 'User');
-$last     = htmlspecialchars($_SESSION['last_name']  ?? '');
-require_once BASE_PATH . '/app/includes/profile_picture.php';
-
-$initials = profile_picture_initials($_SESSION['first_name'] ?? 'U', $_SESSION['last_name'] ?? '');
-$header_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
-  $full_name_header = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''));
-  if ($full_name_header === '') $full_name_header = 'User';
-  $portal_label = strtoupper($user_role ?: 'USER');
-  $member_since = '';
-  $raw_created = $_SESSION['created_at'] ?? $_SESSION['registered_at'] ?? $_SESSION['member_since'] ?? '';
-  if (!empty($raw_created)) {
-      try {
-          $dt = new DateTime((string) $raw_created);
-          $member_since = $dt->format('M. Y');
-      } catch (Throwable $e) {
-          $member_since = '';
-      }
-  }
-
 // Server-side seed for clock
 $today = date('F j, Y');
 $now   = date('h:i A');
@@ -50,13 +30,6 @@ $is_admin_portal = ($user_role === 'admin') || ($user_role === 'superadmin');
 $compact_topbar = $is_admin_portal
     || $is_bhw_portal
     || !empty($mc_dashboard_topbar);
-
-$profile_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/profile.php';
-$settings_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/settings.php';
-if ($is_bhw_portal) {
-    $profile_menu_href = ASSET_BASE . '/views/bhw/settings/profile.php';
-    $settings_menu_href = $profile_menu_href;
-}
 ?>
 <header class="topbar<?= $is_patient_portal ? ' topbar--clinical' : '' ?><?= $is_bhw_portal ? ' topbar--bhw-formal' : '' ?>">
 
@@ -126,35 +99,6 @@ if ($is_bhw_portal) {
     $bell_class = 'topbar-icon-btn mc-notif-btn';
     require_once VIEWS_PATH . '/partials/notification_bell.php';
     ?>
-
-    <!-- Circular aqua user avatar badge -->
-    <button type="button"
-            class="topbar-avatar"
-            title="<?= $first . ' ' . $last ?>"
-            data-profile-avatar-wrap
-            data-profile-menu-trigger="global"
-            aria-label="Open profile menu">
-      <?= profile_picture_render($initials, $header_picture_url, '', 'sm') ?>
-    </button>
-
-    <div class="mc-profmenu" data-profile-menu="global" hidden>
-      <div class="mc-profmenu__hero">
-        <div class="mc-profmenu__seal">
-          <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt=""/>
-        </div>
-        <div class="mc-profmenu__name"><?= htmlspecialchars($full_name_header) ?></div>
-        <div class="mc-profmenu__meta">
-          <?= htmlspecialchars(ucfirst(strtolower($portal_label))) ?>
-          <?php if ($member_since !== ''): ?>
-            — Member since <?= htmlspecialchars($member_since) ?>
-          <?php endif; ?>
-        </div>
-      </div>
-      <div class="mc-profmenu__actions">
-        <a class="mc-profmenu__btn mc-profmenu__btn--primary" href="<?= $profile_menu_href ?>">My Profile</a>
-        <a class="mc-profmenu__btn" href="<?= $settings_menu_href ?>">Settings</a>
-      </div>
-    </div>
 
   </div>
 </header>

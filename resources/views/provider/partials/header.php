@@ -18,33 +18,5 @@
     $bell_class = 'pd-notif-btn mc-notif-btn';
     require_once VIEWS_PATH . '/partials/notification_bell.php';
     ?>
-    <div class="pd-header-user">
-      <div class="pd-header-user-info">
-        <div class="pd-header-user-name"><?= htmlspecialchars($provider['display_name'] ?? trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''))) ?></div>
-        <div class="pd-header-user-role"><?= htmlspecialchars($provider['role'] ?? 'General Medicine') ?></div>
-      </div>
-      <button type="button" class="pd-avatar" data-profile-avatar-wrap data-profile-menu-trigger="provider" aria-label="Open profile menu">
-        <?= profile_picture_render($provider['initials'] ?? 'DR', $provider['picture_url'] ?? null, 'pd-header-avatar', 'sm') ?>
-      </button>
-    </div>
   </div>
 </header>
-
-<?php
-$prov_full_name = trim(($provider['display_name'] ?? '') ?: trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? '')));
-if ($prov_full_name === '') $prov_full_name = 'Provider';
-$prov_role = (string) ($provider['role'] ?? 'Provider');
-?>
-<div class="mc-profmenu" data-profile-menu="provider" hidden>
-  <div class="mc-profmenu__hero">
-    <div class="mc-profmenu__seal">
-      <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt=""/>
-    </div>
-    <div class="mc-profmenu__name"><?= htmlspecialchars($prov_full_name) ?></div>
-    <div class="mc-profmenu__meta"><?= htmlspecialchars($prov_role) ?></div>
-  </div>
-  <div class="mc-profmenu__actions">
-    <a class="mc-profmenu__btn mc-profmenu__btn--primary" href="<?= ASSET_BASE ?>/views/provider/settings.php">My Profile</a>
-    <a class="mc-profmenu__btn" href="<?= ASSET_BASE ?>/views/provider/settings.php">Settings</a>
-  </div>
-</div>
