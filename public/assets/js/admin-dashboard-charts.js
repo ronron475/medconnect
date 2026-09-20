@@ -135,12 +135,14 @@
     T().applyDefaults();
 
     var normalized = normalizeRoleRows(rows);
-    var selectedIndex = charts[canvasId] && charts[canvasId].$mcSelectedIndex != null
-      ? charts[canvasId].$mcSelectedIndex
-      : -1;
-    if (selectedIndex >= normalized.length) selectedIndex = -1;
+    // Always clear sticky selection on data refresh so a previously clicked
+    // Admin/Super Admin bar (count 1) cannot leave the KPI looking like "BHW = 1".
+    var selectedIndex = -1;
 
-    var labels = normalized.map(function (r) { return r.label; });
+    // Bake live counts into axis labels so role/count cannot drift apart.
+    var labels = normalized.map(function (r) {
+      return String(r.label || '') + '  ' + Number(r.count || 0).toLocaleString();
+    });
     var data = normalized.map(function (r) { return r.count; });
     var colors = roleBarColors(normalized, selectedIndex);
 
@@ -215,17 +217,23 @@
             grid: { display: false },
             border: { display: false },
             ticks: {
+              autoSkip: false,
               font: { size: 11, weight: '500' },
               color: T().colors.text,
-              // Show live count beside each role so BHW cannot be misread from bar length alone.
-              callback: function (value) {
+              // Prefer the dataIndex tick index; fall back to baked-in labels.
+              callback: function (value, index) {
                 var chart = charts[canvasId];
                 var rowsLocal = (chart && chart.$mcRoleRows) || normalized;
-                var i = typeof value === 'number' ? value : labels.indexOf(String(value));
-                if (i < 0 || !rowsLocal[i]) {
-                  return typeof value === 'number' && labels[value] != null ? labels[value] : String(value);
+                var i = (typeof index === 'number' && index >= 0)
+                  ? index
+                  : (typeof value === 'number' ? value : -1);
+                if (i >= 0 && rowsLocal[i]) {
+                  return rowsLocal[i].label + '  ' + Number(rowsLocal[i].count || 0).toLocaleString();
                 }
-                return rowsLocal[i].label + '  ' + Number(rowsLocal[i].count || 0).toLocaleString();
+                if (typeof value === 'number' && labels[value] != null) {
+                  return labels[value];
+                }
+                return String(value);
               },
             },
           },

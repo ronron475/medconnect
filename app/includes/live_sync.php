@@ -463,15 +463,10 @@ function live_sync_admin_users_fp(PDO $pdo): string
         ),
     ];
     try {
-        $stmt = $pdo->query("
-            SELECT role, COUNT(*) AS cnt
-            FROM users
-            WHERE role IN ('patient','provider','bhw','admin','superadmin')
-            GROUP BY role
-            ORDER BY role ASC
-        ");
-        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $parts[] = ((string) ($row['role'] ?? '')) . ':' . ((int) ($row['cnt'] ?? 0));
+        require_once __DIR__ . '/admin_dashboard_charts.php';
+        $map = admin_chart_role_counts_map($pdo);
+        foreach ($map as $role => $cnt) {
+            $parts[] = $role . ':' . (int) $cnt;
         }
     } catch (Throwable $e) {
         // keep base fingerprint
