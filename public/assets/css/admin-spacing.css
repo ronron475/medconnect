@@ -44,7 +44,7 @@ body.admin-body .adm-charts-section .adm-section-sub {
 }
 
 body.admin-body [data-live-dashboard] .adm-metrics {
-  gap: 8px;
+  gap: 8px !important;
 }
 
 body.admin-body [data-live-dashboard] .mc-notif-widgets--dashboard {
@@ -83,13 +83,81 @@ body.admin-body [data-live-dashboard] .adm-charts-filters {
   gap: 6px 8px;
 }
 
+/* Platform Snapshot / Platform Metrics — match chart-card density */
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] {
+  gap: 6px !important;
+  margin: 0 !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-section-head {
+  margin: 0 !important;
+  gap: 4px !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-section-title {
+  margin: 0 0 2px !important;
+  font-size: 0.9375rem;
+  line-height: 1.25;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-section-sub {
+  margin: 0 !important;
+  line-height: 1.35;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metrics {
+  gap: 8px !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric {
+  padding: 10px 12px !important;
+  gap: 10px !important;
+  border-radius: 8px;
+  min-height: 0;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric-icon {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric-value {
+  font-size: 1.35rem !important;
+  margin-top: 0 !important;
+  line-height: 1.1;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric-label {
+  font-size: 12px !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric-sub {
+  font-size: 10px !important;
+  margin-top: 1px !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .superadmin-stat-grid,
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .superadmin-stat-grid--compact {
+  gap: 8px !important;
+}
+
+body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .superadmin-stat-card {
+  padding: 10px 12px !important;
+  min-height: 0 !important;
+}
+
 body.admin-body [data-live-dashboard] .superadmin-stat-grid,
 body.admin-body [data-live-dashboard] .superadmin-stat-grid--compact {
-  gap: 8px;
+  gap: 8px !important;
 }
 
 body.admin-body [data-live-dashboard] .superadmin-stat-card {
-  padding: 10px;
+  padding: 10px !important;
 }
 
 body.admin-body [data-live-dashboard] .superadmin-approval-strip {
@@ -114,12 +182,12 @@ body.admin-body .adm-banner-title {
 }
 
 body.admin-body .adm-metric {
-  padding: 12px 12px;
-  gap: 10px;
+  padding: 10px 12px !important;
+  gap: 10px !important;
 }
 
 body.admin-body .adm-metrics {
-  gap: 8px;
+  gap: 8px !important;
 }
 
 body.admin-body .adm-grid {
@@ -384,15 +452,23 @@ body.admin-body .pagination {
   }
 
   body.admin-body [data-live-dashboard] .adm-metrics {
-    gap: 8px;
+    gap: 8px !important;
+  }
+
+  body.admin-body .adm-metric {
+    padding: 10px 10px !important;
+  }
+
+  body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] {
+    gap: 6px !important;
+  }
+
+  body.admin-body [data-live-dashboard] > section[aria-label='Platform metrics'] .adm-metric {
+    padding: 10px !important;
   }
 
   body.admin-body [data-live-dashboard] .adm-grid {
     gap: 8px;
-  }
-
-  body.admin-body .adm-metric {
-    padding: 10px 10px;
   }
 
   body.admin-body .adm-card-head {
