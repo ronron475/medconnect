@@ -38,6 +38,10 @@ require __DIR__ . '/partials/layout_open.php';
 
   <section class="bhw-dash-panel bhw-dash-charts" id="bhwDashChartsRoot" data-days="7" aria-label="Activity charts">
     <div class="bhw-dash-charts-toolbar no-print">
+      <div class="bhw-dash-charts-toolbar__title">
+        <h3 class="bhw-dash-charts-heading">Activity</h3>
+        <p class="bhw-dash-charts-sub">Live barangay trends</p>
+      </div>
       <div class="mc-chart-filters mc-chart-filters--inline bhw-dash-chart-filters">
         <label class="mc-chart-filters__label" for="bhw_dash_days">Period</label>
         <select id="bhw_dash_days" class="form-select mc-chart-filters__control" aria-label="Chart date range">
