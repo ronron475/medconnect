@@ -93,28 +93,117 @@
     });
   }
 
+  function normalizeRoleRows(rows) {
+    return (rows || []).map(function (r) {
+      return {
+        role: r.role || '',
+        label: r.label || '',
+        count: r.count != null ? Number(r.count) || 0 : 0,
+        color: r.color || '',
+      };
+    });
+  }
+
+  function roleBarColors(rows, selectedIndex) {
+    return rows.map(function (r, i) {
+      var base = r.color || T().palette[i % T().palette.length];
+      if (selectedIndex == null || selectedIndex < 0 || selectedIndex === i) {
+        return base;
+      }
+      return T().hexToRgba(base, 0.28);
+    });
+  }
+
+  function setUsersKpi(rows, selectedIndex) {
+    var total = rows.reduce(function (s, r) { return s + (r.count || 0); }, 0);
+    var kpiLabel = document.getElementById('admKpiUsersLabel');
+    if (selectedIndex != null && selectedIndex >= 0 && rows[selectedIndex]) {
+      var sel = rows[selectedIndex];
+      setKpi('admKpiUsersTotal', Number(sel.count || 0).toLocaleString());
+      if (kpiLabel) kpiLabel.textContent = sel.label || 'Selected role';
+      return;
+    }
+    setKpi('admKpiUsersTotal', Number(total).toLocaleString());
+    if (kpiLabel) kpiLabel.textContent = 'Total users';
+  }
+
   function makeHBarChart(canvasId, rows) {
     if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
-    destroy(canvasId);
     T().syncColors();
     T().applyDefaults();
+
+    var normalized = normalizeRoleRows(rows);
+    var selectedIndex = charts[canvasId] && charts[canvasId].$mcSelectedIndex != null
+      ? charts[canvasId].$mcSelectedIndex
+      : -1;
+    if (selectedIndex >= normalized.length) selectedIndex = -1;
+
+    var labels = normalized.map(function (r) { return r.label; });
+    var data = normalized.map(function (r) { return r.count; });
+    var colors = roleBarColors(normalized, selectedIndex);
+
+    if (charts[canvasId]) {
+      var existing = charts[canvasId];
+      existing.data.labels = labels;
+      existing.data.datasets[0].data = data;
+      existing.data.datasets[0].backgroundColor = colors;
+      existing.$mcRoleRows = normalized;
+      existing.$mcSelectedIndex = selectedIndex;
+      existing.update('none');
+      setUsersKpi(normalized, selectedIndex);
+      return;
+    }
+
     charts[canvasId] = new Chart(el, {
       type: 'bar',
       data: {
-        labels: (rows || []).map(function (r) { return r.label; }),
+        labels: labels,
         datasets: [{
-          data: (rows || []).map(function (r) { return r.count; }),
-          backgroundColor: (rows || []).map(function (r, i) {
-            return r.color || T().palette[i % T().palette.length];
-          }),
+          data: data,
+          backgroundColor: colors,
           borderRadius: 4,
           maxBarThickness: 28,
+          minBarLength: 2,
         }],
       },
       options: T().cartesianOptions({
         indexAxis: 'y',
+        // Horizontal bars: index along Y so hover/click maps to the role category.
+        interaction: { mode: 'index', axis: 'y', intersect: false },
+        onClick: function (evt, elements) {
+          var chart = charts[canvasId];
+          if (!chart) return;
+          var rowsLocal = chart.$mcRoleRows || [];
+          if (elements && elements.length) {
+            var idx = elements[0].index;
+            chart.$mcSelectedIndex = (chart.$mcSelectedIndex === idx) ? -1 : idx;
+          } else {
+            chart.$mcSelectedIndex = -1;
+          }
+          chart.data.datasets[0].backgroundColor = roleBarColors(rowsLocal, chart.$mcSelectedIndex);
+          chart.update('none');
+          setUsersKpi(rowsLocal, chart.$mcSelectedIndex);
+        },
+        plugins: Object.assign({}, T().basePlugins(), {
+          tooltip: Object.assign({}, T().basePlugins().tooltip, {
+            callbacks: {
+              title: function (items) {
+                if (!items || !items.length) return '';
+                var chart = items[0].chart;
+                var row = (chart.$mcRoleRows || [])[items[0].dataIndex];
+                return (row && row.label) || items[0].label || '';
+              },
+              label: function (ctx) {
+                var chart = ctx.chart;
+                var row = (chart.$mcRoleRows || [])[ctx.dataIndex];
+                var n = row ? row.count : (ctx.parsed && ctx.parsed.x != null ? ctx.parsed.x : ctx.raw);
+                return ' ' + Number(n || 0).toLocaleString() + ' users';
+              },
+            },
+          }),
+        }),
         scales: {
           x: {
             beginAtZero: true,
@@ -130,6 +219,9 @@
         },
       }),
     });
+    charts[canvasId].$mcRoleRows = normalized;
+    charts[canvasId].$mcSelectedIndex = selectedIndex;
+    setUsersKpi(normalized, selectedIndex);
   }
 
   function makeDoughnutChart(canvasId, rows) {
@@ -169,7 +261,6 @@
 
     setKpi('admKpiConsultTotal', Number(consult.total || 0).toLocaleString());
     setKpi('admKpiRegTotal', Number(reg.total || 0).toLocaleString());
-    setKpi('admKpiUsersTotal', roles.reduce(function (s, r) { return s + (r.count || 0); }, 0).toLocaleString());
 
     var periodLabel = data.period_label || (T().periodLabel ? T().periodLabel(data.days) : 'Month');
     var periodRange = data.period_range_label || (T().periodRangeLabel ? T().periodRangeLabel(data.days) : 'this month');
@@ -222,7 +313,11 @@
     var url = apiUrl();
     if (!url) return Promise.resolve();
 
-    return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    return fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now(), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json' },
+    })
       .then(function (r) { return r.json(); })
       .then(function (json) {
         if (json && json.success && json.data) {
@@ -237,7 +332,10 @@
 
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
-    pollTimer = setInterval(fetchAndRender, REFRESH_MS);
+    pollTimer = setInterval(function () {
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      fetchAndRender();
+    }, REFRESH_MS);
   }
 
   function boot() {
@@ -277,4 +375,8 @@
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && root()) fetchAndRender();
   });
+
+  window.MedConnectAdminDashboardCharts = {
+    refresh: fetchAndRender,
+  };
 })();

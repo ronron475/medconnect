@@ -162,6 +162,16 @@ function superadmin_dashboard_live_payload(PDO $pdo): array
         'metrics' => [
             'patients'         => (int) ($stats['total_patients'] ?? 0),
             'providers'        => (int) ($stats['total_providers'] ?? 0),
+            'bhw'              => (int) ($stats['total_bhw'] ?? 0),
+            'admins'           => (int) ($stats['total_admins'] ?? 0),
+            'superadmins'      => (int) ($stats['total_superadmins'] ?? 0),
+            'total_users'      => (int) (
+                ($stats['total_patients'] ?? 0)
+                + ($stats['total_providers'] ?? 0)
+                + ($stats['total_bhw'] ?? 0)
+                + ($stats['total_admins'] ?? 0)
+                + ($stats['total_superadmins'] ?? 0)
+            ),
             'consultations'    => (int) ($stats['total_consultations'] ?? 0),
             'emergency_cases'  => (int) ($stats['emergency_cases'] ?? 0),
             'barangays'        => (int) ($stats['total_barangays'] ?? 0),

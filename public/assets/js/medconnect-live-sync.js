@@ -131,6 +131,9 @@
       if (global.MedConnectAdminDashboardLive && typeof global.MedConnectAdminDashboardLive.refresh === 'function') {
         global.MedConnectAdminDashboardLive.refresh();
       }
+      if (global.MedConnectAdminDashboardCharts && typeof global.MedConnectAdminDashboardCharts.refresh === 'function') {
+        global.MedConnectAdminDashboardCharts.refresh();
+      }
       if (typeof global.refreshBhwDashboard === 'function') {
         global.refreshBhwDashboard();
       }

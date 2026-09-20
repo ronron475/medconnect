@@ -160,7 +160,8 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                         $role_class = match ($role_key) {
                             'patient' => 'adm-role-badge--patient',
                             'provider' => 'adm-role-badge--provider',
-                            'admin' => 'adm-role-badge--admin',
+                            'bhw' => 'adm-role-badge--bhw',
+                            'admin', 'superadmin' => 'adm-role-badge--admin',
                             default => 'adm-role-badge--default',
                         };
                     ?>

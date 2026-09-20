@@ -994,6 +994,12 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-role-badge--provider 
   color: #93c5fd !important;
 }
 
+html[data-theme-resolved='dark'] body.admin-body .adm-role-badge--bhw,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-role-badge--bhw {
+  background: rgba(2, 132, 199, 0.18) !important;
+  color: #7dd3fc !important;
+}
+
 /* Override light inline badge styles only when no semantic class is set */
 html[data-theme-resolved='dark'] body.admin-body .mc-badge[style]:not([class*='mc-badge--']),
 html[data-theme-resolved='dark'] body.superadmin-body .mc-badge[style]:not([class*='mc-badge--']) {

@@ -250,6 +250,12 @@ body.admin-body .mc-chart-canvas-wrap {
   height: clamp(160px, 22vh, 220px);
 }
 
+body.admin-body .adm-chart-canvas-wrap--roles,
+body.admin-body .mc-chart-canvas-wrap--roles {
+  min-height: 200px;
+  height: clamp(200px, 28vh, 260px);
+}
+
 body.admin-body .mc-chart-canvas-wrap--tall {
   min-height: 180px;
   height: clamp(180px, 26vh, 240px);

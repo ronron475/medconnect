@@ -829,6 +829,7 @@ body.admin-body {
 
 .adm-role-badge--patient  { background: #f0fdfa; color: #0d9488; }
 .adm-role-badge--provider { background: #eff6ff; color: #1d4ed8; }
+.adm-role-badge--bhw      { background: #e0f2fe; color: #0284c7; }
 .adm-role-badge--admin    { background: #f0fdfa; color: #0f766e; }
 .adm-role-badge--default  { background: #f8fafc; color: #64748b; }
 
