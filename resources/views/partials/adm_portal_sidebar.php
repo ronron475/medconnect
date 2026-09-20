@@ -145,17 +145,19 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   </nav>
 
   <a href="<?= htmlspecialchars($config['profile_href']) ?>"
-     class="adm-profile <?= $is_profile_page ? 'is-active' : '' ?><?= $adm_sidebar_portal !== 'bhw' ? ' adm-profile--avatar-only' : '' ?>"
+     class="adm-profile <?= $is_profile_page ? 'is-active' : '' ?>"
      title="<?= htmlspecialchars($config['profile_title']) ?>">
     <div class="adm-profile-avatar" data-profile-avatar-wrap>
       <?= profile_picture_render($display_initials, $display_picture_url, '', 'sm') ?>
     </div>
-    <?php if ($adm_sidebar_portal === 'bhw'): ?>
     <div class="adm-profile-info">
+      <?php if ($adm_sidebar_portal === 'bhw'): ?>
       <div class="adm-profile-name"><?= htmlspecialchars($display_name) ?></div>
       <div class="adm-profile-role"><?= htmlspecialchars($profile_role) ?></div>
+      <?php else: ?>
+      <div class="adm-profile-name"><?= htmlspecialchars($profile_role) ?></div>
+      <?php endif; ?>
     </div>
-    <?php endif; ?>
   </a>
 
 </aside>
