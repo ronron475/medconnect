@@ -18,6 +18,17 @@
     return isNaN(d.getTime()) ? s : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
+  /** True when a media URL points at a PDF (must never be inlined — browsers/Acrobat embed it). */
+  function isPdfUrl(url) {
+    var s = String(url || '');
+    return /\.pdf($|[?#])/i.test(s) || /[?&]f=[^&]*\.pdf/i.test(s);
+  }
+
+  function downloadUrl(url) {
+    if (!url) return '';
+    return String(url) + (String(url).indexOf('?') >= 0 ? '&' : '?') + 'dl=1';
+  }
+
   function ringBell() {
     if (!bellSvg) return;
     bellSvg.classList.remove('ann-bell-ring');
@@ -72,7 +83,8 @@
     if (titleEl) titleEl.textContent = data.title || 'Announcement';
 
     var html = '';
-    if (data.banner_url) {
+    // Image banners only — never <img>/<iframe>/<embed>/<object> a PDF (triggers Acrobat inline).
+    if (data.banner_url && !isPdfUrl(data.banner_url)) {
       html += '<img class="ann-detail__banner" src="' + esc(data.banner_url) + '" alt="">';
     }
     html += '<span class="ann-detail__badge">' + esc(data.category_label || data.category) + '</span>';
@@ -81,7 +93,8 @@
     if (data.short_description) html += '<p class="ann-detail__lead"><strong>' + esc(data.short_description) + '</strong></p>';
     html += '<div class="ann-detail__body">' + esc(data.content || '').replace(/\n/g, '<br>') + '</div>';
     if (data.attachment_url) {
-      html += '<a class="ann-detail__attach" href="' + esc(data.attachment_url) + '" target="_blank" rel="noopener">Download attachment</a>';
+      // Download only — never embed PDF/file viewers in the public modal.
+      html += '<a class="ann-detail__attach" href="' + esc(downloadUrl(data.attachment_url)) + '" download rel="noopener">Download attachment</a>';
     }
     content.innerHTML = html;
   }

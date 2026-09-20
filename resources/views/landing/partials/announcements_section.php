@@ -19,6 +19,12 @@ $annIconSvgs = [
 ];
 
 $annJson = static function (array $ann): string {
+  $bannerUrl = (string)($ann['banner_url'] ?? '');
+  $bannerPath = (string)($ann['banner_image'] ?? '');
+  // Public payload: never hand a PDF to the modal as a banner (no inline Acrobat viewer).
+  if ($bannerUrl !== '' && (preg_match('/\.pdf($|[?#])/i', $bannerUrl) || preg_match('/\.pdf$/i', $bannerPath))) {
+    $bannerUrl = '';
+  }
   return htmlspecialchars(json_encode([
     'id' => (int)$ann['id'],
     'title' => $ann['title'],
@@ -27,7 +33,7 @@ $annJson = static function (array $ann): string {
     'category_label' => $ann['category_label'] ?? '',
     'short_description' => $ann['short_description'] ?? '',
     'content' => $ann['content'] ?? '',
-    'banner_url' => $ann['banner_url'] ?? '',
+    'banner_url' => $bannerUrl,
     'attachment_url' => $ann['attachment_url'] ?? '',
     'publish_at' => $ann['publish_at'] ?? $ann['created_at'],
     'created_at' => $ann['created_at'],
@@ -87,8 +93,14 @@ $annJson = static function (array $ann): string {
               $short = $ann['short_description'] ?: mb_substr(strip_tags($ann['content']), 0, 180);
               if (mb_strlen(strip_tags($ann['content'])) > 180) $short .= '…';
               $imgLoading = $i === 0 ? 'eager' : 'lazy';
+              // Never treat PDFs as card media — browsers/Acrobat will embed a file viewer.
+              $bannerPath = (string)($ann['banner_image'] ?? '');
+              $bannerUrl = (string)($ann['banner_url'] ?? '');
+              $hasImageBanner = $bannerUrl !== ''
+                && !preg_match('/\.pdf($|[?#])/i', $bannerUrl)
+                && !preg_match('/\.pdf$/i', $bannerPath);
             ?>
-            <article class="ann-carousel__slide ann-slide ann-feature-card ann-card ann-card--clickable<?= $i === 0 ? ' is-active' : '' ?><?= !empty($ann['banner_url']) ? ' ann-slide--has-thumb' : ' ann-slide--text-only' ?>"
+            <article class="ann-carousel__slide ann-slide ann-feature-card ann-card ann-card--clickable<?= $i === 0 ? ' is-active' : '' ?><?= $hasImageBanner ? ' ann-slide--has-thumb' : ' ann-slide--text-only' ?>"
                      data-ann-id="<?= (int)$ann['id'] ?>"
                      data-ann-json="<?= $annJson($ann) ?>"
                      role="group"
@@ -97,13 +109,13 @@ $annJson = static function (array $ann): string {
                      tabindex="<?= $i === 0 ? '0' : '-1' ?>">
               <div class="ann-feature-card__shell">
                 <div class="ann-feature-card__media">
-                  <?php if (!empty($ann['banner_url'])): ?>
+                  <?php if ($hasImageBanner): ?>
                   <button type="button"
                           class="ann-feature-card__media-btn"
-                          data-image-url="<?= htmlspecialchars($ann['banner_url']) ?>"
+                          data-image-url="<?= htmlspecialchars($bannerUrl) ?>"
                           aria-label="View full-size image for <?= htmlspecialchars($ann['title']) ?>">
                     <img class="ann-feature-card__img"
-                         src="<?= htmlspecialchars($ann['banner_url']) ?>"
+                         src="<?= htmlspecialchars($bannerUrl) ?>"
                          alt="<?= htmlspecialchars($ann['title']) ?>"
                          loading="<?= $imgLoading ?>"
                          decoding="async"
