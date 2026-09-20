@@ -30,7 +30,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <div>
         <p class="admin-page-intro__desc text-muted">Generate and export system performance data, appointment summaries, and user statistics.</p>
     </div>
-    <div style="display: flex; gap: 12px;">
+    <div style="display: flex; gap: 8px;">
         <button onclick="exportReport('appointments')" class="mc-btn mc-btn--primary">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Export CSV Report
@@ -38,34 +38,34 @@ require_once __DIR__ . '/partials/layout_open.php';
     </div>
 </div>
 
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px;">
+<div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr);">
     <?php foreach($stats as $key => $val): ?>
-    <div class="mc-card" style="text-align: center;">
+    <div class="mc-card" style="text-align: center; padding: 12px 10px;">
         <div class="text-xs text-muted mb-xs" style="text-transform: uppercase; font-weight: 800;"><?= str_replace('_', ' ', $key) ?></div>
         <div class="text-h1" style="color: var(--mc-navy-dark);"><?= number_format($val) ?></div>
     </div>
     <?php endforeach; ?>
 </div>
 
-<div class="mc-card">
-    <h3 class="text-h3 mb-md">Available Report Modules</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+<div class="mc-card" style="padding: 14px 16px;">
+    <h3 class="text-h3 mb-md" style="margin-bottom: 10px;">Available Report Modules</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
         
-        <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
-            <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 8px;">Appointment Summary</div>
-            <p class="text-xs text-muted mb-md">Complete list of all consultations, provider assignments, and completion status.</p>
+        <div style="padding: 14px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
+            <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 6px;">Appointment Summary</div>
+            <p class="text-xs text-muted mb-md" style="margin-bottom: 10px;">Complete list of all consultations, provider assignments, and completion status.</p>
             <button onclick="exportReport('appointments')" class="mc-btn mc-btn--outline mc-btn--info" style="width: 100%;">Download CSV</button>
         </div>
 
-        <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
-            <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 8px;">User Demographics</div>
-            <p class="text-xs text-muted mb-md">Breakdown of registered patients by age, gender, and barangay sector.</p>
+        <div style="padding: 14px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
+            <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 6px;">User Demographics</div>
+            <p class="text-xs text-muted mb-md" style="margin-bottom: 10px;">Breakdown of registered patients by age, gender, and barangay sector.</p>
             <button onclick="exportReport('users')" class="mc-btn mc-btn--outline mc-btn--info" style="width: 100%;">Download CSV</button>
         </div>
 
-        <div style="padding: 20px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
-            <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 8px;">System Audit Snapshot</div>
-            <p class="text-xs text-muted mb-md">Condensed log of all security-related actions for the current billing cycle.</p>
+        <div style="padding: 14px; border-radius: 12px; border: 1px solid var(--mc-border-thin); background: var(--mc-ice-blue);">
+            <div style="font-weight: 800; color: var(--mc-navy-dark); margin-bottom: 6px;">System Audit Snapshot</div>
+            <p class="text-xs text-muted mb-md" style="margin-bottom: 10px;">Condensed log of all security-related actions for the current billing cycle.</p>
             <button onclick="exportReport('audit')" class="mc-btn mc-btn--outline mc-btn--info" style="width: 100%;">Download CSV</button>
         </div>
 
