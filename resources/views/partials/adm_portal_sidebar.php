@@ -25,7 +25,7 @@ $portal_configs = [
         'profile_role' => 'System Administrator',
         'sidebar_class' => 'adm-sidebar',
         'default_name' => 'Admin',
-        'default_initials' => ['A', ''],
+        'default_initials' => ['S', 'A'],
         'aria_label' => 'System Administrator navigation',
     ],
     'superadmin' => [

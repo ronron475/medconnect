@@ -184,6 +184,21 @@
   font-size: 12px;
 }
 
+.adm-sidebar:not(.adm-sidebar--bhw) .adm-profile-avatar .profile-avatar,
+.adm-sidebar:not(.adm-sidebar--bhw) .adm-profile-avatar .profile-avatar__img {
+  width: 100%;
+  height: 100%;
+  font-size: 15px;
+  color: #fff;
+  background: transparent;
+}
+
+.adm-sidebar:not(.adm-sidebar--bhw) .adm-profile-avatar .profile-avatar__initials {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
 .adm-profile-card .profile-picture-upload {
   margin-bottom: 0;
   padding-bottom: 0;
