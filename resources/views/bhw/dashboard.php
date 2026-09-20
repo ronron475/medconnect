@@ -25,12 +25,12 @@ $queueRaw = BhwWorkflows::getTriageQueue($pdo, $bhwCtx, 15, $dashFilters);
 
 $bhwDashCss = ASSETS_PATH . '/css/bhw-dashboard.css';
 $bhwDashCssVer = file_exists($bhwDashCss) ? (int) filemtime($bhwDashCss) : time();
+$bhw_head_css = ASSET_BASE . '/assets/css/bhw-dashboard.css?v=' . $bhwDashCssVer;
 $chartThemeJsVer = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
 $bhwDashChartsJsVer = (int) @filemtime(ASSETS_PATH . '/js/bhw-dashboard-charts.js');
 
 require __DIR__ . '/partials/layout_open.php';
 ?>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dashboard.css?v=<?= $bhwDashCssVer ?>">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 <script src="<?= ASSET_BASE ?>/assets/js/medconnect-chart-theme.js?v=<?= $chartThemeJsVer ?>" defer></script>
 <script src="<?= ASSET_BASE ?>/assets/js/bhw-dashboard-charts.js?v=<?= $bhwDashChartsJsVer ?>" defer></script>

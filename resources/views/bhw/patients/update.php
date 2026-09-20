@@ -2,6 +2,8 @@
 $page_title = 'Update Patient Information';
 $bhw_current_file = 'patients/update.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
+$update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
+$bhw_head_css = ASSET_BASE . '/assets/css/bhw-update-patient.css?v=' . $update_css_ver;
 require __DIR__ . '/../partials/layout_open.php';
 $pid = (int) ($_GET['patient_id'] ?? 0);
 $barangay_label = htmlspecialchars($bhw_barangay_name);
@@ -570,9 +572,7 @@ ob_start();
 })();
 <?php
 $bhw_inline_script = ob_get_clean();
-$update_css_ver = (int) @filemtime(ASSETS_PATH . '/css/bhw-update-patient.css');
 ?>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-update-patient.css?v=<?= $update_css_ver ?>">
 <div class="bhw-update-page">
 
   <header class="bhw-update-header bhw-page-intro">

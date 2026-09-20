@@ -42,14 +42,17 @@
   $bhwPortalVer = file_exists($bhwPortalCss) ? (int) filemtime($bhwPortalCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-portal.css?v=<?= $bhwPortalVer ?>"/>
-  <?php if (!empty($bhw_head_css)): ?>
-  <link rel="stylesheet" href="<?= htmlspecialchars((string) $bhw_head_css, ENT_QUOTES, 'UTF-8') ?>"/>
-  <?php endif; ?>
   <?php
-  $bhwSpacingCss = ASSETS_PATH . '/css/bhw-spacing.css';
-  $bhwSpacingVer = file_exists($bhwSpacingCss) ? (int) filemtime($bhwSpacingCss) : time();
+  $bhwHeadCssList = [];
+  if (!empty($bhw_head_css)) {
+      $bhwHeadCssList = is_array($bhw_head_css) ? $bhw_head_css : [(string) $bhw_head_css];
+  }
+  foreach ($bhwHeadCssList as $bhwHeadHref):
+      $bhwHeadHref = trim((string) $bhwHeadHref);
+      if ($bhwHeadHref === '') continue;
   ?>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-spacing.css?v=<?= $bhwSpacingVer ?>"/>
+  <link rel="stylesheet" href="<?= htmlspecialchars($bhwHeadHref, ENT_QUOTES, 'UTF-8') ?>"/>
+  <?php endforeach; ?>
   <?php $profilePictureCssVer = (int) @filemtime(ASSETS_PATH . '/css/profile-picture.css'); ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/profile-picture.css?v=<?= $profilePictureCssVer ?>"/>
 
@@ -75,7 +78,7 @@
       border-radius: var(--bhw-radius);
       border: 1px solid #e2e8f0;
       box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-      padding: 20px;
+      padding: 12px 14px;
     }
 
     .row > [class*='col-'] > .bhw-card,
@@ -84,7 +87,7 @@
     }
     
     .bhw-metric-card {
-      padding: 20px;
+      padding: 12px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -267,6 +270,12 @@
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dark-mode.css?v=<?= $bhwDarkVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/portal_nav_badge_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
+  <?php
+  /* Spacing last so it matches Admin density and wins over page CSS. */
+  $bhwSpacingCss = ASSETS_PATH . '/css/bhw-spacing.css';
+  $bhwSpacingVer = file_exists($bhwSpacingCss) ? (int) filemtime($bhwSpacingCss) : time();
+  ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-spacing.css?v=<?= $bhwSpacingVer ?>"/>
 </head>
 <body
   class="bhw-body"

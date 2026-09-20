@@ -5,7 +5,6 @@
 $page_title = 'Consultation Center';
 $bhw_current_file = 'consultations/index.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
-require __DIR__ . '/../partials/layout_open.php';
 
 $initialFilter = trim($_GET['filter'] ?? '');
 $initialDate = trim($_GET['date'] ?? date('Y-m-d'));
@@ -15,12 +14,12 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $initialDate)) {
 
 $consCssVer = (int) @filemtime(ASSETS_PATH . '/css/bhw-consultations.css');
 $consJsVer = (int) @filemtime(ASSETS_PATH . '/js/bhw-consultations.js');
+$bhw_head_css = ASSET_BASE . '/assets/css/bhw-consultations.css?v=' . $consCssVer;
 $bhw_extra_js = [
     ASSET_BASE . '/assets/js/bhw-consultations.js?v=' . $consJsVer,
 ];
+require __DIR__ . '/../partials/layout_open.php';
 ?>
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-consultations.css?v=<?= $consCssVer ?>">
-
 <div class="bhw-cons-page" id="bhwConsRoot">
 
   <header class="bhw-cons-hero bhw-page-intro">
