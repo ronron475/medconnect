@@ -228,13 +228,6 @@ body.admin-body {
   border-color: rgba(255,255,255,0.18);
 }
 
-/* Admin / Super Admin: avatar-only profile chip (link + styling unchanged) */
-.adm-sidebar:not(.adm-sidebar--bhw) .adm-profile--avatar-only {
-  justify-content: center;
-  gap: 0;
-  padding: 10px;
-}
-
 .adm-profile-avatar {
   width: 34px;
   height: 34px;
@@ -251,7 +244,7 @@ body.admin-body {
   overflow: hidden;
 }
 
-/* Keep large white initials visible inside the Admin/SuperAdmin avatar circle */
+/* Admin / SuperAdmin: keep large white initials inside the avatar circle */
 .adm-sidebar:not(.adm-sidebar--bhw) .adm-profile-avatar {
   width: 40px;
   height: 40px;
