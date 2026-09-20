@@ -4,7 +4,7 @@ $bhw_current_file = 'followup/reminders.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
 require __DIR__ . '/../partials/layout_open.php';
 $bhw_subnav_items = [
-    ['file' => 'track.php', 'label' => 'Track follow-ups'],
+    ['file' => 'track.php', 'label' => 'Appointment and Follow-up Queue'],
     ['file' => 'reminders.php', 'label' => 'Send reminders'],
 ];
 $bhw_subnav_active = 'followup/reminders.php';

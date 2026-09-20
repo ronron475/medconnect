@@ -9,7 +9,11 @@ $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 $bhwId = (int) ($_SESSION['user_id'] ?? 0);
 
 try {
-    if ($action === 'list') {
+    if ($action === 'queue') {
+        Api::success([
+            'queue' => BhwWorkflows::listAppointmentFollowupQueue($pdo, $ctx),
+        ]);
+    } elseif ($action === 'list') {
         $status = $_GET['status'] ?? null;
         if ($status === '') {
             $status = null;

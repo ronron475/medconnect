@@ -737,6 +737,114 @@ final class BhwWorkflows
     }
 
     /**
+     * Unified barangay appointment + follow-up queue for BHW (no clinical extras).
+     *
+     * @return list<array{
+     *   patient_id:int,
+     *   patient_name:string,
+     *   appointment_date:string,
+     *   appointment_time:string,
+     *   status:string,
+     *   status_key:string,
+     *   source:string,
+     *   sort_key:string
+     * }>
+     */
+    public static function listAppointmentFollowupQueue(PDO $pdo, array $ctx): array
+    {
+        require_once __DIR__ . '/consultation_followup.php';
+        consultation_followup_ensure_schema($pdo);
+
+        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+        $join = bhw_pr_user_join('pr', 'p');
+        $rows = [];
+
+        // Consultations / appointments for sector patients (recent past → upcoming window).
+        try {
+            $sql = "
+                SELECT c.id, c.patient_id, c.consult_date, c.consult_time, c.status,
+                       CONCAT(p.first_name, ' ', p.last_name) AS patient_name
+                FROM consultations c
+                INNER JOIN users p ON p.id = c.patient_id AND p.role = 'patient'
+                INNER JOIN patient_registrations pr ON {$join}
+                WHERE {$clause}
+                  AND c.consult_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+                  AND c.consult_date <= DATE_ADD(CURDATE(), INTERVAL 60 DAY)
+                  AND LOWER(COALESCE(c.status, '')) NOT IN ('cancelled', 'canceled')
+                ORDER BY c.consult_date ASC, c.consult_time ASC
+                LIMIT 300
+            ";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $c) {
+                $date = trim((string) ($c['consult_date'] ?? ''));
+                $time = trim((string) ($c['consult_time'] ?? ''));
+                $raw = strtolower(trim((string) ($c['status'] ?? '')));
+                $statusKey = $raw !== '' ? $raw : 'scheduled';
+                $statusLabel = match ($statusKey) {
+                    'scheduled' => 'Scheduled',
+                    'in_consultation' => 'In consultation',
+                    'completed' => 'Completed',
+                    'pending' => 'Pending',
+                    default => $raw !== '' ? ucwords(str_replace('_', ' ', $raw)) : 'Scheduled',
+                };
+                $sortTime = $time !== '' ? $time : '00:00:00';
+                $rows[] = [
+                    'patient_id' => (int) ($c['patient_id'] ?? 0),
+                    'patient_name' => trim((string) ($c['patient_name'] ?? '')) ?: '—',
+                    'appointment_date' => $date !== '' ? date('M j, Y', strtotime($date)) : '—',
+                    'appointment_time' => $time !== '' ? date('g:i A', strtotime('1970-01-01 ' . $time)) : '—',
+                    'status' => $statusLabel,
+                    'status_key' => $statusKey,
+                    'source' => 'consultation',
+                    'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime,
+                ];
+            }
+        } catch (Throwable $e) {
+            // Keep queue usable if consultations query fails.
+        }
+
+        // Doctor follow-ups for the same barangay patients.
+        $followups = self::listFollowups($pdo, $ctx, null);
+        foreach ($followups as $f) {
+            $rawKey = (string) ($f['display_status_key'] ?? 'unknown');
+            if (in_array($rawKey, ['completed', 'cancelled'], true)) {
+                // Still show recent completed? User wants queue — skip completed/cancelled to keep lean.
+                continue;
+            }
+            $date = trim((string) ($f['followup_date'] ?? ''));
+            $start = trim((string) ($f['slot_start_time'] ?? ''));
+            $statusLabel = (string) ($f['display_status'] ?? 'Follow-up');
+            if ($rawKey === 'upcoming' || $rawKey === 'scheduled') {
+                $statusLabel = 'Follow-up';
+                $rawKey = 'follow_up';
+            } elseif ($rawKey === 'unscheduled') {
+                $statusLabel = 'Pending';
+                $rawKey = 'pending';
+            } elseif ($rawKey === 'missed') {
+                $statusLabel = 'Missed';
+            }
+            $sortTime = $start !== '' ? $start : '00:00:00';
+            $rows[] = [
+                'patient_id' => (int) ($f['patient_id'] ?? 0),
+                'patient_name' => trim((string) ($f['patient_name'] ?? '')) ?: '—',
+                'appointment_date' => $date !== '' ? date('M j, Y', strtotime($date)) : 'Date TBD',
+                'appointment_time' => $start !== '' ? date('g:i A', strtotime('1970-01-01 ' . $start)) : '—',
+                'status' => $statusLabel,
+                'status_key' => $rawKey,
+                'source' => 'followup',
+                'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime,
+            ];
+        }
+
+        usort($rows, static function (array $a, array $b): int {
+            return strcmp((string) $a['sort_key'], (string) $b['sort_key']);
+        });
+
+        return $rows;
+    }
+
+    /**
      * Single doctor follow-up for BHW (read-only clinical fields + home-visit activity).
      *
      * @return array{followup: array<string, mixed>, visits: list<array<string, mixed>>}
