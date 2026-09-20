@@ -1302,7 +1302,8 @@ final class BhwWorkflows
     public static function parseDashboardFilters(array $input): array
     {
         $days = (int) ($input['days'] ?? 7);
-        $allowed = [1, 7, 14, 30, 90];
+        // Match Admin analytics periods: Today / Week / Month / Year.
+        $allowed = [1, 7, 30, 365];
         if (!in_array($days, $allowed, true)) {
             $days = 7;
         }
@@ -1499,34 +1500,82 @@ final class BhwWorkflows
         [$clause, $params] = self::patientScopeWhere($pdo, $ctx, $filters);
         $f = self::parseDashboardFilters($filters);
         $days = $f['days'];
+        $prJoin = '(' . bhw_pr_user_join('pr', 'u')
+            . ' OR LOWER(TRIM(COALESCE(pr.email, \'\'))) = LOWER(TRIM(COALESCE(u.email, \'\'))))';
 
         $consultWeek = [];
         $regWeek = [];
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = date('Y-m-d', strtotime("-{$i} days"));
-            $isToday = ($i === 0);
+        $consultMap = [];
+        $regMap = [];
+        $startDate = date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
 
+        try {
             $cStmt = $pdo->prepare("
-                SELECT COUNT(*) FROM consultations c
-                JOIN users u ON u.id = c.patient_id
-                JOIN patient_registrations pr ON pr.email = u.email
-                WHERE {$clause} AND c.consult_date = ?
+                SELECT c.consult_date AS d, COUNT(*) AS cnt
+                FROM consultations c
+                INNER JOIN users u ON u.id = c.patient_id AND u.role = 'patient'
+                INNER JOIN patient_registrations pr ON {$prJoin}
+                WHERE {$clause}
+                  AND c.consult_date >= ?
+                  AND c.consult_date <= CURDATE()
+                GROUP BY c.consult_date
             ");
-            $cStmt->execute(array_merge($params, [$date]));
+            $cStmt->execute(array_merge($params, [$startDate]));
+            foreach ($cStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+                $d = trim((string) ($row['d'] ?? ''));
+                if ($d !== '') {
+                    $consultMap[$d] = (int) ($row['cnt'] ?? 0);
+                }
+            }
+        } catch (Throwable $e) {
+            $consultMap = [];
+        }
+
+        try {
+            $rStmt = $pdo->prepare("
+                SELECT DATE(pr.created_at) AS d, COUNT(*) AS cnt
+                FROM patient_registrations pr
+                WHERE {$clause}
+                  AND DATE(pr.created_at) >= ?
+                  AND DATE(pr.created_at) <= CURDATE()
+                GROUP BY DATE(pr.created_at)
+            ");
+            $rStmt->execute(array_merge($params, [$startDate]));
+            foreach ($rStmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+                $d = trim((string) ($row['d'] ?? ''));
+                if ($d !== '') {
+                    $regMap[$d] = (int) ($row['cnt'] ?? 0);
+                }
+            }
+        } catch (Throwable $e) {
+            $regMap = [];
+        }
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $ts = strtotime("-{$i} days");
+            $date = date('Y-m-d', $ts);
+            $isToday = ($i === 0);
+            if ($days === 1) {
+                $label = 'Today';
+            } elseif ($days <= 7) {
+                $label = date('D', $ts);
+            } elseif ($days <= 30) {
+                $label = date('M j', $ts);
+            } else {
+                // Year: sparse month ticks (same as Admin).
+                $label = ((int) date('j', $ts) === 1 || $i === $days - 1 || $i === 0)
+                    ? date('M', $ts)
+                    : '';
+            }
+
             $consultWeek[] = [
-                'label'    => $days === 1 ? 'Today' : ($days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date))),
-                'count'    => (int) $cStmt->fetchColumn(),
+                'label'    => $label,
+                'count'    => $consultMap[$date] ?? 0,
                 'is_today' => $isToday,
             ];
-
-            $rStmt = $pdo->prepare("
-                SELECT COUNT(*) FROM patient_registrations pr
-                WHERE {$clause} AND DATE(pr.created_at) = ?
-            ");
-            $rStmt->execute(array_merge($params, [$date]));
             $regWeek[] = [
-                'label'    => $days === 1 ? 'Today' : ($days > 14 ? date('M j', strtotime($date)) : date('D', strtotime($date))),
-                'count'    => (int) $rStmt->fetchColumn(),
+                'label'    => $label,
+                'count'    => $regMap[$date] ?? 0,
                 'is_today' => $isToday,
             ];
         }
@@ -1571,10 +1620,25 @@ final class BhwWorkflows
 
         return [
             'days'               => $days,
+            'period_label'       => match ($days) {
+                1 => 'Today',
+                7 => 'Week',
+                30 => 'Month',
+                365 => 'Year',
+                default => 'Week',
+            },
+            'period_range_label' => match ($days) {
+                1 => 'today',
+                7 => 'this week',
+                30 => 'this month',
+                365 => 'this year',
+                default => 'this week',
+            },
             'consultations_week' => $consultWeek,
             'registrations_week' => $regWeek,
             'triage_mix'         => $triageMix,
             'workflow_pipeline'  => $workflowPipeline,
+            'generated_at'       => date('c'),
         ];
     }
 
