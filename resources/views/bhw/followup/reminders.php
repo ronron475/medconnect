@@ -22,7 +22,9 @@ $bhw_subnav_active = 'followup/reminders.php';
     </div>
   </div>
 </div>
-<script>
+<?php
+ob_start();
+?>
 (function () {
   var el = document.getElementById('bhwRemList');
   var sending = {};
@@ -103,5 +105,7 @@ $bhw_subnav_active = 'followup/reminders.php';
 
   loadReminders();
 })();
-</script>
-<?php require __DIR__ . '/../partials/layout_close.php'; ?>
+<?php
+$bhw_inline_script = ob_get_clean();
+require __DIR__ . '/../partials/layout_close.php';
+?>

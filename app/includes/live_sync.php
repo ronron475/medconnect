@@ -54,7 +54,12 @@ function live_sync_payload(PDO $pdo, int $userId, string $role): array
         $barangayId = live_sync_bhw_barangay_id($pdo, $userId);
         $fingerprints['triage'] = live_sync_bhw_triage_fp($pdo, $barangayId);
         $fingerprints['appointments'] = live_sync_bhw_consultations_fp($pdo, $barangayId, $today);
-        $fingerprints['queue'] = $fingerprints['triage'];
+        $fingerprints['followups'] = live_sync_bhw_followups_fp($pdo, $barangayId);
+        $fingerprints['queue'] = live_sync_hash(
+            $fingerprints['triage'],
+            $fingerprints['appointments'],
+            $fingerprints['followups']
+        );
     } elseif (in_array($role, ['admin', 'superadmin'], true)) {
         $fingerprints['queue'] = live_sync_admin_queue_fp($pdo, $today);
         $fingerprints['appointments'] = $fingerprints['queue'];
@@ -352,23 +357,32 @@ function live_sync_bhw_triage_fp(PDO $pdo, int $barangayId): string
         return live_sync_hash('0');
     }
 
-    $sql = "SELECT COUNT(*), COALESCE(MAX(tr.id),0)
-            FROM triage_results tr
-            INNER JOIN users u ON u.id = tr.patient_id
-            WHERE u.barangay_id = ?";
-    try {
-        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
-        if (!in_array('barangay_id', $cols, true) && live_sync_table_exists($pdo, 'patient_registrations')) {
-            $sql = "SELECT COUNT(*), COALESCE(MAX(tr.id),0)
-                    FROM triage_results tr
-                    INNER JOIN patient_registrations pr ON pr.user_id = tr.patient_id
-                    WHERE pr.barangay_id = ?";
-        }
-    } catch (Throwable $e) {
-        // keep users.barangay_id query
+    // Match BHW queue/dashboard scope: patient_registrations.barangay_id (not users.barangay_id).
+    if (live_sync_table_exists($pdo, 'patient_registrations')) {
+        return live_sync_hash(live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(MAX(tr.id),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(tr.assessed_at)),0)
+             FROM triage_results tr
+             INNER JOIN users p ON p.id = tr.patient_id AND p.role = 'patient'
+             INNER JOIN patient_registrations pr ON (
+                 pr.user_id = p.id
+                 OR (pr.user_id IS NULL AND LOWER(TRIM(COALESCE(pr.email,''))) = LOWER(TRIM(COALESCE(p.email,''))))
+                 OR LOWER(TRIM(COALESCE(pr.email,''))) = LOWER(TRIM(COALESCE(p.email,'')))
+             )
+             WHERE pr.barangay_id = ?",
+            [$barangayId]
+        ));
     }
 
-    return live_sync_hash(live_sync_row($pdo, $sql, [$barangayId]));
+    return live_sync_hash(live_sync_row(
+        $pdo,
+        "SELECT COUNT(*), COALESCE(MAX(tr.id),0)
+         FROM triage_results tr
+         INNER JOIN users u ON u.id = tr.patient_id
+         WHERE u.barangay_id = ?",
+        [$barangayId]
+    ));
 }
 
 function live_sync_bhw_consultations_fp(PDO $pdo, int $barangayId, string $today): string
@@ -377,29 +391,61 @@ function live_sync_bhw_consultations_fp(PDO $pdo, int $barangayId, string $today
         return live_sync_hash('0');
     }
 
-    $sql = "SELECT COUNT(*), COALESCE(MAX(c.id),0),
-                   COALESCE(SUM(CASE LOWER(COALESCE(c.status,''))
-                       WHEN 'in_consultation' THEN 1 ELSE 0 END),0)
-            FROM consultations c
-            INNER JOIN users u ON u.id = c.patient_id
-            WHERE u.barangay_id = ?
-              AND c.consult_date >= DATE_SUB(?, INTERVAL 1 DAY)";
-    try {
-        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
-        if (!in_array('barangay_id', $cols, true) && live_sync_table_exists($pdo, 'patient_registrations')) {
-            $sql = "SELECT COUNT(*), COALESCE(MAX(c.id),0),
-                           COALESCE(SUM(CASE LOWER(COALESCE(c.status,''))
-                               WHEN 'in_consultation' THEN 1 ELSE 0 END),0)
-                    FROM consultations c
-                    INNER JOIN patient_registrations pr ON pr.user_id = c.patient_id
-                    WHERE pr.barangay_id = ?
-                      AND c.consult_date >= DATE_SUB(?, INTERVAL 1 DAY)";
-        }
-    } catch (Throwable $e) {
-        // keep users.barangay_id query
+    if (live_sync_table_exists($pdo, 'patient_registrations')) {
+        return live_sync_hash(live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(MAX(c.id),0),
+                    COALESCE(SUM(CASE LOWER(COALESCE(c.status,''))
+                        WHEN 'in_consultation' THEN 1 ELSE 0 END),0)
+             FROM consultations c
+             INNER JOIN users p ON p.id = c.patient_id AND p.role = 'patient'
+             INNER JOIN patient_registrations pr ON (
+                 pr.user_id = p.id
+                 OR LOWER(TRIM(COALESCE(pr.email,''))) = LOWER(TRIM(COALESCE(p.email,'')))
+             )
+             WHERE pr.barangay_id = ?
+               AND c.consult_date >= DATE_SUB(?, INTERVAL 7 DAY)",
+            [$barangayId, $today]
+        ));
     }
 
-    return live_sync_hash(live_sync_row($pdo, $sql, [$barangayId, $today]));
+    return live_sync_hash(live_sync_row(
+        $pdo,
+        "SELECT COUNT(*), COALESCE(MAX(c.id),0),
+                COALESCE(SUM(CASE LOWER(COALESCE(c.status,''))
+                    WHEN 'in_consultation' THEN 1 ELSE 0 END),0)
+         FROM consultations c
+         INNER JOIN users u ON u.id = c.patient_id
+         WHERE u.barangay_id = ?
+           AND c.consult_date >= DATE_SUB(?, INTERVAL 1 DAY)",
+        [$barangayId, $today]
+    ));
+}
+
+function live_sync_bhw_followups_fp(PDO $pdo, int $barangayId): string
+{
+    if ($barangayId <= 0 || !live_sync_table_exists($pdo, 'followups')) {
+        return live_sync_hash('0');
+    }
+
+    if (!live_sync_table_exists($pdo, 'patient_registrations')) {
+        return live_sync_hash('0');
+    }
+
+    return live_sync_hash(live_sync_row(
+        $pdo,
+        "SELECT COUNT(*), COALESCE(MAX(f.id),0),
+                COALESCE(MAX(UNIX_TIMESTAMP(f.created_at)),0)
+         FROM followups f
+         INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
+         INNER JOIN patient_registrations pr ON (
+             pr.user_id = p.id
+             OR LOWER(TRIM(COALESCE(pr.email,''))) = LOWER(TRIM(COALESCE(p.email,'')))
+         )
+         WHERE pr.barangay_id = ?
+           AND LOWER(COALESCE(f.status,'')) NOT IN ('completed','cancelled','canceled')",
+        [$barangayId]
+    ));
 }
 
 function live_sync_admin_queue_fp(PDO $pdo, string $today): string

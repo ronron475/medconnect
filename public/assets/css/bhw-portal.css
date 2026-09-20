@@ -414,6 +414,43 @@ body.bhw-body .bhw-afu-search input:focus {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
+body.bhw-body .bhw-afu-live {
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0f766e;
+  background: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+}
+
+body.bhw-body .bhw-afu-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+}
+
+body.bhw-body .bhw-afu-live.is-offline {
+  color: #b91c1c;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+body.bhw-body .bhw-afu-live.is-offline::before {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
 .bhw-fu-actions {
   display: flex;
   flex-wrap: wrap;

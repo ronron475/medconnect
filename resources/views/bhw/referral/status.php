@@ -37,7 +37,9 @@ $bhw_subnav_active = 'referral/status.php';
     </div>
   </div>
 </div>
-<script>
+<?php
+ob_start();
+?>
 (function () {
   var tb = document.getElementById('bhwRefBody');
 
@@ -76,5 +78,7 @@ $bhw_subnav_active = 'referral/status.php';
     tb.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-4">Could not load referrals.</td></tr>';
   });
 })();
-</script>
-<?php require __DIR__ . '/../partials/layout_close.php'; ?>
+<?php
+$bhw_inline_script = ob_get_clean();
+require __DIR__ . '/../partials/layout_close.php';
+?>
