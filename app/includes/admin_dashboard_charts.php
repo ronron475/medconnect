@@ -267,7 +267,7 @@ function admin_chart_user_roles(PDO $pdo): array
 
 /**
  * Distinct user counts keyed by canonical role.
- * BHW uses role value 'bhw' in the users table (not a separate BHW accounts table).
+ * BHW uses role value 'bhw' in the users table (not applications / invites).
  *
  * @return array<string, int>
  */
@@ -281,16 +281,17 @@ function admin_chart_role_counts_map(PDO $pdo): array
         $hasArchivedAt = in_array('archived_at', $cols, true);
         $hasAccountStatus = in_array('account_status', $cols, true);
 
-        // Exclude archived accounts only (same idea as staff "All" lists). Do NOT
-        // filter by barangay_id, is_active alone, or the current session user.
+        // Source: users accounts only. No barangay / session / LIMIT / JOIN filters.
+        // Exclude only explicitly archived accounts. NULL/blank account_status must still count
+        // (SQL `<> 'archived'` alone would drop NULL rows and under-count BHW).
         $where = [
-            "LOWER(TRIM(role)) IN ('patient','provider','bhw','admin','superadmin')",
+            "LOWER(TRIM(COALESCE(role, ''))) IN ('patient','provider','bhw','admin','superadmin')",
         ];
         if ($hasArchivedAt) {
             $where[] = 'archived_at IS NULL';
         }
         if ($hasAccountStatus) {
-            $where[] = "account_status <> 'archived'";
+            $where[] = "(account_status IS NULL OR TRIM(account_status) = '' OR LOWER(TRIM(account_status)) <> 'archived')";
         }
 
         $sql = '
