@@ -222,9 +222,16 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
     ];
 }
 
-/** @return list<array{label:string,count:int,color:string}> */
+/**
+ * Live user counts by role for Admin + Super Admin User Distribution chart.
+ * Always returns every tracked role (including BHW) so the chart never omits a category.
+ * Counts every matching users-table row once — no barangay filter, no demo values.
+ *
+ * @return list<array{role:string,label:string,count:int,color:string}>
+ */
 function admin_chart_user_roles(PDO $pdo): array
 {
+    $order = ['patient', 'provider', 'bhw', 'admin', 'superadmin'];
     $palette = [
         'patient'    => '#0d9488',
         'provider'   => '#2563eb',
@@ -240,7 +247,7 @@ function admin_chart_user_roles(PDO $pdo): array
         'superadmin' => 'Super Admins',
     ];
 
-    $out = [];
+    $counts = array_fill_keys($order, 0);
     try {
         $stmt = $pdo->query("
             SELECT role, COUNT(*) AS cnt
@@ -249,15 +256,22 @@ function admin_chart_user_roles(PDO $pdo): array
             GROUP BY role
         ");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-            $role = (string) $row['role'];
-            $out[] = [
-                'label' => $labels[$role] ?? ucfirst($role),
-                'count' => (int) $row['cnt'],
-                'color' => $palette[$role] ?? '#64748b',
-            ];
+            $role = (string) ($row['role'] ?? '');
+            if (array_key_exists($role, $counts)) {
+                $counts[$role] = (int) $row['cnt'];
+            }
         }
-        usort($out, fn($a, $b) => $b['count'] <=> $a['count']);
     } catch (Throwable $e) {}
+
+    $out = [];
+    foreach ($order as $role) {
+        $out[] = [
+            'role'  => $role,
+            'label' => $labels[$role],
+            'count' => $counts[$role],
+            'color' => $palette[$role],
+        ];
+    }
 
     return $out;
 }

@@ -43,7 +43,8 @@
   function roleClass(role) {
     if (role === 'patient') return 'adm-role-badge--patient';
     if (role === 'provider') return 'adm-role-badge--provider';
-    if (role === 'admin') return 'adm-role-badge--admin';
+    if (role === 'bhw') return 'adm-role-badge--bhw';
+    if (role === 'admin' || role === 'superadmin') return 'adm-role-badge--admin';
     return 'adm-role-badge--default';
   }
 
@@ -121,6 +122,9 @@
     var m = payload.metrics || {};
     setText('[data-live-metric="patients"]', m.patients || 0);
     setText('[data-live-metric="providers"]', m.providers || 0);
+    setText('[data-live-metric="bhw"]', m.bhw || 0);
+    setText('[data-live-metric="admins"]', m.admins || 0);
+    setText('[data-live-metric="total_users"]', m.total_users || 0);
     setText('[data-live-metric="consultations"]', m.consultations || 0);
     setText('[data-live-metric="emergency_cases"]', m.emergency_cases || 0);
     setText('[data-live-metric="barangays"]', m.barangays || 0);
@@ -229,6 +233,9 @@
     else updateAdmin(payload);
     touchSync(payload.updated_at);
     if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+    if (window.MedConnectAdminDashboardCharts && typeof window.MedConnectAdminDashboardCharts.refresh === 'function') {
+      window.MedConnectAdminDashboardCharts.refresh();
+    }
   }
 
   async function refresh() {
@@ -252,7 +259,10 @@
   function start() {
     if (timer) return;
     refresh();
-    timer = global.setInterval(refresh, POLL_MS);
+    timer = global.setInterval(function () {
+      if (global.MedConnectLiveSync && Date.now() - (global.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      refresh();
+    }, POLL_MS);
   }
 
   function stop() {

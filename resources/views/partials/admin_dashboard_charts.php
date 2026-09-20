@@ -78,10 +78,10 @@ $chart_theme_css_ver = (int) @filemtime(ASSETS_PATH . '/css/medconnect-charts.cs
         </div>
         <div class="adm-chart-kpi">
           <strong id="admKpiUsersTotal">—</strong>
-          <span>Total users</span>
+          <span id="admKpiUsersLabel">Total users</span>
         </div>
       </div>
-      <div class="adm-chart-canvas-wrap">
+      <div class="adm-chart-canvas-wrap adm-chart-canvas-wrap--roles">
         <canvas id="admChartRoles" aria-label="User distribution chart"></canvas>
       </div>
     </article>

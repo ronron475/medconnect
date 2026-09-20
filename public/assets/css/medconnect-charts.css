@@ -185,6 +185,12 @@
   height: 280px;
 }
 
+.mc-chart-canvas-wrap--roles,
+.adm-chart-canvas-wrap--roles {
+  min-height: 220px;
+  height: 240px;
+}
+
 .mc-chart-canvas-wrap--ring {
   min-height: 220px;
   height: 240px;

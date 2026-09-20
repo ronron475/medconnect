@@ -452,8 +452,30 @@ function live_sync_admin_users_fp(PDO $pdo): string
         return live_sync_hash('0');
     }
 
-    return live_sync_hash(live_sync_row(
-        $pdo,
-        'SELECT COUNT(*), COALESCE(MAX(id),0) FROM users'
-    ));
+    // Include role breakdown + updated_at so add/remove/role/status changes
+    // (e.g. new BHW) invalidate Admin/SuperAdmin dashboard + charts immediately.
+    $parts = [
+        live_sync_row(
+            $pdo,
+            'SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(UNIX_TIMESTAMP(MAX(updated_at)),0),
+                    COALESCE(SUM(is_active=1),0), COALESCE(SUM(is_active=0),0)
+             FROM users'
+        ),
+    ];
+    try {
+        $stmt = $pdo->query("
+            SELECT role, COUNT(*) AS cnt
+            FROM users
+            WHERE role IN ('patient','provider','bhw','admin','superadmin')
+            GROUP BY role
+            ORDER BY role ASC
+        ");
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $parts[] = ((string) ($row['role'] ?? '')) . ':' . ((int) ($row['cnt'] ?? 0));
+        }
+    } catch (Throwable $e) {
+        // keep base fingerprint
+    }
+
+    return live_sync_hash(...$parts);
 }

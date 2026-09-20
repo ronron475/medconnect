@@ -52,6 +52,11 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     <div class="superadmin-stat-grid superadmin-stat-grid--compact">
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="patients"><?= (int) $stats['total_patients'] ?></div><div class="text-xs text-muted">Patients</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="providers"><?= (int) $stats['total_providers'] ?></div><div class="text-xs text-muted">Doctors</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="bhw"><?= (int) $stats['total_bhw'] ?></div><div class="text-xs text-muted">BHW</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="total_users"><?= (int) (
+            ($stats['total_patients'] ?? 0) + ($stats['total_providers'] ?? 0) + ($stats['total_bhw'] ?? 0)
+            + ($stats['total_admins'] ?? 0) + ($stats['total_superadmins'] ?? 0)
+        ) ?></div><div class="text-xs text-muted">Total Users</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="consultations"><?= (int) $stats['total_consultations'] ?></div><div class="text-xs text-muted">Consultations</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="emergency_cases" style="color:<?= (int) $stats['emergency_cases'] > 0 ? '#ef233c' : 'inherit' ?>;"><?= (int) $stats['emergency_cases'] ?></div><div class="text-xs text-muted">Emergency Cases</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="barangays"><?= (int) $stats['total_barangays'] ?></div><div class="text-xs text-muted">Barangays</div></div>
