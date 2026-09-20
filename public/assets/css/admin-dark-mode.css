@@ -307,6 +307,24 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--blue {
   color: #93c5fd !important;
 }
 
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--green,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--green {
+  background: rgba(22, 163, 74, 0.15) !important;
+  color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--purple,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--purple {
+  background: rgba(147, 51, 234, 0.15) !important;
+  color: #d8b4fe !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--amber,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--amber {
+  background: rgba(217, 119, 6, 0.15) !important;
+  color: #fcd34d !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--indigo,
 html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--indigo {
   background: rgba(13, 148, 136, 0.15) !important;
@@ -323,6 +341,17 @@ html[data-theme-resolved='dark'] body.admin-body .adm-metric-icon--red,
 html[data-theme-resolved='dark'] body.superadmin-body .adm-metric-icon--red {
   background: rgba(220, 38, 38, 0.15) !important;
   color: #fca5a5 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .adm-metric--patients,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric--patients,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric--doctors,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric--doctors,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric--bhw,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric--bhw,
+html[data-theme-resolved='dark'] body.admin-body .adm-metric--consults,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-metric--consults {
+  background: var(--adm-card-bg, #1e293b) !important;
 }
 
 /* ── Typography ── */

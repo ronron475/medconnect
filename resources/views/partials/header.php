@@ -45,9 +45,9 @@ $today = date('F j, Y');
 $now   = date('h:i A');
 $header_date_caps = strtoupper(date('l, M j, Y'));
 $is_bhw_portal = $user_role === 'bhw';
+$is_admin_portal = ($user_role === 'admin') || ($user_role === 'superadmin');
 /* Admin/SuperAdmin/BHW: page title only — no role subtitle above the title. */
-$compact_topbar = ($user_role === 'admin')
-    || ($user_role === 'superadmin')
+$compact_topbar = $is_admin_portal
     || $is_bhw_portal
     || !empty($mc_dashboard_topbar);
 
@@ -100,13 +100,15 @@ if ($is_bhw_portal) {
   <div class="topbar-right">
 
     <?php if (!$is_patient_portal): ?>
-    <!-- Live Digital Clock -->
-    <div class="topbar-datetime" aria-label="Current date and time">
+    <!-- Live date (admin: date only — no stacked time); BHW/provider: date + time -->
+    <div class="topbar-datetime<?= $is_admin_portal ? ' topbar-datetime--date-only' : '' ?>" aria-label="<?= $is_admin_portal ? 'Current date' : 'Current date and time' ?>">
       <span class="topbar-date" id="global-date"><?= $today ?></span>
+      <?php if (!$is_admin_portal): ?>
       <?php if ($is_bhw_portal): ?>
       <span class="topbar-time-sep" aria-hidden="true">|</span>
       <?php endif; ?>
       <span class="topbar-time" id="global-time"><?= $now ?></span>
+      <?php endif; ?>
     </div>
 
     <!-- Thin vertical separator rule -->
@@ -161,13 +163,13 @@ if ($is_bhw_portal) {
 (function() {
   const dateEl = document.getElementById('global-date');
   const timeEl = document.getElementById('global-time');
-  if (!timeEl) return;
+  if (!dateEl && !timeEl) return;
   const M = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   function tick() {
     const d = new Date(), h = d.getHours(), m = d.getMinutes(), ampm = h >= 12 ? 'PM' : 'AM';
     if (dateEl) dateEl.textContent = M[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
-    timeEl.textContent = (h % 12 || 12) + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
+    if (timeEl) timeEl.textContent = (h % 12 || 12) + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm;
   }
-  tick(); setInterval(tick, 1000);
+  tick(); setInterval(tick, timeEl ? 1000 : 60000);
 })();
 </script>

@@ -23,7 +23,6 @@ $admin_id = (int) ($_SESSION['user_id'] ?? 0);
 
 // Platform metrics — same role map as User Distribution chart
 $role_counts     = admin_chart_role_counts_map($pdo);
-$total_users     = array_sum($role_counts);
 $total_patients  = (int) ($role_counts['patient'] ?? 0);
 $total_providers = (int) ($role_counts['provider'] ?? 0);
 $total_bhw       = (int) ($role_counts['bhw'] ?? 0);
@@ -86,33 +85,43 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
         </div>
     </div>
     <div class="adm-metrics">
-        <div class="adm-metric">
+        <div class="adm-metric adm-metric--patients">
             <div class="adm-metric-icon adm-metric-icon--blue">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value" data-live-metric="patients"><?= $total_patients ?></div>
                 <div class="adm-metric-label">Patients</div>
-                <div class="adm-metric-sub" data-live-metric="total_users"><?= $total_users ?> total users</div>
+                <div class="adm-metric-value" data-live-metric="patients"><?= $total_patients ?></div>
+                <div class="adm-metric-sub">Total Patients</div>
             </div>
         </div>
-        <div class="adm-metric">
-            <div class="adm-metric-icon adm-metric-icon--indigo">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+        <div class="adm-metric adm-metric--doctors">
+            <div class="adm-metric-icon adm-metric-icon--green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value" data-live-metric="providers"><?= $total_providers ?></div>
                 <div class="adm-metric-label">Doctors</div>
-                <div class="adm-metric-sub" data-live-metric="bhw"><?= $total_bhw ?> BHW active</div>
+                <div class="adm-metric-value" data-live-metric="providers"><?= $total_providers ?></div>
+                <div class="adm-metric-sub">Total Doctors</div>
             </div>
         </div>
-        <div class="adm-metric">
-            <div class="adm-metric-icon adm-metric-icon--teal">
+        <div class="adm-metric adm-metric--bhw">
+            <div class="adm-metric-icon adm-metric-icon--purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="adm-metric-body">
+                <div class="adm-metric-label">BHWs</div>
+                <div class="adm-metric-value" data-live-metric="bhw"><?= $total_bhw ?></div>
+                <div class="adm-metric-sub">Total BHWs</div>
+            </div>
+        </div>
+        <div class="adm-metric adm-metric--consults">
+            <div class="adm-metric-icon adm-metric-icon--amber">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value" data-live-metric="consults_today"><?= $consults_today ?></div>
                 <div class="adm-metric-label">Consultations Today</div>
+                <div class="adm-metric-value" data-live-metric="consults_today"><?= $consults_today ?></div>
                 <div class="adm-metric-sub" data-live-metric="active_sessions"><?= $active_sessions ?> in session now</div>
             </div>
         </div>
@@ -121,8 +130,8 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
             </div>
             <div class="adm-metric-body">
-                <div class="adm-metric-value" style="color:#dc2626;" data-live-metric="urgent_triage"><?= $urgent_triage ?></div>
                 <div class="adm-metric-label">Urgent Triage</div>
+                <div class="adm-metric-value" style="color:#dc2626;" data-live-metric="urgent_triage"><?= $urgent_triage ?></div>
                 <div class="adm-metric-sub">Requires attention</div>
             </div>
         </div>

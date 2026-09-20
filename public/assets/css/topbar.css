@@ -111,6 +111,16 @@
   gap: 1px;
 }
 
+/* Admin/SuperAdmin: single date line (no stacked clock) */
+.topbar-datetime--date-only {
+  flex-direction: row;
+  align-items: center;
+  height: auto;
+  padding-right: 0;
+  border-right: none;
+  gap: 0;
+}
+
 .topbar-date {
   font-size: 13px;
   font-weight: 600;
