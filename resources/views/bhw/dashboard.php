@@ -92,20 +92,6 @@ require __DIR__ . '/partials/layout_open.php';
     </div>
   </section>
 
-  <section class="bhw-dash-panel" aria-labelledby="bhwDashOpsTitle">
-    <div class="bhw-dash-panel__head">
-      <h3 id="bhwDashOpsTitle">Operations Summary</h3>
-      <span class="bhw-dash-panel__note">Live platform activity</span>
-    </div>
-    <div class="bhw-dash-ops">
-      <?php
-      $notif_widget_mode = 'strip';
-      $notif_widget_bare = true;
-      require VIEWS_PATH . '/partials/notification_widgets.php';
-      ?>
-    </div>
-  </section>
-
   <section class="bhw-dash-panel bhw-dash-panel--queue" aria-labelledby="bhwDashQueueTitle">
     <div class="bhw-dash-panel__head">
       <h3 id="bhwDashQueueTitle">Triage &amp; Scheduling Queue</h3>

@@ -929,7 +929,7 @@ final class ComplaintSemanticValidator
             $value = (string) ($s['value'] ?? '');
             if ($value !== '' && in_array($type, [
                 'symptom', 'body_part', 'duration', 'injury', 'malaise',
-                'finding', 'condition', 'physical_change',
+                'finding', 'condition', 'physical_change', 'breathing', 'bleeding',
             ], true)) {
                 $out[] = $type . ':' . $value;
             }

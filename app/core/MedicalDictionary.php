@@ -153,12 +153,22 @@ final class MedicalDictionary
         if ($term === '') {
             return false;
         }
+        // Local/dictionary terms are not English.
         if (self::lookup($term) !== null) {
             return false;
         }
-
-        return self::lookupByEnglish($term) !== null
-            || preg_match('/^[a-z0-9\s\-]+$/i', $term) === 1;
+        // Real English dictionary hit for the whole phrase.
+        if (self::lookupByEnglish($term) !== null) {
+            return true;
+        }
+        // Common English closed-class / auxiliary evidence — not bare Latin/ASCII script.
+        // Avoids treating Hiligaynon/Tagalog ASCII complaints as English while still
+        // recognizing short English sentences like "I cannot breathe".
+        return (bool) preg_match(
+            '/\b(i|my|you|the|a|an|is|are|was|were|have|has|had|cannot|can\'t|don\'t|do\s+not|'
+            . 'not|with|without|and|or|for|from|this|that|it|me|am)\b/iu',
+            $term
+        );
     }
 
     private static function buildEnglishIndex(): void

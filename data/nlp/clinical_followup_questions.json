@@ -200,7 +200,7 @@
       "red_flag_related": false,
       "english": "On a scale of 1 to 10, where 1 means very mild pain and 10 means the worst pain you can imagine, how severe is your pain?",
       "tagalog": "Sa sukat na 1 hanggang 10, kung saan ang 1 ay napakagaan na sakit at ang 10 ay pinakamalalang sakit na maiisip mo, gaano kasakit ang nararamdaman mo?",
-      "hiligaynon": "Gaano kasakit ang imo nabatyagan halin 1 tubtob 10?"
+      "hiligaynon": "Pila ka grabe ang imo kasakit, halin 1 tubtob 10?"
     },
     {
       "question_id": "DIZZINESS_TYPE",

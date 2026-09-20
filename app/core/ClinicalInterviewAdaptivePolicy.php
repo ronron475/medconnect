@@ -51,14 +51,16 @@ final class ClinicalInterviewAdaptivePolicy
         if ($complaints === [] && $assessment !== []) {
             $complaints = ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $facts);
         }
+        $caseHaystack = self::fullCaseHaystack($context, $transcript, $facts);
         $concepts = ClinicalInterviewContextResolver::deriveFamilies($complaints, $transcript, $facts);
-        $concepts = self::enrichConcepts($concepts, $facts, $transcript);
+        // Enrich from full case (incl. meaning bridge) so multilingual gloss can
+        // surface pain without expanding per-dialect word lists.
+        $concepts = self::enrichConcepts($concepts, $facts, $transcript, $caseHaystack);
         $concepts = array_values(array_unique(array_filter(array_map(
             static fn ($c): string => strtolower(trim((string) $c)),
             $concepts
         ))));
 
-        $caseHaystack = self::fullCaseHaystack($context, $transcript, $facts);
         $gaps = self::openClinicalGaps($facts, $transcript, $concepts, $caseHaystack);
 
         $queue = [];
@@ -372,8 +374,8 @@ final class ClinicalInterviewAdaptivePolicy
             $complaints = ClinicalInterviewContextResolver::deriveComplaints($assessment, $transcript, $facts);
         }
         $concepts = ClinicalInterviewContextResolver::deriveFamilies($complaints, $transcript, $facts);
-        $concepts = self::enrichConcepts($concepts, $facts, $transcript);
         $caseHaystack = self::fullCaseHaystack($context, $transcript, $facts);
+        $concepts = self::enrichConcepts($concepts, $facts, $transcript, $caseHaystack);
         $gaps = self::openClinicalGaps($facts, $transcript, $concepts, $caseHaystack);
 
         // Critical gaps that should block early finalize.
@@ -438,6 +440,35 @@ final class ClinicalInterviewAdaptivePolicy
             }
         }
         $parts[] = self::factsSummary($facts);
+
+        // Meaning bridge is interpretation aid only — never replaces patient speech,
+        // but lets existing English pain/concept gates fire for local wording.
+        $bridge = is_array($context['semantic_bridge'] ?? null) ? $context['semantic_bridge'] : [];
+        foreach ([
+            'ollama_meaning',
+            'gemini_concept',
+            'nlp_text',
+            'python_gloss',
+            'domain_normalized',
+            'domain_meaning',
+        ] as $key) {
+            $bit = trim((string) ($bridge[$key] ?? ''));
+            if ($bit !== '') {
+                $parts[] = $bit;
+            }
+        }
+        foreach ((array) ($bridge['python_symptoms'] ?? []) as $sym) {
+            $s = trim((string) $sym);
+            if ($s !== '') {
+                $parts[] = $s;
+            }
+        }
+        foreach ((array) ($bridge['domain_relationships'] ?? []) as $rel) {
+            $r = strtoupper(trim((string) $rel));
+            if ($r !== '') {
+                $parts[] = $r;
+            }
+        }
 
         return mb_strtolower(trim(implode("\n", array_filter($parts, static fn ($p): bool => trim((string) $p) !== ''))));
     }
@@ -508,22 +539,10 @@ final class ClinicalInterviewAdaptivePolicy
             $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
         }
 
+        // Numeric 1–10 only closes severity — qualitative intensifiers (grabe/severe)
+        // must not skip PAIN_SEVERITY.
         if (self::caseSuggestsPainIntensity($concepts, $facts, $caseHaystack) && $sev === null) {
-            // Numeric score is preferred, but do not block triage when intensity is already
-            // described qualitatively or when a critical red-flag fact is already known.
-            $qual = trim((string) ($facts['pain_qualifier'] ?? ''));
-            $criticalKnown = ($facts['weakness'] ?? null) === true
-                || ($facts['speech_difficulty'] ?? null) === true
-                || ($facts['vision_change'] ?? null) === true
-                || ($facts['breathing_difficulty'] ?? null) === true
-                || ($facts['bleeding_heavy'] ?? null) === true;
-            $qualEnough = $qual !== '' || (bool) preg_match(
-                '/\b(mild|moderate|severe|grabe|gamay|medyo|tunga-tunga|pinakagrabe|unbearable)\b/u',
-                $caseHaystack
-            );
-            if (!$criticalKnown && !$qualEnough) {
-                $gaps['severity'] = true;
-            }
+            $gaps['severity'] = true;
         }
         if (self::locationIsMaterial($concepts, $facts) && $locs === []) {
             $gaps['location'] = true;
@@ -709,15 +728,14 @@ final class ClinicalInterviewAdaptivePolicy
             return null;
         }
 
-        // Gap-driven boosts so the most useful unknown fact is asked first.
-        // Order is case-dependent: missing location outranks severity; acuity can
-        // elevate red-flag probes above routine history.
-        if ($gapKey === 'location' && !empty($gaps['location'])) {
+        // Gap-driven boosts: for pain cases, numeric severity is first required
+        // follow-up; then location; then timing / associated. Red-flags follow
+        // severity when the scale is still open (domain-filtered only).
+        if ($gapKey === 'severity' && !empty($gaps['severity'])) {
             return 2;
         }
-        if ($gapKey === 'severity' && !empty($gaps['severity'])) {
-            // Prefer locating the complaint before scoring intensity when site unknown.
-            return !empty($gaps['location']) ? 4 : 3;
+        if ($gapKey === 'location' && !empty($gaps['location'])) {
+            return 3;
         }
         if ($gapKey === 'associated_detail' && !empty($gaps['associated_detail'])) {
             return 3;
@@ -732,9 +750,12 @@ final class ClinicalInterviewAdaptivePolicy
 
         // Red-flag probes: only when domain-relevant (already filtered) and slot unknown.
         if ($redFlag) {
-            // High-acuity cues: prefer warning-sign questions over routine severity/timing.
             $acuity = self::acuityCueScore($facts, $concepts);
             $boosted = max(1, min(25, $bankPriority - 25 - $acuity));
+            // Keep PAIN_SEVERITY ahead while the 1–10 score is still missing.
+            if (!empty($gaps['severity'])) {
+                return max(3, $boosted);
+            }
 
             return $boosted;
         }
@@ -829,8 +850,9 @@ final class ClinicalInterviewAdaptivePolicy
             'how long' => ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
             'duration' => ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
             'sudden versus gradual' => ClinicalFeatureExtractors::hasTimingInformation($caseHaystack, $facts),
-            'breathing' => ($facts['breathing_difficulty'] ?? null) !== null
-                || (bool) preg_match('/\b(budlay.*ginhawa|difficulty breathing|hirap huminga|shortness of breath|sobra.*ginhawa)\b/u', $caseHaystack),
+            // Meaning-bridge / complaint language ("difficulty breathing") is NOT severity.
+            // Only a structured breathing_difficulty fact closes BREATHING_SEVERITY.
+            'breathing' => ($facts['breathing_difficulty'] ?? null) !== null,
             'weakness' => ($facts['weakness'] ?? null) !== null
                 || (bool) preg_match('/\b(kaluya|panghihina|weakness|numbness|pamamanhid)\b/u', $caseHaystack),
             'speech' => ($facts['speech_difficulty'] ?? null) !== null,
@@ -847,15 +869,19 @@ final class ClinicalInterviewAdaptivePolicy
             $checks['associated'] = self::associatedSymptomsResolved($facts);
         }
 
+        // Severity slots: only structured follow-up answers close them — never complaint gloss.
+        if ($qid === 'PAIN_SEVERITY') {
+            return ($facts['pain_score'] ?? null) !== null;
+        }
+        if ($qid === 'BREATHING_SEVERITY') {
+            // Presence inferred from the complaint must not mark this purpose known.
+            return false;
+        }
+
         foreach ($checks as $needle => $known) {
             if ($known && str_contains($purpose, $needle)) {
                 return true;
             }
-        }
-
-        // If the patient already answered with a clear numeric pain score in free text.
-        if ($qid === 'PAIN_SEVERITY' && ($facts['pain_score'] ?? null) !== null) {
-            return true;
         }
 
         return false;
@@ -866,11 +892,20 @@ final class ClinicalInterviewAdaptivePolicy
      * @param array<string, mixed> $facts
      * @return list<string>
      */
-    private static function enrichConcepts(array $concepts, array $facts, string $transcript): array
-    {
-        $low = mb_strtolower($transcript);
+    private static function enrichConcepts(
+        array $concepts,
+        array $facts,
+        string $transcript,
+        string $caseHaystack = ''
+    ): array {
+        // Prefer full-case probe (patient text + meaning bridge) over raw transcript alone.
+        $low = mb_strtolower(trim($caseHaystack !== '' ? $caseHaystack : $transcript));
         if (($facts['breathing_difficulty'] ?? null) === true
-            || preg_match('/\b(budlay|ginhawa|dyspnea|hirap\s+huminga|cannot\s+breathe)\b/u', $low)
+            || preg_match(
+                '/\b(budlay|ginhawa|dyspnea|hirap\s+huminga|cannot\s+breathe|can\'t\s+breathe|'
+                . 'difficulty\s+breathing|shortness\s+of\s+breath|breathing_difficulty)\b/u',
+                $low
+            )
         ) {
             $concepts[] = 'breathing';
             $concepts[] = 'respiratory';
@@ -890,11 +925,25 @@ final class ClinicalInterviewAdaptivePolicy
             'dizziness', 'eye', 'nose_pain', 'chest_pain', 'abdominal_pain', 'headache',
             'gastrointestinal', 'cardiovascular', 'ear', 'dental_pain', 'clinical_finding',
         ]) !== [];
-        $hasPainLanguage = (bool) preg_match('/\b(sakit|masakit|pain|hapdi|kasakit|gasakit|hurts?)\b/u', $low);
-        if ($locs === [] && !$siteImplied && $hasPainLanguage) {
+        // Pain families already derived from datasets/concepts also count (semantic path).
+        $painFamily = array_intersect($concepts, [
+            'pain', 'pain_unspecified', 'pain_no_location', 'headache', 'chest_pain',
+            'abdominal_pain', 'nose_pain', 'eye', 'dental_pain', 'ear', 'musculoskeletal',
+        ]) !== [];
+        // Offline lexical safety + English gloss from meaning bridge (via caseHaystack).
+        // Do not grow per-dialect example lists here — bridge supplies local expressions.
+        $hasPainLanguage = $painFamily || (bool) preg_match(
+            '/\b(sakit|masakit|pain|hapdi|kasakit|gasakit|hurts?)\b/u',
+            $low
+        );
+        // Always tag pain when indicated — including when the site is already known —
+        // so PAIN_SEVERITY stays eligible.
+        if ($hasPainLanguage) {
             $concepts[] = 'pain';
-            $concepts[] = 'pain_unspecified';
-            $concepts[] = 'pain_no_location';
+            if ($locs === [] && !$siteImplied) {
+                $concepts[] = 'pain_unspecified';
+                $concepts[] = 'pain_no_location';
+            }
         }
         // Ear / clinical finding with pain language → allow pain severity/location bank tags.
         if ((in_array('ear', $concepts, true) || in_array('clinical_finding', $concepts, true))
@@ -947,13 +996,13 @@ final class ClinicalInterviewAdaptivePolicy
         if (($findingStatus[$targetFinding] ?? '') === 'uncertain') {
             return true;
         }
+        // Locations from patient speech / facts only — never from bank question text in $hay
+        // (e.g. NEURO_WEAKNESS wording mentions kamot/tiil and must not invent arm/leg facts).
         $locs = self::bodyLocations($facts);
         if ($locs === []) {
             $locs = ClinicalFeatureExtractors::extractBodyLocations($transcript);
-            if ($locs === []) {
-                $locs = ClinicalFeatureExtractors::extractBodyLocations($hay);
-            }
         }
+        $patientHay = mb_strtolower(trim($transcript));
 
         return match ($qid) {
             'PAIN_LOCATION', 'UNWELL_WHAT' => $locs !== []
@@ -965,13 +1014,13 @@ final class ClinicalInterviewAdaptivePolicy
             'PAIN_SEVERITY' => $hasSeverity,
             'ONSET', 'DURATION' => $hasTiming,
             'NEURO_WEAKNESS' => ($facts['weakness'] ?? null) !== null
-                || (bool) preg_match('/\b(no|wala|hindi|indi|without)\s+(weakness|numbness|pamamanhid|numb|kaluya)\b/u', $hay)
-                || (bool) preg_match('/nangaluya|kaluya|one[- ]sided|wala nga kamot|weakness in one/u', $hay),
+                || (bool) preg_match('/\b(no|wala|hindi|indi|without)\s+(weakness|numbness|pamamanhid|numb|kaluya)\b/u', $patientHay)
+                || (bool) preg_match('/nangaluya|kaluya|one[- ]sided|wala nga kamot|weakness in one/u', $patientHay),
             // Each neuro probe is independent — answering weakness must not suppress speech/vision.
             'NEURO_SPEECH' => ($facts['speech_difficulty'] ?? null) !== null
-                || (bool) preg_match('/\b(slurred|speech\s+difficult|indi\s+makahambal|hindi\s+makapagsalita|cannot\s+speak)\b/u', $hay),
+                || (bool) preg_match('/\b(slurred|speech\s+difficult|indi\s+makahambal|hindi\s+makapagsalita|cannot\s+speak)\b/u', $patientHay),
             'NEURO_VISION', 'EYE_VISION' => ($facts['vision_change'] ?? null) !== null
-                || (bool) preg_match('/\b(sudden\s+vision|vision\s+loss|double\s+vision|blurry\s+vision|nawala\s+panulok|malabo\s+(ang\s+)?paningin)\b/u', $hay),
+                || (bool) preg_match('/\b(sudden\s+vision|vision\s+loss|double\s+vision|blurry\s+vision|nawala\s+panulok|malabo\s+(ang\s+)?paningin)\b/u', $patientHay),
             'BREATHING_SEVERITY' => ($facts['breathing_difficulty'] ?? null) !== null,
             'BLEEDING_CONTINUING' => ($facts['bleeding_continuing'] ?? null) !== null,
             'BLEEDING_HEAVY' => ($facts['bleeding_heavy'] ?? null) !== null,

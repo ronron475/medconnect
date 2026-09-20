@@ -65,6 +65,7 @@ if ($restorePreliminaryUi) {
             'assessment_in_progress' => true,
             'followup_question' => (string) ($question['text'] ?? $held['text'] ?? $prelimInterview['patient_message'] ?? ''),
             'followup_question_id' => (string) ($question['question_id'] ?? $held['question_id'] ?? $prelimInterview['awaiting_question_id'] ?? ''),
+            'question_language' => (string) ($question['language'] ?? $held['language'] ?? $prelimInterview['question_language'] ?? 'english'),
         ];
     } else {
         $prelimLabel = function_exists('patient_symptoms_review_classification_label')
@@ -207,6 +208,7 @@ $placeholder = $interview_complaint_locked
           </div>
           <span class="pdash-followup__scale-label pdash-followup__scale-label--end">10 = worst pain</span>
         </div>
+        <div id="pdashFollowupChoices" class="pdash-followup__choices" hidden></div>
         <p id="pdashFollowupHelper" class="pdash-followup__helper"<?= $followup_is_pain_scale ? '' : ' hidden' ?>><?= $followup_is_pain_scale ? 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).' : '' ?></p>
       </div>
       <div class="pdash-followup__answer">

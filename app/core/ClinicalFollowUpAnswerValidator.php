@@ -320,6 +320,74 @@ final class ClinicalFollowUpAnswerValidator
     }
 
     /**
+     * Soft clarify for wrong-slot / off-slot answers — keeps the same clinical purpose
+     * without inventing facts or blindly echoing an identical prompt alone.
+     */
+    public static function clarifyCurrentSlotMessage(
+        string $langKey,
+        string $qid,
+        string $reason = '',
+        bool $offSlotAbsorbed = false
+    ): string {
+        $lang = strtolower($langKey);
+        $qid = strtoupper(trim($qid));
+        $reason = strtolower(trim($reason));
+        $wrongField = $offSlotAbsorbed
+            || str_contains($reason, 'yes_no_wrong')
+            || str_contains($reason, 'wrong_field')
+            || str_contains($reason, 'field_evidence')
+            || str_contains($reason, 'unrelated');
+
+        if (!$wrongField) {
+            return '';
+        }
+
+        $isTiming = $qid === 'ONSET' || $qid === 'DURATION' || str_contains($qid, 'ONSET') || str_contains($qid, 'DURATION');
+        $isSeverity = $qid === 'PAIN_SEVERITY' || str_contains($qid, 'SEVERITY');
+        $isAssoc = str_contains($qid, 'ASSOCIATED') || str_contains($qid, 'NEURO') || str_contains($qid, 'BREATHING');
+
+        if ($offSlotAbsorbed) {
+            return match ($lang) {
+                'hiligaynon', 'ilonggo' => $isTiming
+                    ? 'Salamat. Palihog sabta gihapon kung san-o / pila ka dugay ini nagsugod.'
+                    : ($isSeverity
+                        ? 'Salamat. Palihog hatag sang numero 1 tubtob 10 para sa kasakit.'
+                        : 'Salamat, nakuha ko ina. Palihog sabta gihapon ang pamangkot sa ibabaw.'),
+                'tagalog', 'filipino' => $isTiming
+                    ? 'Salamat. Pakisagot pa rin kung kailan / gaano katagal ito nagsimula.'
+                    : ($isSeverity
+                        ? 'Salamat. Pakibigay ng numero 1 hanggang 10 para sa sakit.'
+                        : 'Salamat, nakuha ko iyon. Pakisagot pa rin ang tanong sa itaas.'),
+                default => $isTiming
+                    ? 'Thanks — I noted that. Please still say when / how long this started.'
+                    : ($isSeverity
+                        ? 'Thanks — I noted that. Please still give a pain score from 1 to 10.'
+                        : 'Thanks — I noted that. Please still answer the question above.'),
+            };
+        }
+
+        if ($isTiming) {
+            return match ($lang) {
+                'hiligaynon', 'ilonggo' => 'Indi ko pa makuha kung san-o ini nagsugod. Palihog isugid kung kagano / san-o nagsugod ang imo ginabatyag.',
+                'tagalog', 'filipino' => 'Hindi ko pa makuha kung kailan ito nagsimula. Pakisabi kung kailan / gaano katagal nagsimula ang nararamdaman mo.',
+                default => 'I still need when this started. Please say when / how long your symptom began.',
+            };
+        }
+        if ($isSeverity) {
+            return self::painScaleRetryMessage($lang);
+        }
+        if ($isAssoc) {
+            return match ($lang) {
+                'hiligaynon', 'ilonggo' => 'Palihog sabta oo ukon indi sa pamangkot sa ibabaw (ukon isugid kung indi ka sigurado).',
+                'tagalog', 'filipino' => 'Pakisagot oo o hindi sa tanong sa itaas (o sabihin kung hindi ka sigurado).',
+                default => 'Please answer yes or no to the question above (or say if you are not sure).',
+            };
+        }
+
+        return '';
+    }
+
+    /**
      * Normalize any persisted/legacy Hiligaynon retry wording to the current patient-facing copy.
      */
     public static function normalizeRetryMessage(string $message, string $langKey = 'hiligaynon'): string

@@ -79,8 +79,10 @@
   var followupQuestionEl = document.getElementById('pdashFollowupQuestion');
   var followupAnswerEl = document.getElementById('pdashFollowupAnswer');
   var followupScaleEl = document.getElementById('pdashFollowupScale');
+  var followupChoicesEl = document.getElementById('pdashFollowupChoices');
   var followupHelperEl = document.getElementById('pdashFollowupHelper');
   var followupNoticeEl = document.getElementById('pdashFollowupNotice');
+  var lastFollowupMeta = { questionId: '', language: 'english' };
   var ANSWER_LABEL = 'Submit answer';
 
   /** @type {null|'non_urgent'|'urgent'|'emergency'} */
@@ -121,6 +123,9 @@
   }
 
   function isPainScaleQuestion(text) {
+    if (window.McFollowupChoices && typeof window.McFollowupChoices.isPainScaleText === 'function') {
+      return window.McFollowupChoices.isPainScaleText(text);
+    }
     var q = String(text || '');
     return /1\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
       || /0\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
@@ -130,18 +135,58 @@
       || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
   }
 
-  function setFollowupExtras(question) {
-    var showScale = isPainScaleQuestion(question);
+  function setFollowupExtras(question, meta) {
+    meta = meta || {};
+    var qid = String(meta.questionId || meta.followup_question_id || lastFollowupMeta.questionId || '').trim();
+    var lang = String(meta.language || meta.question_language || lastFollowupMeta.language || 'english').trim();
+    lastFollowupMeta = { questionId: qid, language: lang };
+
+    var kind = 'free_text';
+    if (window.McFollowupChoices && typeof window.McFollowupChoices.resolveControlKind === 'function') {
+      kind = window.McFollowupChoices.resolveControlKind(qid, question);
+    } else if (isPainScaleQuestion(question)) {
+      kind = 'pain';
+    }
+
+    var showScale = kind === 'pain';
     if (followupScaleEl) {
       followupScaleEl.hidden = !showScale;
       Array.prototype.forEach.call(followupScaleEl.querySelectorAll('.pdash-followup__scale-btn'), function (btn) {
         btn.classList.remove('is-selected');
       });
+      if (showScale && window.McFollowupChoices && typeof window.McFollowupChoices.applyPainScaleLabels === 'function') {
+        window.McFollowupChoices.applyPainScaleLabels(followupScaleEl, lang);
+      }
     }
+
+    if (followupChoicesEl && window.McFollowupChoices) {
+      if (kind === 'free_text' || kind === 'pain') {
+        window.McFollowupChoices.clear(followupChoicesEl);
+      } else {
+        window.McFollowupChoices.render(followupChoicesEl, {
+          kind: kind,
+          lang: lang,
+          answerEl: followupAnswerEl,
+          onSelect: function () {
+            clearFollowupNotice();
+          }
+        });
+      }
+    } else if (followupChoicesEl) {
+      followupChoicesEl.hidden = true;
+      followupChoicesEl.innerHTML = '';
+    }
+
     if (followupHelperEl) {
-      if (showScale) {
+      var helper = '';
+      if (window.McFollowupChoices && typeof window.McFollowupChoices.helperText === 'function') {
+        helper = window.McFollowupChoices.helperText(kind, lang);
+      } else if (showScale) {
+        helper = 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).';
+      }
+      if (helper) {
         followupHelperEl.hidden = false;
-        followupHelperEl.textContent = 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).';
+        followupHelperEl.textContent = helper;
       } else {
         followupHelperEl.hidden = true;
         followupHelperEl.textContent = '';
@@ -246,7 +291,7 @@
       followupAnswerEl.value = '';
     }
     clearFollowupNotice();
-    setFollowupExtras('');
+    setFollowupExtras('', {});
   }
 
   function showFollowupUi(question, options) {
@@ -256,7 +301,10 @@
     if (followupQuestionEl) {
       followupQuestionEl.textContent = q;
     }
-    setFollowupExtras(q);
+    setFollowupExtras(q, {
+      questionId: options.questionId || options.followup_question_id || '',
+      language: options.language || options.question_language || ''
+    });
     if (options.notice) {
       showFollowupNotice(options.notice);
     } else {
@@ -508,7 +556,10 @@
     if (data.assessment_in_progress) {
       assessmentInProgress = true;
       awaitingSecondClick = false;
-      showFollowupUi(data.followup_question || '');
+      showFollowupUi(data.followup_question || '', {
+        questionId: data.followup_question_id || '',
+        language: data.question_language || ''
+      });
       updateSubmitButtonLabel();
       return;
     }
@@ -596,6 +647,8 @@
         awaitingSecondClick = false;
         triageId = parseInt(payload.triage_id, 10) || triageId;
         showFollowupUi(payload.followup_question || '', {
+          questionId: payload.followup_question_id || '',
+          language: payload.question_language || '',
           notice: (payload.retry_current_question || payload.answer_rejected)
             ? (payload.patient_message || data.message || '')
             : '',
@@ -701,6 +754,8 @@
         triageId = parseInt(payload.triage_id, 10) || triageId;
         hideContinueUi();
         showFollowupUi(payload.followup_question || '', {
+          questionId: payload.followup_question_id || '',
+          language: payload.question_language || '',
           notice: (payload.retry_current_question || payload.answer_rejected)
             ? (payload.patient_message || json.message || '')
             : '',
@@ -795,7 +850,28 @@
   updateSubmitButtonLabel();
   restorePreliminaryState();
   if (followupWrap && !followupWrap.hidden && followupQuestionEl) {
-    setFollowupExtras(followupQuestionEl.textContent || '');
+    setFollowupExtras(followupQuestionEl.textContent || '', {
+      questionId: (form && form.getAttribute('data-preliminary'))
+        ? (function () {
+            try {
+              var raw = JSON.parse(form.getAttribute('data-preliminary') || '{}');
+              return raw.followup_question_id || '';
+            } catch (_) {
+              return '';
+            }
+          })()
+        : lastFollowupMeta.questionId,
+      language: (form && form.getAttribute('data-preliminary'))
+        ? (function () {
+            try {
+              var raw = JSON.parse(form.getAttribute('data-preliminary') || '{}');
+              return raw.question_language || '';
+            } catch (_) {
+              return '';
+            }
+          })()
+        : lastFollowupMeta.language
+    });
     form.classList.add('is-followup-active');
     if (assessmentInProgress) updateSubmitButtonLabel();
   }

@@ -964,6 +964,20 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__scale-btn.
   color: #fff;
 }
 
+html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__choice-btn {
+  background: rgba(15, 23, 42, 0.65);
+  border-color: rgba(45, 212, 191, 0.28);
+  color: #99f6e4;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__choice-btn:hover,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__choice-btn:focus-visible,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__choice-btn.is-selected {
+  background: #0f766e;
+  border-color: #14b8a6;
+  color: #fff;
+}
+
 html[data-theme-resolved='dark'] body.patient-portal .pdash-followup__notice {
   background: rgba(127, 29, 29, 0.35);
   border-color: rgba(248, 113, 113, 0.45);

@@ -1,0 +1,309 @@
+/* Gemini Clinical Interview Demo — DEMO ONLY */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+.gci-body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #0f172a;
+  background: linear-gradient(165deg, #ecfeff 0%, #f8fafc 45%, #f0fdfa 100%);
+}
+
+.gci-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 18px 48px;
+}
+
+.gci-kicker {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+
+.gci-title {
+  margin: 0 0 8px;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #012a4a;
+}
+
+.gci-sub {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  color: #334155;
+  max-width: 70ch;
+}
+
+.gci-pipeline {
+  display: inline-block;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #012a4a;
+  color: #ecfeff;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.gci-card {
+  margin-top: 18px;
+  padding: 18px 18px 16px;
+  background: #fff;
+  border: 1px solid #dbe4ee;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(1, 42, 74, 0.06);
+}
+
+.gci-card-title {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 750;
+  color: #012a4a;
+}
+
+.gci-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.gci-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font: inherit;
+  resize: vertical;
+  background: #f8fafc;
+}
+
+.gci-input:focus {
+  outline: 2px solid #0d9488;
+  border-color: #0d9488;
+  background: #fff;
+}
+
+.gci-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.gci-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gci-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.gci-btn-primary {
+  background: #0d9488;
+  color: #fff;
+}
+
+.gci-btn-primary:hover:not(:disabled) {
+  background: #0f766e;
+}
+
+.gci-btn-secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.gci-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.gci-chip {
+  border: 1px solid #99f6e4;
+  background: #f0fdfa;
+  color: #115e59;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.gci-chip:hover {
+  background: #ccfbf1;
+}
+
+.gci-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.gci-status {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.gci-status[data-status="interviewing"] {
+  background: #ecfeff;
+  color: #0e7490;
+}
+
+.gci-status[data-status="information_sufficient"],
+.gci-status[data-status="final_triage"] {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.gci-status[data-status="error"] {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.gci-conversation {
+  min-height: 180px;
+  max-height: 420px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px 8px;
+}
+
+.gci-bubble {
+  max-width: 92%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.gci-bubble--patient {
+  align-self: flex-end;
+  background: #ccfbf1;
+  color: #134e4a;
+  border-bottom-right-radius: 4px;
+}
+
+.gci-bubble--gemini {
+  align-self: flex-start;
+  background: #e0f2fe;
+  color: #0c4a6e;
+  border-bottom-left-radius: 4px;
+}
+
+.gci-bubble--system {
+  align-self: stretch;
+  background: #f8fafc;
+  color: #475569;
+  border: 1px dashed #cbd5e1;
+  font-size: 0.84rem;
+}
+
+.gci-bubble strong {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.gci-answer-wrap {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.gci-answer-wrap .gci-btn {
+  margin-top: 10px;
+}
+
+.gci-pre {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  overflow: auto;
+  max-height: 280px;
+}
+
+.gci-pre--debug {
+  max-height: 420px;
+}
+
+.gci-hint {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.gci-triage {
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.gci-triage--idle {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.gci-triage--NON-URGENT {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.gci-triage--URGENT {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.gci-triage--EMERGENCY {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.gci-footer {
+  margin-top: 22px;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+@media (max-width: 860px) {
+  .gci-grid {
+    grid-template-columns: 1fr;
+  }
+}
