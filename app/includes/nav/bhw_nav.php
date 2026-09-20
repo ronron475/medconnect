@@ -57,10 +57,10 @@ function bhw_nav_groups(): array
         [
             'id' => 'followup',
             'icon' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
-            'label' => 'Appointment Follow-ups',
-            'description' => 'Track scheduled follow-up appointments',
+            'label' => 'Appointment and Follow-up Queue',
+            'description' => 'Barangay appointment and follow-up queue',
             'children' => [
-                ['file' => 'followup/track.php', 'label' => 'Appointment Follow-ups', 'hint' => 'Monitor recovery progress', 'icon' => 'activity', 'sidebar' => true],
+                ['file' => 'followup/track.php', 'label' => 'Appointment and Follow-up Queue', 'hint' => 'Live appointment & follow-up queue', 'icon' => 'activity', 'sidebar' => true],
                 ['file' => 'followup/reminders.php', 'label' => 'Send Reminders', 'hint' => 'Notify patients to follow up', 'icon' => 'bell', 'sidebar' => false],
             ],
         ],
@@ -209,7 +209,7 @@ function bhw_nav_sections(): array
         ['section' => null, 'items' => [
             [$dash['file'], $dash['label'], $dash['icon']],
         ]],
-        // Final BHW sidebar order: Patient List → Records → View Referrals → Appointment Follow-ups
+        // Final BHW sidebar order: Patient List → Records → View Referrals → Appointment and Follow-up Queue
         ['section' => 'Barangay Operations', 'items' => $collectItems([
             'patients', 'records', 'referral', 'followup',
         ])],

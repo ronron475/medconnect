@@ -362,11 +362,57 @@ td.bhw-followup-empty {
 }
 
 .bhw-fu-status--upcoming { background: #ecfdf5; color: #047857; }
+.bhw-fu-status--scheduled { background: #eff6ff; color: #1d4ed8; }
+.bhw-fu-status--follow_up { background: #f5f3ff; color: #6d28d9; }
+.bhw-fu-status--pending { background: #fff7ed; color: #c2410c; }
+.bhw-fu-status--in_consultation { background: #ecfeff; color: #0e7490; }
 .bhw-fu-status--missed { background: #fef2f2; color: #b91c1c; }
 .bhw-fu-status--completed { background: #eff6ff; color: #1d4ed8; }
 .bhw-fu-status--unscheduled { background: #fff7ed; color: #c2410c; }
 .bhw-fu-status--cancelled { background: #f1f5f9; color: #475569; }
 .bhw-fu-status--unknown { background: #f8fafc; color: #64748b; }
+
+/* Appointment and Follow-up Queue */
+body.bhw-body .bhw-afu-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+body.bhw-body .bhw-afu-search {
+  flex: 1 1 auto;
+  position: relative;
+  max-width: 420px;
+}
+
+body.bhw-body .bhw-afu-search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+body.bhw-body .bhw-afu-search input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 36px;
+  background: #fff;
+  color: #0f172a;
+}
+
+body.bhw-body .bhw-afu-search input:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
 
 .bhw-fu-actions {
   display: flex;
