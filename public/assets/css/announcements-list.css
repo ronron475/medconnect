@@ -262,6 +262,15 @@ body.ann-list-page-body::before {
   overflow: hidden;
 }
 
+.ann-list-card--plain .ann-list-card__media-btn,
+.ann-list-card--plain .ann-list-card__img {
+  display: none;
+}
+
+.ann-list-card--plain .ann-list-card__link {
+  padding-top: clamp(20px, 3vw, 28px);
+}
+
 .ann-list-card__cta {
   display: inline-flex;
   align-items: center;
