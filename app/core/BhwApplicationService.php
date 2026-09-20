@@ -780,7 +780,7 @@ final class BhwApplicationService
             $stmt = $this->pdo->query("
                 SELECT a.id, a.status, a.first_name, a.middle_name, a.last_name, a.email,
                        a.phone, a.barangay_id, a.appointment_date, a.submitted_at, a.invited_at,
-                       a.bhw_submitted_at, a.created_by, a.submitted_by,
+                       a.bhw_submitted_at, a.created_by, a.submitted_by, a.user_id,
                        b.name AS barangay_name,
                        (SELECT COUNT(*) FROM bhw_application_documents d WHERE d.application_id = a.id) AS document_count
                 FROM bhw_applications a
@@ -793,7 +793,7 @@ final class BhwApplicationService
             $stmt = $this->pdo->prepare("
                 SELECT a.id, a.status, a.first_name, a.middle_name, a.last_name, a.email,
                        a.phone, a.barangay_id, a.appointment_date, a.submitted_at, a.invited_at,
-                       a.bhw_submitted_at, a.created_by, a.submitted_by,
+                       a.bhw_submitted_at, a.created_by, a.submitted_by, a.user_id,
                        b.name AS barangay_name,
                        (SELECT COUNT(*) FROM bhw_application_documents d WHERE d.application_id = a.id) AS document_count
                 FROM bhw_applications a
@@ -806,12 +806,120 @@ final class BhwApplicationService
         }
 
         foreach ($rows as &$row) {
+            $row['source'] = 'application';
             $row['display_name'] = $this->displayName($row);
             $row['status_label'] = $this->statusLabel((string) $row['status']);
         }
         unset($row);
 
-        return $rows;
+        // Active BHWs come from live users accounts (not fake applications).
+        return $this->mergeActiveBhwUserAccounts($rows);
+    }
+
+    /**
+     * Active BHW user accounts for Management hub (users table = source of truth).
+     * Excludes only archived; NULL/blank account_status still counts when is_active=1.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listActiveBhwUserAccounts(): array
+    {
+        $cols = $this->pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $hasAccountStatus = in_array('account_status', $cols, true);
+
+        $sql = "
+            SELECT u.id AS user_id, u.first_name, u.last_name, u.email, u.phone,
+                   u.barangay_id, u.is_active, u.created_at,
+                   b.name AS barangay_name
+            FROM users u
+            LEFT JOIN barangays b ON b.id = u.barangay_id
+            WHERE LOWER(TRIM(COALESCE(u.role, ''))) = 'bhw'
+              AND COALESCE(u.is_active, 0) = 1
+        ";
+        if ($hasAccountStatus) {
+            $sql .= "
+              AND (
+                u.account_status IS NULL
+                OR TRIM(u.account_status) = ''
+                OR LOWER(TRIM(u.account_status)) <> 'archived'
+              )
+            ";
+        }
+        $sql .= ' ORDER BY u.last_name ASC, u.first_name ASC';
+
+        return $this->pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Append active BHW user rows that are not already represented by an
+     * active/approved application. Does not create bhw_applications records.
+     *
+     * @param list<array<string, mixed>> $appRows
+     * @return list<array<string, mixed>>
+     */
+    private function mergeActiveBhwUserAccounts(array $appRows): array
+    {
+        $coveredEmails = [];
+        $coveredUserIds = [];
+        foreach ($appRows as $row) {
+            $status = strtolower(trim((string) ($row['status'] ?? '')));
+            if (!in_array($status, [self::STATUS_ACTIVE, self::STATUS_APPROVED], true)) {
+                continue;
+            }
+            $email = strtolower(trim((string) ($row['email'] ?? '')));
+            if ($email !== '') {
+                $coveredEmails[$email] = true;
+            }
+            $uid = (int) ($row['user_id'] ?? 0);
+            if ($uid > 0) {
+                $coveredUserIds[$uid] = true;
+            }
+        }
+
+        foreach ($this->listActiveBhwUserAccounts() as $user) {
+            $uid = (int) ($user['user_id'] ?? 0);
+            $email = strtolower(trim((string) ($user['email'] ?? '')));
+            if ($uid > 0 && isset($coveredUserIds[$uid])) {
+                continue;
+            }
+            if ($email !== '' && isset($coveredEmails[$email])) {
+                continue;
+            }
+
+            $synthetic = [
+                'id'               => 0,
+                'source'           => 'user_account',
+                'user_id'          => $uid,
+                'status'           => self::STATUS_ACTIVE,
+                'first_name'       => (string) ($user['first_name'] ?? ''),
+                'middle_name'      => '',
+                'last_name'        => (string) ($user['last_name'] ?? ''),
+                'email'            => (string) ($user['email'] ?? ''),
+                'phone'            => (string) ($user['phone'] ?? ''),
+                'barangay_id'      => $user['barangay_id'] ?? null,
+                'appointment_date' => null,
+                'submitted_at'     => null,
+                'invited_at'       => null,
+                'bhw_submitted_at' => null,
+                'created_by'       => null,
+                'submitted_by'     => null,
+                'barangay_name'    => (string) ($user['barangay_name'] ?? ''),
+                'document_count'   => 0,
+                'created_at'       => $user['created_at'] ?? null,
+            ];
+            $synthetic['display_name'] = $this->displayName($synthetic);
+            $synthetic['status_label'] = $this->statusLabel(self::STATUS_ACTIVE);
+            $appRows[] = $synthetic;
+
+            if ($uid > 0) {
+                $coveredUserIds[$uid] = true;
+            }
+            if ($email !== '') {
+                $coveredEmails[$email] = true;
+            }
+        }
+
+        return $appRows;
     }
 
     public static function normalizeHubStatusFilter(string $filter): string
@@ -891,10 +999,17 @@ final class BhwApplicationService
      */
     public function statsFromRows(array $rows): array
     {
+        $applicationRows = array_values(array_filter(
+            $rows,
+            static fn(array $r): bool => ($r['source'] ?? 'application') !== 'user_account'
+        ));
+
         return [
-            'total'    => count($rows),
+            // Total Applications stays application-workflow only.
+            'total'    => count($applicationRows),
             'draft'    => $this->countRowsForHubFilter($rows, 'draft'),
             'pending'  => $this->countRowsForHubFilter($rows, 'pending_approval'),
+            // Active includes live users.role=bhw accounts merged into the hub list.
             'active'   => $this->countRowsForHubFilter($rows, 'active'),
             'rejected' => $this->countRowsForHubFilter($rows, 'rejected'),
         ];

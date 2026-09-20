@@ -80,7 +80,13 @@
       e.stopPropagation();
     }
     closeAllNotifPanels();
-    window.location.assign(link.href);
+    let target = link.href;
+    const item = link.closest('[data-id]');
+    const notifId = item ? (parseInt(item.dataset.id, 10) || 0) : 0;
+    if (notifId > 0 && target.indexOf('notification_id=') === -1) {
+      target += (target.indexOf('?') >= 0 ? '&' : '?') + 'notification_id=' + encodeURIComponent(String(notifId));
+    }
+    window.location.assign(target);
   }
 
   function csrf() {
@@ -180,8 +186,13 @@
     const readAction = n.is_read ? 'unread' : 'read';
     const readLabel = n.is_read ? 'Mark unread' : 'Mark read';
     const readIcon = n.is_read ? '○' : '✓';
+    const url = n.action_url || n.link || '';
+    const viewBtn = (url && url !== '#')
+      ? '<a class="mc-notif-view-btn" href="' + escapeAttr(url) + '" title="View" aria-label="View notification details">View</a>'
+      : '';
     return (
       '<div class="mc-notif-item-actions">' +
+        viewBtn +
         '<button type="button" data-action="' + readAction + '" title="' + readLabel + '" aria-label="' + readLabel + '">' + readIcon + '</button>' +
         '<button type="button" data-action="delete" title="Delete" aria-label="Delete notification">×</button>' +
       '</div>'
@@ -510,6 +521,14 @@
       });
     });
 
+    list.querySelectorAll('.mc-notif-view-btn').forEach(function (link) {
+      link.addEventListener('click', function (e) {
+        const item = link.closest('[data-id]');
+        if (item) markRead(parseInt(item.dataset.id, 10));
+        followNotifLink(link, e);
+      });
+    });
+
     list.querySelectorAll('[data-action]').forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
@@ -523,7 +542,7 @@
     // Whole-row tap target for mobile (avoids missing the inner link).
     list.querySelectorAll('.mc-notif-item[data-id]').forEach(function (row) {
       row.addEventListener('click', function (e) {
-        if (e.target.closest('[data-action]') || e.target.closest('.mc-notif-item-link')) return;
+        if (e.target.closest('[data-action]') || e.target.closest('.mc-notif-item-link') || e.target.closest('.mc-notif-view-btn')) return;
         const link = row.querySelector('.mc-notif-item-link');
         if (!link) return;
         if (itemId(row)) markRead(itemId(row));
@@ -866,12 +885,17 @@
       } else {
         listEl.innerHTML = data.notifications.map(function (n) {
           if (n.is_read) markedReadIds.add(parseInt(n.notification_id, 10) || 0);
+          const url = n.action_url || n.link || '#';
+          const viewBtn = (url && url !== '#')
+            ? '<a class="mc-notif-view-btn" href="' + escapeAttr(url) + '" title="View" aria-label="View notification details">View</a>'
+            : '';
           return (
             '<div class="mc-notif-item' + (!n.is_read ? ' is-unread' : '') + '" data-id="' + n.notification_id + '">' +
-              '<a class="mc-notif-item-link" href="' + escapeAttr(n.action_url || n.link || '#') + '">' +
+              '<a class="mc-notif-item-link" href="' + escapeAttr(url) + '">' +
                 renderItemBody(n) +
               '</a>' +
               '<div class="mc-notif-page-actions">' +
+                viewBtn +
                 '<button type="button" data-action="' + (n.is_read ? 'unread' : 'read') + '" title="' + (n.is_read ? 'Mark unread' : 'Mark read') + '" aria-label="' + (n.is_read ? 'Mark as unread' : 'Mark as read') + '">' + (n.is_read ? '○' : '✓') + '</button>' +
                 '<button type="button" data-action="archive" title="Archive" aria-label="Archive">⊘</button>' +
                 '<button type="button" data-action="delete" title="Delete" aria-label="Delete">×</button>' +
@@ -928,8 +952,15 @@
         loadPage(currentPage);
         return;
       }
+      const viewBtn = e.target.closest('.mc-notif-view-btn');
+      if (viewBtn) {
+        const row = viewBtn.closest('[data-id]');
+        if (row && itemId(row)) markRead(itemId(row));
+        followNotifLink(viewBtn, e);
+        return;
+      }
       const item = e.target.closest('.mc-notif-item[data-id]');
-      if (item && !e.target.closest('[data-action]')) {
+      if (item && !e.target.closest('[data-action]') && !e.target.closest('.mc-notif-view-btn')) {
         const link = item.querySelector('.mc-notif-item-link') || item.querySelector('a');
         if (link) {
           if (itemId(item)) markRead(itemId(item));

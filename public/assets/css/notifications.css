@@ -141,6 +141,27 @@
   gap: 4px;
   margin-left: auto;
   padding-top: 2px;
+  align-items: center;
+}
+
+.mc-notif-view-btn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(6, 147, 150, 0.35);
+  background: rgba(6, 147, 150, 0.08);
+  color: var(--mc-aqua-medium, #069396);
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.mc-notif-view-btn:hover {
+  background: rgba(6, 147, 150, 0.16);
+  color: var(--mc-aqua-dark, #047a7d);
 }
 
 .mc-notif-item-actions button {
@@ -296,6 +317,11 @@
   display: flex;
   gap: 6px;
   margin-left: auto;
+  align-items: center;
+}
+
+.mc-notif-page-actions .mc-notif-view-btn {
+  margin-right: 2px;
 }
 
 .mc-notif-page-actions button {

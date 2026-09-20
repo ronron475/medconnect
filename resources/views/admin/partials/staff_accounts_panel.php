@@ -72,15 +72,25 @@ if ($hub_kind === 'doctor') {
         $params[] = $verify_filter;
     }
 } else {
-    // BHW: preserve prior behavior (active excludes archived; archived tab only archived).
+    // BHW: users table is source of truth. Active = is_active and not archived.
+    // NULL/blank account_status still counts (legacy / synced accounts).
     if ($hub_tab === 'archived') {
         $query .= " AND u.account_status = 'archived'";
     } elseif ($hub_tab === 'active') {
-        $query .= " AND u.account_status = 'active'";
+        $query .= " AND COALESCE(u.is_active, 0) = 1
+                    AND (
+                        u.account_status IS NULL
+                        OR TRIM(u.account_status) = ''
+                        OR LOWER(TRIM(u.account_status)) <> 'archived'
+                    )";
     } elseif ($hub_tab === 'rejected') {
         $query .= " AND u.account_status = 'rejected'";
     } else {
-        $query .= " AND u.account_status != 'archived'";
+        $query .= " AND (
+                        u.account_status IS NULL
+                        OR TRIM(u.account_status) = ''
+                        OR LOWER(TRIM(u.account_status)) <> 'archived'
+                    )";
     }
 }
 
@@ -198,9 +208,15 @@ $base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
             <tbody>
                 <?php foreach ($staff as $s):
                     // Account column / actions use stored account_status (not PRC).
-                    $storedStatus = AccountStatus::normalize((string) ($s['account_status'] ?? AccountStatus::ACTIVE));
-                    if ($storedStatus === AccountStatus::ACTIVE && empty($s['is_active'])) {
-                        $storedStatus = AccountStatus::DEACTIVATED;
+                    // Blank/NULL + is_active counts as Active (matches BHW hub / chart logic).
+                    $rawAccountStatus = trim((string) ($s['account_status'] ?? ''));
+                    if ($rawAccountStatus === '') {
+                        $storedStatus = !empty($s['is_active']) ? AccountStatus::ACTIVE : AccountStatus::DEACTIVATED;
+                    } else {
+                        $storedStatus = AccountStatus::normalize($rawAccountStatus);
+                        if ($storedStatus === AccountStatus::ACTIVE && empty($s['is_active'])) {
+                            $storedStatus = AccountStatus::DEACTIVATED;
+                        }
                     }
                     $acctBadge = AccountStatus::badge($storedStatus);
                     $staff_name = htmlspecialchars($s['first_name'] . ' ' . $s['last_name'], ENT_QUOTES);

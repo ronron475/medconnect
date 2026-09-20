@@ -143,6 +143,9 @@ final class BhwWorkflows
             'bhw_id' => $bhwId,
         ]);
         bhw_notify($pdo, $patientId, 'system', 'Profile Updated', 'Your contact or medical information was updated by your BHW.', ASSET_BASE . '/views/patient/profile.php');
+
+        require_once __DIR__ . '/notification_events.php';
+        NotificationEvents::bhwPatientProfileUpdated($pdo, $patientId, $bhwId);
     }
 
     public static function assessTriage(string $complaint, array $symptoms = []): array
