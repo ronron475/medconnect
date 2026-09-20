@@ -53,9 +53,6 @@
     setText('[data-live-metric="patients"]', m.patients || 0);
     setText('[data-live-metric="providers"]', m.providers || 0);
     setText('[data-live-metric="bhw"]', m.bhw || 0);
-    setText('[data-live-metric="consults_today"]', m.consults_today || 0);
-    setText('[data-live-metric="active_sessions"]', (m.active_sessions || 0) + ' in session now');
-    setText('[data-live-metric="urgent_triage"]', m.urgent_triage || 0);
 
     var q = payload.queue || {};
     var queueHost = document.querySelector('[data-live-maker-queue]');

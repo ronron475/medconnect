@@ -26,16 +26,6 @@ $role_counts     = admin_chart_role_counts_map($pdo);
 $total_patients  = (int) ($role_counts['patient'] ?? 0);
 $total_providers = (int) ($role_counts['provider'] ?? 0);
 $total_bhw       = (int) ($role_counts['bhw'] ?? 0);
-$active_users    = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE is_active=1')->fetchColumn();
-
-$has_consults = $pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount() > 0;
-$consults_today = $has_consults
-    ? (int) $pdo->query("SELECT COUNT(*) FROM consultations WHERE consult_date = CURDATE()")->fetchColumn() : 0;
-$active_sessions = $has_consults
-    ? (int) $pdo->query("SELECT COUNT(*) FROM consultations WHERE status='in_consultation'")->fetchColumn() : 0;
-
-$urgent_triage = $pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()
-    ? (int) $pdo->query("SELECT COUNT(*) FROM triage_results WHERE level IN ('1','2') OR urgency_label LIKE '%Urgent%'")->fetchColumn() : 0;
 
 $pending_doctor_apps = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
 $pending_bhw_stmt = $pdo->prepare("
@@ -81,7 +71,7 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
         <div>
             <h2 class="adm-section-title">Platform Snapshot</h2>
-            <p class="adm-section-sub">Registered users and clinical workload · auto-refreshes</p>
+            <p class="adm-section-sub">Registered users · auto-refreshes</p>
         </div>
     </div>
     <div class="adm-metrics">
@@ -113,26 +103,6 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                 <div class="adm-metric-label">BHWs</div>
                 <div class="adm-metric-value" data-live-metric="bhw"><?= $total_bhw ?></div>
                 <div class="adm-metric-sub">Total BHWs</div>
-            </div>
-        </div>
-        <div class="adm-metric adm-metric--consults">
-            <div class="adm-metric-icon adm-metric-icon--amber">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            </div>
-            <div class="adm-metric-body">
-                <div class="adm-metric-label">Consultations Today</div>
-                <div class="adm-metric-value" data-live-metric="consults_today"><?= $consults_today ?></div>
-                <div class="adm-metric-sub" data-live-metric="active_sessions"><?= $active_sessions ?> in session now</div>
-            </div>
-        </div>
-        <div class="adm-metric adm-metric--urgent">
-            <div class="adm-metric-icon adm-metric-icon--red">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            </div>
-            <div class="adm-metric-body">
-                <div class="adm-metric-label">Urgent Triage</div>
-                <div class="adm-metric-value" style="color:#dc2626;" data-live-metric="urgent_triage"><?= $urgent_triage ?></div>
-                <div class="adm-metric-sub">Requires attention</div>
             </div>
         </div>
     </div>
