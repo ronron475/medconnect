@@ -5,15 +5,15 @@
 
 /* Match Admin dashboard page rhythm (admin-spacing.css). */
 body.bhw-body .portal-page-body:has(.bhw-dash) {
-  padding: 12px 20px 18px !important;
-  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 10px) !important;
-  gap: 12px !important;
+  padding: 10px 14px 14px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 8px) !important;
+  gap: 8px !important;
 }
 
 .bhw-dash {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   max-width: 100%;
 }
 

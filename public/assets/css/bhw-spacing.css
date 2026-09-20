@@ -1,7 +1,27 @@
 /**
- * BHW portal page-intro spacing — title lives in .topbar-title.
+ * BHW portal spacing — body.bhw-body only.
+ * Tight page rhythm across Dashboard, Patient List, Records, Referrals, etc.
  */
 
+/* ── Page shell: less outer margin/padding ── */
+body.bhw-body .portal-page-body {
+  padding: 12px 16px 16px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 10px) !important;
+  gap: 10px !important;
+}
+
+body.bhw-body .portal-page-body:has(.bhw-dash),
+body.bhw-body .portal-page-body:has(.bhw-pl-page),
+body.bhw-body .portal-page-body:has(.bhw-records-page),
+body.bhw-body .portal-page-body:has(.bhw-referral-page),
+body.bhw-body .portal-page-body:has(.bhw-followup-page),
+body.bhw-body .portal-page-body:has(.bhw-reports-page) {
+  padding: 10px 14px 14px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 8px) !important;
+  gap: 8px !important;
+}
+
+/* ── Page intros (title lives in topbar) ── */
 body.bhw-body .bhw-page-intro,
 body.bhw-body .bhw-dash-header.bhw-page-intro,
 body.bhw-body .bhw-cons-hero.bhw-page-intro,
@@ -14,12 +34,11 @@ body.bhw-body .bhw-reports-header.bhw-page-intro {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px 16px;
+  gap: 8px 12px;
   flex-wrap: wrap;
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 
-/* Dashboard intro sits inside .bhw-dash gap — no extra bottom margin. */
 body.bhw-body .bhw-dash > .bhw-dash-header.bhw-page-intro {
   margin: 0;
 }
@@ -35,14 +54,14 @@ body.bhw-body .bhw-referral-header.bhw-page-intro .bhw-page-intro__desc,
 body.bhw-body .bhw-followup-header.bhw-page-intro .bhw-page-intro__desc {
   margin: 0;
   max-width: 68ch;
-  font-size: 0.875rem;
-  line-height: 1.55;
+  font-size: 0.8125rem;
+  line-height: 1.4;
   color: #64748b;
 }
 
 body.bhw-body .bhw-dash-header.bhw-page-intro {
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   margin: 0;
 }
 
@@ -62,7 +81,232 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-header.bhw-page-intr
   color: #94a3b8;
 }
 
+/* ── Sidebar denser ── */
+body.bhw-body .adm-brand {
+  padding: 14px 14px 10px;
+}
+
+body.bhw-body .adm-nav-section {
+  padding: 8px 10px 2px;
+}
+
+body.bhw-body .adm-nav-item,
+body.bhw-body .bhw-sidebar .adm-nav-item {
+  padding: 6px 10px;
+  gap: 8px;
+}
+
+body.bhw-body .adm-profile {
+  padding: 10px 12px;
+}
+
+/* ── Shared cards / panels ── */
+body.bhw-body .bhw-card,
+body.bhw-body .mc-card,
+body.bhw-body .bhw-pl-table-wrap,
+body.bhw-body .bhw-referral-table-card,
+body.bhw-body .bhw-cons-panel,
+body.bhw-body .bhw-form-card {
+  margin-bottom: 0;
+}
+
+body.bhw-body .portal-page-body > .bhw-card,
+body.bhw-body .portal-page-body > .mc-card {
+  margin-bottom: 0;
+}
+
+body.bhw-body .bhw-card,
+body.bhw-body .mc-card {
+  padding: 12px 14px;
+}
+
+/* ── Dashboard ── */
+body.bhw-body .bhw-dash {
+  gap: 8px !important;
+}
+
+body.bhw-body .bhw-dash-header {
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+body.bhw-body .bhw-dash-panel__head,
+body.bhw-body .bhw-dash-recent .adm-card-head {
+  padding: 10px 12px;
+  gap: 6px;
+}
+
+body.bhw-body .bhw-dash-stats {
+  gap: 8px;
+  padding: 10px;
+}
+
+body.bhw-body .bhw-dash-stat {
+  padding: 12px 12px;
+}
+
+body.bhw-body .bhw-dash .mc-notif-widget {
+  padding: 10px;
+}
+
+body.bhw-body .bhw-dash-panel__toolbar {
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+body.bhw-body .bhw-dash-charts,
+body.bhw-body .bhw-dash-charts-grid {
+  gap: 8px;
+}
+
+body.bhw-body .bhw-dash .bhw-chart-card,
+body.bhw-body .bhw-dash .mc-chart-card {
+  min-height: 0 !important;
+  padding: 10px 12px 8px !important;
+}
+
+body.bhw-body .bhw-dash .mc-chart-canvas-wrap,
+body.bhw-body .bhw-dash .bhw-chart-wrap {
+  flex: 0 0 auto !important;
+  min-height: 110px !important;
+  height: clamp(110px, 16vh, 150px) !important;
+}
+
+body.bhw-body .bhw-dash-queue-table th,
+body.bhw-body .bhw-dash-queue-table td {
+  padding: 7px 10px;
+}
+
+/* ── Patient List ── */
+body.bhw-body .bhw-pl-page {
+  gap: 0;
+}
+
+body.bhw-body .bhw-pl-header,
+body.bhw-body .bhw-pl-header.bhw-page-intro {
+  gap: 8px 12px;
+  margin-bottom: 8px;
+  padding-bottom: 0;
+}
+
+body.bhw-body .bhw-pl-header-actions {
+  gap: 6px;
+}
+
+body.bhw-body .bhw-pl-btn {
+  padding: 6px 12px;
+  gap: 5px;
+}
+
+body.bhw-body .bhw-pl-toolbar {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  gap: 6px 8px;
+}
+
+body.bhw-body .bhw-pl-toolbar-search input {
+  padding: 7px 10px 7px 34px;
+}
+
+body.bhw-body .bhw-pl-toolbar select {
+  padding: 6px 10px;
+}
+
+body.bhw-body .bhw-pl-table thead th {
+  padding: 7px 10px;
+}
+
+body.bhw-body .bhw-pl-table tbody td {
+  padding: 7px 10px;
+}
+
+body.bhw-body .bhw-pl-badge {
+  padding: 2px 7px;
+}
+
+body.bhw-body .bhw-pl-btn-view,
+body.bhw-body .bhw-pl-row-actions .bhw-pl-btn {
+  padding: 5px 10px;
+}
+
+body.bhw-body .bhw-pl-footer,
+body.bhw-body .bhw-pl-pagination {
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+body.bhw-body .bhw-pl-email {
+  margin-top: 1px;
+}
+
+/* ── Records / referrals / follow-ups / reports ── */
+body.bhw-body .bhw-records-header,
+body.bhw-body .bhw-referral-header,
+body.bhw-body .bhw-followup-header,
+body.bhw-body .bhw-reports-header,
+body.bhw-body .bhw-update-header {
+  margin-bottom: 8px;
+  gap: 8px 12px;
+}
+
+body.bhw-body .bhw-records-toolbar,
+body.bhw-body .bhw-referral-toolbar,
+body.bhw-body .bhw-followup-toolbar,
+body.bhw-body .bhw-reports-toolbar {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  gap: 6px 8px;
+}
+
+body.bhw-body .bhw-records-table th,
+body.bhw-body .bhw-records-table td,
+body.bhw-body .bhw-referral-table th,
+body.bhw-body .bhw-referral-table td,
+body.bhw-body .bhw-followup-table th,
+body.bhw-body .bhw-followup-table td,
+body.bhw-body .bhw-reports-table th,
+body.bhw-body .bhw-reports-table td,
+body.bhw-body table.adm-table th,
+body.bhw-body table.adm-table td {
+  padding: 7px 10px;
+}
+
+body.bhw-body .bhw-reports-header {
+  padding-bottom: 8px;
+}
+
+body.bhw-body .bhw-reports-card,
+body.bhw-body .bhw-report-card {
+  padding: 12px 14px;
+}
+
+/* ── Profile / settings forms ── */
+body.bhw-body .bhw-form-card,
+body.bhw-body .bhw-profile-card {
+  padding: 12px 14px;
+}
+
+body.bhw-body .form-group,
+body.bhw-body .mb-md {
+  margin-bottom: 10px;
+}
+
+body.bhw-body .mc-chart-filters {
+  padding: 8px 10px;
+  gap: 8px 10px;
+  margin-bottom: 6px;
+}
+
+/* ── Mobile ── */
 @media (max-width: 768px) {
+  body.bhw-body .portal-page-body {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + 6px) !important;
+    padding-bottom: 12px !important;
+    gap: 8px !important;
+  }
+
   body.bhw-body .bhw-page-intro,
   body.bhw-body .bhw-dash-header.bhw-page-intro,
   body.bhw-body .bhw-cons-hero.bhw-page-intro,
@@ -70,7 +314,38 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-reports-header.bhw-page-intr
   body.bhw-body .bhw-update-header.bhw-page-intro,
   body.bhw-body .bhw-records-header.bhw-page-intro,
   body.bhw-body .bhw-reports-header.bhw-page-intro {
-    margin-bottom: 12px;
-    gap: 10px;
+    margin-bottom: 8px;
+    gap: 8px;
+  }
+
+  body.bhw-body .bhw-pl-toolbar {
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+
+  body.bhw-body .bhw-pl-table thead th,
+  body.bhw-body .bhw-pl-table tbody td {
+    padding: 6px 8px;
+  }
+
+  body.bhw-body .bhw-dash {
+    gap: 8px !important;
+  }
+
+  body.bhw-body .bhw-dash-stats {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  body.bhw-body .adm-nav-item {
+    padding: 7px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  body.bhw-body .portal-page-body {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+    gap: 6px !important;
   }
 }
