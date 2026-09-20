@@ -60,8 +60,8 @@ PROMPT;
     }
 
     /**
-     * Hiligaynon/local-language meaning support for the complaint interview.
-     * Prefers Ollama (local Llama); fails soft so existing Hiligaynon NLP continues.
+     * Multilingual complaint meaning support (Hiligaynon / Tagalog / English / mixed).
+     * Uses configured provider order (default: Groq → OpenAI → local). Fails soft.
      * Does not triage and must not replace the original patient text at the call site.
      *
      * @return array<string, mixed>
@@ -82,18 +82,27 @@ PROMPT;
             . "Extract only concepts clearly supported by the text. Do not diagnose. Do not invent urgency.\n"
             . "Do not output EMERGENCY, URGENT, or NON-URGENT.";
 
-        // Prefer Ollama/local first for Hiligaynon support; fail soft on error.
-        try {
-            [$content, $usedProvider, $usedModel] = self::chatCompletion('local', $userPrompt);
-            $parsed = self::extractJson($content);
-            $concepts = self::normalizeConcepts($parsed);
-            $score = max(0, min(100, (int) ($parsed['confidence_score'] ?? 0)));
-            if ($score === 0 && $concepts !== []) {
-                $sum = array_sum(array_column($concepts, 'confidence'));
-                $score = (int) round($sum / count($concepts));
-            }
-            $english = trim((string) ($parsed['english_interpretation'] ?? ''));
-            if ($english !== '') {
+        $lastError = '';
+        foreach (self::providerChain() as $provider) {
+            try {
+                [$content, $usedProvider, $usedModel] = self::chatCompletion($provider, $userPrompt);
+                $parsed = self::extractJson($content);
+                $concepts = self::normalizeConcepts($parsed);
+                $score = max(0, min(100, (int) ($parsed['confidence_score'] ?? 0)));
+                if ($score === 0 && $concepts !== []) {
+                    $sum = array_sum(array_column($concepts, 'confidence'));
+                    $score = (int) round($sum / count($concepts));
+                }
+                $english = trim((string) ($parsed['english_interpretation'] ?? ''));
+                if ($english === '') {
+                    $lastError = 'empty_interpretation';
+                    continue;
+                }
+                if (preg_match('/\b(EMERGENCY|URGENT|NON-URGENT|NON_URGENT)\b/iu', $english)) {
+                    $lastError = 'triage_language_rejected';
+                    continue;
+                }
+
                 return [
                     'status'                 => 'complete',
                     'provider'               => $usedProvider,
@@ -102,13 +111,14 @@ PROMPT;
                     'confidence_score'       => $score,
                     'concepts'               => $concepts,
                     'notes'                  => trim((string) ($parsed['notes'] ?? '')),
+                    'evidence_source'        => 'ai_interpreter',
                 ];
+            } catch (Throwable $e) {
+                $lastError = $e->getMessage();
             }
-        } catch (Throwable $e) {
-            return self::emptyResult('unavailable', $originalText, $e->getMessage());
         }
 
-        return self::emptyResult('unavailable', $originalText, 'Local interpreter returned empty meaning');
+        return self::emptyResult('unavailable', $originalText, $lastError ?: 'No AI provider available');
     }
 
     /**
