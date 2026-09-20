@@ -268,7 +268,12 @@
 }
 
 .bhw-dash-chart-filters {
-  margin: 0 20px 12px;
+  margin: 0;
+  width: auto;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .adm-charts-filters .mc-chart-filters__status {

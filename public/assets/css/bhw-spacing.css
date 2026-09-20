@@ -19,9 +19,9 @@ body.bhw-body .portal-page-body:has(.bhw-reports-page),
 body.bhw-body .portal-page-body:has(.bhw-activity-page),
 body.bhw-body .portal-page-body:has(.bhw-cons-page),
 body.bhw-body .portal-page-body:has(.bhw-update-page) {
-  padding: 10px 16px 14px !important;
-  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 8px) !important;
-  gap: 10px !important;
+  padding: 8px 14px 12px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 6px) !important;
+  gap: 8px !important;
 }
 
 /* ── Page intros ── */
@@ -119,9 +119,9 @@ body.bhw-body .bhw-activity-table-card {
   margin-bottom: 0;
 }
 
-/* ── Dashboard (match Admin compact chart + table rhythm) ── */
+/* ── Dashboard (match Admin compact rhythm; charts readable size) ── */
 body.bhw-body .bhw-dash {
-  gap: 10px !important;
+  gap: 8px !important;
 }
 
 body.bhw-body .bhw-dash-header {
@@ -130,9 +130,19 @@ body.bhw-body .bhw-dash-header {
 }
 
 body.bhw-body .bhw-dash-panel__head,
-body.bhw-body .bhw-dash-recent .adm-card-head {
+body.bhw-body .bhw-dash-recent .adm-card-head,
+body.bhw-body .bhw-dash-recent .mc-notif-recent-panel__head {
   padding: 10px 12px !important;
   gap: 8px !important;
+}
+
+body.bhw-body .bhw-dash-recent .mc-notif-recent-panel__body {
+  padding: 0 !important;
+}
+
+body.bhw-body .bhw-dash-recent .mc-notif-list--feed .mc-notif-item {
+  padding: 10px 12px !important;
+  gap: 10px !important;
 }
 
 body.bhw-body .bhw-dash-stats {
@@ -159,36 +169,36 @@ body.bhw-body .bhw-dash-charts-grid {
 }
 
 body.bhw-body .bhw-dash-charts-grid {
-  padding: 8px 12px 12px !important;
+  padding: 4px 12px 12px !important;
 }
 
 body.bhw-body .bhw-dash .bhw-chart-card,
 body.bhw-body .bhw-dash .mc-chart-card {
   min-height: 0 !important;
   height: auto !important;
-  padding: 10px 12px 8px !important;
+  padding: 10px 12px 10px !important;
   gap: 0 !important;
 }
 
-/* Match Admin chart canvas scale */
+/* Larger than Admin micro-charts so BHW trends stay readable */
 body.bhw-body .bhw-dash .mc-chart-canvas-wrap,
 body.bhw-body .bhw-dash .bhw-chart-wrap,
 body.bhw-body .bhw-dash .bhw-chart-wrap--line,
 body.bhw-body .bhw-dash .bhw-chart-wrap--bar {
   flex: 0 0 auto !important;
-  min-height: 110px !important;
-  height: clamp(110px, 16vh, 150px) !important;
+  min-height: 180px !important;
+  height: clamp(180px, 24vh, 220px) !important;
   max-height: none !important;
 }
 
 body.bhw-body .bhw-dash .bhw-chart-wrap--ring {
-  min-height: 120px !important;
-  height: clamp(120px, 16vh, 150px) !important;
+  min-height: 180px !important;
+  height: clamp(180px, 24vh, 220px) !important;
 }
 
 body.bhw-body .bhw-dash .bhw-chart-wrap--bar-tall {
-  min-height: 130px !important;
-  height: clamp(130px, 18vh, 170px) !important;
+  min-height: 200px !important;
+  height: clamp(200px, 26vh, 240px) !important;
 }
 
 body.bhw-body .bhw-dash .bhw-chart-card h4 {
@@ -197,23 +207,47 @@ body.bhw-body .bhw-dash .bhw-chart-card h4 {
 }
 
 body.bhw-body .bhw-dash-charts-toolbar {
-  padding: 8px 12px 0 !important;
-  gap: 6px 8px !important;
+  padding: 8px 12px 4px !important;
+  gap: 8px !important;
+  min-height: 0 !important;
+}
+
+/* Keep Period | select | status on one row (match Admin) */
+body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters,
+body.bhw-body .bhw-dash-charts-toolbar .bhw-dash-chart-filters {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 8px !important;
+}
+
+body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__label {
+  display: inline-block !important;
+  width: auto !important;
+  margin: 0 !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
 }
 
 body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__control {
-  min-height: 34px !important;
+  width: auto !important;
+  min-height: 32px !important;
   min-width: 110px !important;
+  max-width: 140px !important;
   font-size: 13px !important;
   padding: 4px 28px 4px 8px !important;
 }
 
-body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__label {
-  font-size: 10px !important;
-}
-
 body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__status {
+  margin: 0 !important;
   font-size: 11px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
 }
 
 body.bhw-body .bhw-dash-panel__head h3,
@@ -496,8 +530,8 @@ body.bhw-body .mc-chart-filters {
   body.bhw-body .bhw-dash .bhw-chart-wrap,
   body.bhw-body .bhw-dash .bhw-chart-wrap--line,
   body.bhw-body .bhw-dash .bhw-chart-wrap--bar {
-    min-height: 100px !important;
-    height: clamp(100px, 22vh, 140px) !important;
+    min-height: 160px !important;
+    height: clamp(160px, 28vh, 200px) !important;
   }
 
   body.bhw-body .adm-nav-item {
