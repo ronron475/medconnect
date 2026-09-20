@@ -100,6 +100,30 @@ final class ClinicalInterviewGeminiFollowUp
                 return null;
             }
 
+            // Explicit finish signal from Gemini when nothing clinically useful remains.
+            if (array_key_exists('continue_interview', $parsed) && $parsed['continue_interview'] === false) {
+                self::$lastError = 'continue_interview_false';
+
+                return null;
+            }
+
+            // PHP safety gate: reject if AdaptivePolicy would treat the slot as already answered.
+            if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+                $stillOpen = ClinicalInterviewAdaptivePolicy::listCandidateSlots($context, $transcript, []);
+                $openIds = [];
+                foreach ($stillOpen as $row) {
+                    if (is_array($row)) {
+                        $openIds[] = strtoupper(trim((string) ($row['question_id'] ?? '')));
+                    }
+                }
+                $pickedId = strtoupper(trim((string) ($pick['question_id'] ?? '')));
+                if ($pickedId === '' || !in_array($pickedId, $openIds, true)) {
+                    self::$lastError = 'php_gate_rejected_already_known';
+
+                    return null;
+                }
+            }
+
             $question = self::sanitizeQuestion((string) ($parsed['question'] ?? ''));
             if ($question === '') {
                 // Prefer bank template wording if Gemini text was rejected.
@@ -289,7 +313,7 @@ final class ClinicalInterviewGeminiFollowUp
 
         return "Write one follow-up question a nurse would say out loud.\n"
             . "Language: {$langLine} only.\n"
-            . 'Clinical purpose (chosen by existing NLP — phrase this purpose only): '
+            . 'Clinical purpose (chosen by existing NLP allow-list — phrase this purpose only): '
             . trim((string) ($slot['clinical_purpose'] ?? 'clarify the complaint')) . "\n"
             . 'Question slot id: ' . ($qid !== '' ? $qid : '(none)') . "\n"
             . $painRule
@@ -299,15 +323,11 @@ final class ClinicalInterviewGeminiFollowUp
             . 'Active complaint focus (answer applies ONLY to this): '
             . ($activeSpan !== '' ? mb_substr($activeSpan, 0, 240) : '(full case)') . "\n"
             . 'Active complaint families: ' . ($activeFamilies !== [] ? implode(', ', $activeFamilies) : '(none)') . "\n"
-            . 'Original patient complaint (authoritative wording; never discard): '
-            . ($originalComplaint !== '' ? mb_substr($originalComplaint, 0, 400) : '(none)') . "\n"
-            . 'Ollama/local meaning support (secondary; may be empty; do not invent beyond this): '
+            . self::knownInformationBlock($context, $transcript, $facts)
+            . 'AI meaning support (secondary; not patient speech): '
             . ($ollamaMeaning !== '' ? mb_substr($ollamaMeaning, 0, 240) : '(none)') . "\n"
-            . 'Already known from the COMPLETE case (do not ask again): ' . ($known !== [] ? implode('; ', $known) : '(none)') . "\n"
-            . 'Prior answers: ' . ($answered !== [] ? implode(' | ', $answered) : '(none)') . "\n"
-            . 'Already asked slots: ' . ($asked !== [] ? implode(', ', $asked) : '(none)') . "\n"
-            . 'Accumulated case text: ' . mb_substr(trim($transcript), 0, 800) . "\n"
             . "Do not assume facts from a different complaint apply to the active one.\n"
+            . "Do not ask for information already listed as known.\n"
             . "Reply with the question only. No preamble.";
     }
 
@@ -584,21 +604,130 @@ PROMPT;
             . "Language for the spoken question: {$langLine} only.\n"
             . "You MUST pick exactly one candidate from this allow-list (JSON):\n{$candidatesJson}\n"
             . "Active complaint id: " . ($activeId !== '' ? $activeId : '(single)') . "\n"
-            . "Already known case (do not re-ask): " . mb_substr($known !== '' ? $known : '(none)', 0, 1200) . "\n"
+            . self::knownInformationBlock($context, $transcript, $facts)
             . "Finding status map: " . json_encode($findingStatus, JSON_UNESCAPED_UNICODE) . "\n"
             . "WHO/IITT information needs still worth clarifying (NOT a triage decision):\n"
             . ($whoNeeds !== '' ? $whoNeeds : '(none listed)') . "\n"
-            . "Accumulated text: " . mb_substr(trim($transcript), 0, 700) . "\n\n"
+            . "Accumulated patient/case text: " . mb_substr(trim($transcript), 0, 700) . "\n\n"
             . "Return ONLY compact JSON with keys:\n"
             . "{\"index\":0,\"question_id\":\"...\",\"target_finding\":\"...\",\"complaint_id\":\"...\",\"question\":\"...\",\"continue_interview\":true}\n"
             . "Rules:\n"
-            . "- index must match one allow-list item.\n"
+            . "- FIRST review Already known / patient-authored evidence / prior answers. Do not re-ask those.\n"
+            . "- index must match one allow-list item whose information is still genuinely missing.\n"
             . "- question_id and target_finding must match that same allow-list item.\n"
             . "- Ask exactly ONE atomic question for that one finding only.\n"
             . "- Never ask A or B or C in one question.\n"
             . "- Never diagnose. Never say EMERGENCY, URGENT, or NON-URGENT.\n"
             . "- Never invent symptoms the patient did not state.\n"
+            . "- If nothing important is missing, set continue_interview=false and pick index 0 with an empty question.\n"
             . "- Output JSON only.";
+    }
+
+    /**
+     * Compact known-information block for Gemini select/phrase prompts.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $facts
+     */
+    private static function knownInformationBlock(array $context, string $transcript, array $facts): string
+    {
+        $patientEvidence = '';
+        if (class_exists('ClinicalInterviewEngine') && method_exists('ClinicalInterviewEngine', 'patientEvidenceText')) {
+            try {
+                $patientEvidence = trim((string) ClinicalInterviewEngine::patientEvidenceText($context));
+            } catch (Throwable) {
+                $patientEvidence = '';
+            }
+        }
+        if ($patientEvidence === '') {
+            $patientEvidence = trim((string) (
+                ($context['chief_complaint'] ?? '')
+                ?: (($context['complaint_text_cleaner']['original'] ?? '') ?: '')
+            ));
+            $turns = [];
+            foreach ((array) ($context['patient_turns'] ?? []) as $t) {
+                if (is_string($t) && trim($t) !== '') {
+                    $turns[] = trim($t);
+                }
+            }
+            if ($turns !== []) {
+                $patientEvidence = trim($patientEvidence . '. ' . implode('. ', $turns));
+            }
+        }
+
+        $knownCase = '';
+        if (class_exists('ClinicalInterviewAdaptivePolicy')) {
+            $knownCase = ClinicalInterviewAdaptivePolicy::fullCaseHaystack($context, $transcript, $facts);
+        }
+
+        $polarity = [];
+        foreach ([
+            'weakness', 'speech_difficulty', 'vision_change', 'breathing_difficulty',
+            'bleeding_continuing', 'bleeding_heavy', 'dizziness', 'chest_radiation',
+            'sweating', 'abdominal_associated', 'fever_confirmed', 'blood_in_stool', 'pregnancy',
+        ] as $key) {
+            if (array_key_exists($key, $facts) && ($facts[$key] === true || $facts[$key] === false)) {
+                $polarity[] = $key . '=' . ($facts[$key] === true ? 'true' : 'false');
+            }
+        }
+
+        $structured = [];
+        if (($facts['pain_score'] ?? null) !== null && $facts['pain_score'] !== '') {
+            $structured[] = 'pain_score=' . (int) $facts['pain_score'];
+        }
+        if (trim((string) ($facts['pain_qualifier'] ?? '')) !== '') {
+            $structured[] = 'pain_qualifier=' . trim((string) $facts['pain_qualifier']);
+        }
+        if (trim((string) ($facts['onset'] ?? '')) !== '') {
+            $structured[] = 'onset=' . trim((string) $facts['onset']);
+        }
+        if (trim((string) ($facts['duration_label'] ?? '')) !== '') {
+            $structured[] = 'duration=' . trim((string) $facts['duration_label']);
+        }
+        foreach ((array) ($facts['body_locations'] ?? []) as $loc) {
+            if (is_string($loc) && trim($loc) !== '') {
+                $structured[] = 'location=' . trim($loc);
+            }
+        }
+
+        $answered = [];
+        foreach ((array) ($context['questions_answered'] ?? []) as $qa) {
+            if (!is_array($qa)) {
+                continue;
+            }
+            $qid = trim((string) ($qa['question_id'] ?? ''));
+            $a = trim((string) ($qa['answer'] ?? $qa['patient_answer'] ?? ''));
+            if ($qid !== '' || $a !== '') {
+                $answered[] = trim($qid . '=' . $a);
+            }
+        }
+        $asked = array_values(array_filter(array_map('strval', (array) ($context['questions_asked'] ?? []))));
+
+        $aiMeaning = trim((string) (($context['semantic_bridge']['ollama_meaning'] ?? '') ?: ''));
+        $aiConcept = trim((string) (($context['semantic_bridge']['gemini_concept'] ?? '') ?: ''));
+        $aiSymptoms = [];
+        foreach ((array) ($facts['symptoms_ai'] ?? []) as $s) {
+            if (is_string($s) && trim($s) !== '') {
+                $aiSymptoms[] = trim($s);
+            }
+        }
+
+        return 'Original patient complaint / patient-authored evidence (do not treat AI gloss as patient speech): '
+            . mb_substr($patientEvidence !== '' ? $patientEvidence : '(none)', 0, 500) . "\n"
+            . 'Structured clinical facts already known: '
+            . ($structured !== [] ? implode('; ', $structured) : '(none)') . "\n"
+            . 'Structured polarity already known: '
+            . ($polarity !== [] ? implode('; ', $polarity) : '(none)') . "\n"
+            . 'Complete-case known summary: '
+            . mb_substr($knownCase !== '' ? $knownCase : '(none)', 0, 900) . "\n"
+            . 'Previous patient answers: '
+            . ($answered !== [] ? implode(' | ', $answered) : '(none)') . "\n"
+            . 'Previously answered / asked interview slots: '
+            . ($asked !== [] ? implode(', ', $asked) : '(none)') . "\n"
+            . 'AI-derived meaning (NOT patient-authored; do not re-ask as if unknown patient speech): '
+            . mb_substr($aiMeaning !== '' ? $aiMeaning : '(none)', 0, 240) . "\n"
+            . 'AI-derived concept/symptoms (NOT patient-authored): '
+            . trim(($aiConcept !== '' ? $aiConcept . '; ' : '') . ($aiSymptoms !== [] ? implode(', ', $aiSymptoms) : '(none)')) . "\n";
     }
 
     /**

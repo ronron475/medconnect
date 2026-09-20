@@ -58,8 +58,12 @@ final class ClinicalInterviewEngine
                     $originalForDisplay = $originalTurnForLanguage;
                 }
 
-                // Optional Hiligaynon meaning support (Ollama/local first). Never replaces original text.
-                $ollamaBridge = self::maybeHiligaynonMeaningBridge($originalForDisplay, (string) ($semantic['detected_language'] ?? ''));
+                // Primary AI meaning (Groq → OpenAI → local via MedicalAiInterpreter).
+                // Never replaces original patient wording; never sets triage class.
+                $ollamaBridge = self::maybeAiMeaningBridge($originalForDisplay, (string) ($semantic['detected_language'] ?? ''));
+                if ($ollamaBridge === [] && is_array($semantic['ollama_bridge'] ?? null)) {
+                    $ollamaBridge = $semantic['ollama_bridge'];
+                }
                 if ($ollamaBridge !== []) {
                     $bridgeMeaning = trim((string) ($ollamaBridge['english_interpretation'] ?? ''));
                     $geminiConcept = trim((string) ($semantic['gemini_medical_concept'] ?? ''));
@@ -83,15 +87,39 @@ final class ClinicalInterviewEngine
                         'discarded' => is_array($semantic['discarded_tokens'] ?? null) ? $semantic['discarded_tokens'] : [],
                     ];
                     // Additive bridge metadata only — triage still owned by ClinicalTriageEngine.
+                    $aiConcepts = [];
+                    foreach ((array) (($ollamaBridge['concepts'] ?? []) ?: []) as $c) {
+                        if (!is_array($c)) {
+                            continue;
+                        }
+                        $term = trim((string) ($c['term'] ?? ''));
+                        if ($term !== '') {
+                            $aiConcepts[] = $term;
+                        }
+                    }
                     $context['semantic_bridge'] = [
                         'source' => (string) ($semantic['combine_reason'] ?? ''),
                         'gemini_concept' => (string) ($semantic['gemini_medical_concept'] ?? ''),
                         'ollama_meaning' => (string) (($ollamaBridge['english_interpretation'] ?? '') ?: ''),
+                        'ai_provider' => (string) (($ollamaBridge['provider'] ?? '') ?: ''),
                         'nlp_text' => $nlpText,
                         'original' => $originalForDisplay,
                         'domain_label' => (string) ($semantic['domain_label'] ?? ''),
                         'clinically_vague' => !empty($semantic['clinically_vague']),
+                        'evidence_source' => 'ai_bridge',
                     ];
+                    if ($aiConcepts !== []) {
+                        $facts = is_array($context['facts'] ?? null) ? $context['facts'] : self::blankFacts([]);
+                        $aiBag = self::stringList($facts['symptoms_ai'] ?? []);
+                        foreach ($aiConcepts as $term) {
+                            $term = trim((string) $term);
+                            if ($term !== '' && !in_array($term, $aiBag, true)) {
+                                $aiBag[] = $term;
+                            }
+                        }
+                        $facts['symptoms_ai'] = $aiBag;
+                        $context['facts'] = $facts;
+                    }
                     if ($context['chief_complaint'] === '' && $originalForDisplay !== '') {
                         $context['chief_complaint'] = $originalForDisplay;
                     }
@@ -2247,18 +2275,32 @@ final class ClinicalInterviewEngine
         $lang = $context['question_language'] !== '' ? $context['question_language'] : 'english';
         $language = strtoupper($lang === 'tagalog' ? 'TAGALOG' : ($lang === 'hiligaynon' ? 'HILIGAYNON' : 'ENGLISH'));
 
-        // 1) Universal Gemini select among PHP allow-list candidates (atomic findings).
+        // 1) Gemini select among PHP allow-list candidates (already-known slots filtered by AdaptivePolicy).
         try {
             if (class_exists('ClinicalInterviewAdaptivePolicy')
                 && class_exists('ClinicalInterviewGeminiFollowUp')
                 && ClinicalInterviewGeminiFollowUp::enabled()
             ) {
                 $candidates = ClinicalInterviewAdaptivePolicy::listCandidateSlots($context, $transcript, $assessment);
+                if ($candidates === []) {
+                    // Nothing clinically missing — finish interview → ClinicalTriageEngine.
+                    return null;
+                }
                 $picked = ClinicalInterviewGeminiFollowUp::selectNext($candidates, $context, $transcript);
                 if (is_array($picked) && trim((string) ($picked['text'] ?? '')) !== '') {
-                    $picked['language'] = (string) ($picked['language'] ?? $language);
+                    // Final PHP gate: still must be in the current open-candidate set.
+                    $openIds = [];
+                    foreach ($candidates as $row) {
+                        if (is_array($row)) {
+                            $openIds[] = strtoupper(trim((string) ($row['question_id'] ?? '')));
+                        }
+                    }
+                    $pickedId = strtoupper(trim((string) ($picked['question_id'] ?? '')));
+                    if ($pickedId !== '' && in_array($pickedId, $openIds, true)) {
+                        $picked['language'] = (string) ($picked['language'] ?? $language);
 
-                    return $picked;
+                        return $picked;
+                    }
                 }
             }
         } catch (Throwable $e) {
@@ -3255,30 +3297,17 @@ final class ClinicalInterviewEngine
     }
 
     /**
-     * Optional Ollama/local Hiligaynon meaning support. Fails soft to existing NLP.
+     * Optional AI meaning support (Groq → OpenAI → local). Fails soft.
      * Never replaces the original patient wording and never sets triage class.
+     * Runs for English / Hiligaynon / Tagalog / mixed.
      *
      * @return array<string, mixed>
      */
-    private static function maybeHiligaynonMeaningBridge(string $originalText, string $detectedLanguage): array
+    private static function maybeAiMeaningBridge(string $originalText, string $detectedLanguage = ''): array
     {
+        unset($detectedLanguage);
         $originalText = trim($originalText);
         if ($originalText === '' || !class_exists('MedicalAiInterpreter')) {
-            return [];
-        }
-        $lang = strtolower(trim($detectedLanguage));
-        $looksLocal = in_array($lang, ['hiligaynon', 'ilonggo', 'tagalog', 'filipino', 'mixed'], true);
-        if (!$looksLocal && class_exists('HiligaynonLanguageDetector')) {
-            try {
-                $detected = HiligaynonLanguageDetector::detect($originalText);
-                $primary = strtolower((string) ($detected['primary'] ?? ''));
-                $looksLocal = in_array($primary, ['hiligaynon', 'ilonggo', 'tagalog', 'filipino'], true)
-                    || !empty($detected['is_mixed']);
-            } catch (Throwable) {
-                $looksLocal = false;
-            }
-        }
-        if (!$looksLocal) {
             return [];
         }
 
@@ -3300,11 +3329,21 @@ final class ClinicalInterviewEngine
                 'provider' => (string) ($result['provider'] ?? ''),
                 'confidence_score' => (int) ($result['confidence_score'] ?? 0),
                 'concepts' => is_array($result['concepts'] ?? null) ? $result['concepts'] : [],
+                'evidence_source' => 'ai_interpreter',
             ];
         } catch (Throwable $e) {
-            error_log('Hiligaynon meaning bridge fallback: ' . $e->getMessage());
+            error_log('AI meaning bridge fallback: ' . $e->getMessage());
 
             return [];
         }
+    }
+
+    /**
+     * @deprecated Use maybeAiMeaningBridge — kept for older call sites.
+     * @return array<string, mixed>
+     */
+    private static function maybeHiligaynonMeaningBridge(string $originalText, string $detectedLanguage): array
+    {
+        return self::maybeAiMeaningBridge($originalText, $detectedLanguage);
     }
 }

@@ -71,17 +71,39 @@ final class ComplaintSemanticValidator
             $phpEvidence = 'none';
         }
 
-        // Dataset-first: call Gemini only when PHP is not confident, or tests inject a result.
-        // Always send ORIGINAL patient wording when Gemini runs (cleaner may drop unknown local terms).
+        // Primary AI understanding: Gemini (medical complaint) + Groq/interpreter (English meaning).
+        // PHP remains the validation / combine / fallback layer.
         $gemini = $geminiOverride ?? self::resolveGeminiFallback($raw, $phpEvidence, $incompleteJunk);
 
         $decision = self::combine($phpEvidence, $php, $gemini);
         $lang = self::detectLanguageKey($raw);
         $ollamaBridge = [];
 
-        // When Gemini is down/uncertain and PHP has no concept, try local Ollama meaning
-        // BEFORE hard reject. Does not triage; only health-domain understanding.
-        if (empty($decision['is_valid']) && !$incompleteJunk) {
+        // Groq-first meaning bridge (provider chain). Additive only — never replaces patient wording.
+        // Runs for multilingual understanding even when PHP was already strong.
+        if (!$incompleteJunk && !self::phpLooksHardNonMedical($php)) {
+            $meaningBridge = self::tryOllamaHealthMeaningBridge($raw, $php, $gemini);
+            if (!empty($meaningBridge['is_health_related'])
+                || trim((string) ($meaningBridge['english_interpretation'] ?? '')) !== ''
+            ) {
+                $ollamaBridge = $meaningBridge;
+                $meaning = trim((string) ($meaningBridge['english_interpretation'] ?? ''));
+                if ($meaning !== '' && mb_stripos($nlpText, $meaning) === false) {
+                    $nlpText = trim(($nlpText !== '' ? $nlpText : $raw) . '. ' . $meaning);
+                    $usable = true;
+                }
+                if (empty($decision['is_valid']) && !empty($meaningBridge['is_health_related'])) {
+                    $decision = [
+                        'is_valid' => true,
+                        'classification' => self::CLASS_VALID,
+                        'reason' => 'Groq/AI meaning support — health-related; PHP/Gemini uncertain',
+                    ];
+                }
+            }
+        }
+
+        // Legacy soft path when Gemini failed and meaning bridge was empty above.
+        if (empty($decision['is_valid']) && !$incompleteJunk && $ollamaBridge === []) {
             $ollamaBridge = self::tryOllamaHealthMeaningBridge($raw, $php, $gemini);
             if (!empty($ollamaBridge['is_health_related'])) {
                 $decision = [
@@ -415,7 +437,11 @@ final class ComplaintSemanticValidator
     }
 
     /**
-     * Gemini fallback only when PHP evidence is not strong.
+     * Gemini language/medical understanding for opening complaints.
+     * Called whenever PHP evidence is not already strong (primary AI path for uncertain input).
+     * When PHP is strong, Groq meaning enrichment still runs separately; Gemini is reserved
+     * for uncertain/weak cases and for follow-up question review.
+     * PHP validates via combine(); fail-open if Gemini disabled/unavailable.
      *
      * @return array<string, mixed>
      */
@@ -432,7 +458,17 @@ final class ComplaintSemanticValidator
                 'medical_concept' => '',
             ];
         }
-        if ($phpEvidence === 'strong') {
+        // Strong PHP match: skip Gemini gate (Groq meaning bridge still enriches separately).
+        // Force Gemini with MEDCONNECT_GEMINI_ALWAYS=1 when desired.
+        $always = false;
+        $rawAlways = getenv('MEDCONNECT_GEMINI_ALWAYS');
+        if ($rawAlways === false || $rawAlways === '') {
+            $rawAlways = $_ENV['MEDCONNECT_GEMINI_ALWAYS'] ?? '';
+        }
+        if ($rawAlways !== '' && !in_array(strtolower(trim((string) $rawAlways)), ['0', 'false', 'no', 'off'], true)) {
+            $always = true;
+        }
+        if ($phpEvidence === 'strong' && !$always) {
             return [
                 'available' => false,
                 'is_medical_complaint' => null,
@@ -443,13 +479,13 @@ final class ComplaintSemanticValidator
                 'medical_concept' => '',
             ];
         }
-        if (!class_exists('GeminiComplaintInputValidator')) {
+        if (!class_exists('GeminiComplaintInputValidator') || !GeminiComplaintInputValidator::enabled()) {
             return [
                 'available' => false,
                 'is_medical_complaint' => null,
                 'classification' => null,
                 'confidence' => null,
-                'error' => 'class_missing',
+                'error' => 'class_missing_or_disabled',
                 'corrected_text' => '',
                 'medical_concept' => '',
             ];
