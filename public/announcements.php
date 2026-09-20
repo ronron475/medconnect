@@ -37,8 +37,8 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/style.css?v=20260701e">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/responsive.css">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=3.2">
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=20">
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcements-list.css?v=5">
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=30">
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcements-list.css?v=6">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-responsive.css?v=5">
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css">
 </head>
@@ -57,32 +57,12 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
             All Announcements
           </a>
           <div class="ann-list-detail__card">
-            <?php
-              $detailBanner = (string)($detail['banner_url'] ?? '');
-              $detailBannerPath = (string)($detail['banner_image'] ?? '');
-              $showDetailBanner = $detailBanner !== ''
-                && !preg_match('/\.pdf($|[?#])/i', $detailBanner)
-                && !preg_match('/\.pdf$/i', $detailBannerPath);
-            ?>
-            <?php if ($showDetailBanner): ?>
-            <img class="ann-detail__banner" src="<?= htmlspecialchars($detailBanner) ?>" alt="<?= htmlspecialchars($detail['title']) ?>">
-            <?php endif; ?>
             <span class="ann-detail__badge"><?= htmlspecialchars($detail['category_label']) ?></span>
             <?php if (!empty($detail['is_pinned'])): ?>
             <span class="ann-list-card__featured" style="margin-left:8px;"><span aria-hidden="true">📌</span> Featured</span>
             <?php endif; ?>
             <h1 class="ann-detail__title"><?= htmlspecialchars($detail['title']) ?></h1>
-            <?php if ($detail['subtitle']): ?>
-            <p class="ann-detail__subtitle"><?= htmlspecialchars($detail['subtitle']) ?></p>
-            <?php endif; ?>
             <time class="ann-detail__date"><?= date('F j, Y', strtotime($detail['publish_at'] ?? $detail['created_at'])) ?></time>
-            <?php if ($detail['short_description']): ?>
-            <p class="ann-detail__lead"><strong><?= htmlspecialchars($detail['short_description']) ?></strong></p>
-            <?php endif; ?>
-            <div class="ann-detail__body"><?= nl2br(htmlspecialchars($detail['content'])) ?></div>
-            <?php if ($detail['attachment_url']): ?>
-            <a class="ann-detail__attach" href="<?= htmlspecialchars($detail['attachment_url'] . (str_contains($detail['attachment_url'], '?') ? '&' : '?') . 'dl=1') ?>" download rel="noopener">Download attachment (PDF)</a>
-            <?php endif; ?>
           </div>
         </article>
       <?php else: ?>
@@ -102,29 +82,8 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
         <div class="ann-list-grid">
           <?php foreach ($items as $ann):
             $pubDate = date('M j, Y', strtotime($ann['publish_at'] ?? $ann['created_at']));
-            $excerpt = $ann['short_description'] ?: mb_substr(strip_tags($ann['content']), 0, 180);
-            if (mb_strlen(strip_tags($ann['content'])) > 180) $excerpt .= '…';
-            $listBanner = (string)($ann['banner_url'] ?? '');
-            $listBannerPath = (string)($ann['banner_image'] ?? '');
-            $showListBanner = $listBanner !== ''
-              && !preg_match('/\.pdf($|[?#])/i', $listBanner)
-              && !preg_match('/\.pdf$/i', $listBannerPath);
           ?>
-          <article class="ann-list-card">
-            <?php if ($showListBanner): ?>
-            <button type="button"
-                    class="ann-list-card__media-btn"
-                    data-image-url="<?= htmlspecialchars($listBanner) ?>"
-                    aria-label="View full-size image for <?= htmlspecialchars($ann['title']) ?>">
-              <img class="ann-list-card__img"
-                   src="<?= htmlspecialchars($listBanner) ?>"
-                   alt="<?= htmlspecialchars($ann['title']) ?>"
-                   loading="lazy"
-                   decoding="async"
-                   width="1600"
-                   height="900">
-            </button>
-            <?php endif; ?>
+          <article class="ann-list-card ann-list-card--plain">
             <a href="?id=<?= (int)$ann['id'] ?>" class="ann-list-card__link">
               <div class="ann-list-card__meta">
                 <span class="ann-list-card__badge"><?= htmlspecialchars($ann['category_label']) ?></span>
@@ -137,7 +96,6 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
                 </time>
               </div>
               <h2 class="ann-list-card__title"><?= htmlspecialchars($ann['title']) ?></h2>
-              <p class="ann-list-card__excerpt"><?= htmlspecialchars($excerpt) ?></p>
               <span class="ann-list-card__cta">Read announcement <?= $arrowIcon ?></span>
             </a>
           </article>
@@ -148,22 +106,6 @@ $emptyIcon = '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke
     </div>
   </main>
 
-  <div id="ann-image-lightbox" class="ann-lightbox" hidden aria-modal="true" role="dialog" aria-label="Announcement image preview">
-    <div class="ann-lightbox__backdrop" data-ann-lightbox-close aria-hidden="true"></div>
-    <div class="ann-lightbox__dialog">
-      <button type="button" class="ann-lightbox__close" data-ann-lightbox-close aria-label="Close image preview">&times;</button>
-      <div class="ann-lightbox__toolbar" role="toolbar" aria-label="Image zoom controls">
-        <button type="button" class="ann-lightbox__tool" data-ann-lightbox-zoom="out" aria-label="Zoom out">−</button>
-        <button type="button" class="ann-lightbox__tool" data-ann-lightbox-zoom="reset" aria-label="Reset zoom">100%</button>
-        <button type="button" class="ann-lightbox__tool" data-ann-lightbox-zoom="in" aria-label="Zoom in">+</button>
-      </div>
-      <div class="ann-lightbox__stage">
-        <img class="ann-lightbox__img" src="" alt="">
-      </div>
-    </div>
-  </div>
-
   <script>window.ASSET_BASE = <?= json_encode($asset) ?>;</script>
-  <script src="<?= $asset ?>/assets/js/announcements-list.js?v=1"></script>
 </body>
 </html>

@@ -51,7 +51,7 @@ $asset = ASSET_BASE;
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/hero-illustration.css?v=4" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/announcement-modal.css" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/location-modal.css?v=1" />
-  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=29" />
+  <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-announcements.css?v=30" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-nav.css?v=4.2" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab.css?v=14" />
   <link rel="stylesheet" href="<?= $asset ?>/assets/css/landing-fab-modals.css?v=2" />
@@ -1190,7 +1190,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
 
 
-<script src="<?= $asset ?>/assets/js/landing-announcements.js?v=6"></script>
+<script src="<?= $asset ?>/assets/js/landing-announcements.js?v=7"></script>
 <script src="<?= $asset ?>/assets/js/landing-location.js?v=1"></script>
 <?php $landingDownloadJsVer = (int) @filemtime(ASSETS_PATH . '/js/landing-download-app.js'); ?>
 <script src="<?= $asset ?>/assets/js/landing-download-app.js?v=<?= $landingDownloadJsVer ?>"></script>

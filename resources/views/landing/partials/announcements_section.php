@@ -19,22 +19,13 @@ $annIconSvgs = [
 ];
 
 $annJson = static function (array $ann): string {
-  $bannerUrl = (string)($ann['banner_url'] ?? '');
-  $bannerPath = (string)($ann['banner_image'] ?? '');
-  // Public payload: never hand a PDF to the modal as a banner (no inline Acrobat viewer).
-  if ($bannerUrl !== '' && (preg_match('/\.pdf($|[?#])/i', $bannerUrl) || preg_match('/\.pdf$/i', $bannerPath))) {
-    $bannerUrl = '';
-  }
+  // Public payload: metadata only — never ship files/content for public rendering.
   return htmlspecialchars(json_encode([
     'id' => (int)$ann['id'],
     'title' => $ann['title'],
-    'subtitle' => $ann['subtitle'] ?? '',
     'category' => $ann['category'] ?? '',
     'category_label' => $ann['category_label'] ?? '',
-    'short_description' => $ann['short_description'] ?? '',
-    'content' => $ann['content'] ?? '',
-    'banner_url' => $bannerUrl,
-    'attachment_url' => $ann['attachment_url'] ?? '',
+    'is_pinned' => !empty($ann['is_pinned']) ? 1 : 0,
     'publish_at' => $ann['publish_at'] ?? $ann['created_at'],
     'created_at' => $ann['created_at'],
   ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
@@ -88,64 +79,31 @@ $annJson = static function (array $ann): string {
         <div class="ann-carousel__viewport">
           <div class="ann-carousel__track" id="ann-carousel-track">
             <?php foreach ($items as $i => $ann):
-              $cat = $ann['category'] ?? 'general';
               $pubDate = !empty($ann['publish_at']) ? date('M j, Y', strtotime($ann['publish_at'])) : date('M j, Y', strtotime($ann['created_at']));
-              $short = $ann['short_description'] ?: mb_substr(strip_tags($ann['content']), 0, 180);
-              if (mb_strlen(strip_tags($ann['content'])) > 180) $short .= '…';
-              $imgLoading = $i === 0 ? 'eager' : 'lazy';
-              // Never treat PDFs as card media — browsers/Acrobat will embed a file viewer.
-              $bannerPath = (string)($ann['banner_image'] ?? '');
-              $bannerUrl = (string)($ann['banner_url'] ?? '');
-              $hasImageBanner = $bannerUrl !== ''
-                && !preg_match('/\.pdf($|[?#])/i', $bannerUrl)
-                && !preg_match('/\.pdf$/i', $bannerPath);
             ?>
-            <article class="ann-carousel__slide ann-slide ann-feature-card ann-card ann-card--clickable<?= $i === 0 ? ' is-active' : '' ?><?= $hasImageBanner ? ' ann-slide--has-thumb' : ' ann-slide--text-only' ?>"
+            <article class="ann-carousel__slide ann-slide ann-feature-card ann-card ann-card--clickable ann-slide--plain ann-slide--text-only<?= $i === 0 ? ' is-active' : '' ?>"
                      data-ann-id="<?= (int)$ann['id'] ?>"
                      data-ann-json="<?= $annJson($ann) ?>"
                      role="group"
                      aria-roledescription="slide"
                      aria-label="Announcement <?= $i + 1 ?> of <?= count($items) ?>"
                      tabindex="<?= $i === 0 ? '0' : '-1' ?>">
-              <div class="ann-feature-card__shell">
-                <div class="ann-feature-card__media">
-                  <?php if ($hasImageBanner): ?>
-                  <button type="button"
-                          class="ann-feature-card__media-btn"
-                          data-image-url="<?= htmlspecialchars($bannerUrl) ?>"
-                          aria-label="View full-size image for <?= htmlspecialchars($ann['title']) ?>">
-                    <img class="ann-feature-card__img"
-                         src="<?= htmlspecialchars($bannerUrl) ?>"
-                         alt="<?= htmlspecialchars($ann['title']) ?>"
-                         loading="<?= $imgLoading ?>"
-                         decoding="async"
-                         width="1600"
-                         height="900">
-                  </button>
-                  <?php else: ?>
-                  <div class="ann-feature-card__placeholder" aria-hidden="true"></div>
-                  <?php endif; ?>
-                  <div class="ann-feature-card__scrim" aria-hidden="true"></div>
-                  <div class="ann-slide__caption ann-feature-card__caption">
-                    <div class="ann-slide__caption-head">
-                      <div class="ann-slide__badges">
-                        <span class="ann-slide__badge"><?= htmlspecialchars($ann['category_label']) ?></span>
-                        <?php if (!empty($ann['is_pinned'])): ?>
-                        <span class="ann-slide__featured"><span class="ann-slide__featured-icon" aria-hidden="true">📌</span> Featured</span>
-                        <?php endif; ?>
-                      </div>
-                      <time class="ann-slide__date" datetime="<?= htmlspecialchars($ann['publish_at'] ?? $ann['created_at']) ?>"><?= $pubDate ?></time>
+              <div class="ann-feature-card__shell ann-feature-card__shell--plain">
+                <div class="ann-slide__caption ann-feature-card__caption ann-feature-card__caption--plain">
+                  <div class="ann-slide__caption-head">
+                    <div class="ann-slide__badges">
+                      <span class="ann-slide__badge"><?= htmlspecialchars($ann['category_label']) ?></span>
+                      <?php if (!empty($ann['is_pinned'])): ?>
+                      <span class="ann-slide__featured"><span class="ann-slide__featured-icon" aria-hidden="true">📌</span> Featured</span>
+                      <?php endif; ?>
                     </div>
-                    <h3 class="ann-slide__title"><?= htmlspecialchars($ann['title']) ?></h3>
-                    <?php if (!empty($ann['subtitle'])): ?>
-                    <p class="ann-slide__subtitle"><?= htmlspecialchars($ann['subtitle']) ?></p>
-                    <?php endif; ?>
-                    <p class="ann-slide__desc"><?= htmlspecialchars($short) ?></p>
-                    <button type="button" class="ann-slide__read" data-read-ann="<?= (int)$ann['id'] ?>">
-                      <span>Read More</span>
-                      <svg class="ann-slide__read-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-                    </button>
+                    <time class="ann-slide__date" datetime="<?= htmlspecialchars($ann['publish_at'] ?? $ann['created_at']) ?>"><?= $pubDate ?></time>
                   </div>
+                  <h3 class="ann-slide__title"><?= htmlspecialchars($ann['title']) ?></h3>
+                  <button type="button" class="ann-slide__read" data-read-ann="<?= (int)$ann['id'] ?>">
+                    <span>Read More</span>
+                    <svg class="ann-slide__read-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                  </button>
                 </div>
               </div>
             </article>
@@ -193,18 +151,3 @@ $annJson = static function (array $ann): string {
     </div>
   </div>
 </section>
-
-<div id="ann-image-lightbox" class="ann-lightbox" hidden aria-modal="true" role="dialog" aria-label="Announcement image preview">
-  <div class="ann-lightbox__backdrop" data-ann-lightbox-close aria-hidden="true"></div>
-  <div class="ann-lightbox__dialog">
-    <button type="button" class="ann-lightbox__close" data-ann-lightbox-close aria-label="Close image preview">&times;</button>
-    <div class="ann-lightbox__toolbar" role="toolbar" aria-label="Image zoom controls">
-      <button type="button" class="ann-lightbox__tool" data-ann-lightbox-zoom="out" aria-label="Zoom out">−</button>
-      <button type="button" class="ann-lightbox__tool" data-ann-lightbox-zoom="reset" aria-label="Reset zoom">100%</button>
-      <button type="button" class="ann-lightbox__tool" data-ann-lightbox-zoom="in" aria-label="Zoom in">+</button>
-    </div>
-    <div class="ann-lightbox__stage">
-      <img class="ann-lightbox__img" src="" alt="">
-    </div>
-  </div>
-</div>
