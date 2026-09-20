@@ -1785,8 +1785,54 @@ body.mc-tips-ready-modal-open {
 
 .pdash-followup__helper[hidden],
 .pdash-followup__scale[hidden],
+.pdash-followup__choices[hidden],
 .pdash-followup__notice[hidden] {
   display: none !important;
+}
+
+.pdash-followup__choices {
+  margin: 10px 0 0;
+}
+
+.pdash-followup__choices-track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pdash-followup__choice-btn {
+  appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: #fff;
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.pdash-followup__choice-btn:hover,
+.pdash-followup__choice-btn:focus-visible {
+  border-color: rgba(14, 116, 144, 0.45);
+  background: rgba(14, 116, 144, 0.06);
+  outline: none;
+}
+
+.pdash-followup__choice-btn.is-selected {
+  border-color: rgba(14, 116, 144, 0.75);
+  background: rgba(14, 116, 144, 0.12);
+  color: #0e7490;
+}
+
+.pdash-followup__choice-extra {
+  margin-top: 10px;
+}
+
+.pdash-followup__date-input {
+  max-width: 220px;
 }
 
 .pdash-followup__scale {

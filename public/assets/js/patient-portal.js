@@ -1405,6 +1405,9 @@
   }
 
   function isPainScaleQuestion(text) {
+    if (window.McFollowupChoices && typeof window.McFollowupChoices.isPainScaleText === 'function') {
+      return window.McFollowupChoices.isPainScaleText(text);
+    }
     const q = String(text || '');
     return /1\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
       || /0\s*(tubtob|to|hanggang|-|–|—)\s*10/i.test(q)
@@ -1414,20 +1417,64 @@
       || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
   }
 
-  function setBookingFollowupExtras(question) {
+  let lastBookingFollowupMeta = { questionId: '', language: 'english' };
+
+  function setBookingFollowupExtras(question, meta = {}) {
+    const qid = String(meta.questionId || meta.followup_question_id || lastBookingFollowupMeta.questionId || '').trim();
+    const lang = String(meta.language || meta.question_language || lastBookingFollowupMeta.language || 'english').trim();
+    lastBookingFollowupMeta = { questionId: qid, language: lang };
+
+    let kind = 'free_text';
+    if (window.McFollowupChoices && typeof window.McFollowupChoices.resolveControlKind === 'function') {
+      kind = window.McFollowupChoices.resolveControlKind(qid, question);
+    } else if (isPainScaleQuestion(question)) {
+      kind = 'pain';
+    }
+
     const scale = document.getElementById('triageFollowupScale');
+    const choices = document.getElementById('triageFollowupChoices');
     const helper = document.getElementById('triageFollowupHelper');
-    const showScale = isPainScaleQuestion(question);
+    const ans = document.getElementById('triage_followup_answer');
+    const showScale = kind === 'pain';
+
     if (scale) {
       scale.hidden = !showScale;
       scale.querySelectorAll('.pdash-followup__scale-btn').forEach((btn) => {
         btn.classList.remove('is-selected');
       });
+      if (showScale && window.McFollowupChoices && typeof window.McFollowupChoices.applyPainScaleLabels === 'function') {
+        window.McFollowupChoices.applyPainScaleLabels(scale, lang);
+      }
     }
+
+    if (choices && window.McFollowupChoices) {
+      if (kind === 'free_text' || kind === 'pain') {
+        window.McFollowupChoices.clear(choices);
+      } else {
+        window.McFollowupChoices.render(choices, {
+          kind,
+          lang,
+          answerEl: ans,
+          onSelect: () => {
+            clearBookingFollowupNotice();
+          },
+        });
+      }
+    } else if (choices) {
+      choices.hidden = true;
+      choices.innerHTML = '';
+    }
+
     if (helper) {
-      if (showScale) {
+      let helperText = '';
+      if (window.McFollowupChoices && typeof window.McFollowupChoices.helperText === 'function') {
+        helperText = window.McFollowupChoices.helperText(kind, lang);
+      } else if (showScale) {
+        helperText = 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).';
+      }
+      if (helperText) {
         helper.hidden = false;
-        helper.textContent = 'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).';
+        helper.textContent = helperText;
       } else {
         helper.hidden = true;
         helper.textContent = '';
@@ -1499,7 +1546,10 @@
       qText = String(question.text || question.question || '');
     }
     if (qEl) qEl.textContent = qText;
-    setBookingFollowupExtras(qText);
+    setBookingFollowupExtras(qText, {
+      questionId: options.questionId || options.followup_question_id || '',
+      language: options.language || options.question_language || '',
+    });
     if (options.notice) {
       showBookingFollowupNotice(options.notice);
     } else {
@@ -1536,7 +1586,7 @@
     if (form) form.classList.remove('is-followup-active');
     if (ans) ans.value = '';
     clearBookingFollowupNotice();
-    setBookingFollowupExtras('');
+    setBookingFollowupExtras('', {});
   }
 
   function setBookingComplaintLocked(locked) {
@@ -1769,7 +1819,10 @@
         twoStep.interviewInProgress = true;
         twoStep.awaitingSecond = false;
         twoStep.level = '';
-        showBookingFollowupUi(data.followup_question || '');
+        showBookingFollowupUi(data.followup_question || '', {
+          questionId: data.followup_question_id || '',
+          language: data.question_language || '',
+        });
         setSubmitLabel('Submit answer');
         return;
       }
@@ -1904,6 +1957,8 @@
                 if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
                 const retry = !!(failPayload.retry_current_question || failPayload.answer_rejected);
                 showBookingFollowupUi(failPayload.followup_question || '', {
+                  questionId: failPayload.followup_question_id || '',
+                  language: failPayload.question_language || '',
                   notice: retry
                     ? (failPayload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.')
                     : '',
@@ -1922,7 +1977,10 @@
               }
               if (failPayload.duplicate_pending || (json && json.duplicate_pending)) {
                 if (failPayload.assessment_in_progress) {
-                  showBookingFollowupUi(failPayload.followup_question || '');
+                  showBookingFollowupUi(failPayload.followup_question || '', {
+                    questionId: failPayload.followup_question_id || '',
+                    language: failPayload.question_language || '',
+                  });
                   return;
                 }
                 const existingLevel = urgencyToLevel(failPayload.triage_level || failPayload.classification_label)
@@ -1966,6 +2024,8 @@
               if (triageIdInput) triageIdInput.value = String(twoStep.triageId);
               const retry = !!(payload.retry_current_question || payload.answer_rejected);
               showBookingFollowupUi(payload.followup_question || '', {
+                questionId: payload.followup_question_id || '',
+                language: payload.question_language || '',
                 notice: retry
                   ? (payload.patient_message || json.message || 'Please provide an answer related to your current symptom and the question above. You can try again.')
                   : '',

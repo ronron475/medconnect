@@ -119,6 +119,14 @@ final class HiligaynonTextNormalizer
      */
     private static function normalizeChatShorthand(string $text): string
     {
+        // Universal clitic spacing first (same family as ClinicalFeatureExtractors /
+        // ClinicalFollowUpAnswerValidator): diko / indiko → di ko / indi ko, then
+        // expand bare di/d forms to indi where existing rules already do.
+        $text = preg_replace('/\bdi\s*ko\b/ui', 'di ko', $text) ?? $text;
+        $text = preg_replace('/\bindi\s*ko\b/ui', 'indi ko', $text) ?? $text;
+        $text = preg_replace('/\bhindi\s*ko\b/ui', 'hindi ko', $text) ?? $text;
+        $text = preg_replace('/\bdili\s*ko\b/ui', 'dili ko', $text) ?? $text;
+
         $patterns = [
             '/\bsakit\s+kag\s+d\s+nko\s+kaginhawa\b/u' => 'sakit kag indi ko kaginhawa',
             '/\bsakit\s+kag\s+d\s+nako\s+kaginhawa\b/u' => 'sakit kag indi ko kaginhawa',
@@ -127,6 +135,7 @@ final class HiligaynonTextNormalizer
             '/\bd\s+nko\b/u'                           => 'indi ko',
             '/\bd\s+nako\b/u'                          => 'indi ko',
             '/\bd\s+ko\b/u'                            => 'indi ko',
+            '/\bdi\s+ko\b/u'                           => 'indi ko',
             '/\bdko\b/u'                               => 'indi ko',
             '/\bdli\s+ko\b/u'                          => 'dili ko',
             '/\bdli\s+nako\b/u'                        => 'dili nako',

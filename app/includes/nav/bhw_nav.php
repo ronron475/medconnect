@@ -31,7 +31,8 @@ function bhw_nav_groups(): array
             'label' => 'Consultations',
             'description' => 'Schedule, status, and video assistance',
             'children' => [
-                ['file' => 'consultations/index.php', 'label' => 'Consultation Center', 'hint' => 'Schedule, status & video help', 'icon' => 'video'],
+                // Kept as a route; not shown in the final BHW sidebar.
+                ['file' => 'consultations/index.php', 'label' => 'Consultation Center', 'hint' => 'Schedule, status & video help', 'icon' => 'video', 'sidebar' => false],
             ],
         ],
         [
@@ -69,7 +70,9 @@ function bhw_nav_groups(): array
             'label' => 'Reports',
             'description' => 'Healthcare statistics and exports for your barangay',
             'children' => [
-                ['file' => 'reports/index.php', 'label' => 'Healthcare Reports', 'hint' => 'Charts & CSV/Excel export', 'icon' => 'chart', 'sidebar' => true],
+                // Healthcare Reports route kept; hidden from final sidebar.
+                ['file' => 'reports/index.php', 'label' => 'Healthcare Reports', 'hint' => 'Charts & CSV/Excel export', 'icon' => 'chart', 'sidebar' => false],
+                // My Activity Log must remain in the final BHW sidebar.
                 ['file' => 'activity/index.php', 'label' => 'My Activity Log', 'hint' => 'Your actions & downloads', 'icon' => 'clock', 'sidebar' => true],
             ],
         ],
@@ -206,9 +209,11 @@ function bhw_nav_sections(): array
         ['section' => null, 'items' => [
             [$dash['file'], $dash['label'], $dash['icon']],
         ]],
+        // Final BHW sidebar order: Patient List → Records → View Referrals → Appointment Follow-ups
         ['section' => 'Barangay Operations', 'items' => $collectItems([
-            'patients', 'consultations', 'records', 'followup', 'referral',
+            'patients', 'records', 'referral', 'followup',
         ])],
+        // Reports section keeps My Activity Log only (do not remove).
         ['section' => 'Reports', 'items' => $collectItems(['reports'])],
         ['section' => 'Account', 'items' => $collectItems(['settings'])],
     ];

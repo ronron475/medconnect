@@ -252,6 +252,7 @@ $patient_has_completed_visit = patient_portal_has_completed_visit($pdo, (int) $u
   try { sessionStorage.setItem('medconnect_block_telemedicine', '1'); } catch (_) {}
   </script>
   <?php endif; ?>
+  <script src="<?= ASSET_BASE ?>/assets/js/clinical-followup-choices.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/clinical-followup-choices.js') ?>"></script>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-portal.js?v=<?= $patient_portal_ver ?>"></script>
   <?php $visitHistoryJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-visit-history.js'); ?>
   <script src="<?= ASSET_BASE ?>/assets/js/patient-visit-history.js?v=<?= $visitHistoryJsVer ?>"></script>

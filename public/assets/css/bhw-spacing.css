@@ -19,6 +19,11 @@ body.bhw-body .bhw-reports-header.bhw-page-intro {
   margin: 0 0 14px;
 }
 
+/* Dashboard intro sits inside .bhw-dash gap — no extra bottom margin. */
+body.bhw-body .bhw-dash > .bhw-dash-header.bhw-page-intro {
+  margin: 0;
+}
+
 body.bhw-body .bhw-page-intro__desc,
 body.bhw-body .bhw-dash-header.bhw-page-intro .bhw-dash-header__desc,
 body.bhw-body .bhw-cons-hero.bhw-page-intro .bhw-cons-hero__sub,
@@ -37,7 +42,8 @@ body.bhw-body .bhw-followup-header.bhw-page-intro .bhw-page-intro__desc {
 
 body.bhw-body .bhw-dash-header.bhw-page-intro {
   align-items: center;
-  padding: 0;
+  padding: 8px 12px;
+  margin: 0;
 }
 
 body.bhw-body .bhw-cons-hero.bhw-page-intro {

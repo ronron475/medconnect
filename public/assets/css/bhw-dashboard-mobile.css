@@ -244,20 +244,20 @@
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget {
-    min-height: 84px;
-    padding: 12px;
+    min-height: 0;
+    padding: 10px 12px;
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget-value {
-    font-size: clamp(1.4rem, 5.5vw, 1.55rem);
+    font-size: clamp(1.25rem, 5vw, 1.4rem);
     font-weight: 800;
-    line-height: 1.15;
+    line-height: 1.1;
   }
 
   body.bhw-body .bhw-dash .mc-notif-widget-label {
-    font-size: 11px;
-    line-height: 1.35;
-    margin-top: 4px;
+    font-size: 10.5px;
+    line-height: 1.3;
+    margin-top: 0;
     white-space: normal;
     overflow-wrap: anywhere;
   }

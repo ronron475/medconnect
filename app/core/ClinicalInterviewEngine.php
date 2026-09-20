@@ -79,6 +79,19 @@ final class ClinicalInterviewEngine
                 }
 
                 if ($nlpText !== '') {
+                    // Reuse HealthComplaintDomainDetector output already computed by the
+                    // semantic gate — additive gloss for AdaptivePolicy/families only.
+                    $phpDomain = is_array($semantic['php_domain'] ?? null) ? $semantic['php_domain'] : [];
+                    $domainBridge = self::domainMeaningFromPhpDomain($phpDomain);
+                    $domainNorm = (string) ($domainBridge['normalized'] ?? '');
+                    $domainMeaning = (string) ($domainBridge['meaning'] ?? '');
+                    if ($domainNorm !== '' && mb_stripos($nlpText, $domainNorm) === false) {
+                        $nlpText = trim($nlpText . '. ' . $domainNorm);
+                    }
+                    if ($domainMeaning !== '' && mb_stripos($nlpText, $domainMeaning) === false) {
+                        $nlpText = trim($nlpText . '. ' . $domainMeaning);
+                    }
+
                     // Working copy for extractors / enrichment only — never stored as patient_turns.
                     $turn = $nlpText;
                     $context['complaint_text_cleaner'] = [
@@ -97,14 +110,24 @@ final class ClinicalInterviewEngine
                             $aiConcepts[] = $term;
                         }
                     }
+                    $geminiConcept = trim((string) ($semantic['gemini_medical_concept'] ?? ''));
+                    if ($geminiConcept === '' && $domainMeaning !== '') {
+                        $geminiConcept = $domainMeaning;
+                    }
                     $context['semantic_bridge'] = [
                         'source' => (string) ($semantic['combine_reason'] ?? ''),
-                        'gemini_concept' => (string) ($semantic['gemini_medical_concept'] ?? ''),
+                        'gemini_concept' => $geminiConcept,
                         'ollama_meaning' => (string) (($ollamaBridge['english_interpretation'] ?? '') ?: ''),
                         'ai_provider' => (string) (($ollamaBridge['provider'] ?? '') ?: ''),
                         'nlp_text' => $nlpText,
                         'original' => $originalForDisplay,
                         'domain_label' => (string) ($semantic['domain_label'] ?? ''),
+                        'domain_normalized' => $domainNorm,
+                        'domain_meaning' => $domainMeaning,
+                        'domain_relationships' => array_values(array_filter(array_map(
+                            'strval',
+                            (array) ($phpDomain['relationships'] ?? [])
+                        ))),
                         'clinically_vague' => !empty($semantic['clinically_vague']),
                         'evidence_source' => 'ai_bridge',
                     ];
@@ -156,9 +179,16 @@ final class ClinicalInterviewEngine
                 $validation = ClinicalFollowUpAnswerValidator::validate($originalTurnForLanguage, $awaiting, $context);
                 self::logFollowUpValidation($context, $awaiting, $originalTurnForLanguage, $validation);
                 if (empty($validation['accept'])) {
-                    // Keep clinically useful free-text (e.g. "Ga suka ko" / breathing red flags)
+                    // Keep clinically useful free-text (timing, locations, named symptoms)
                     // even when the answer does not satisfy the current question slot.
+                    $beforeFacts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
                     $context = self::absorbOffSlotClinicalFacts($context, $originalTurnForLanguage, $awaiting);
+                    $afterFacts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+                    if ($afterFacts !== $beforeFacts || self::turnHasOffSlotClinicalValue($originalTurnForLanguage)) {
+                        $validation['_off_slot_absorbed'] = true;
+                    }
+                    $context = self::appendPatientTurn($context, $originalTurnForLanguage);
+
                     return self::wrapRetryCurrentQuestion($context, $validation);
                 }
                 $context['last_followup_validation'] = $validation;
@@ -263,10 +293,13 @@ final class ClinicalInterviewEngine
         // Bare yes/no turns are excluded from the haystack; polarity lives in structured facts.
         // Stage 2A: still pass clinicalContextText for parity; also pass structured interviewFacts (unused for decisions yet).
         $clinicalText = self::clinicalContextText($context, self::clinicalTranscript($context));
+        $patientEvidence = self::patientEvidenceText($context);
         $interviewFacts = self::interviewFactsForTriage($context);
         $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText, [], [], 0, true, $interviewFacts);
         $assessment = self::assessmentFromEngine($raw, $transcript, (string) ($raw['english_translation'] ?? $transcript), $checkboxSymptoms);
-        $nlpFacts = self::factsFromAssessment($assessment, $clinicalText);
+        // Body/timing re-extraction must use patient-authored text only — never factsHaystack
+        // phrases like "no one-sided weakness" / legacy "arm or leg" wording.
+        $nlpFacts = self::factsFromAssessment($assessment, $patientEvidence !== '' ? $patientEvidence : $transcript);
         $context['facts'] = self::mergeFacts($context['facts'], $nlpFacts);
         $context = self::absorbAssessmentIntoCase($context, $assessment, $raw);
         $context['chief_complaints'] = ClinicalInterviewContextResolver::deriveComplaints($assessment, $clinicalText, $context['facts']);
@@ -294,7 +327,10 @@ final class ClinicalInterviewEngine
                 (string) ($raw['english_translation'] ?? $transcript),
                 $checkboxSymptoms
             );
-            $context['facts'] = self::mergeFacts($context['facts'], self::factsFromAssessment($assessment, $clinicalText));
+            $context['facts'] = self::mergeFacts(
+                $context['facts'],
+                self::factsFromAssessment($assessment, $patientEvidence !== '' ? $patientEvidence : $transcript)
+            );
             $context = self::absorbAssessmentIntoCase($context, $assessment, $raw);
             if (class_exists('ClinicalInterviewMultiComplaint')) {
                 $context = ClinicalInterviewMultiComplaint::persistActiveFacts($context);
@@ -580,30 +616,17 @@ final class ClinicalInterviewEngine
             return 'english';
         }
 
-        $primary = strtolower((string) ($detection['dominant'] ?? $detection['primary'] ?? 'hiligaynon'));
-        if ($primary === 'mixed') {
-            $tags = is_array($detection['tags'] ?? null) ? $detection['tags'] : [];
-            if (in_array('english', $tags, true) && !in_array('hiligaynon', $tags, true) && !in_array('tagalog', $tags, true)) {
-                return 'english';
-            }
-            if (in_array('tagalog', $tags, true) && !in_array('hiligaynon', $tags, true)) {
-                return 'tagalog';
-            }
-            if (in_array('hiligaynon', $tags, true) && !in_array('tagalog', $tags, true)) {
-                return 'hiligaynon';
-            }
-            if (in_array('tagalog', $tags, true)) {
-                return 'tagalog';
-            }
-            if (in_array('hiligaynon', $tags, true)) {
-                return 'hiligaynon';
-            }
-            if (in_array('english', $tags, true)) {
-                return 'english';
-            }
+        $detectedPrimary = strtolower((string) ($detection['primary'] ?? ''));
+        $dominant = strtolower((string) ($detection['dominant'] ?? $detectedPrimary ?: 'hiligaynon'));
+
+        // Mixed: follow dominant from exclusive/structural resolution — not tag order.
+        if ($detectedPrimary === 'mixed') {
+            return self::normalizeQuestionLanguage($dominant !== '' ? $dominant : 'hiligaynon');
         }
 
-        return self::normalizeQuestionLanguage($primary);
+        $primary = $detectedPrimary !== '' ? $detectedPrimary : $dominant;
+
+        return self::normalizeQuestionLanguage($primary !== '' ? $primary : 'hiligaynon');
     }
 
     public static function languageLabel(string $primary): string
@@ -817,8 +840,62 @@ final class ClinicalInterviewEngine
                 $parts[] = $pySymptom;
             }
         }
+        $domainNorm = trim((string) (($context['semantic_bridge']['domain_normalized'] ?? '') ?: ''));
+        if ($domainNorm !== '' && mb_stripos(implode(' ', $parts), $domainNorm) === false) {
+            $parts[] = $domainNorm;
+        }
+        $domainMeaning = trim((string) (($context['semantic_bridge']['domain_meaning'] ?? '') ?: ''));
+        if ($domainMeaning !== '' && mb_stripos(implode(' ', $parts), $domainMeaning) === false) {
+            $parts[] = $domainMeaning;
+        }
 
         return trim(implode('. ', array_values(array_unique($parts))));
+    }
+
+    /**
+     * Map HealthComplaintDomainDetector relationships/signals to English clinical
+     * phrases already used by families/AdaptivePolicy — never complaint-specific.
+     *
+     * @param array<string, mixed> $phpDomain
+     * @return array{normalized:string,meaning:string}
+     */
+    private static function domainMeaningFromPhpDomain(array $phpDomain): array
+    {
+        $normalized = trim((string) ($phpDomain['normalized'] ?? ''));
+        $bits = [];
+        foreach ((array) ($phpDomain['relationships'] ?? []) as $rel) {
+            $key = strtoupper(trim((string) $rel));
+            if ($key === 'BREATHING_DIFFICULTY') {
+                $bits[] = 'difficulty breathing';
+                $bits[] = 'cannot breathe';
+            }
+        }
+        foreach ((array) ($phpDomain['signals'] ?? []) as $sig) {
+            if (!is_array($sig)) {
+                continue;
+            }
+            $type = strtolower(trim((string) ($sig['type'] ?? '')));
+            $value = trim((string) ($sig['value'] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            if ($type === 'breathing') {
+                $bits[] = $value;
+                $bits[] = 'difficulty breathing';
+            } elseif ($type === 'bleeding') {
+                $bits[] = $value;
+                $bits[] = 'bleeding';
+            } elseif (in_array($type, ['symptom', 'finding', 'condition', 'injury', 'physical_change'], true)) {
+                $bits[] = $value;
+            }
+        }
+
+        $meaning = trim(implode(' ', array_values(array_unique(array_filter($bits)))));
+
+        return [
+            'normalized' => $normalized,
+            'meaning' => $meaning,
+        ];
     }
 
     /**
@@ -1074,14 +1151,16 @@ final class ClinicalInterviewEngine
             $parts[] = $symptom;
         }
         $positive = [
-            'weakness' => 'weakness in one arm or leg',
+            // Avoid canonical body-part tokens here — factsFromAssessment re-scans this
+            // haystack and would otherwise invent arm/leg locations from negation phrases.
+            'weakness' => 'one-sided weakness',
             'speech_difficulty' => 'difficulty speaking',
             'vision_change' => 'sudden vision change',
             'breathing_difficulty' => 'difficulty breathing',
             'bleeding_continuing' => 'ongoing bleeding',
             'bleeding_heavy' => 'heavy bleeding',
             'dizziness' => 'dizziness',
-            'chest_radiation' => 'chest pain spreading to arm',
+            'chest_radiation' => 'radiating chest pain',
             'sweating' => 'sweating with chest pain',
             'abdominal_associated' => 'vomiting with abdominal pain',
             'fever_confirmed' => 'fever',
@@ -1298,9 +1377,21 @@ final class ClinicalInterviewEngine
         if ($qualifier !== '') {
             $facts['pain_qualifier'] = $qualifier;
         }
-        foreach (ClinicalFeatureExtractors::extractBodyLocations($combined) as $loc) {
-            if (!in_array($loc, $facts['body_locations'], true)) {
-                $facts['body_locations'][] = $loc;
+        // Body sites only from patient-authored wording — never from yes/no / bare negation
+        // (avoids leaking kamot/tiil out of the prior question text into facts).
+        $negationOnly = self::isNegationOrYesNoOnlyTurn($turn);
+        if (!$negationOnly) {
+            foreach (ClinicalFeatureExtractors::extractBodyLocations($turn) as $loc) {
+                if (!in_array($loc, $facts['body_locations'], true)) {
+                    $facts['body_locations'][] = $loc;
+                }
+            }
+            if ($originalComplaint !== '') {
+                foreach (ClinicalFeatureExtractors::extractBodyLocations($originalComplaint) as $loc) {
+                    if (!in_array($loc, $facts['body_locations'], true)) {
+                        $facts['body_locations'][] = $loc;
+                    }
+                }
             }
         }
         if (ClinicalFeatureExtractors::deniedAssociatedSymptoms($turn)) {
@@ -1547,6 +1638,9 @@ final class ClinicalInterviewEngine
         if ($isUncertain) {
             $facts['patient_uncertain'] = true;
             $targetFinding = strtolower(trim((string) ($context['awaiting_target_finding'] ?? '')));
+            if ($targetFinding === '' && $awaiting !== '') {
+                $targetFinding = self::targetFindingForQuestion($awaiting);
+            }
             if ($targetFinding !== '') {
                 $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
                 $status[$targetFinding] = 'uncertain';
@@ -1562,6 +1656,17 @@ final class ClinicalInterviewEngine
             // Patient cannot name the extra symptom — stop looping the detail question.
             if ($awaiting === 'ASSOCIATED_DETAIL') {
                 $facts['needs_associated_detail'] = false;
+            }
+            // Yes/no clinical probes: uncertainty resolves the finding without inventing POS/NEG.
+            if (in_array($awaiting, [
+                'NEURO_WEAKNESS', 'NEURO_SPEECH', 'NEURO_VISION', 'EYE_VISION',
+                'BREATHING_SEVERITY', 'BLEEDING_CONTINUING', 'BLEEDING_HEAVY', 'BLEEDING_DIZZY',
+                'CHEST_RADIATION', 'CHEST_SWEATING', 'ABDOMINAL_ASSOCIATED', 'FEVER_CONFIRM',
+                'ASSOCIATED_SYMPTOMS',
+            ], true) && $targetFinding !== '') {
+                $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+                $status[$targetFinding] = 'uncertain';
+                $facts['finding_status'] = $status;
             }
         }
 
@@ -1662,15 +1767,18 @@ final class ClinicalInterviewEngine
         if (trim((string) ($extracted['onset'] ?? '')) !== '') {
             $facts['onset'] = (string) $extracted['onset'];
         }
-        if (!empty($extracted['body_locations']) && is_array($extracted['body_locations'])) {
-            $locs = is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [];
-            foreach ($extracted['body_locations'] as $loc) {
-                $loc = trim((string) $loc);
-                if ($loc !== '' && !in_array($loc, $locs, true)) {
-                    $locs[] = $loc;
+        if (!empty($extracted['body_locations']) && is_array($extracted['body_locations']) && !$isUncertain) {
+            // Never promote locations from negative/uncertain answers.
+            if ($class !== 'VALID_NEGATIVE' && $polarity !== 'negative') {
+                $locs = is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [];
+                foreach ($extracted['body_locations'] as $loc) {
+                    $loc = trim((string) $loc);
+                    if ($loc !== '' && !in_array($loc, $locs, true)) {
+                        $locs[] = $loc;
+                    }
                 }
+                $facts['body_locations'] = $locs;
             }
-            $facts['body_locations'] = $locs;
         }
 
         // Named clinical booleans (incl. Gemini) — never for uncertain answers.
@@ -1724,12 +1832,9 @@ final class ClinicalInterviewEngine
         if (preg_match('/nabulag|vision loss|double vision|nawala panulok/u', $low)) {
             $facts['vision_change'] = true;
         }
-        if (!$negatedBreathing && preg_match(
-            '/(?<!no )(?<!not )(?<!wala ko )(?<!wala )(cannot breathe|can\'t breathe|indi ko makaginhawa|indi ko kaginhawa|budlay.{0,12}ginhawa|hirap huminga)\b/u',
-            $low
-        )) {
-            $facts['breathing_difficulty'] = true;
-        }
+        // Do NOT set breathing_difficulty=true from chief-complaint / meaning-bridge text.
+        // Presence stays in clinical text for ClinicalTriageEngine CDS; BREATHING_SEVERITY
+        // must remain askable until the patient answers that follow-up (like pain_score).
         if (preg_match('/\b(malipong|nalipong|dizzy|nahihilo|nahilo|punaw|faint)\b/u', $low)
             && !preg_match('/\b(no|wala|hindi|indi|without)\s+(malipong|dizzy|hilo)\b/u', $low)
         ) {
@@ -2646,13 +2751,6 @@ final class ClinicalInterviewEngine
     }
 
     /**
-     * Invalid follow-up: keep the same question, do not append the answer or update facts.
-     *
-     * @param array<string, mixed> $context
-     * @param array<string, mixed> $validation
-     * @return array<string, mixed>
-     */
-    /**
      * Capture named symptoms / implicit red flags from an answer that failed the
      * current-question validator, without advancing or filling the awaited slot.
      *
@@ -2724,17 +2822,66 @@ final class ClinicalInterviewEngine
 
         $facts = self::absorbImplicitRedFlags($facts, mb_strtolower($combined));
 
-        // Timing volunteered inside a wrong-slot answer can still fill an empty onset.
+        // Timing volunteered inside a wrong-slot answer can still fill empty onset/duration.
+        // extractOnset() only covers sudden/gradual — duration phrases like "kahapon" live here.
         if (!in_array($awaitingUpper, ['ONSET', 'DURATION'], true)) {
             $onset = ClinicalFeatureExtractors::extractOnset($turn);
             if ($onset !== '' && ($facts['onset'] === '' || $facts['onset'] === 'uncertain')) {
                 $facts['onset'] = $onset;
+            }
+            $duration = ClinicalFeatureExtractors::extractDuration($turn);
+            $durLabel = trim((string) ($duration['label'] ?? ''));
+            if ($durLabel !== '') {
+                // Prefer a more specific timing label when the patient volunteers it off-slot.
+                $priorDur = trim((string) ($facts['duration_label'] ?? ''));
+                if ($priorDur === '' || mb_strtolower($priorDur) !== mb_strtolower($durLabel)) {
+                    // Keep prior onset if already known; still record the volunteered duration.
+                    if ($priorDur === '') {
+                        $facts['duration_label'] = $durLabel;
+                    } elseif (!str_contains(mb_strtolower($priorDur), mb_strtolower($durLabel))
+                        && !str_contains(mb_strtolower($durLabel), mb_strtolower($priorDur))
+                    ) {
+                        $facts['duration_label'] = $priorDur . '; ' . $durLabel;
+                    }
+                }
+                if (trim((string) ($facts['onset'] ?? '')) === '' || $facts['onset'] === 'uncertain') {
+                    $derived = ClinicalFeatureExtractors::onsetFromDuration($duration);
+                    $facts['onset'] = $derived !== '' ? $derived : $durLabel;
+                    if (trim((string) ($facts['duration_label'] ?? '')) === '') {
+                        $facts['duration_label'] = $durLabel;
+                    }
+                }
             }
         }
 
         $context['facts'] = $facts;
 
         return $context;
+    }
+
+    /**
+     * True when absorbOffSlotClinicalFacts would persist usable timing/symptom evidence.
+     */
+    private static function turnHasOffSlotClinicalValue(string $turn): bool
+    {
+        $turn = trim($turn);
+        if ($turn === '') {
+            return false;
+        }
+        if (ClinicalFeatureExtractors::extractOnset($turn) !== '') {
+            return true;
+        }
+        if (trim((string) (ClinicalFeatureExtractors::extractDuration($turn)['label'] ?? '')) !== '') {
+            return true;
+        }
+        if (ClinicalFeatureExtractors::extractStandalonePainScore($turn, true) !== null) {
+            return true;
+        }
+        if (ClinicalFeatureExtractors::extractBodyLocations($turn) !== []) {
+            return true;
+        }
+
+        return false;
     }
 
     private static function wrapRetryCurrentQuestion(array $context, array $validation): array
@@ -2755,12 +2902,34 @@ final class ClinicalInterviewEngine
         ];
         $wrapped = self::wrapInProgress($assessment, $context, $question, $transcript);
         $langKey = (string) ($context['question_language'] ?? 'english');
+        $reason = strtolower(trim((string) ($validation['reason'] ?? '')));
         $rawMessage = (string) ($validation['message'] ?? '');
-        $wrapped['patient_message'] = class_exists('ClinicalFollowUpAnswerValidator')
-            ? ClinicalFollowUpAnswerValidator::normalizeRetryMessage($rawMessage, $langKey)
-            : $rawMessage;
-        if ($wrapped['patient_message'] === '' && class_exists('ClinicalFollowUpAnswerValidator')) {
-            $wrapped['patient_message'] = ClinicalFollowUpAnswerValidator::retryMessage($langKey);
+        // Soft clarify: rephrase the held slot when the answer missed it (wrong-field yes/no,
+        // off-slot clinical fact absorbed, etc.) — avoid identical blind repeats.
+        if (class_exists('ClinicalFollowUpAnswerValidator')) {
+            $clarify = ClinicalFollowUpAnswerValidator::clarifyCurrentSlotMessage(
+                $langKey,
+                (string) ($question['question_id'] ?? $context['awaiting_question_id'] ?? ''),
+                $reason,
+                !empty($validation['_off_slot_absorbed'])
+            );
+            if ($clarify !== '') {
+                $wrapped['patient_message'] = $clarify;
+            } else {
+                $wrapped['patient_message'] = ClinicalFollowUpAnswerValidator::normalizeRetryMessage($rawMessage, $langKey);
+            }
+            if ($wrapped['patient_message'] === '') {
+                $wrapped['patient_message'] = ClinicalFollowUpAnswerValidator::retryMessage($langKey);
+            }
+        } else {
+            $wrapped['patient_message'] = $rawMessage;
+        }
+        // Prefer a lightly rephrased question text when clarifying the same slot.
+        $rephrased = self::rephraseHeldQuestionText($question, $langKey);
+        if ($rephrased !== '') {
+            $question['text'] = $rephrased;
+            $wrapped['followup_question'] = $question;
+            $wrapped['interview']['last_followup_question'] = self::questionSnapshot($question);
         }
         $wrapped['answer_rejected'] = !$acceptedUncertain;
         $wrapped['retry_current_question'] = true;
@@ -2775,9 +2944,98 @@ final class ClinicalInterviewEngine
         ];
         $wrapped['interview']['answer_rejected'] = !$acceptedUncertain;
         $wrapped['interview']['retry_current_question'] = true;
-        $wrapped['interview']['last_followup_question'] = self::questionSnapshot($question);
+        if (($wrapped['interview']['last_followup_question']['text'] ?? '') === '') {
+            $wrapped['interview']['last_followup_question'] = self::questionSnapshot($question);
+        }
 
         return $wrapped;
+    }
+
+    /**
+     * Bare yes/no / existential negation with no clinical content — must not seed body sites.
+     */
+    private static function isNegationOrYesNoOnlyTurn(string $turn): bool
+    {
+        $turn = trim($turn);
+        if ($turn === '') {
+            return false;
+        }
+        $low = mb_strtolower($turn);
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($low)) {
+            return true;
+        }
+        $yn = class_exists('ClinicalFeatureExtractors')
+            ? ClinicalFeatureExtractors::extractYesNo($turn)
+            : null;
+        if ($yn === null) {
+            // Explicit bare negation particles without polarity extractors firing.
+            if (!preg_match('/^(wala|walang|walay|walla|none|nothing|nope|no)\b/u', $low)) {
+                return false;
+            }
+        }
+        // Any positive clinical noun / body term means this is not negation-only.
+        if (preg_match(
+            '/\b(may|mayroon|naa|gina|naga|ga|kasakit|sakit|pain|suka|ubo|hilo|hubag|ginhawa|breath|'
+            . 'makaginhawa|kaginhawa|ulo|olo|tiyan|dughan|chest|head|arm|leg|kamot|tiil|paa|mata|'
+            . 'weakness|kaluya|numb|fever|lagnat|hilanat)\b/u',
+            $low
+        )) {
+            return false;
+        }
+
+        return mb_strlen(preg_replace('/\s+/u', ' ', $low) ?? $low) <= 24;
+    }
+
+    private static function targetFindingForQuestion(string $qid): string
+    {
+        $qid = strtoupper(trim($qid));
+        if ($qid === '') {
+            return '';
+        }
+
+        return match ($qid) {
+            'PAIN_SEVERITY' => 'pain_severity',
+            'PAIN_LOCATION', 'UNWELL_WHAT', 'SPECIFIC_LOCATION' => 'pain_location',
+            'ONSET' => 'onset',
+            'DURATION' => 'duration',
+            'NEURO_WEAKNESS' => 'weakness',
+            'NEURO_SPEECH' => 'speech_difficulty',
+            'NEURO_VISION', 'EYE_VISION' => 'vision_change',
+            'BREATHING_SEVERITY' => 'breathing_difficulty',
+            'BLEEDING_CONTINUING' => 'bleeding_continuing',
+            'BLEEDING_HEAVY' => 'bleeding_heavy',
+            'BLEEDING_DIZZY' => 'dizziness',
+            'CHEST_RADIATION' => 'chest_radiation',
+            'FEVER_CONFIRM' => 'fever_confirmed',
+            'ASSOCIATED_SYMPTOMS' => 'has_other_symptoms',
+            'ASSOCIATED_DETAIL' => 'associated_detail',
+            default => strtolower($qid),
+        };
+    }
+
+    /**
+     * Light rephrase of the held question so retries are not identical blind repeats.
+     *
+     * @param array<string, mixed> $question
+     */
+    private static function rephraseHeldQuestionText(array $question, string $langKey): string
+    {
+        $text = trim((string) ($question['text'] ?? ''));
+        if ($text === '') {
+            return '';
+        }
+        $lang = strtolower($langKey);
+        // Prefix only — keep bank wording; do not invent a new clinical question.
+        $prefix = match ($lang) {
+            'hiligaynon', 'ilonggo' => 'Palihog klarohon: ',
+            'tagalog', 'filipino' => 'Pakilinaw: ',
+            default => 'Just to clarify: ',
+        };
+        if (str_starts_with(mb_strtolower($text), mb_strtolower(trim($prefix)))) {
+            return $text;
+        }
+
+        return $prefix . $text;
     }
 
     /**
@@ -2800,7 +3058,9 @@ final class ClinicalInterviewEngine
         }
 
         $qid = strtoupper(trim($awaiting));
-        if ($qid === '') {
+        // Only the generic associated yes/no probe gets one clarify pass.
+        // Neuro / breathing / bleeding probes resolve via finding_status=uncertain.
+        if ($qid !== 'ASSOCIATED_SYMPTOMS') {
             return false;
         }
 

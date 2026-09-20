@@ -40,7 +40,12 @@ final class ClinicalInterviewContextResolver
             ];
         }
 
-        $hasPainToken = (bool) preg_match('/\b(sakit|masakit|pain|hurts|hapdi|discomfort)\b/u', mb_strtolower($transcript));
+        // Align with AdaptivePolicy / deriveFamilies: aspect forms (gasakit, kasakit)
+        // are pain language — \bsakit\b alone does not match "gasakit".
+        $hasPainToken = (bool) preg_match(
+            '/\b(sakit|masakit|pain|hurts|hapdi|discomfort|kasakit|gasakit)\b/u',
+            mb_strtolower($transcript)
+        );
         $hasLocation = ($facts['body_locations'] ?? []) !== []
             || ClinicalFeatureExtractors::extractBodyLocations($transcript) !== [];
         $hasHealthcare = self::hasHealthcareSignal($transcript, $concepts);
