@@ -3,6 +3,29 @@
  */
 @import url('medconnect-charts.css');
 
+/* Compact dashboard topbar: title sits beside menu (no eyebrow gap). */
+body.bhw-body--dashboard .topbar--bhw-formal {
+  align-items: center;
+  min-height: 64px;
+}
+
+body.bhw-body--dashboard .topbar--bhw-formal .topbar-left {
+  align-items: center;
+}
+
+body.bhw-body--dashboard .topbar--bhw-formal .topbar-title-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  min-height: 0;
+}
+
+body.bhw-body--dashboard .topbar--bhw-formal .topbar-title {
+  line-height: 1.2;
+  margin: 0;
+}
+
 .bhw-dash {
   display: flex;
   flex-direction: column;
