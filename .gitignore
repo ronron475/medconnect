@@ -39,6 +39,7 @@ storage/uploads/ids/*
 !storage/uploads/ids/.gitkeep
 storage/cache/*
 !storage/cache/.gitkeep
+storage/ai_provider_runtime.env
 storage/temp/*
 !storage/temp/.gitkeep
 storage/logs/*

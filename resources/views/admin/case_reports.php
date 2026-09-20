@@ -18,7 +18,7 @@ if (!defined('MC_PORTAL_SHELL') || MC_PORTAL_SHELL !== 'superadmin') {
 require_once BASE_PATH . '/app/includes/case_reports.php';
 require_once BASE_PATH . '/app/includes/portal_auth.php';
 
-$page_title = 'Case Reports';
+$page_title = 'Violation Reports';
 $apiUrl = ASSET_BASE . '/app/api/admin/case_reports.php';
 $isSuperadmin = portal_is_superadmin();
 $isSuperadminPortal = defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin';

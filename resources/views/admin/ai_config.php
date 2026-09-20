@@ -13,6 +13,7 @@ require_once BASE_PATH . '/app/includes/auth_guard.php';
 require_once BASE_PATH . '/app/includes/system_settings.php';
 require_once BASE_PATH . '/app/includes/portal_auth.php';
 require_once BASE_PATH . '/app/includes/nlp_inventory.php';
+require_once BASE_PATH . '/app/includes/ai_providers.php';
 require_once __DIR__ . '/_portal_access.php';
 
 $page_title = 'Triage & System Settings';
@@ -20,6 +21,8 @@ $rules = $pdo->query("SELECT * FROM triage_rules ORDER BY base_level ASC, sympto
 $stored = system_settings_get_all($pdo);
 $triageApi = ASSET_BASE . '/app/api/superadmin/triage_rules.php';
 $settingsApi = ASSET_BASE . '/app/api/admin/save_system_settings.php';
+$aiProvidersApi = ASSET_BASE . '/app/api/admin/ai_providers.php';
+$aiProvidersSnapshot = ai_providers_live_snapshot(false);
 
 $system_vars = [
     ['key' => 'AI_CONFIDENCE_THRESHOLD', 'value' => $stored['AI_CONFIDENCE_THRESHOLD'] ?? '0.85', 'desc' => 'Minimum confidence score for auto-triage.'],
@@ -37,7 +40,7 @@ $dictApi = ASSET_BASE . '/app/api/admin/faq_chatbot_dictionary.php';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-config.css?v=1.0">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-ai-config.css?v=1.1">
 
 <div class="header-row admin-page-intro">
   <div>
@@ -45,6 +48,79 @@ require_once __DIR__ . '/partials/layout_open.php';
   </div>
   <button type="button" class="mc-btn mc-btn--primary" id="saveSystemSettings">Save Global Changes</button>
 </div>
+
+<section class="ai-config-section" aria-labelledby="aiProvidersTitle">
+  <div class="ai-providers-header">
+    <div>
+      <h2 class="ai-config-section__title" id="aiProvidersTitle">AI Provider Settings</h2>
+      <p class="ai-config-section__desc">
+        Live configuration for MedConnect AI, Groq, and Gemini. Status comes from the backend — API keys stay in server environment and are never shown.
+      </p>
+    </div>
+    <button type="button" class="mc-btn mc-btn--outline" id="btnAiProvidersRefresh">Refresh status</button>
+  </div>
+  <p class="ai-providers-triage-note" id="aiProvidersTriageNote"><?= htmlspecialchars($aiProvidersSnapshot['triage_note'] ?? '') ?></p>
+  <form id="aiProvidersForm" class="ai-providers-grid">
+    <?php foreach ($aiProvidersSnapshot['providers'] as $prov):
+      $pid = htmlspecialchars((string) $prov['id']);
+      $state = $prov['state'] ?? [];
+      $status = htmlspecialchars((string) ($state['status'] ?? 'unknown'));
+      $statusLabel = htmlspecialchars((string) ($state['label'] ?? $status));
+      $statusMsg = htmlspecialchars((string) ($state['message'] ?? ''));
+      $enabledName = $pid === 'medconnect_ai' ? 'medconnect_ai_enabled' : ($pid . '_enabled');
+      $modelName = $pid === 'groq' ? 'groq_model' : ($pid === 'gemini' ? 'gemini_model' : '');
+    ?>
+    <article class="ai-provider-card" data-provider="<?= $pid ?>" data-status="<?= $status ?>">
+      <header class="ai-provider-card__head">
+        <div>
+          <h3 class="ai-provider-card__name"><?= htmlspecialchars((string) $prov['name']) ?></h3>
+          <p class="ai-provider-card__desc"><?= htmlspecialchars((string) ($prov['description'] ?? '')) ?></p>
+        </div>
+        <span class="ai-provider-status ai-provider-status--<?= $status ?>" data-role="status-badge"><?= $statusLabel ?></span>
+      </header>
+      <p class="ai-provider-card__msg" data-role="status-msg"><?= $statusMsg ?></p>
+      <dl class="ai-provider-meta">
+        <div>
+          <dt>API key</dt>
+          <dd data-role="key-status"><?php
+            if ($prov['api_key_set'] === null) {
+              echo 'N/A (service URL)';
+            } else {
+              echo !empty($prov['api_key_set']) ? 'Set in environment' : 'Not set';
+            }
+          ?></dd>
+        </div>
+        <div>
+          <dt>Model</dt>
+          <dd data-role="model-display"><?= htmlspecialchars((string) ($prov['model'] ?? '—')) ?></dd>
+        </div>
+        <div>
+          <dt>Engine</dt>
+          <dd><?= htmlspecialchars((string) ($prov['engine'] ?? '—')) ?></dd>
+        </div>
+      </dl>
+      <label class="ai-provider-toggle">
+        <input type="checkbox" name="<?= htmlspecialchars($enabledName) ?>" value="1"
+          <?= !empty($prov['enabled']) ? 'checked' : '' ?>>
+        <span>Enabled</span>
+      </label>
+      <?php if ($modelName !== ''): ?>
+      <label class="ai-provider-field">
+        <span>Model</span>
+        <input type="text" name="<?= htmlspecialchars($modelName) ?>"
+               value="<?= htmlspecialchars((string) ($prov['model'] ?? '')) ?>"
+               class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;"
+               autocomplete="off" spellcheck="false">
+      </label>
+      <?php endif; ?>
+      <p class="ai-provider-card__role"><?= htmlspecialchars((string) ($prov['role'] ?? '')) ?></p>
+      <button type="button" class="mc-btn mc-btn--outline mc-btn--sm js-ai-provider-test" data-provider="<?= $pid ?>">
+        Test Connection
+      </button>
+    </article>
+    <?php endforeach; ?>
+  </form>
+</section>
 
 <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
   <div class="mc-card" style="padding:0;overflow:hidden;">
@@ -212,6 +288,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 (function () {
   var triageApi = <?= json_encode($triageApi) ?>;
   var settingsApi = <?= json_encode($settingsApi) ?>;
+  var aiProvidersApi = <?= json_encode($aiProvidersApi) ?>;
 
   function rulePayload(row) {
     var fd = new FormData();
@@ -257,12 +334,141 @@ require_once __DIR__ . '/partials/layout_open.php';
     bindRuleRow(row);
   };
 
+  function aiProvidersFormData() {
+    var form = document.getElementById('aiProvidersForm');
+    var fd = new FormData(form);
+    fd.set('medconnect_ai_enabled', form.querySelector('[name="medconnect_ai_enabled"]') && form.querySelector('[name="medconnect_ai_enabled"]').checked ? '1' : '0');
+    fd.set('groq_enabled', form.querySelector('[name="groq_enabled"]') && form.querySelector('[name="groq_enabled"]').checked ? '1' : '0');
+    fd.set('gemini_enabled', form.querySelector('[name="gemini_enabled"]') && form.querySelector('[name="gemini_enabled"]').checked ? '1' : '0');
+    return fd;
+  }
+
+  function applyProviderSnapshot(data) {
+    if (!data || !data.providers) return;
+    var note = document.getElementById('aiProvidersTriageNote');
+    if (note && data.triage_note) note.textContent = data.triage_note;
+    data.providers.forEach(function (prov) {
+      var card = document.querySelector('.ai-provider-card[data-provider="' + prov.id + '"]');
+      if (!card) return;
+      var state = prov.state || {};
+      var status = state.status || 'unknown';
+      card.setAttribute('data-status', status);
+      var badge = card.querySelector('[data-role="status-badge"]');
+      if (badge) {
+        badge.className = 'ai-provider-status ai-provider-status--' + status;
+        badge.textContent = state.label || status;
+      }
+      var msg = card.querySelector('[data-role="status-msg"]');
+      if (msg) msg.textContent = state.message || '';
+      var modelDd = card.querySelector('[data-role="model-display"]');
+      if (modelDd) modelDd.textContent = prov.model || '—';
+      var keyDd = card.querySelector('[data-role="key-status"]');
+      if (keyDd) {
+        if (prov.api_key_set === null) keyDd.textContent = 'N/A (service URL)';
+        else keyDd.textContent = prov.api_key_set ? 'Set in environment' : 'Not set';
+      }
+      var enabledName = prov.id === 'medconnect_ai' ? 'medconnect_ai_enabled' : (prov.id + '_enabled');
+      var toggle = card.querySelector('input[name="' + enabledName + '"]');
+      if (toggle) toggle.checked = !!prov.enabled;
+      if (prov.id === 'groq' || prov.id === 'gemini') {
+        var modelInput = card.querySelector('input[name="' + prov.id + '_model"]');
+        if (modelInput && prov.model) modelInput.value = prov.model;
+      }
+    });
+  }
+
+  function refreshAiProviders(live) {
+    var url = aiProvidersApi + (live ? '?live=1' : '');
+    return fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.success && j.data) applyProviderSnapshot(j.data);
+        return j;
+      });
+  }
+
+  var refreshBtn = document.getElementById('btnAiProvidersRefresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', function () {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Refreshing…';
+      refreshAiProviders(true).finally(function () {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'Refresh status';
+      });
+    });
+  }
+
+  document.querySelectorAll('.js-ai-provider-test').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var provider = btn.getAttribute('data-provider');
+      var card = btn.closest('.ai-provider-card');
+      var msg = card ? card.querySelector('[data-role="status-msg"]') : null;
+      btn.disabled = true;
+      btn.textContent = 'Testing…';
+      if (msg) msg.textContent = 'Running live connection test…';
+      var fd = new FormData();
+      fd.append('action', 'test');
+      fd.append('provider', provider);
+      fetch(aiProvidersApi, { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          var data = j.data || {};
+          var ok = !!(j.success && data.ok);
+          if (card) {
+            var status = data.status || (ok ? 'connected' : 'unavailable');
+            card.setAttribute('data-status', status);
+            var badge = card.querySelector('[data-role="status-badge"]');
+            if (badge) {
+              badge.className = 'ai-provider-status ai-provider-status--' + status;
+              badge.textContent = ok ? 'Connected' : (status === 'not_configured' ? 'Not configured' : (status === 'disabled' ? 'Disabled' : 'Unavailable'));
+            }
+          }
+          if (msg) msg.textContent = j.message || data.message || (ok ? 'Connected' : 'Failed');
+          if (data.model) {
+            var modelDd = card && card.querySelector('[data-role="model-display"]');
+            if (modelDd) modelDd.textContent = data.model;
+          }
+        })
+        .catch(function () {
+          if (msg) msg.textContent = 'Test request failed.';
+        })
+        .finally(function () {
+          btn.disabled = false;
+          btn.textContent = 'Test Connection';
+        });
+    });
+  });
+
   document.getElementById('saveSystemSettings').addEventListener('click', function () {
+    var saveBtn = document.getElementById('saveSystemSettings');
+    saveBtn.disabled = true;
     var fd = new FormData(document.getElementById('systemSettingsForm'));
     fd.append('csrf_token', document.body.dataset.csrf || '');
-    fetch(settingsApi, { method: 'POST', body: fd })
-      .then(function (r) { return r.json(); })
-      .then(function (j) { alert(j.message || 'Done'); if (j.success) location.reload(); });
+    var providerFd = aiProvidersFormData();
+    providerFd.append('action', 'save');
+    providerFd.append('csrf_token', document.body.dataset.csrf || '');
+
+    Promise.all([
+      fetch(settingsApi, { method: 'POST', body: fd, credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+      fetch(aiProvidersApi, { method: 'POST', body: providerFd, credentials: 'same-origin' }).then(function (r) { return r.json(); }),
+    ]).then(function (results) {
+      var sys = results[0] || {};
+      var ai = results[1] || {};
+      if (sys.success && ai.success) {
+        alert('System settings and AI provider settings saved.');
+        location.reload();
+        return;
+      }
+      var parts = [];
+      if (!sys.success) parts.push(sys.message || 'System settings failed');
+      if (!ai.success) parts.push(ai.message || 'AI provider settings failed');
+      alert(parts.join('\n'));
+    }).catch(function () {
+      alert('Save request failed.');
+    }).finally(function () {
+      saveBtn.disabled = false;
+    });
   });
 
   var dictApi = <?= json_encode($dictApi) ?>;
