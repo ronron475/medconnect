@@ -981,6 +981,47 @@ final class NotificationEvents
         ]);
     }
 
+    /**
+     * BHW updated an existing patient profile → unread Admin + SuperAdmin inbox items.
+     * VIEW opens the read-only patient update viewer (latest DB data).
+     */
+    public static function bhwPatientProfileUpdated(PDO $pdo, int $patientId, int $bhwId): void
+    {
+        if ($patientId <= 0 || $bhwId <= 0) {
+            return;
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))
+            FROM users
+            WHERE id = ? AND role = 'patient'
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId]);
+        $patientName = trim((string) ($stmt->fetchColumn() ?: ''));
+        if ($patientName === '') {
+            $patientName = 'A patient';
+        }
+
+        $payload = [
+            'sender_id'     => $bhwId,
+            'type'          => NotificationManager::TYPE_MEDICAL,
+            'title'         => 'BHW Patient Update',
+            'message'       => "{$patientName}'s information was updated by a BHW. Click View to review the latest record.",
+            'priority'      => 'normal',
+            'related_table' => 'users',
+            'related_id'    => $patientId,
+            'icon'          => 'file-text',
+        ];
+
+        NotificationManager::notifyAdmins($pdo, array_merge($payload, [
+            'action_url' => '/views/admin/bhw_patient_update_view.php?patient_id=' . $patientId,
+        ]));
+        NotificationManager::notifySuperadmins($pdo, array_merge($payload, [
+            'action_url' => '/views/superadmin/bhw_patient_update_view.php?patient_id=' . $patientId,
+        ]));
+    }
+
     public static function followUpScheduled(
         PDO $pdo,
         int $patientId,

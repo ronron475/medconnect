@@ -355,7 +355,10 @@
 
     tbody.innerHTML = rows.map(function (r) {
       let actionCell;
-      if (checkerMode && canReview(r.status)) {
+      if (r.source === 'user_account') {
+        // Live users.role=bhw row — no application workflow actions.
+        actionCell = '<span class="staff-apps-meta staff-apps-meta--muted">Active account</span>';
+      } else if (checkerMode && canReview(r.status)) {
         actionCell = utils.renderReviewBtn(r.id, 'bhw-review-btn', 'Review');
       } else if (!checkerMode && canAdminEditStatus(r.status)) {
         actionCell = utils.renderEditBtn(r.id, true, 'bhw-edit-btn');
