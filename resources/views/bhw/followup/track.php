@@ -126,7 +126,8 @@ require __DIR__ . '/../partials/layout_open.php';
       changed.indexOf('appointments') !== -1 ||
       changed.indexOf('queue') !== -1 ||
       changed.indexOf('consultations') !== -1 ||
-      changed.indexOf('followups') !== -1
+      changed.indexOf('followups') !== -1 ||
+      changed.indexOf('triage') !== -1
     ) {
       loadQueue(true);
     }

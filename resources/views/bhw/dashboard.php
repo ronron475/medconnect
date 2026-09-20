@@ -16,7 +16,6 @@ $bhwCtx = [
     'barangay_name' => $bhw_barangay_name,
     'allowed' => empty($bhw_no_sector),
 ];
-$stationBarangayName = $bhw_barangay_name;
 $dashFilters = ['days' => 7];
 // Unassigned BHW (barangay_id=0) uses deny-all SQL → live zeros, same UI shell.
 $dashboardCharts = BhwWorkflows::getDashboardCharts($pdo, $bhwCtx, $dashFilters);
@@ -37,39 +36,27 @@ require __DIR__ . '/partials/layout_open.php';
 
 <div class="bhw-dash">
 
-  <section class="bhw-dash-panel bhw-dash-charts" aria-labelledby="bhwDashChartsTitle">
-    <div class="bhw-dash-panel__head">
-      <h3 id="bhwDashChartsTitle">Sector analytics</h3>
-      <span class="bhw-dash-panel__note" id="bhwDashChartsNote">Last 7 days · Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></span>
-    </div>
-    <div class="mc-chart-filters bhw-dash-chart-filters no-print">
-      <div class="mc-chart-filters__field mc-chart-filters__field--station">
-        <span class="mc-chart-filters__label">Your station</span>
-        <p class="bhw-dash-station-name" id="bhwDashStationName">Brgy. <?= htmlspecialchars($bhw_barangay_name) ?></p>
-      </div>
-      <div class="mc-chart-filters__field">
-        <label class="mc-chart-filters__label" for="bhw_dash_days">Period</label>
-        <select class="form-select mc-chart-filters__control" id="bhw_dash_days" aria-label="Chart period in days">
+  <section class="bhw-dash-panel bhw-dash-charts" aria-label="Activity charts">
+    <div class="bhw-dash-charts-toolbar no-print">
+      <label class="bhw-dash-period" for="bhw_dash_days">
+        <span class="bhw-dash-period__label">Period</span>
+        <select class="form-select bhw-dash-period__select" id="bhw_dash_days" aria-label="Chart period">
           <option value="1">Today</option>
           <option value="7" selected>Last 7 days</option>
           <option value="14">Last 14 days</option>
           <option value="30">Last 30 days</option>
           <option value="90">Last 90 days</option>
         </select>
-      </div>
-      <div class="mc-chart-filters__actions">
-        <button type="button" class="bhw-btn-teal" id="bhw_dash_apply">Apply</button>
-        <button type="button" class="bhw-btn-outline" id="bhw_dash_reset">Reset</button>
-      </div>
+      </label>
     </div>
     <div class="bhw-dash-charts-grid">
       <article class="bhw-chart-card">
         <h4 id="bhw_dash_title_consult">Consultations</h4>
-        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_consult_week" aria-label="Weekly consultations chart"></canvas></div>
+        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_consult_week" aria-label="Consultations chart"></canvas></div>
       </article>
       <article class="bhw-chart-card">
         <h4 id="bhw_dash_title_reg">New registrations</h4>
-        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_reg_week" aria-label="Weekly registrations chart"></canvas></div>
+        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_reg_week" aria-label="Registrations chart"></canvas></div>
       </article>
     </div>
   </section>
@@ -129,7 +116,6 @@ ob_start();
   var initialQueue = <?= json_encode($queueRaw, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   var searchInput = document.getElementById('resident-search');
   var dashDays = document.getElementById('bhw_dash_days');
-  var stationBarangay = <?= json_encode('Brgy. ' . $stationBarangayName, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   var tableBody = document.getElementById('queue-tbody');
   var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
 
@@ -137,18 +123,11 @@ ob_start();
     return { days: dashDays ? dashDays.value : '7' };
   }
 
-  function updateChartNote(payload) {
-    var note = document.getElementById('bhwDashChartsNote');
+  function updateChartTitles(payload) {
     var days = (payload && payload.days) || (dashDays ? dashDays.value : 7);
-    var periodText = (window.McChartTheme && McChartTheme.periodLabel)
-      ? McChartTheme.periodLabel(days)
-      : ('Last ' + days + ' days');
     var rangeText = (window.McChartTheme && McChartTheme.periodRangeLabel)
       ? McChartTheme.periodRangeLabel(days)
       : ('last ' + days + ' days');
-    if (note) {
-      note.textContent = periodText + ' · ' + stationBarangay;
-    }
     var tc = document.getElementById('bhw_dash_title_consult');
     var tr = document.getElementById('bhw_dash_title_reg');
     if (tc) tc.textContent = 'Consultations — ' + rangeText;
@@ -237,7 +216,7 @@ ob_start();
 
       if (res.charts && window.BhwDashboardCharts) {
         var chartsFp = stableFp(res.charts);
-        updateChartNote(res.charts);
+        updateChartTitles(res.charts);
         // Chart module updates Chart.js data in place (no destroy/remount).
         if (chartsFp !== lastChartsFp || !lastChartsFp) {
           lastChartsFp = chartsFp;
@@ -247,17 +226,6 @@ ob_start();
     });
   }
 
-  document.getElementById('bhw_dash_apply')?.addEventListener('click', function () {
-    lastChartsFp = '';
-    lastQueueFp = '';
-    refreshDashboard();
-  });
-  document.getElementById('bhw_dash_reset')?.addEventListener('click', function () {
-    if (dashDays) dashDays.value = '7';
-    lastChartsFp = '';
-    lastQueueFp = '';
-    refreshDashboard();
-  });
   dashDays?.addEventListener('change', function () {
     lastChartsFp = '';
     lastQueueFp = '';
@@ -269,7 +237,7 @@ ob_start();
     lastQueueFp = stableFp(initialQueue);
     renderQueue(initialQueue);
   }
-  updateChartNote(<?= json_encode($dashboardCharts) ?>);
+  updateChartTitles(<?= json_encode($dashboardCharts) ?>);
   lastChartsFp = stableFp(<?= json_encode($dashboardCharts) ?>);
   window.refreshBhwDashboard = refreshDashboard;
 
