@@ -108,9 +108,9 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 12px;
+  gap: 8px;
   flex-wrap: wrap;
-  padding: 10px 16px;
+  padding: 10px 12px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -147,9 +147,9 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 .bhw-dash-panel__toolbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  padding: 10px 16px;
+  padding: 8px 12px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -161,7 +161,7 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 
 .bhw-dash-search svg {
   position: absolute;
-  left: 12px;
+  left: 10px;
   top: 50%;
   transform: translateY(-50%);
   color: #94a3b8;
@@ -170,12 +170,12 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 
 .bhw-dash-search input {
   width: 100%;
-  padding: 9px 12px 9px 38px;
+  padding: 7px 10px 7px 34px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  min-height: 40px;
+  min-height: 34px;
   background: #fff;
   color: #0f172a;
   box-shadow: none;
@@ -218,8 +218,8 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 12px 18px 0;
+  gap: 6px 8px;
+  padding: 8px 12px 0;
 }
 
 .bhw-dash-charts-toolbar .mc-chart-filters--inline {
@@ -227,7 +227,7 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
   margin: 0;
   background: transparent;
   border: none;
-  gap: 8px 10px;
+  gap: 6px 8px;
 }
 
 .bhw-dash-charts-toolbar .mc-chart-filters__label {
@@ -240,8 +240,8 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 }
 
 .bhw-dash-charts-toolbar .mc-chart-filters__control {
-  min-width: 120px;
-  min-height: 38px;
+  min-width: 110px;
+  min-height: 34px;
   font-size: 13px;
   font-weight: 600;
   border-radius: 4px;
@@ -249,6 +249,7 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
   color: #0f172a;
   background: #fff;
   cursor: pointer;
+  padding: 4px 28px 4px 8px;
 }
 
 .bhw-dash-charts-toolbar .mc-chart-filters__control:focus {
@@ -268,17 +269,18 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 .bhw-dash-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding: 12px 18px 18px;
+  gap: 8px;
+  padding: 8px 12px 12px;
 }
 
 .bhw-dash-charts .bhw-chart-card {
   margin: 0;
-  padding: 16px 18px 14px;
-  height: 100%;
+  padding: 10px 12px 8px;
+  height: auto;
   display: flex;
   flex-direction: column;
-  min-height: 280px;
+  min-height: 0;
+  gap: 0;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -296,14 +298,14 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 }
 
 .bhw-dash-charts .bhw-chart-card h4 {
-  margin: 0 0 12px;
-  font-size: 1rem;
+  margin: 0 0 6px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.01em;
   line-height: 1.35;
   flex: 0 0 auto;
-  min-height: 1.25em;
+  min-height: 0;
   overflow-wrap: anywhere;
 }
 
@@ -315,21 +317,21 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 }
 
 .bhw-dash-charts .bhw-chart-wrap--ring {
-  height: 260px;
-  min-height: 260px;
+  height: clamp(120px, 16vh, 150px);
+  min-height: 120px;
   max-height: none;
 }
 
 .bhw-dash-charts .bhw-chart-wrap--line,
 .bhw-dash-charts .bhw-chart-wrap--bar {
-  height: 260px;
-  min-height: 260px;
+  height: clamp(110px, 16vh, 150px);
+  min-height: 110px;
   max-height: none;
 }
 
 .bhw-dash-charts .bhw-chart-wrap--bar-tall {
-  height: 300px;
-  min-height: 300px;
+  height: clamp(130px, 18vh, 170px);
+  min-height: 130px;
   max-height: none;
 }
 
@@ -540,7 +542,7 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 }
 
 .bhw-dash-queue-table thead th {
-  padding: 9px 16px;
+  padding: 8px 12px;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -552,7 +554,7 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 }
 
 .bhw-dash-queue-table tbody td {
-  padding: 10px 16px;
+  padding: 9px 12px;
   vertical-align: middle;
   color: #334155;
   border-bottom: 1px solid #f1f5f9;
@@ -591,9 +593,9 @@ body.bhw-body .portal-page-body:has(.bhw-dash) {
 }
 
 .bhw-dash-queue-empty {
-  padding: 28px 20px;
+  padding: 20px 16px;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1.45;
   color: #64748b;
   background: #fff;
