@@ -7,7 +7,6 @@ require __DIR__ . '/../partials/layout_open.php';
 <div class="bhw-followup-page bhw-afu-queue" id="bhwAfuQueueRoot">
   <header class="bhw-followup-header bhw-page-intro">
     <p class="bhw-page-intro__desc">Live queue of appointments and follow-ups for residents in your assigned barangay.</p>
-    <a href="reminders.php" class="bhw-btn-outline">Send reminders</a>
   </header>
 
   <div class="bhw-card bhw-followup-card">
