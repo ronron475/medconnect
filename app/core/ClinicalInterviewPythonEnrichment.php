@@ -156,10 +156,18 @@ final class ClinicalInterviewPythonEnrichment
             $context['facts'] = [];
         }
         $facts = $context['facts'];
-        $facts['symptoms'] = self::mergeStringLists(
-            is_array($facts['symptoms'] ?? null) ? $facts['symptoms'] : [],
-            is_array($enrichment['english_symptoms'] ?? null) ? $enrichment['english_symptoms'] : []
-        );
+        $aiNames = is_array($enrichment['english_symptoms'] ?? null) ? $enrichment['english_symptoms'] : [];
+        foreach ($aiNames as $name) {
+            $name = trim((string) $name);
+            if ($name === '') {
+                continue;
+            }
+            // AI/Python labels → symptoms_ai; still merge into legacy symptoms for compatibility.
+            $legacy = is_array($facts['symptoms'] ?? null) ? $facts['symptoms'] : [];
+            $facts['symptoms'] = self::mergeStringLists($legacy, [$name]);
+            $ai = is_array($facts['symptoms_ai'] ?? null) ? $facts['symptoms_ai'] : [];
+            $facts['symptoms_ai'] = self::mergeStringLists($ai, [$name]);
+        }
         $facts['body_locations'] = self::mergeStringLists(
             is_array($facts['body_locations'] ?? null) ? $facts['body_locations'] : [],
             is_array($enrichment['body_locations'] ?? null) ? $enrichment['body_locations'] : []

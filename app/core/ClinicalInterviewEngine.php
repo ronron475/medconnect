@@ -75,6 +75,7 @@ final class ClinicalInterviewEngine
                 }
 
                 if ($nlpText !== '') {
+                    // Working copy for extractors / enrichment only — never stored as patient_turns.
                     $turn = $nlpText;
                     $context['complaint_text_cleaner'] = [
                         'original' => $originalForDisplay,
@@ -136,14 +137,13 @@ final class ClinicalInterviewEngine
                 $context = self::applyFollowUpValidationFacts($context, $validation, $awaiting);
                 $correctedFromValidation = trim((string) ($validation['corrected_answer'] ?? ''));
                 if (self::shouldRetryUncertainYesNo($context, $validation, $awaiting)) {
-                    $uncertainTurn = $correctedFromValidation !== ''
-                        ? $correctedFromValidation
-                        : $originalTurnForLanguage;
-                    $context = self::appendPatientTurn($context, $uncertainTurn);
+                    // Provenance: store the patient's own wording, not corrected/enriched gloss.
+                    $context = self::appendPatientTurn($context, $originalTurnForLanguage);
 
                     return self::wrapRetryCurrentQuestion($context, $validation);
                 }
                 if ($correctedFromValidation !== '') {
+                    // Working copy for extractors only — patient_turns keep the original answer.
                     $turn = $correctedFromValidation;
                 }
             } catch (Throwable $e) {
@@ -152,6 +152,7 @@ final class ClinicalInterviewEngine
         }
 
         // Opening turn already dropped non-essential tokens; follow-up answers still get cleaned.
+        // Cleaned/normalized text is for extractors only — patient_turns stay patient-authored.
         if (!$isOpeningTurn && $turn !== '' && class_exists('ComplaintTriageTextCleaner')) {
             try {
                 $clean = ComplaintTriageTextCleaner::prepare($turn);
@@ -199,8 +200,10 @@ final class ClinicalInterviewEngine
             $context['last_answer_normalization'] = $turnPrep;
         }
 
-        if ($turn !== '') {
-            $context = self::appendPatientTurn($context, $turn);
+        // Patient-text channel: original utterance only (not nlpText / corrected / AI gloss).
+        $patientAuthoredTurn = trim($originalTurnForLanguage);
+        if ($patientAuthoredTurn !== '') {
+            $context = self::appendPatientTurn($context, $patientAuthoredTurn);
         }
 
         $transcript = self::transcript($context);
@@ -230,8 +233,10 @@ final class ClinicalInterviewEngine
 
         // Recalculate triage from the complete accumulated case (complaint + turns + structured facts).
         // Bare yes/no turns are excluded from the haystack; polarity lives in structured facts.
+        // Stage 2A: still pass clinicalContextText for parity; also pass structured interviewFacts (unused for decisions yet).
         $clinicalText = self::clinicalContextText($context, self::clinicalTranscript($context));
-        $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText);
+        $interviewFacts = self::interviewFactsForTriage($context);
+        $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText, [], [], 0, true, $interviewFacts);
         $assessment = self::assessmentFromEngine($raw, $transcript, (string) ($raw['english_translation'] ?? $transcript), $checkboxSymptoms);
         $nlpFacts = self::factsFromAssessment($assessment, $clinicalText);
         $context['facts'] = self::mergeFacts($context['facts'], $nlpFacts);
@@ -253,7 +258,8 @@ final class ClinicalInterviewEngine
         $expandedText = self::clinicalContextText($context, self::clinicalTranscript($context));
         if ($expandedText !== $clinicalText && $expandedText !== '') {
             $clinicalText = $expandedText;
-            $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText);
+            $interviewFacts = self::interviewFactsForTriage($context);
+            $raw = ClinicalTriageEngine::assess($clinicalText, $clinicalText, [], [], 0, true, $interviewFacts);
             $assessment = self::assessmentFromEngine(
                 $raw,
                 $transcript,
@@ -279,7 +285,8 @@ final class ClinicalInterviewEngine
                     self::clinicalTranscript($context)
                 );
                 if ($caseText !== '') {
-                    $raw = ClinicalTriageEngine::assess($caseText, $caseText);
+                    $interviewFacts = self::interviewFactsForTriage($context);
+                    $raw = ClinicalTriageEngine::assess($caseText, $caseText, [], [], 0, true, $interviewFacts);
                     $assessment = self::assessmentFromEngine(
                         $raw,
                         $transcript,
@@ -448,7 +455,8 @@ final class ClinicalInterviewEngine
             if ($caseText === '') {
                 $caseText = self::clinicalContextText($context, self::clinicalTranscript($context));
             }
-            $raw = ClinicalTriageEngine::assess($caseText, $caseText);
+            $interviewFacts = self::interviewFactsForTriage($context);
+            $raw = ClinicalTriageEngine::assess($caseText, $caseText, [], [], 0, true, $interviewFacts);
             $assessment = self::assessmentFromEngine(
                 $raw,
                 $transcript,
@@ -628,21 +636,28 @@ final class ClinicalInterviewEngine
     }
 
     /**
+     * Append one patient-authored turn. Callers must pass the original utterance —
+     * never Gemini/Ollama/Python gloss, corrected_answer, or cleaned nlp_text.
+     *
      * @param array<string, mixed> $context
      * @return array<string, mixed>
      */
-    private static function appendPatientTurn(array $context, string $turn): array
+    private static function appendPatientTurn(array $context, string $patientAuthoredTurn): array
     {
-        if ($context['chief_complaint'] === '') {
-            $original = trim((string) (($context['complaint_text_cleaner']['original'] ?? '') ?: $turn));
-            $context['chief_complaint'] = $original !== '' ? $original : $turn;
+        $patientAuthoredTurn = trim($patientAuthoredTurn);
+        if ($patientAuthoredTurn === '') {
+            return $context;
         }
-        $context['patient_turns'][] = $turn;
+        if ($context['chief_complaint'] === '') {
+            $original = trim((string) (($context['complaint_text_cleaner']['original'] ?? '') ?: $patientAuthoredTurn));
+            $context['chief_complaint'] = $original !== '' ? $original : $patientAuthoredTurn;
+        }
+        $context['patient_turns'][] = $patientAuthoredTurn;
         $awaiting = (string) ($context['awaiting_question_id'] ?? '');
         if ($awaiting !== '') {
             $context['questions_answered'][] = [
                 'question_id' => $awaiting,
-                'answer' => $turn,
+                'answer' => $patientAuthoredTurn,
             ];
         }
 
@@ -660,7 +675,8 @@ final class ClinicalInterviewEngine
     }
 
     /**
-     * Transcript for triage haystack: skip bare yes/no turns (already stored as structured facts).
+     * Patient-authored turns for clinical text (skip bare yes/no; polarity lives in facts).
+     * patient_turns must already be original patient wording only.
      *
      * @param array<string, mixed> $context
      */
@@ -693,12 +709,13 @@ final class ClinicalInterviewEngine
     }
 
     /**
-     * Primary complaint + patient turns for missing-slot / timing detection.
-     * Cleaned NLP turns alone can drop soft timing phrases; original complaint must remain.
+     * Patient-authored evidence only: chief complaint + original patient turns.
+     * Excludes factsHaystack(), semantic_bridge.*, Python gloss, and KB-derived labels.
+     * Stable across AI/KB enrichment (Stage 1 patient-text channel).
      *
      * @param array<string, mixed> $context
      */
-    private static function clinicalContextText(array $context, string $transcript = ''): string
+    public static function patientEvidenceText(array $context): string
     {
         $parts = [];
         $complaint = trim((string) ($context['chief_complaint'] ?? ''));
@@ -709,14 +726,38 @@ final class ClinicalInterviewEngine
         if ($originalCleaner !== '' && mb_strtolower($originalCleaner) !== mb_strtolower($complaint)) {
             $parts[] = $originalCleaner;
         }
-        $turns = trim($transcript !== '' ? $transcript : self::clinicalTranscript($context));
-        if ($turns === '' && self::transcript($context) !== '') {
-            // Fall back only when filtering removed everything but complaint still needs turns context.
-            $turns = self::clinicalTranscript($context);
-        }
+        $turns = self::clinicalTranscript($context);
         if ($turns !== '') {
             $parts[] = $turns;
         }
+
+        return trim(implode('. ', array_values(array_unique($parts))));
+    }
+
+    /**
+     * Full clinical context for Stage-1 triage input (patient text + structured/AI enrichment).
+     * Enrichment stays here — not in patientEvidenceText / patient_turns.
+     * Cleaned NLP turns alone can drop soft timing phrases; original complaint must remain.
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function clinicalContextText(array $context, string $transcript = ''): string
+    {
+        $parts = [];
+        // Patient-authored base (stable when enrichment changes).
+        $patientOnly = self::patientEvidenceText($context);
+        if ($patientOnly !== '') {
+            $parts[] = $patientOnly;
+        } else {
+            $turns = trim($transcript !== '' ? $transcript : self::clinicalTranscript($context));
+            if ($turns === '' && self::transcript($context) !== '') {
+                $turns = self::clinicalTranscript($context);
+            }
+            if ($turns !== '') {
+                $parts[] = $turns;
+            }
+        }
+        // System / structured / AI enrichment — interpretation aids for triage, not patient text.
         $factsHaystack = self::factsHaystack(is_array($context['facts'] ?? null) ? $context['facts'] : []);
         if ($factsHaystack !== '') {
             $parts[] = $factsHaystack;
@@ -781,6 +822,10 @@ final class ClinicalInterviewEngine
             'symptoms' => self::stringList($seed['symptoms'] ?? []),
             'associated_symptoms' => self::stringList($seed['associated_symptoms'] ?? []),
             'negative_symptoms' => self::stringList($seed['negative_symptoms'] ?? []),
+            // Stage 2 Batch 1: provenance buckets (legacy lists above stay for AdaptivePolicy/UI).
+            'symptoms_patient' => self::stringList($seed['symptoms_patient'] ?? []),
+            'symptoms_kb' => self::stringList($seed['symptoms_kb'] ?? []),
+            'symptoms_ai' => self::stringList($seed['symptoms_ai'] ?? []),
             'vital_signs' => self::stringList($seed['vital_signs'] ?? []),
             'risk_factors' => self::stringList($seed['risk_factors'] ?? []),
             'red_flags' => self::stringList($seed['red_flags'] ?? []),
@@ -844,6 +889,118 @@ final class ClinicalInterviewEngine
         }
 
         return array_values(array_unique($out));
+    }
+
+    /**
+     * Stage 2 Batch 1: record a symptom name with provenance.
+     * Always keeps legacy facts.symptoms compatible with AdaptivePolicy/UI/haystack.
+     *
+     * @param array<string, mixed> $facts
+     * @param 'patient'|'kb'|'ai' $source
+     * @return array<string, mixed>
+     */
+    private static function recordSymptomName(array $facts, string $name, string $source): array
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return $facts;
+        }
+        $negList = self::stringList($facts['negative_symptoms'] ?? []);
+        foreach ($negList as $neg) {
+            if (self::symptomMatchesConcept($name, $neg)) {
+                return $facts;
+            }
+        }
+
+        $legacy = self::stringList($facts['symptoms'] ?? []);
+        if (!in_array($name, $legacy, true)) {
+            $legacy[] = $name;
+        }
+        $facts['symptoms'] = $legacy;
+
+        $bucket = match ($source) {
+            'kb' => 'symptoms_kb',
+            'ai' => 'symptoms_ai',
+            default => 'symptoms_patient',
+        };
+        $prov = self::stringList($facts[$bucket] ?? []);
+        if (!in_array($name, $prov, true)) {
+            $prov[] = $name;
+        }
+        $facts[$bucket] = $prov;
+
+        return $facts;
+    }
+
+    /**
+     * Drop negated names from legacy + provenance symptom buckets.
+     *
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function filterSymptomsAgainstNegatives(array $facts): array
+    {
+        $negList = self::stringList($facts['negative_symptoms'] ?? []);
+        if ($negList === []) {
+            return $facts;
+        }
+        $keep = static function (string $name) use ($negList): bool {
+            foreach ($negList as $neg) {
+                if (self::symptomMatchesConcept($name, $neg)) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+        foreach (['symptoms', 'symptoms_patient', 'symptoms_kb', 'symptoms_ai'] as $key) {
+            $facts[$key] = array_values(array_filter(self::stringList($facts[$key] ?? []), $keep));
+        }
+
+        return $facts;
+    }
+
+    /**
+     * Stage 2A: structured interview facts for ClinicalTriageEngine (plumbing only).
+     * Single-complaint → current context facts.
+     * Multi-complaint → active facts + per-track facts (no synthetic English phrases).
+     *
+     * @param array<string, mixed> $context
+     * @return array<string, mixed>
+     */
+    private static function interviewFactsForTriage(array $context): array
+    {
+        $facts = is_array($context['facts'] ?? null) ? $context['facts'] : [];
+        $tracks = is_array($context['complaints'] ?? null) ? $context['complaints'] : [];
+        $patientEvidenceText = self::patientEvidenceText($context);
+
+        if (count($tracks) <= 1) {
+            // Stage 2 Batch 4: always expose patient_evidence_text for shadow comparison.
+            // Does not change clinical fact meanings; key is ignored by normalizeFactBag polarity.
+            $facts['patient_evidence_text'] = $patientEvidenceText;
+
+            return $facts;
+        }
+
+        $trackPacks = [];
+        foreach ($tracks as $track) {
+            if (!is_array($track)) {
+                continue;
+            }
+            $trackPacks[] = [
+                'complaint_id' => (string) ($track['id'] ?? ''),
+                'text_span' => (string) ($track['text_span'] ?? ''),
+                'family_keys' => is_array($track['family_keys'] ?? null) ? $track['family_keys'] : [],
+                'facts' => is_array($track['facts'] ?? null) ? $track['facts'] : [],
+            ];
+        }
+
+        return [
+            'active_complaint_id' => (string) ($context['active_complaint_id'] ?? ''),
+            'active_facts' => $facts,
+            'tracks' => $trackPacks,
+            'patient_evidence_text' => $patientEvidenceText,
+        ];
     }
 
     /**
@@ -962,31 +1119,12 @@ final class ClinicalInterviewEngine
         }
         $facts['negative_symptoms'] = $negList;
 
-        $symptoms = self::stringList($facts['symptoms'] ?? []);
+        // KB-derived engine labels → symptoms_kb (not patient-reported evidence).
+        // Legacy facts.symptoms still updated for AdaptivePolicy/UI/haystack compatibility.
         foreach (self::stringList($assessment['detected_symptoms'] ?? []) as $name) {
-            $drop = false;
-            foreach ($negList as $neg) {
-                if (self::symptomMatchesConcept($name, $neg)) {
-                    $drop = true;
-                    break;
-                }
-            }
-            if (!$drop && !in_array($name, $symptoms, true)) {
-                $symptoms[] = $name;
-            }
+            $facts = self::recordSymptomName($facts, $name, 'kb');
         }
-        $facts['symptoms'] = array_values(array_filter(
-            $symptoms,
-            static function (string $name) use ($negList): bool {
-                foreach ($negList as $neg) {
-                    if (self::symptomMatchesConcept($name, $neg)) {
-                        return false;
-                    }
-                }
-
-                return true;
-            }
-        ));
+        $facts = self::filterSymptomsAgainstNegatives($facts);
 
         $flags = self::redFlagNames($assessment);
         $facts['red_flags'] = array_values(array_unique(array_merge(
@@ -1190,10 +1328,6 @@ final class ClinicalInterviewEngine
                         continue;
                     }
                     $negList[] = $neg;
-                    $facts['symptoms'] = array_values(array_filter(
-                        self::stringList($facts['symptoms'] ?? []),
-                        static fn (string $s): bool => !self::symptomMatchesConcept($s, $neg)
-                    ));
                     if (self::symptomMatchesConcept('cough', $neg) || $neg === 'ubo') {
                         // Keep cough off the positive list; do not invent a cough fact.
                     }
@@ -1205,6 +1339,7 @@ final class ClinicalInterviewEngine
                     }
                 }
                 $facts['negative_symptoms'] = $negList;
+                $facts = self::filterSymptomsAgainstNegatives($facts);
             } catch (Throwable) {
                 // keep extractor-only facts
             }
@@ -1224,7 +1359,6 @@ final class ClinicalInterviewEngine
             try {
                 $turnMatches = SymptomKnowledgeBase::matchSymptoms($turn, $turn);
                 $assoc = self::stringList($facts['associated_symptoms'] ?? []);
-                $symptoms = self::stringList($facts['symptoms'] ?? []);
                 $negList = self::stringList($facts['negative_symptoms'] ?? []);
                 $addedNamed = false;
                 foreach ($turnMatches as $row) {
@@ -1242,15 +1376,13 @@ final class ClinicalInterviewEngine
                     if ($denied) {
                         continue;
                     }
-                    if (!in_array($name, $symptoms, true)) {
-                        $symptoms[] = $name;
-                    }
+                    // Lexicon-matched labels are KB-derived (patient text triggered the match).
+                    $facts = self::recordSymptomName($facts, $name, 'kb');
                     if ($awaiting !== '' && !in_array($name, $assoc, true)) {
                         $assoc[] = $name;
                         $addedNamed = true;
                     }
                 }
-                $facts['symptoms'] = $symptoms;
                 $facts['associated_symptoms'] = $assoc;
                 if ($addedNamed && (
                     $awaitingUpper === 'ASSOCIATED_DETAIL'
@@ -1274,15 +1406,11 @@ final class ClinicalInterviewEngine
             $label = self::freeTextAssociatedLabel($turn);
             if ($label !== '') {
                 $assoc = self::stringList($facts['associated_symptoms'] ?? []);
-                $symptoms = self::stringList($facts['symptoms'] ?? []);
                 if (!in_array($label, $assoc, true)) {
                     $assoc[] = $label;
                 }
-                if (!in_array($label, $symptoms, true)) {
-                    $symptoms[] = $label;
-                }
                 $facts['associated_symptoms'] = $assoc;
-                $facts['symptoms'] = $symptoms;
+                $facts = self::recordSymptomName($facts, $label, 'patient');
                 $facts['has_other_symptoms'] = true;
                 $facts['needs_associated_detail'] = false;
             }
@@ -1465,7 +1593,6 @@ final class ClinicalInterviewEngine
                 continue;
             }
             $assoc = self::stringList($facts['associated_symptoms'] ?? []);
-            $symptoms = self::stringList($facts['symptoms'] ?? []);
             foreach ($extracted[$listKey] as $name) {
                 $name = trim((string) $name);
                 if ($name === '') {
@@ -1474,12 +1601,9 @@ final class ClinicalInterviewEngine
                 if (!in_array($name, $assoc, true)) {
                     $assoc[] = $name;
                 }
-                if (!in_array($name, $symptoms, true)) {
-                    $symptoms[] = $name;
-                }
+                $facts = self::recordSymptomName($facts, $name, 'patient');
             }
             $facts['associated_symptoms'] = $assoc;
-            $facts['symptoms'] = $symptoms;
             if ($assoc !== []) {
                 $facts['has_other_symptoms'] = true;
                 $facts['needs_associated_detail'] = false;
@@ -1607,6 +1731,7 @@ final class ClinicalInterviewEngine
         $out = $left;
         $listKeys = [
             'body_locations', 'symptoms', 'associated_symptoms', 'negative_symptoms',
+            'symptoms_patient', 'symptoms_kb', 'symptoms_ai',
             'vital_signs', 'risk_factors', 'red_flags', 'medical_history',
         ];
         $replaceKeys = [
@@ -1793,6 +1918,9 @@ final class ClinicalInterviewEngine
         $facts = self::blankFacts([
             'body_locations' => $body,
             'symptoms' => $symptoms,
+            'symptoms_kb' => $detectedSymptoms,
+            // Bridge/Gemini lexical finding names are AI-derived, not patient-reported.
+            'symptoms_ai' => $findingSymptoms,
             'pain_score' => $pain['score'] ?? null,
             'pain_qualifier' => ClinicalFeatureExtractors::extractPainQualifier($transcript),
             'onset' => $onset,
@@ -2513,7 +2641,6 @@ final class ClinicalInterviewEngine
         if (class_exists('SymptomKnowledgeBase')) {
             try {
                 $assoc = self::stringList($facts['associated_symptoms'] ?? []);
-                $symptoms = self::stringList($facts['symptoms'] ?? []);
                 $negList = self::stringList($facts['negative_symptoms'] ?? []);
                 foreach (SymptomKnowledgeBase::matchSymptoms($turn, $turn) as $row) {
                     $name = trim((string) ($row['symptom_name'] ?? ''));
@@ -2530,9 +2657,7 @@ final class ClinicalInterviewEngine
                     if ($denied) {
                         continue;
                     }
-                    if (!in_array($name, $symptoms, true)) {
-                        $symptoms[] = $name;
-                    }
+                    $facts = self::recordSymptomName($facts, $name, 'kb');
                     if (!in_array($name, $assoc, true)) {
                         $assoc[] = $name;
                     }
@@ -2541,10 +2666,9 @@ final class ClinicalInterviewEngine
                 if ($label !== '' && !in_array($label, $assoc, true)) {
                     $assoc[] = $label;
                 }
-                if ($label !== '' && !in_array($label, $symptoms, true)) {
-                    $symptoms[] = $label;
+                if ($label !== '') {
+                    $facts = self::recordSymptomName($facts, $label, 'patient');
                 }
-                $facts['symptoms'] = $symptoms;
                 $facts['associated_symptoms'] = $assoc;
             } catch (Throwable) {
                 // keep prior facts
@@ -2853,6 +2977,7 @@ final class ClinicalInterviewEngine
             'final_classification' => $finalDisplay,
             'facts' => $context['facts'],
             'patient_turns' => $context['patient_turns'],
+            'patient_evidence_text' => self::patientEvidenceText($context),
             'chief_complaints' => $context['chief_complaints'],
             'semantic_bridge' => is_array($context['semantic_bridge'] ?? null) ? $context['semantic_bridge'] : [],
             'python_enrichment' => is_array($context['python_enrichment'] ?? null) ? $context['python_enrichment'] : [],
@@ -3048,21 +3173,18 @@ final class ClinicalInterviewEngine
         }
 
         if ($finding === 'vomiting') {
-            $symptoms = self::stringList($facts['symptoms'] ?? []);
             $neg = self::stringList($facts['negative_symptoms'] ?? []);
             if ($yesNo) {
-                if (!in_array('Vomiting', $symptoms, true)) {
-                    $symptoms[] = 'Vomiting';
-                }
                 $neg = array_values(array_filter($neg, static fn (string $s): bool => !str_contains(mb_strtolower($s), 'vomit') && !str_contains(mb_strtolower($s), 'suka')));
+                $facts['negative_symptoms'] = $neg;
+                $facts = self::recordSymptomName($facts, 'Vomiting', 'patient');
             } else {
                 if (!in_array('vomiting', $neg, true)) {
                     $neg[] = 'vomiting';
                 }
-                $symptoms = array_values(array_filter($symptoms, static fn (string $s): bool => !str_contains(mb_strtolower($s), 'vomit') && !str_contains(mb_strtolower($s), 'suka')));
+                $facts['negative_symptoms'] = $neg;
+                $facts = self::filterSymptomsAgainstNegatives($facts);
             }
-            $facts['symptoms'] = $symptoms;
-            $facts['negative_symptoms'] = $neg;
         }
 
         // bleeding_with_abdomen is presence only — never map to bleeding_continuing

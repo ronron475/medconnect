@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * DEMO ONLY — universal patient-answer misspelling / typo tolerance.
  *
@@ -323,6 +323,12 @@ final class NlpStep3DemoAnswerFuzzy
                 $out[] = $tok;
                 continue;
             }
+            // Never fuzzy-correct clinical timing tokens (night→eight, etc.).
+            $cleanLow = mb_strtolower((string) preg_replace('/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/u', '', $tok));
+            if (self::isProtectedTimingToken($cleanLow)) {
+                $out[] = $tok;
+                continue;
+            }
             $clean = (string) preg_replace('/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/u', '', $tok);
             if ($clean === '' || mb_strlen($clean) < self::MIN_TOKEN_LEN) {
                 $out[] = $tok;
@@ -367,6 +373,24 @@ final class NlpStep3DemoAnswerFuzzy
             'fuzzy_status' => $status,
             'confidence' => $corrections === [] ? 1.0 : $minConf,
         ];
+    }
+
+    /** Tokens that must never be fuzzy-rewritten (clinical timing vocabulary). */
+    private static function isProtectedTimingToken(string $token): bool
+    {
+        $token = mb_strtolower(trim($token));
+        if ($token === '') {
+            return false;
+        }
+
+        return in_array($token, [
+            'yesterday', 'yesturday', 'today', 'tonight', 'night', 'morning', 'afternoon', 'evening',
+            'earlier', 'recently', 'ago', 'while', 'since', 'last', 'this',
+            'kanina', 'gahapon', 'kahapon', 'kagapon', 'kagab-i', 'kagabi', 'subong', 'ngayon',
+            'halin', 'ligad', 'dugay', 'matagal', 'bag-o', 'lang', 'oras', 'adlaw', 'araw',
+            'semana', 'linggo', 'bulan', 'buwan', 'hours', 'hour', 'days', 'day', 'weeks', 'week',
+            'months', 'month', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+        ], true);
     }
 
     /**

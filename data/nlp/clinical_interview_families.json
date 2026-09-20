@@ -65,7 +65,7 @@
         "coughing_blood", "vomiting_blood", "hemoptysis", "anticoagulant_bleeding",
         "warfarin_bleeding", "postpartum_hemorrhage", "circumcision_bleeding"
       ],
-      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "\\bpagdurugo\\b", "bleeding", "\\bdugo\\b", "hemorrhage", "epistaxis", "hematuria"]
+      "text_regex": ["\\bgadugo\\b", "nagadugo", "nagdugo", "dumudugo", "nagdudugo", "\\bpagdurugo\\b", "bleeding", "\\bblood\\b", "\\bdugo\\b", "hemorrhage", "epistaxis", "hematuria", "bloody"]
     },
     {
       "complaint_id": "NOSE_PAIN",
@@ -89,7 +89,7 @@
         "foreign_body_aspiration", "pediatric_breathing_distress", "cannot_speak_full_sentences",
         "copd_exacerbation", "pneumonia_symptoms", "blue_lips", "neonatal_distress"
       ],
-      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap.{0,20}huminga", "hirap huminga", "di ako makahinga", "shortness of breath", "ginhwa", "\\bwheez", "\\bstridor\\b", "\\bcyanosis\\b"]
+      "text_regex": ["difficulty breathing", "cannot breathe", "can't breathe", "can't catch my breath", "catch my breath", "makahinga", "makaginhawa", "budlay.{0,16}ginhawa", "hirap.{0,20}huminga", "hirap huminga", "di ako makahinga", "shortness of breath", "ginhwa", "\\bwheez", "\\bstridor\\b", "\\bcyanosis\\b"]
     },
     {
       "complaint_id": "COUGH",
@@ -162,7 +162,7 @@
         "bph_symptoms", "penile_discharge", "urinary_catheter_issue"
       ],
       "medical_categories": ["urinary", "urology"],
-      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bpee(?:ing)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi", "hematuria"]
+      "text_regex": ["\\bdysuria\\b", "\\burinat(?:e|ion)?\\b", "\\bpee(?:ing)?\\b", "\\bihi\\b", "\\bpag-ihi\\b", "\\bmag-ihi\\b", "\\bburning\\s+urin", "burning.{0,24}(bladder|urin|pee|ihi)", "(bladder|urin|pee|ihi).{0,24}burn", "empty\\s+(?:my\\s+)?bladder", "\\bfrequency\\b", "\\buti\\b", "masakit.{0,20}ihi", "di makaihi", "hindi makaihi", "hematuria"]
     },
     {
       "complaint_id": "DIZZINESS",
@@ -194,7 +194,7 @@
     {
       "complaint_id": "MUSCULOSKELETAL",
       "label": "Musculoskeletal symptoms",
-      "family_key": "pain",
+      "family_key": "musculoskeletal",
       "symptom_name_contains": ["back pain", "joint", "sprain", "fracture", "body pain"],
       "symptom_ids": [
         "back_pain", "body_pain", "neck_pain", "shoulder_pain", "hip_pain", "knee_pain",
@@ -202,7 +202,12 @@
         "dislocation", "muscle_cramps", "muscle_weakness", "chronic_pain", "night_pain"
       ],
       "medical_categories": ["musculoskeletal"],
-      "text_regex": ["back\\s*pain", "sakit\\s+likod", "joint\\s*pain", "\\bsprain\\b", "\\bfracture\\b", "body\\s*pain"]
+      "text_regex": [
+        "back\\s*pain", "sakit\\s+likod", "joint\\s*pain", "\\bsprain\\b", "\\bfracture\\b", "body\\s*pain",
+        "\\bbroken\\b", "\\bfractured\\b", "\\bsnapped\\b", "\\bcracked\\b", "\\bnabali\\b", "\\bbali\\b",
+        "broke\\s+(?:my\\s+|the\\s+)?(?:arm|leg|hand|foot|wrist|ankle|finger|toe|bone)",
+        "\\bbroke\\b"
+      ]
     },
     {
       "complaint_id": "EAR",
@@ -269,7 +274,7 @@
   "derived_families": [
     {
       "key": "pain",
-      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "pain", "pain_unspecified", "dental_pain"]
+      "add_when_family_any": ["headache", "chest_pain", "abdominal_pain", "nose_pain", "eye", "pain", "pain_unspecified", "dental_pain", "musculoskeletal"]
     },
     {
       "key": "respiratory",

@@ -422,13 +422,40 @@ final class BodyLocationLexicon
         if (class_exists('HiligaynonTextNormalizer')) {
             $normalized = HiligaynonTextNormalizer::forMatch($text);
             if ($normalized !== '') {
-                return $normalized;
+                $text = $normalized;
+            } else {
+                $text = mb_strtolower($text, 'UTF-8');
+                $text = preg_replace('/[^a-z0-9\s\-]/u', ' ', $text) ?? $text;
+                $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
             }
+        } else {
+            $text = mb_strtolower($text, 'UTF-8');
+            $text = preg_replace('/[^a-z0-9\s\-]/u', ' ', $text) ?? $text;
+            $text = trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
         }
-        $text = mb_strtolower($text, 'UTF-8');
-        $text = preg_replace('/[^a-z0-9\s\-]/u', ' ', $text) ?? $text;
 
-        return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+        // Always apply plural morphology after language normalization so
+        // Hiligaynon/Tagalog paths still map arms→arm, legs→leg, etc.
+        return self::normalizeBodyPlurals($text);
+    }
+
+    /** Plural clinical body sites → singular for alias matching. */
+    private static function normalizeBodyPlurals(string $text): string
+    {
+        $pluralMap = [
+            'arms' => 'arm', 'legs' => 'leg', 'eyes' => 'eye', 'ears' => 'ear',
+            'hands' => 'hand', 'feet' => 'foot', 'teeth' => 'tooth', 'fingers' => 'finger',
+            'knees' => 'knee', 'wrists' => 'wrist', 'ankles' => 'ankle', 'shoulders' => 'shoulder',
+            'elbows' => 'elbow', 'hips' => 'hip', 'toes' => 'toe',
+        ];
+
+        return (string) preg_replace_callback(
+            '/\b(' . implode('|', array_map(static fn ($k) => preg_quote($k, '/'), array_keys($pluralMap))) . ')\b/u',
+            static function (array $m) use ($pluralMap): string {
+                return $pluralMap[$m[1]] ?? $m[1];
+            },
+            $text
+        );
     }
 
     /**
@@ -679,6 +706,14 @@ final class BodyLocationLexicon
             // Symptom words that are not anatomical sites.
             'fever', 'lagnat', 'hilanat', 'weakness', 'numbness', 'numb', 'dizzy',
             'dizziness', 'cough', 'ubo', 'vomit', 'nausea', 'diarrhea',
+            // Fluids / substances / qualifiers — never become organ aliases
+            // (e.g. "blood" from "blood;kidney;trauma" keyword rows → kidney).
+            'blood', 'dugo', 'bleed', 'bleeding', 'pus', 'nana', 'infection',
+            'pressure', 'sugar', 'urine', 'ihi', 'stool', 'tae', 'vomit', 'suka',
+            // Functional symptom words — not anatomical sites.
+            'ginhawa', 'hinga', 'breath', 'breathing', 'budlay', 'lisod', 'hirap',
+            'dyspnea', 'shortness', 'catch', 'empty', 'bladder', 'broken', 'fracture',
+            'fractured', 'snapped', 'cracked', 'nabali', 'bali',
         ];
         $canonicals = [];
         foreach (self::$aliasIndex ?? [] as $meta) {
@@ -705,9 +740,13 @@ final class BodyLocationLexicon
                 $bodyRaw = (string) (
                     ($data['body_part'] ?? '')
                     ?: ($data['body'] ?? '')
-                    ?: ($data['confidence_keywords'] ?? '')
-                    ?: ($data['medical_term'] ?? '')
                 );
+                // Do NOT fall back to confidence_keywords / medical_term / causes —
+                // those lists mix organs with fluids, diseases, and functional words
+                // (e.g. "blood;kidney", "heart failure", "ginhawa"→heart).
+                if ($bodyRaw === '') {
+                    continue;
+                }
                 // body_part / keywords may be "shoulder;joint;pain" — take first known anatomy canonical.
                 $bodyParts = preg_split('/[|;,]+/u', strtolower($bodyRaw)) ?: [];
                 $canonical = '';

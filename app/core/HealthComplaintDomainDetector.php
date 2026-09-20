@@ -403,6 +403,7 @@ final class HealthComplaintDomainDetector
     {
         $signals = [];
         $hay = self::applyMisspellHints($hay);
+        $hay = self::normalizeBodyMorphology($hay);
 
         $patterns = [
             'duration' => [
@@ -425,19 +426,23 @@ final class HealthComplaintDomainDetector
                 '/\b(indi\s+ko\s+maayo|hindi\s+ko\s+mabuti|dili\s+ko\s+maayo|gakapoy|nagakapoy|kapoy\s+ko|luya\s+ko|masama\s+ang\s+pakiramdam|not\s+feeling\s+well|don\'?t\s+feel\s+well|feel(s|ing)?\s+weird|body\s+feels\s+weird|ginalain|lain\s+lawas)\b/u',
             ],
             'body_part' => [
-                '/\b(ulo|olo|mata|eye|eyes|tiyan|stomach|tummy|dughan|dibdib|chest|lawas|body|likod|back|tuhod|throat|tungol|ilong|nose|tenga|ear|kamot|kamay|hand|tiil|paa|foot|feet|dila|tongue|ngipon|tooth|tudlo|finger|skin|balat|head)\b/u',
+                '/\b(ulo|olo|mata|eye|eyes|tiyan|stomach|tummy|dughan|dibdib|chest|lawas|body|likod|back|'
+                . 'tuhod|throat|tungol|ilong|nose|tenga|ear|ears|kamot|kamay|hand|hands|tiil|paa|foot|feet|'
+                . 'dila|tongue|ngipon|tooth|tudlo|finger|skin|balat|head|arm|arms|leg|legs|braso|butkon|'
+                . 'bukton|siko|elbow|forearm|shin|ankle|wrist|shoulder|liog|neck|nawong|face)\b/u',
             ],
             'patient_reference' => [
                 '/\b(ko|akon|ako|aku|my|i|ang\s+akin|q)\b/u',
             ],
             'breathing' => [
-                '/\b(budlay\s+ginhawa|lisod\s+ginhawa|lisud\s+ginhawa|hirap\s+huminga|difficulty\s+breathing|short\s+of\s+breath|cannot\s+breathe|ginhawa)\b/u',
+                '/\b(budlay\s+ginhawa|lisod\s+ginhawa|lisud\s+ginhawa|hirap\s+(?:ako(?:ng)?\s+)?huminga|difficulty\s+breathing|short(?:ness)?\s+of\s+breath|cannot\s+breathe|can\'?t\s+breathe|can\'?t\s+catch\s+(?:my\s+)?breath|catch\s+my\s+breath|makahinga|makaginhawa|ginhawa)\b/u',
             ],
             'bleeding' => [
-                '/\b(dugo|bleeding|bleed|nagdugo|hemorrhage)\b/u',
+                '/\b(dugo|bleeding|bleeds?|nagdugo|nagadugo|nagdudugo|hemorrhage|bloody|blood)\b/u',
             ],
             'injury' => [
-                '/\b(samad|wound|injury|injured|nasugatan|nabuno|nahulog|trauma|burn|nasunog)\b/u',
+                '/\b(samad|wound|injury|injured|nasugatan|nabuno|nahulog|trauma|burn|nasunog|'
+                . 'broken|fractured?|fracture|snapped|cracked|nabali|bali|napilasan|naligli)\b/u',
             ],
             'severity' => [
                 '/\b(grabe|malala|severe|mild|moderate|[0-9]{1,2}\s*\/\s*10)\b/u',
@@ -615,6 +620,18 @@ final class HealthComplaintDomainDetector
             $name = trim((string) ($row['symptom_name'] ?? $row['matched_term'] ?? ''));
             $term = trim((string) ($row['matched_term'] ?? $name));
             if ($name === '' && $term === '') {
+                continue;
+            }
+            // Greetings / non-clinical dictionary hits must not invent health evidence.
+            $probe = mb_strtolower($term !== '' ? $term : $name);
+            if (in_array($probe, [
+                'hello', 'hi', 'hey', 'thanks', 'thank you', 'ok', 'okay', 'bye', 'goodbye',
+                'halong', 'kumusta', 'good morning', 'good afternoon', 'good evening',
+            ], true)) {
+                continue;
+            }
+            $id = mb_strtolower((string) ($row['id'] ?? ''));
+            if ($id === 'dict_hello' || str_starts_with($id, 'dict_hi')) {
                 continue;
             }
             $hits[] = ['type' => 'dataset_symptom', 'value' => $term !== '' ? $term : $name];
@@ -800,6 +817,38 @@ final class HealthComplaintDomainDetector
             $out[] = $map[$collapsed] ?? $map[$w] ?? $collapsed;
         }
         return implode(' ', $out);
+    }
+
+    /**
+     * General clinical morphology: plural body-site tokens → singular for matching.
+     */
+    private static function normalizeBodyMorphology(string $hay): string
+    {
+        $map = [
+            'arms' => 'arm',
+            'legs' => 'leg',
+            'eyes' => 'eye',
+            'ears' => 'ear',
+            'hands' => 'hand',
+            'feet' => 'foot',
+            'teeth' => 'tooth',
+            'fingers' => 'finger',
+            'toes' => 'toe',
+            'knees' => 'knee',
+            'wrists' => 'wrist',
+            'ankles' => 'ankle',
+            'shoulders' => 'shoulder',
+            'elbows' => 'elbow',
+            'hips' => 'hip',
+        ];
+        return (string) preg_replace_callback(
+            '/\b(' . implode('|', array_map(static fn ($k) => preg_quote($k, '/'), array_keys($map))) . ')\b/iu',
+            static function (array $m) use ($map): string {
+                $low = mb_strtolower($m[1]);
+                return $map[$low] ?? $m[1];
+            },
+            $hay
+        );
     }
 
     private static function normalize(string $text): string
