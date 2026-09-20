@@ -28,9 +28,6 @@ $bhwDashCssVer = file_exists($bhwDashCss) ? (int) filemtime($bhwDashCss) : time(
 $chartThemeJsVer = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
 $bhwDashChartsJsVer = (int) @filemtime(ASSETS_PATH . '/js/bhw-dashboard-charts.js');
 
-/* Compact topbar: Dashboard title only (no "Barangay Health Operations" eyebrow). */
-$mc_dashboard_topbar = true;
-
 require __DIR__ . '/partials/layout_open.php';
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-dashboard.css?v=<?= $bhwDashCssVer ?>">

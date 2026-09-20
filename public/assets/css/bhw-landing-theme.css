@@ -28,30 +28,36 @@ body.bhw-body {
   color: var(--landing-navy);
 }
 
-/* ── Formal topbar ── */
+/* Formal BHW topbar — page title only (no "Barangay Health Operations" subtitle). */
 body.bhw-body .topbar--bhw-formal {
+  align-items: center;
+  min-height: 64px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
-  min-height: 64px;
   padding: 0 28px;
 }
 
 body.bhw-body .topbar--bhw-formal .topbar-left {
+  align-items: center;
   gap: 0;
 }
 
-body.bhw-body .topbar--bhw-formal .topbar-eyebrow {
+body.bhw-body .topbar--bhw-formal .topbar-title-block {
   display: flex;
-  align-items: center;
-  gap: 5px;
-  color: #3b82f6;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  min-height: 0;
+}
+
+body.bhw-body .topbar--bhw-formal .topbar-eyebrow {
+  display: none !important;
 }
 
 body.bhw-body .topbar--bhw-formal .topbar-title {
+  line-height: 1.2;
+  margin: 0;
   color: #0f172a;
   font-size: 19px;
   font-weight: 700;
@@ -94,10 +100,6 @@ body.bhw-body .topbar--bhw-formal .topbar-sep {
   height: 26px;
   background: #e2e8f0;
   margin: 0 6px;
-}
-
-body.bhw-body .topbar-eyebrow {
-  color: #3b82f6;
 }
 
 body.bhw-body .topbar-title {
