@@ -10,7 +10,6 @@ require_once BASE_PATH . '/app/includes/nav/bhw_nav.php';
 
 $dashboard_nav = bhw_nav_dashboard();
 $page_title = $dashboard_nav['label'];
-$page_description = $dashboard_nav['description'];
 
 $bhwCtx = [
     'barangay_id' => (int) $bhw_barangay_id,
@@ -37,12 +36,6 @@ require __DIR__ . '/partials/layout_open.php';
 <script type="application/json" id="bhwDashChartsData"><?= json_encode($dashboardCharts, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
 
 <div class="bhw-dash">
-
-  <header class="bhw-dash-header bhw-page-intro">
-    <div class="bhw-dash-header__main">
-      <p class="bhw-dash-header__desc">Brgy. <?= htmlspecialchars($bhw_barangay_name) ?> — <?= htmlspecialchars($dashboard_nav['description']) ?></p>
-    </div>
-  </header>
 
   <section class="bhw-dash-panel bhw-dash-charts" aria-labelledby="bhwDashChartsTitle">
     <div class="bhw-dash-panel__head">
@@ -77,14 +70,6 @@ require __DIR__ . '/partials/layout_open.php';
       <article class="bhw-chart-card">
         <h4 id="bhw_dash_title_reg">New registrations</h4>
         <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_reg_week" aria-label="Weekly registrations chart"></canvas></div>
-      </article>
-      <article class="bhw-chart-card">
-        <h4>Triage &amp; workflow risk</h4>
-        <div class="bhw-chart-wrap bhw-chart-wrap--ring"><canvas id="bhw_dash_triage_mix" aria-label="Triage mix chart"></canvas></div>
-      </article>
-      <article class="bhw-chart-card">
-        <h4>Patient workflow pipeline</h4>
-        <div class="bhw-chart-wrap bhw-chart-wrap--bar-tall"><canvas id="bhw_dash_workflow" aria-label="Workflow pipeline chart"></canvas></div>
       </article>
     </div>
   </section>
