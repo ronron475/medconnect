@@ -131,12 +131,13 @@
     if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
+    // Always rebuild: Chart.js category-axis ticks often stay stale with update('none'),
+    // which made BHW (and other role) labels fail to refresh after live data changes.
+    destroy(canvasId);
     T().syncColors();
     T().applyDefaults();
 
     var normalized = normalizeRoleRows(rows);
-    // Always clear sticky selection on data refresh so a previously clicked
-    // Admin/Super Admin bar (count 1) cannot leave the KPI looking like "BHW = 1".
     var selectedIndex = -1;
 
     // Bake live counts into axis labels so role/count cannot drift apart.
@@ -145,18 +146,6 @@
     });
     var data = normalized.map(function (r) { return r.count; });
     var colors = roleBarColors(normalized, selectedIndex);
-
-    if (charts[canvasId]) {
-      var existing = charts[canvasId];
-      existing.data.labels = labels;
-      existing.data.datasets[0].data = data;
-      existing.data.datasets[0].backgroundColor = colors;
-      existing.$mcRoleRows = normalized;
-      existing.$mcSelectedIndex = selectedIndex;
-      existing.update('none');
-      setUsersKpi(normalized, selectedIndex);
-      return;
-    }
 
     charts[canvasId] = new Chart(el, {
       type: 'bar',
@@ -220,7 +209,6 @@
               autoSkip: false,
               font: { size: 11, weight: '500' },
               color: T().colors.text,
-              // Prefer the dataIndex tick index; fall back to baked-in labels.
               callback: function (value, index) {
                 var chart = charts[canvasId];
                 var rowsLocal = (chart && chart.$mcRoleRows) || normalized;
