@@ -45,8 +45,10 @@ $today = date('F j, Y');
 $now   = date('h:i A');
 $header_date_caps = strtoupper(date('l, M j, Y'));
 $is_bhw_portal = $user_role === 'bhw';
+/* Admin/SuperAdmin/BHW: page title only — no role subtitle above the title. */
 $compact_topbar = ($user_role === 'admin')
     || ($user_role === 'superadmin')
+    || $is_bhw_portal
     || !empty($mc_dashboard_topbar);
 
 $profile_menu_href = ASSET_BASE . '/views/' . htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'admin' ? 'admin' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient')))) . '/profile.php';
