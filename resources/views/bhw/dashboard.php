@@ -50,7 +50,6 @@ require __DIR__ . '/partials/layout_open.php';
           <option value="30">Month</option>
           <option value="365">Year</option>
         </select>
-        <span id="bhwDashChartsUpdated" class="text-xs text-muted mc-chart-filters__status" aria-live="polite">Live</span>
       </div>
     </div>
     <div class="bhw-dash-charts-grid">
@@ -121,23 +120,11 @@ ob_start();
   var searchInput = document.getElementById('resident-search');
   var dashDays = document.getElementById('bhw_dash_days');
   var chartsRoot = document.getElementById('bhwDashChartsRoot');
-  var chartsUpdated = document.getElementById('bhwDashChartsUpdated');
   var tableBody = document.getElementById('queue-tbody');
   var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
 
   function dashFilters() {
     return { days: dashDays ? dashDays.value : '7' };
-  }
-
-  function setChartsUpdated(iso) {
-    if (!chartsUpdated) return;
-    try {
-      var d = iso ? new Date(iso) : new Date();
-      if (isNaN(d.getTime())) d = new Date();
-      chartsUpdated.textContent = 'Updated ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    } catch (e) {
-      chartsUpdated.textContent = 'Live';
-    }
   }
 
   function updateChartTitles(payload) {
@@ -221,10 +208,7 @@ ob_start();
   function refreshDashboard() {
     if (document.hidden) return;
     BhwPortal.get('dashboard.php', dashFilters()).then(function (res) {
-      if (!res.success) {
-        if (chartsUpdated) chartsUpdated.textContent = 'Offline';
-        return;
-      }
+      if (!res.success) return;
 
       // Rebuild queue only when rows change — avoids layout churn below the charts.
       var queue = res.queue || [];
@@ -242,18 +226,12 @@ ob_start();
           lastChartsFp = chartsFp;
           BhwDashboardCharts.update(res.charts);
         }
-        setChartsUpdated(res.charts.generated_at || res.server_time || null);
-      } else {
-        setChartsUpdated(null);
       }
-    }).catch(function () {
-      if (chartsUpdated) chartsUpdated.textContent = 'Offline';
-    });
+    }).catch(function () {});
   }
 
   dashDays?.addEventListener('change', function () {
     if (chartsRoot) chartsRoot.setAttribute('data-days', dashDays.value);
-    if (chartsUpdated) chartsUpdated.textContent = 'Updating…';
     lastChartsFp = '';
     lastQueueFp = '';
     refreshDashboard();
@@ -266,7 +244,6 @@ ob_start();
   }
   updateChartTitles(<?= json_encode($dashboardCharts) ?>);
   lastChartsFp = stableFp(<?= json_encode($dashboardCharts) ?>);
-  setChartsUpdated(<?= json_encode($dashboardCharts['generated_at'] ?? date('c')) ?>);
   window.refreshBhwDashboard = refreshDashboard;
 
   var dashTimer = setInterval(function () {
