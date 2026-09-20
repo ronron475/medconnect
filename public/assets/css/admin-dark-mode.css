@@ -893,6 +893,11 @@ html[data-theme-resolved='dark'] body.superadmin-body .staff-apps-empty__text {
 }
 
 /* Doctor / BHW management hub tabs */
+html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-filter-group__label,
+html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-filter-group__label {
+  color: #8FAABF !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .staff-mgmt-tabs,
 html[data-theme-resolved='dark'] body.superadmin-body .staff-mgmt-tabs {
   background: #0D1E30 !important;

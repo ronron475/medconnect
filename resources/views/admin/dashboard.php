@@ -12,6 +12,7 @@ if (!defined('BASE_PATH')) {
 require_once __DIR__ . '/_portal_access.php';
 require_once BASE_PATH . '/app/includes/doctor_application_schema.php';
 require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
+require_once BASE_PATH . '/app/includes/admin_dashboard_charts.php';
 
 doctor_application_ensure_schema($pdo);
 bhw_application_ensure_schema($pdo);
@@ -20,11 +21,12 @@ $page_title = 'Dashboard';
 
 $admin_id = (int) ($_SESSION['user_id'] ?? 0);
 
-// Platform metrics
-$total_users     = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-$total_patients  = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='patient'")->fetchColumn();
-$total_providers = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='provider'")->fetchColumn();
-$total_bhw       = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='bhw'")->fetchColumn();
+// Platform metrics — same role map as User Distribution chart
+$role_counts     = admin_chart_role_counts_map($pdo);
+$total_users     = array_sum($role_counts);
+$total_patients  = (int) ($role_counts['patient'] ?? 0);
+$total_providers = (int) ($role_counts['provider'] ?? 0);
+$total_bhw       = (int) ($role_counts['bhw'] ?? 0);
 $active_users    = (int) $pdo->query('SELECT COUNT(*) FROM users WHERE is_active=1')->fetchColumn();
 
 $has_consults = $pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount() > 0;

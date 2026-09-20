@@ -34,13 +34,15 @@ function superadmin_count(PDO $pdo, string $sql): int
 function superadmin_dashboard_stats(PDO $pdo): array
 {
     superadmin_ensure_schema($pdo);
+    require_once dirname(__DIR__) . '/admin_dashboard_charts.php';
+    $roleCounts = admin_chart_role_counts_map($pdo);
 
     $stats = [
-        'total_patients'      => superadmin_count($pdo, "SELECT COUNT(*) FROM users WHERE role='patient'"),
-        'total_providers'     => superadmin_count($pdo, "SELECT COUNT(*) FROM users WHERE role='provider'"),
-        'total_bhw'           => superadmin_count($pdo, "SELECT COUNT(*) FROM users WHERE role='bhw'"),
-        'total_admins'        => superadmin_count($pdo, "SELECT COUNT(*) FROM users WHERE role='admin'"),
-        'total_superadmins'   => superadmin_count($pdo, "SELECT COUNT(*) FROM users WHERE role='superadmin'"),
+        'total_patients'      => (int) ($roleCounts['patient'] ?? 0),
+        'total_providers'     => (int) ($roleCounts['provider'] ?? 0),
+        'total_bhw'           => (int) ($roleCounts['bhw'] ?? 0),
+        'total_admins'        => (int) ($roleCounts['admin'] ?? 0),
+        'total_superadmins'   => (int) ($roleCounts['superadmin'] ?? 0),
         'total_consultations' => superadmin_table_exists($pdo, 'consultations')
             ? superadmin_count($pdo, 'SELECT COUNT(*) FROM consultations') : 0,
         'total_referrals'     => superadmin_table_exists($pdo, 'digital_referrals')

@@ -161,17 +161,20 @@ $base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
     </div>
 
     <?php if ($show_prc_subfilters): ?>
-    <div class="staff-mgmt-subfilters">
-        <?php
-        foreach (['all' => 'All PRC Status', 'verified' => 'Verified', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $vf => $vfLabel):
-            $sep = str_contains($base_tab_url, '?') ? '&' : '?';
-            $href = $base_tab_url . ($vf !== 'all' ? $sep . 'verify=' . urlencode($vf) : '');
-        ?>
-        <a href="<?= htmlspecialchars($href) ?>"
-           class="mc-btn mc-btn--sm <?= $verify_filter === $vf ? 'mc-btn--primary' : 'mc-btn--outline' ?>">
-            <?= htmlspecialchars($vfLabel) ?>
-        </a>
-        <?php endforeach; ?>
+    <div class="staff-mgmt-filter-group staff-mgmt-filter-group--prc">
+        <div class="staff-mgmt-filter-group__label" id="staffMgmtPrcStatusLabel">PRC Verification Status</div>
+        <div class="staff-mgmt-subfilters" role="group" aria-labelledby="staffMgmtPrcStatusLabel">
+            <?php
+            foreach (['all' => 'All PRC Status', 'verified' => 'Verified', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $vf => $vfLabel):
+                $sep = str_contains($base_tab_url, '?') ? '&' : '?';
+                $href = $base_tab_url . ($vf !== 'all' ? $sep . 'verify=' . urlencode($vf) : '');
+            ?>
+            <a href="<?= htmlspecialchars($href) ?>"
+               class="mc-btn mc-btn--sm <?= $verify_filter === $vf ? 'mc-btn--primary' : 'mc-btn--outline' ?>">
+                <?= htmlspecialchars($vfLabel) ?>
+            </a>
+            <?php endforeach; ?>
+        </div>
     </div>
     <?php endif; ?>
 

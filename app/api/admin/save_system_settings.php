@@ -6,7 +6,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/system_settings
 require_once BASE_PATH . '/app/includes/audit_log.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/portal_auth.php';
 
-portal_api_require_superadmin();
+portal_api_require_admin_portal();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

@@ -6,6 +6,7 @@ require_once __DIR__ . '/_bootstrap.php';
 require_once BASE_PATH . '/app/includes/superadmin/service.php';
 require_once BASE_PATH . '/app/includes/doctor_application_schema.php';
 require_once BASE_PATH . '/app/includes/bhw_application_schema.php';
+require_once BASE_PATH . '/app/includes/admin_dashboard_charts.php';
 
 doctor_application_ensure_schema($pdo);
 bhw_application_ensure_schema($pdo);
@@ -16,6 +17,8 @@ $security = superadmin_get_security_summary($pdo);
 $recentActivities = superadmin_recent_activities($pdo, 8);
 $recentLogins = superadmin_recent_logins($pdo, 6);
 $health = superadmin_system_health($pdo);
+$role_counts = admin_chart_role_counts_map($pdo);
+$total_users_live = array_sum($role_counts);
 
 $pending_doctor_approvals = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
 $pending_bhw_approvals    = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
@@ -50,13 +53,10 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
         <p class="adm-section-sub">Key totals at a glance · auto-refreshes</p>
     </div>
     <div class="superadmin-stat-grid superadmin-stat-grid--compact">
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="patients"><?= (int) $stats['total_patients'] ?></div><div class="text-xs text-muted">Patients</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="providers"><?= (int) $stats['total_providers'] ?></div><div class="text-xs text-muted">Doctors</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="bhw"><?= (int) $stats['total_bhw'] ?></div><div class="text-xs text-muted">BHW</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="total_users"><?= (int) (
-            ($stats['total_patients'] ?? 0) + ($stats['total_providers'] ?? 0) + ($stats['total_bhw'] ?? 0)
-            + ($stats['total_admins'] ?? 0) + ($stats['total_superadmins'] ?? 0)
-        ) ?></div><div class="text-xs text-muted">Total Users</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="patients"><?= (int) ($role_counts['patient'] ?? 0) ?></div><div class="text-xs text-muted">Patients</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="providers"><?= (int) ($role_counts['provider'] ?? 0) ?></div><div class="text-xs text-muted">Doctors</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="bhw"><?= (int) ($role_counts['bhw'] ?? 0) ?></div><div class="text-xs text-muted">BHW</div></div>
+        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="total_users"><?= (int) $total_users_live ?></div><div class="text-xs text-muted">Total Users</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="consultations"><?= (int) $stats['total_consultations'] ?></div><div class="text-xs text-muted">Consultations</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="emergency_cases" style="color:<?= (int) $stats['emergency_cases'] > 0 ? '#ef233c' : 'inherit' ?>;"><?= (int) $stats['emergency_cases'] ?></div><div class="text-xs text-muted">Emergency Cases</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="barangays"><?= (int) $stats['total_barangays'] ?></div><div class="text-xs text-muted">Barangays</div></div>

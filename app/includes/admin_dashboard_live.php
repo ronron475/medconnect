@@ -13,13 +13,15 @@ function admin_dashboard_live_payload(PDO $pdo, int $adminId): array
 {
     require_once dirname(__DIR__) . '/doctor_application_schema.php';
     require_once dirname(__DIR__) . '/bhw_application_schema.php';
+    require_once __DIR__ . '/admin_dashboard_charts.php';
     doctor_application_ensure_schema($pdo);
     bhw_application_ensure_schema($pdo);
 
-    $totalUsers = (int) $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn();
-    $totalPatients = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='patient'")->fetchColumn();
-    $totalProviders = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='provider'")->fetchColumn();
-    $totalBhw = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='bhw'")->fetchColumn();
+    $roleCounts = admin_chart_role_counts_map($pdo);
+    $totalPatients = (int) ($roleCounts['patient'] ?? 0);
+    $totalProviders = (int) ($roleCounts['provider'] ?? 0);
+    $totalBhw = (int) ($roleCounts['bhw'] ?? 0);
+    $totalUsers = array_sum($roleCounts);
 
     $hasConsults = $pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount() > 0;
     $consultsToday = $hasConsults
@@ -108,6 +110,7 @@ function superadmin_dashboard_live_payload(PDO $pdo): array
     require_once __DIR__ . '/superadmin/service.php';
     require_once dirname(__DIR__) . '/doctor_application_schema.php';
     require_once dirname(__DIR__) . '/bhw_application_schema.php';
+    require_once __DIR__ . '/admin_dashboard_charts.php';
     doctor_application_ensure_schema($pdo);
     bhw_application_ensure_schema($pdo);
 
@@ -116,6 +119,7 @@ function superadmin_dashboard_live_payload(PDO $pdo): array
     $recentActivities = superadmin_recent_activities($pdo, 8);
     $recentLogins = superadmin_recent_logins($pdo, 6);
     $health = superadmin_system_health($pdo);
+    $roleCounts = admin_chart_role_counts_map($pdo);
 
     $pendingDoctor = (int) $pdo->query("SELECT COUNT(*) FROM doctor_applications WHERE status='pending_approval'")->fetchColumn();
     $pendingBhw = (int) $pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status='pending_approval'")->fetchColumn();
@@ -160,18 +164,12 @@ function superadmin_dashboard_live_payload(PDO $pdo): array
     return [
         'scope' => 'superadmin',
         'metrics' => [
-            'patients'         => (int) ($stats['total_patients'] ?? 0),
-            'providers'        => (int) ($stats['total_providers'] ?? 0),
-            'bhw'              => (int) ($stats['total_bhw'] ?? 0),
-            'admins'           => (int) ($stats['total_admins'] ?? 0),
-            'superadmins'      => (int) ($stats['total_superadmins'] ?? 0),
-            'total_users'      => (int) (
-                ($stats['total_patients'] ?? 0)
-                + ($stats['total_providers'] ?? 0)
-                + ($stats['total_bhw'] ?? 0)
-                + ($stats['total_admins'] ?? 0)
-                + ($stats['total_superadmins'] ?? 0)
-            ),
+            'patients'         => (int) ($roleCounts['patient'] ?? 0),
+            'providers'        => (int) ($roleCounts['provider'] ?? 0),
+            'bhw'              => (int) ($roleCounts['bhw'] ?? 0),
+            'admins'           => (int) ($roleCounts['admin'] ?? 0),
+            'superadmins'      => (int) ($roleCounts['superadmin'] ?? 0),
+            'total_users'      => array_sum($roleCounts),
             'consultations'    => (int) ($stats['total_consultations'] ?? 0),
             'emergency_cases'  => (int) ($stats['emergency_cases'] ?? 0),
             'barangays'        => (int) ($stats['total_barangays'] ?? 0),
