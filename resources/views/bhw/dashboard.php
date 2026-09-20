@@ -36,18 +36,18 @@ require __DIR__ . '/partials/layout_open.php';
 
 <div class="bhw-dash">
 
-  <section class="bhw-dash-panel bhw-dash-charts" aria-label="Activity charts">
+  <section class="bhw-dash-panel bhw-dash-charts" id="bhwDashChartsRoot" data-days="7" aria-label="Activity charts">
     <div class="bhw-dash-charts-toolbar no-print">
-      <label class="bhw-dash-period" for="bhw_dash_days">
-        <span class="bhw-dash-period__label">Period</span>
-        <select class="form-select bhw-dash-period__select" id="bhw_dash_days" aria-label="Chart period">
+      <div class="mc-chart-filters mc-chart-filters--inline bhw-dash-chart-filters">
+        <label class="mc-chart-filters__label" for="bhw_dash_days">Period</label>
+        <select id="bhw_dash_days" class="form-select mc-chart-filters__control" aria-label="Chart date range">
           <option value="1">Today</option>
-          <option value="7" selected>Last 7 days</option>
-          <option value="14">Last 14 days</option>
-          <option value="30">Last 30 days</option>
-          <option value="90">Last 90 days</option>
+          <option value="7" selected>Week</option>
+          <option value="30">Month</option>
+          <option value="365">Year</option>
         </select>
-      </label>
+        <span id="bhwDashChartsUpdated" class="text-xs text-muted mc-chart-filters__status" aria-live="polite">Live</span>
+      </div>
     </div>
     <div class="bhw-dash-charts-grid">
       <article class="bhw-chart-card">
@@ -116,11 +116,24 @@ ob_start();
   var initialQueue = <?= json_encode($queueRaw, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
   var searchInput = document.getElementById('resident-search');
   var dashDays = document.getElementById('bhw_dash_days');
+  var chartsRoot = document.getElementById('bhwDashChartsRoot');
+  var chartsUpdated = document.getElementById('bhwDashChartsUpdated');
   var tableBody = document.getElementById('queue-tbody');
   var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
 
   function dashFilters() {
     return { days: dashDays ? dashDays.value : '7' };
+  }
+
+  function setChartsUpdated(iso) {
+    if (!chartsUpdated) return;
+    try {
+      var d = iso ? new Date(iso) : new Date();
+      if (isNaN(d.getTime())) d = new Date();
+      chartsUpdated.textContent = 'Updated ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } catch (e) {
+      chartsUpdated.textContent = 'Live';
+    }
   }
 
   function updateChartTitles(payload) {
@@ -204,7 +217,10 @@ ob_start();
   function refreshDashboard() {
     if (document.hidden) return;
     BhwPortal.get('dashboard.php', dashFilters()).then(function (res) {
-      if (!res.success) return;
+      if (!res.success) {
+        if (chartsUpdated) chartsUpdated.textContent = 'Offline';
+        return;
+      }
 
       // Rebuild queue only when rows change — avoids layout churn below the charts.
       var queue = res.queue || [];
@@ -222,11 +238,18 @@ ob_start();
           lastChartsFp = chartsFp;
           BhwDashboardCharts.update(res.charts);
         }
+        setChartsUpdated(res.charts.generated_at || res.server_time || null);
+      } else {
+        setChartsUpdated(null);
       }
+    }).catch(function () {
+      if (chartsUpdated) chartsUpdated.textContent = 'Offline';
     });
   }
 
   dashDays?.addEventListener('change', function () {
+    if (chartsRoot) chartsRoot.setAttribute('data-days', dashDays.value);
+    if (chartsUpdated) chartsUpdated.textContent = 'Updating…';
     lastChartsFp = '';
     lastQueueFp = '';
     refreshDashboard();
@@ -239,6 +262,7 @@ ob_start();
   }
   updateChartTitles(<?= json_encode($dashboardCharts) ?>);
   lastChartsFp = stableFp(<?= json_encode($dashboardCharts) ?>);
+  setChartsUpdated(<?= json_encode($dashboardCharts['generated_at'] ?? date('c')) ?>);
   window.refreshBhwDashboard = refreshDashboard;
 
   var dashTimer = setInterval(function () {
@@ -251,7 +275,12 @@ ob_start();
   });
   document.addEventListener('medconnect:live-sync', function (ev) {
     var changed = (ev.detail && ev.detail.changed) || [];
-    if (changed.indexOf('triage') !== -1 || changed.indexOf('queue') !== -1 || changed.indexOf('appointments') !== -1) {
+    if (
+      changed.indexOf('triage') !== -1 ||
+      changed.indexOf('queue') !== -1 ||
+      changed.indexOf('appointments') !== -1 ||
+      changed.indexOf('consultations') !== -1
+    ) {
       refreshDashboard();
     }
   });

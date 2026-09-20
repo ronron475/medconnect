@@ -180,19 +180,23 @@ body.bhw-body .bhw-dash .bhw-chart-card h4 {
   margin-bottom: 12px !important;
 }
 
-body.bhw-body .bhw-dash-period__label {
-  font-size: 0.875rem !important;
-}
-
-body.bhw-body .bhw-dash-period__select {
-  min-height: 40px !important;
-  min-width: 168px !important;
-  font-size: 0.9375rem !important;
-  padding: 6px 32px 6px 12px !important;
-}
-
 body.bhw-body .bhw-dash-charts-toolbar {
-  padding: 14px 18px 0 !important;
+  padding: 12px 18px 0 !important;
+}
+
+body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__control {
+  min-height: 38px !important;
+  min-width: 120px !important;
+  font-size: 13px !important;
+  padding: 6px 28px 6px 10px !important;
+}
+
+body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__label {
+  font-size: 10px !important;
+}
+
+body.bhw-body .bhw-dash-charts-toolbar .mc-chart-filters__status {
+  font-size: 11px !important;
 }
 
 body.bhw-body .bhw-dash-panel__head h3,
