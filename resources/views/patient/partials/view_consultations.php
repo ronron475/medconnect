@@ -55,58 +55,7 @@
 
     </div>
 
-    <aside class="psess-side" aria-label="Related pages and help">
-
-      <section class="psess-related">
-        <h2 class="psess-related__title">Also in your portal</h2>
-        <nav class="psess-related__nav">
-          <a href="<?= ASSET_BASE ?>/views/patient/triage.php" class="psess-related__link psess-related__link--primary">
-            <span class="psess-related__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>
-            </span>
-            <span>
-              <strong>Book Consultation</strong>
-              <small>Schedule your next video visit</small>
-            </span>
-          </a>
-          <a href="<?= ASSET_BASE ?>/views/patient/my_health.php" class="psess-related__link">
-            <span class="psess-related__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </span>
-            <span>
-              <strong>My Health</strong>
-              <small>Care timeline &amp; health files</small>
-            </span>
-          </a>
-          <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="psess-related__link">
-            <span class="psess-related__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            </span>
-            <span>
-              <strong>Health Summary</strong>
-              <small>Allergies, blood type, meds</small>
-            </span>
-          </a>
-          <a href="<?= ASSET_BASE ?>/views/patient/messages.php" class="psess-related__link">
-            <span class="psess-related__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            </span>
-            <span>
-              <strong>Messages</strong>
-              <small>Chat with your provider</small>
-            </span>
-          </a>
-          <a href="<?= ASSET_BASE ?>/views/patient/dashboard.php" class="psess-related__link">
-            <span class="psess-related__icon" aria-hidden="true">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-            </span>
-            <span>
-              <strong>Dashboard</strong>
-              <small>Overview &amp; quick stats</small>
-            </span>
-          </a>
-        </nav>
-      </section>
+    <aside class="psess-side" aria-label="Session help">
 
       <details class="psess-flow">
         <summary class="psess-flow__summary">

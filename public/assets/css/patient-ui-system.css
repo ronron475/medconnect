@@ -373,14 +373,20 @@ body.patient-portal .pdash-side {
   gap: var(--pt-card-gap);
 }
 
-body.patient-portal .psess-related,
-body.patient-portal .pdash-quick {
+body.patient-portal .psess-related {
   padding: var(--pt-space-md);
 }
 
-body.patient-portal .psess-related__nav,
-body.patient-portal .pdash-quick {
+body.patient-portal .psess-related__nav {
   gap: var(--pt-space-sm);
+}
+
+body.patient-portal .pdash-quick {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--pt-stat-gap);
+  padding: 0;
+  margin-bottom: 0;
 }
 
 body.patient-portal .psess-related__link,
@@ -634,7 +640,9 @@ body.patient-portal .messages-page {
 
 body.patient-portal .pdash-quick {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--pt-stat-gap);
   margin-bottom: 0;
+  padding: 0;
 }
 
 body.patient-portal .pdash-live,

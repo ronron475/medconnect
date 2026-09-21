@@ -208,44 +208,49 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
 </div>
 <?php endif; ?>
 
-<div class="mc-card patient-triage-form">
-  <h3 class="text-h3 mb-md">Schedule Your Visit</h3>
-  <div id="triageFormAlert" class="patient-triage-alert" role="alert"></div>
-  <form
-    id="patientTriageForm"
-    class="<?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'is-followup-active' : '' ?>"
-    novalidate
-    <?php if ($preliminary_json !== ''): ?>
-    data-preliminary="<?= htmlspecialchars($preliminary_json, ENT_QUOTES, 'UTF-8') ?>"
-    <?php endif; ?>
-  >
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-    <input type="hidden" id="booking_triage_id" name="triage_id" value="<?= (int) ($active_chief_complaint_triage_id > 0 ? $active_chief_complaint_triage_id : ($preliminary_payload['triage_id'] ?? 0)) ?>">
-    <?php if (!empty($force_new_concern)): ?>
-    <input type="hidden" name="new_concern" value="1">
-    <?php endif; ?>
+<form
+  id="patientTriageForm"
+  class="patient-triage-form<?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? ' is-followup-active' : '' ?>"
+  novalidate
+  <?php if ($preliminary_json !== ''): ?>
+  data-preliminary="<?= htmlspecialchars($preliminary_json, ENT_QUOTES, 'UTF-8') ?>"
+  <?php endif; ?>
+>
+  <input type="hidden" name="csrf_token" value="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+  <input type="hidden" id="booking_triage_id" name="triage_id" value="<?= (int) ($active_chief_complaint_triage_id > 0 ? $active_chief_complaint_triage_id : ($preliminary_payload['triage_id'] ?? 0)) ?>">
+  <?php if (!empty($force_new_concern)): ?>
+  <input type="hidden" name="new_concern" value="1">
+  <?php endif; ?>
+
+  <div class="mc-card patient-triage-schedule">
+    <h3 class="patient-triage-schedule__title">Schedule Your Visit</h3>
+    <p class="patient-triage-schedule__lead">
+      Describe your primary complaint to start a new consultation. Previous complaints stay in My Sessions and are not reused.
+    </p>
+    <div id="triageFormAlert" class="patient-triage-alert" role="alert"></div>
+
     <div class="form-group" id="chief-complaint">
-      <label class="form-label" for="chief_complaint">
+      <label class="form-label patient-triage-label" for="chief_complaint">
         Primary Complaint<?= $chief_complaint_locked ? ' <span class="text-muted">(' . htmlspecialchars($chief_complaint_source_label) . ')</span>' : '' ?>
       </label>
       <textarea
         id="chief_complaint"
         name="chief_complaint"
-        class="form-control<?= $interview_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
-        rows="<?= $interview_complaint_locked ? 1 : 2 ?>"
+        class="form-control patient-triage-complaint<?= $interview_complaint_locked ? ' pdash-care-form__input--locked' : '' ?>"
+        rows="<?= $interview_complaint_locked ? 2 : 4 ?>"
         placeholder="<?= $interview_complaint_locked ? 'Your submitted primary complaint…' : 'Describe your primary complaint...' ?>"
         maxlength="500"
         <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
-      <p class="text-xs text-muted" style="margin-top:4px;">
+      <?php if ($preliminary_payload !== null || $chief_complaint_locked): ?>
+      <p class="text-xs text-muted patient-triage-complaint-hint">
         <?php if ($preliminary_payload !== null): ?>
         This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
-        <?php elseif ($chief_complaint_locked): ?>
-        This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php else: ?>
-        Describe your primary complaint to start a new consultation. Previous complaints stay in My Sessions and are not reused.
+        This primary complaint is already on file and will be reviewed by your doctor. It cannot be changed while this consultation is still active.
         <?php endif; ?>
       </p>
+      <?php endif; ?>
       <?php if ($show_start_new_consultation_btn): ?>
       <div class="patient-triage-new-consult" id="startNewConsultationWrap"<?= $show_start_new_consultation_wrap ? '' : ' hidden' ?>>
         <button
@@ -331,9 +336,6 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
     <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
       <?= !empty($preliminary_payload['assessment_in_progress'] ?? false) ? 'Submit answer' : 'Submit patient complaint' ?>
     </button>
-    <p class="text-xs text-muted patient-triage-submit-hint">
-      Click once for the AI preliminary assessment. Click <strong>Submit patient complaint</strong> again to continue.
-    </p>
     <?php endif; ?>
 
     <?php if ($urgent_open_choice && empty($emergency_blocks_booking)): ?>
@@ -344,60 +346,62 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
       <p id="urgentDoctorChoiceStatus" class="text-xs text-muted" role="status">Loading doctors with open slots today…</p>
     </div>
     <?php endif; ?>
+  </div>
 
-    <div class="form-group" id="bookingAssignedProviderWrap"<?= ($urgent_open_choice || !empty($emergency_blocks_booking)) ? ' hidden' : '' ?>>
-      <label class="form-label" id="bookingAssignedProviderLabel">Automatically Assigned Provider</label>
-      <div
-        id="bookingAssignedProvider"
-        class="booking-assigned-provider<?= ($has_assigned_provider || ($consultation_already_assigned && $assigned_display_name !== '')) ? ' is-assigned' : ' is-pending' ?>"
-        role="status"
-      >
-        <p id="bookingAssignedProviderName" class="booking-assigned-provider__name">
-          <?php if ($assigned_display_name !== ''): ?>
-          Dr. <?= htmlspecialchars($assigned_display_name) ?>
-          <?php else: ?>
-          Waiting for assignment…
-          <?php endif; ?>
-        </p>
-        <p class="booking-assigned-provider__hint">
-          <?php if ($assigned_display_name !== ''): ?>
-          Provider automatically selected based on your triage result, provider availability, appointment slots, and workload.
-          <?php else: ?>
-          Your doctor appears here after automatic assignment. You cannot choose a provider manually.
-          <?php endif; ?>
-        </p>
-      </div>
-      <input type="hidden" id="booking_provider" name="provider_id" value="<?= $locked_provider_id > 0 ? (int) $locked_provider_id : '' ?>" autocomplete="off">
+  <div class="form-group patient-triage-assign" id="bookingAssignedProviderWrap"<?= ($urgent_open_choice || !empty($emergency_blocks_booking)) ? ' hidden' : '' ?>>
+    <label class="form-label patient-triage-assign__label" id="bookingAssignedProviderLabel" for="bookingAssignedProvider">Assigned provider</label>
+    <div
+      id="bookingAssignedProvider"
+      class="booking-assigned-provider<?= ($has_assigned_provider || ($consultation_already_assigned && $assigned_display_name !== '')) ? ' is-assigned' : ' is-pending' ?>"
+      role="status"
+    >
+      <p id="bookingAssignedProviderName" class="booking-assigned-provider__name">
+        <?php if ($assigned_display_name !== ''): ?>
+        Dr. <?= htmlspecialchars($assigned_display_name) ?>
+        <?php else: ?>
+        Waiting for assignment…
+        <?php endif; ?>
+      </p>
+      <p class="booking-assigned-provider__hint"<?= $assigned_display_name === '' ? ' hidden' : '' ?>>
+        <?php if ($assigned_display_name !== ''): ?>
+        Provider automatically selected based on your triage result, provider availability, appointment slots, and workload.
+        <?php else: ?>
+        Your doctor appears here after automatic assignment. You cannot choose a provider manually.
+        <?php endif; ?>
+      </p>
     </div>
+    <input type="hidden" id="booking_provider" name="provider_id" value="<?= $locked_provider_id > 0 ? (int) $locked_provider_id : '' ?>" autocomplete="off">
+  </div>
 
-    <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== '' && $locked_assigned_has_slots): ?>
-    <div class="patient-triage-alert patient-triage-alert--success is-visible patient-triage-alert--spaced-sm" role="status">
-      <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has open clinic times today. Pick a slot below to book your video visit.
-    </div>
+  <?php if (!empty($review_booking_ctx['locked']) && $locked_provider_name !== '' && $locked_assigned_has_slots): ?>
+  <div class="patient-triage-alert patient-triage-alert--success is-visible patient-triage-alert--spaced-sm" role="status">
+    <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has open clinic times today. Pick a slot below to book your video visit.
+  </div>
+  <?php endif; ?>
+
+  <?php if (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && $locked_alternate_available): ?>
+  <div id="bookingAlternatePanel" class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
+    <p class="patient-triage-alert__line"><strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots left today.</p>
+    <p class="text-sm text-muted patient-triage-alert__line">You can request the <strong>next available doctor</strong> who has clinic hours today. Your care tips review will move to that doctor too.</p>
+    <button type="button" class="mc-btn mc-btn--outline patient-triage-alt-btn" id="btnRequestAlternateProvider">
+      Request next available doctor
+    </button>
+    <p id="bookingAlternateStatus" class="text-xs text-muted" style="margin:10px 0 0;" hidden role="alert"></p>
+  </div>
+  <?php elseif (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && !$locked_alternate_available): ?>
+  <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
+    <?php if ($locked_provider_name !== ''): ?>
+    <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots today, and no other doctor has clinic hours right now.
+    <?php else: ?>
+    No doctor has clinic hours right now.
     <?php endif; ?>
+    You are in the waiting queue (Waiting for Doctor Availability). We will notify you by email when a consultation slot becomes available — you do not need to start over.
+  </div>
+  <?php endif; ?>
 
-    <?php if (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && $locked_alternate_available): ?>
-    <div id="bookingAlternatePanel" class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
-      <p class="patient-triage-alert__line"><strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots left today.</p>
-      <p class="text-sm text-muted patient-triage-alert__line">You can request the <strong>next available doctor</strong> who has clinic hours today. Your care tips review will move to that doctor too.</p>
-      <button type="button" class="mc-btn mc-btn--outline patient-triage-alt-btn" id="btnRequestAlternateProvider">
-        Request next available doctor
-      </button>
-      <p id="bookingAlternateStatus" class="text-xs text-muted" style="margin:10px 0 0;" hidden role="alert"></p>
-    </div>
-    <?php elseif (!empty($review_booking_ctx['locked']) && !$locked_assigned_has_slots && !$locked_alternate_available): ?>
-    <div class="patient-triage-alert patient-triage-alert--warning is-visible patient-triage-alert--spaced-sm" role="status">
-      <?php if ($locked_provider_name !== ''): ?>
-      <strong><?= htmlspecialchars($locked_provider_name) ?></strong> has no open slots today, and no other doctor has clinic hours right now.
-      <?php else: ?>
-      No doctor has clinic hours right now.
-      <?php endif; ?>
-      You are in the waiting queue (Waiting for Doctor Availability). We will notify you by email when a consultation slot becomes available — you do not need to start over.
-    </div>
-    <?php endif; ?>
-
-    <div class="form-group<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>" id="bookingDateGroup"<?= !empty($urgent_open_choice) ? ' hidden' : '' ?>>
-      <label class="form-label" for="booking_date_display">Appointment date (today only)</label>
+  <div class="patient-triage-booking-meta<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>">
+    <div class="mc-card patient-triage-meta-card form-group<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>" id="bookingDateGroup"<?= !empty($urgent_open_choice) ? ' hidden' : '' ?>>
+      <label class="form-label patient-triage-label" for="booking_date_display">Appointment date (today only)</label>
       <div
         id="booking_date_display"
         class="booking-today-date"
@@ -409,13 +413,10 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
         name="booking_date"
         value="<?= htmlspecialchars($booking_today_ymd) ?>"
       >
-      <p class="text-xs text-muted booking-today-hint">
-        Only today&apos;s clinic hours set by the doctor are shown below.
-      </p>
     </div>
 
-    <div class="form-group<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>" id="bookingSlotsGroup">
-      <label class="form-label" for="bookingSlotsWrap"><?= !empty($urgent_open_choice) ? 'Selected earliest slot' : 'Available time slots (today)' ?></label>
+    <div class="mc-card patient-triage-meta-card form-group<?= !empty($urgent_open_choice) ? ' is-urgent-earliest-only' : '' ?>" id="bookingSlotsGroup">
+      <label class="form-label patient-triage-label" for="bookingSlotsWrap"><?= !empty($urgent_open_choice) ? 'Selected earliest slot' : 'Available time slots' ?></label>
       <div id="bookingSlotsWrap" class="booking-slots-wrap">
         <p class="text-xs text-muted"><?php
           if (!empty($emergency_blocks_booking)) {
@@ -425,19 +426,20 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
           } elseif ($is_provider_locked) {
               echo 'Available times for your assigned doctor today.';
           } else {
-              echo 'Appointment times appear after you submit your complaint.';
+              echo 'Available slots will appear here after AI triage.';
           }
         ?></p>
       </div>
       <input type="hidden" id="booking_slot_id" name="slot_id" value="">
     </div>
+  </div>
 
-    <?php if (($is_provider_locked || $urgent_open_choice) && empty($emergency_blocks_booking)): ?>
-    <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit" id="patientTriageSubmit">
-      Book Appointment
-    </button>
-    <?php endif; ?>
-  </form>
+  <?php if (($is_provider_locked || $urgent_open_choice) && empty($emergency_blocks_booking)): ?>
+  <button type="submit" class="mc-btn mc-btn--primary patient-triage-submit patient-triage-submit--book" id="patientTriageSubmit">
+    Book Appointment
+  </button>
+  <?php endif; ?>
+
   <div id="patientTriageBookedPanel" class="patient-triage-booked" hidden>
     <p class="patient-triage-booked__hint">Your video visit is confirmed. Open My Sessions when it is time to join, or change the time if you still need a different slot today.</p>
     <div class="patient-triage-booked__actions">
@@ -445,7 +447,7 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
       <button type="button" class="mc-btn mc-btn--outline" id="patientTriageChangeTime">Change time</button>
     </div>
   </div>
-</div>
+</form>
 
 <!-- Silent booking overlay (no technical AI output) -->
 <?php

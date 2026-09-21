@@ -937,7 +937,7 @@
       }
       const providerId = resolveProviderId();
       if (!providerId) {
-        clearSlots('Appointment times appear after you submit your complaint.');
+        clearSlots('Available slots will appear here after AI triage.');
         return;
       }
       loadTodayBooking(providerId);
@@ -949,7 +949,7 @@
     } else if (initialProviderId) {
       loadTodayBooking(initialProviderId);
     } else {
-      clearSlots('Appointment times appear after you submit your complaint.');
+      clearSlots('Available slots will appear here after AI triage.');
     }
 
     /**
@@ -1370,6 +1370,9 @@
         text += ' Next open time: ' + slotLabel + '.';
       }
       hint.textContent = text;
+      hint.hidden = false;
+    } else if (hint) {
+      hint.hidden = true;
     }
   }
 
