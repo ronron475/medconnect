@@ -1293,6 +1293,368 @@ final class BhwApplicationService
     }
 
     /**
+     * Barangay-first Management hub summary.
+     * Counts (no duplicate users/apps):
+     * - active: enabled approved BHW user accounts
+     * - pending_approval: applications awaiting Super Admin
+     * - inactive: deactivated/suspended BHW user accounts
+     * - total: active + pending_approval + inactive + in-progress invites
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function barangayHubSummary(): array
+    {
+        require_once dirname(__DIR__) . '/includes/barangays_bago.php';
+        require_once dirname(__DIR__) . '/includes/user_account_status.php';
+        user_account_status_ensure_schema($this->pdo);
+
+        $barangays = [];
+        foreach (barangays_list_bago_city($this->pdo) as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $barangays[$id] = [
+                'barangay_id'      => $id,
+                'barangay_name'    => (string) ($row['name'] ?? ''),
+                'city'             => (string) ($row['city'] ?? 'Bago City'),
+                'total'            => 0,
+                'active'           => 0,
+                'pending_approval' => 0,
+                'inactive'         => 0,
+                'in_progress'      => 0,
+            ];
+        }
+
+        foreach ($this->listAssignedBhwUsersForHub() as $user) {
+            $bid = (int) ($user['barangay_id'] ?? 0);
+            if ($bid <= 0 || !isset($barangays[$bid])) {
+                continue;
+            }
+            $bucket = $this->hubUserBucket($user);
+            if ($bucket === 'active') {
+                $barangays[$bid]['active']++;
+            } elseif ($bucket === 'inactive') {
+                $barangays[$bid]['inactive']++;
+            } else {
+                continue;
+            }
+            $barangays[$bid]['total']++;
+        }
+
+        $appStmt = $this->pdo->query("
+            SELECT barangay_id, status, COUNT(*) AS cnt
+            FROM bhw_applications
+            WHERE barangay_id IS NOT NULL AND barangay_id > 0
+              AND status IN (
+                'pending_approval', 'invited', 'onboarding', 'requires_documents', 'draft',
+                'rejected'
+              )
+            GROUP BY barangay_id, status
+        ");
+        if ($appStmt) {
+            while ($row = $appStmt->fetch(PDO::FETCH_ASSOC)) {
+                $bid = (int) ($row['barangay_id'] ?? 0);
+                if (!isset($barangays[$bid])) {
+                    continue;
+                }
+                $status = (string) ($row['status'] ?? '');
+                $cnt = (int) ($row['cnt'] ?? 0);
+                if ($status === self::STATUS_PENDING) {
+                    $barangays[$bid]['pending_approval'] += $cnt;
+                    $barangays[$bid]['total'] += $cnt;
+                } elseif (in_array($status, [self::STATUS_INVITED, self::STATUS_ONBOARDING, self::STATUS_REQUIRES_DOCUMENTS, self::STATUS_DRAFT], true)) {
+                    $barangays[$bid]['in_progress'] += $cnt;
+                    $barangays[$bid]['total'] += $cnt;
+                } elseif ($status === self::STATUS_REJECTED) {
+                    // Rejected stays visible in detail; count under inactive for barangay rollup.
+                    $barangays[$bid]['inactive'] += $cnt;
+                    $barangays[$bid]['total'] += $cnt;
+                }
+            }
+        }
+
+        $list = array_values($barangays);
+        usort($list, static function (array $a, array $b): int {
+            return strcasecmp((string) $a['barangay_name'], (string) $b['barangay_name']);
+        });
+
+        return $list;
+    }
+
+    /**
+     * BHWs + applications for one barangay (detail view).
+     *
+     * @return array<string, mixed>
+     */
+    public function barangayHubDetail(int $barangayId): array
+    {
+        require_once dirname(__DIR__) . '/includes/user_account_status.php';
+        user_account_status_ensure_schema($this->pdo);
+
+        $name = '';
+        foreach ($this->getBarangays() as $b) {
+            if ((int) ($b['id'] ?? 0) === $barangayId) {
+                $name = (string) ($b['name'] ?? '');
+                break;
+            }
+        }
+
+        $counts = [
+            'total'            => 0,
+            'active'           => 0,
+            'pending_approval' => 0,
+            'inactive'         => 0,
+            'in_progress'      => 0,
+        ];
+        $items = [];
+        $coveredUserIds = [];
+        $coveredEmails = [];
+
+        // Applications first (include docs + appointment).
+        $stmt = $this->pdo->prepare("
+            SELECT a.id, a.status, a.first_name, a.middle_name, a.last_name, a.email, a.phone,
+                   a.barangay_id, a.appointment_date, a.submitted_at, a.invited_at, a.bhw_submitted_at,
+                   a.user_id, a.rejection_reason, a.additional_docs_note
+            FROM bhw_applications a
+            WHERE a.barangay_id = ?
+            ORDER BY FIELD(a.status, 'pending_approval', 'requires_documents', 'onboarding', 'invited', 'draft', 'active', 'approved', 'rejected'),
+                     COALESCE(a.bhw_submitted_at, a.submitted_at, a.updated_at) DESC
+        ");
+        $stmt->execute([$barangayId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $status = (string) ($row['status'] ?? '');
+            $uid = (int) ($row['user_id'] ?? 0);
+            $email = strtolower(trim((string) ($row['email'] ?? '')));
+            $docs = $this->getDocuments((int) $row['id']);
+            $docPublic = [];
+            foreach ($docs as $d) {
+                $docPublic[] = [
+                    'id'            => (int) ($d['id'] ?? 0),
+                    'document_type' => (string) ($d['document_type'] ?? ''),
+                    'original_name' => (string) ($d['original_name'] ?? ''),
+                    'mime_type'     => (string) ($d['mime_type'] ?? ''),
+                    'uploaded_at'   => $d['uploaded_at'] ?? null,
+                ];
+            }
+
+            $approval = $this->hubApprovalLabel($status, null, true);
+            $items[] = [
+                'kind'             => 'application',
+                'application_id'   => (int) $row['id'],
+                'user_id'          => $uid > 0 ? $uid : null,
+                'display_name'     => $this->displayName($row),
+                'email'            => (string) ($row['email'] ?? ''),
+                'phone'            => (string) ($row['phone'] ?? ''),
+                'status'           => $status,
+                'status_label'     => $this->statusLabel($status),
+                'approval_status'  => $approval['code'],
+                'approval_label'   => $approval['label'],
+                'appointment_date' => $row['appointment_date'] ?? null,
+                'submitted_at'     => $row['bhw_submitted_at'] ?? $row['submitted_at'] ?? $row['invited_at'] ?? null,
+                'document_count'   => count($docPublic),
+                'documents'        => $docPublic,
+                'rejection_reason' => $row['rejection_reason'] ?? null,
+                'docs_note'        => $row['additional_docs_note'] ?? null,
+                'can_review'       => $status === self::STATUS_PENDING,
+                'can_edit_invite'  => in_array($status, [self::STATUS_DRAFT, self::STATUS_REJECTED], true),
+                'can_resend'       => in_array($status, [self::STATUS_INVITED, self::STATUS_ONBOARDING], true),
+                'can_deactivate'   => false,
+                'can_reactivate'   => false,
+            ];
+
+            if ($uid > 0) {
+                $coveredUserIds[$uid] = true;
+            }
+            if ($email !== '') {
+                $coveredEmails[$email] = true;
+            }
+
+            if ($status === self::STATUS_PENDING) {
+                $counts['pending_approval']++;
+                $counts['total']++;
+            } elseif (in_array($status, [self::STATUS_ACTIVE, self::STATUS_APPROVED], true)) {
+                // Counted via users row below when linked; if no user yet, count as active.
+                if ($uid <= 0) {
+                    $counts['active']++;
+                    $counts['total']++;
+                }
+            } elseif ($status === self::STATUS_REJECTED) {
+                $counts['inactive']++;
+                $counts['total']++;
+            } elseif (in_array($status, [self::STATUS_INVITED, self::STATUS_ONBOARDING, self::STATUS_REQUIRES_DOCUMENTS, self::STATUS_DRAFT], true)) {
+                $counts['in_progress']++;
+                $counts['total']++;
+            }
+        }
+
+        foreach ($this->listAssignedBhwUsersForHub($barangayId) as $user) {
+            $uid = (int) ($user['user_id'] ?? 0);
+            $email = strtolower(trim((string) ($user['email'] ?? '')));
+            if (($uid > 0 && isset($coveredUserIds[$uid])) || ($email !== '' && isset($coveredEmails[$email]))) {
+                // Already represented by an application row — enrich that row's deactivate flags.
+                foreach ($items as &$item) {
+                    $sameUser = $uid > 0 && (int) ($item['user_id'] ?? 0) === $uid;
+                    $sameEmail = $email !== '' && strtolower((string) ($item['email'] ?? '')) === $email;
+                    if (!$sameUser && !$sameEmail) {
+                        continue;
+                    }
+                    if (($item['status'] ?? '') === self::STATUS_ACTIVE || ($item['status'] ?? '') === self::STATUS_APPROVED) {
+                        $bucket = $this->hubUserBucket($user);
+                        $item['account_status'] = (string) ($user['account_status'] ?? 'active');
+                        $item['is_active'] = (int) ($user['is_active'] ?? 0) === 1;
+                        if ($bucket === 'inactive') {
+                            $item['approval_status'] = 'deactivated';
+                            $item['approval_label'] = 'Inactive / Deactivated';
+                            $item['status_label'] = 'Inactive / Deactivated';
+                            $item['can_reactivate'] = true;
+                            $item['can_deactivate'] = false;
+                            $counts['inactive']++;
+                            $counts['total']++;
+                        } else {
+                            $item['can_deactivate'] = true;
+                            $item['can_reactivate'] = false;
+                            $counts['active']++;
+                            $counts['total']++;
+                        }
+                    }
+                    break;
+                }
+                unset($item);
+                continue;
+            }
+
+            $bucket = $this->hubUserBucket($user);
+            $approval = $this->hubApprovalLabel(self::STATUS_ACTIVE, $user, true);
+            $items[] = [
+                'kind'             => 'user_account',
+                'application_id'   => null,
+                'user_id'          => $uid,
+                'display_name'     => trim((string) ($user['first_name'] ?? '') . ' ' . (string) ($user['last_name'] ?? '')),
+                'email'            => (string) ($user['email'] ?? ''),
+                'phone'            => (string) ($user['phone'] ?? ''),
+                'status'           => self::STATUS_ACTIVE,
+                'status_label'     => $approval['label'],
+                'approval_status'  => $approval['code'],
+                'approval_label'   => $approval['label'],
+                'appointment_date' => null,
+                'submitted_at'     => $user['created_at'] ?? null,
+                'document_count'   => 0,
+                'documents'        => [],
+                'account_status'   => (string) ($user['account_status'] ?? 'active'),
+                'is_active'        => (int) ($user['is_active'] ?? 0) === 1,
+                'can_review'       => false,
+                'can_edit_invite'  => false,
+                'can_resend'       => false,
+                'can_deactivate'   => $bucket === 'active',
+                'can_reactivate'   => $bucket === 'inactive',
+            ];
+            if ($bucket === 'active') {
+                $counts['active']++;
+            } else {
+                $counts['inactive']++;
+            }
+            $counts['total']++;
+        }
+
+        return [
+            'barangay_id'   => $barangayId,
+            'barangay_name' => $name,
+            'counts'        => $counts,
+            'items'         => $items,
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function listAssignedBhwUsersForHub(?int $barangayId = null): array
+    {
+        $cols = $this->pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $hasAccountStatus = in_array('account_status', $cols, true);
+
+        $sql = "
+            SELECT u.id AS user_id, u.first_name, u.last_name, u.email, u.phone,
+                   u.barangay_id, u.is_active, u.created_at,
+                   " . ($hasAccountStatus ? 'u.account_status' : "'active' AS account_status") . "
+            FROM users u
+            WHERE LOWER(TRIM(COALESCE(u.role, ''))) = 'bhw'
+              AND u.barangay_id IS NOT NULL
+              AND u.barangay_id > 0
+        ";
+        if ($hasAccountStatus) {
+            $sql .= "
+              AND (
+                u.account_status IS NULL
+                OR TRIM(u.account_status) = ''
+                OR LOWER(TRIM(u.account_status)) <> 'archived'
+              )
+            ";
+        }
+        $params = [];
+        if ($barangayId !== null && $barangayId > 0) {
+            $sql .= ' AND u.barangay_id = ?';
+            $params[] = $barangayId;
+        }
+        $sql .= ' ORDER BY u.last_name ASC, u.first_name ASC';
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     */
+    private function hubUserBucket(array $user): string
+    {
+        $accountStatus = strtolower(trim((string) ($user['account_status'] ?? 'active')));
+        $isActive = (int) ($user['is_active'] ?? 0) === 1;
+        if (!$isActive || in_array($accountStatus, ['deactivated', 'suspended', 'rejected'], true)) {
+            return 'inactive';
+        }
+
+        return 'active';
+    }
+
+    /**
+     * @param array<string, mixed>|null $user
+     * @return array{code: string, label: string}
+     */
+    private function hubApprovalLabel(string $appStatus, ?array $user, bool $preferApp = true): array
+    {
+        if ($user) {
+            $bucket = $this->hubUserBucket($user);
+            if ($bucket === 'inactive') {
+                return ['code' => 'deactivated', 'label' => 'Inactive / Deactivated'];
+            }
+        }
+        if ($appStatus === self::STATUS_PENDING) {
+            return ['code' => 'pending_approval', 'label' => 'Pending Approval'];
+        }
+        if (in_array($appStatus, [self::STATUS_ACTIVE, self::STATUS_APPROVED], true)) {
+            return ['code' => 'active', 'label' => 'Approved / Active'];
+        }
+        if ($appStatus === self::STATUS_REJECTED) {
+            return ['code' => 'rejected', 'label' => 'Rejected'];
+        }
+        if ($appStatus === self::STATUS_REQUIRES_DOCUMENTS) {
+            return ['code' => 'requires_documents', 'label' => 'Correction Requested'];
+        }
+        if ($appStatus === self::STATUS_ONBOARDING) {
+            return ['code' => 'onboarding', 'label' => 'Onboarding'];
+        }
+        if ($appStatus === self::STATUS_INVITED) {
+            return ['code' => 'invited', 'label' => 'Invited'];
+        }
+        if ($appStatus === self::STATUS_DRAFT) {
+            return ['code' => 'draft', 'label' => 'Draft'];
+        }
+
+        return ['code' => $appStatus, 'label' => $this->statusLabel($appStatus)];
+    }
+
+    /**
      * @param array<string, mixed> $app
      */
     private function canAdminEdit(int $adminId, array $app): bool

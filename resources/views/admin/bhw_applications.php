@@ -122,8 +122,8 @@ require_once __DIR__ . '/partials/layout_open.php';
 <header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
         <p class="staff-apps-hero__desc"><?= $is_superadmin_checker
-            ? 'Review Barangay Health Worker applications completed by invitees and manage approved accounts. Use the Pending Approval tab for Super Administrator review.'
-            : 'Invite Barangay Health Workers, attach institutional documents, and track activation until Super Administrator approval.' ?></p>
+            ? 'Manage Barangay Health Workers by barangay. Open a barangay to review applications, documents, and account status. Only Super Administrators can approve, reject, deactivate, or reactivate.'
+            : 'Invite Barangay Health Workers by barangay. Select an assigned barangay when creating an invite; track each barangay’s BHW counts in real time.' ?></p>
     </div>
     <?php if (!$is_superadmin_checker): ?>
     <div class="staff-apps-hero__actions">
@@ -141,66 +141,92 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 ?>
 
 <?php if ($show_applications_panel): ?>
-<div class="staff-apps-stats" id="bhwAppStats" aria-live="polite">
-    <div class="staff-apps-stat">
-        <div class="staff-apps-stat__value" id="statTotal">—</div>
-        <div class="staff-apps-stat__label">Total Applications</div>
-    </div>
-    <div class="staff-apps-stat staff-apps-stat--draft">
-        <div class="staff-apps-stat__value" id="statDraft">—</div>
-        <div class="staff-apps-stat__label">Drafts</div>
-    </div>
-    <div class="staff-apps-stat staff-apps-stat--pending">
-        <div class="staff-apps-stat__value" id="statPending">—</div>
-        <div class="staff-apps-stat__label">Pending Approval</div>
-    </div>
-    <div class="staff-apps-stat staff-apps-stat--active">
-        <div class="staff-apps-stat__value" id="statActive">—</div>
-        <div class="staff-apps-stat__label">Approved / Active</div>
-    </div>
-</div>
 
-<div class="staff-apps-note" role="note">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <?php if ($is_superadmin_checker): ?>
-    <span><strong>Maker-Checker separation applies.</strong> You cannot approve applications you personally submitted. Verify barangay assignment and supporting documents before activation.</span>
-    <?php else: ?>
-    <span><strong>You invite — the BHW completes.</strong> Enter assignment details and the appointment letter, then send an invite. The BHW creates their own password and uploads their Government ID. A Super Administrator gives final approval.</span>
-    <?php endif; ?>
-</div>
-
-<div class="staff-apps-card">
-    <div class="staff-apps-card__toolbar">
-        <div class="staff-apps-search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="search" id="bhwAppSearch" class="staff-apps-search__input" placeholder="Search by name, email, barangay…" aria-label="Search applications">
+<section class="bhw-hub" id="bhwBarangayHub" aria-labelledby="bhwHubTitle">
+    <div class="bhw-hub__head">
+        <div>
+            <h2 class="bhw-hub__title" id="bhwHubTitle">Barangay list</h2>
+            <p class="bhw-hub__sub">Select a barangay to view its BHWs. Counts update live when invites are sent or accounts change.</p>
         </div>
-        <select id="bhwAppStatusFilter" class="staff-apps-filter" aria-label="Filter by status">
-            <option value="all">All statuses</option>
-            <option value="draft">Draft</option>
-            <option value="pending_approval">Pending Approval</option>
-            <option value="active">Active</option>
-            <option value="rejected">Rejected</option>
-        </select>
-        <span class="staff-apps-card__count" id="bhwAppCount"></span>
+        <span class="bhw-hub__live" id="bhwHubLive" aria-live="polite">Updating…</span>
     </div>
-    <div class="staff-apps-table-wrap">
-        <table class="staff-apps-table" id="bhwAppsTable">
-            <thead>
-                <tr>
-                    <th>Applicant</th>
-                    <th>Barangay</th>
-                    <th>Appointment</th>
-                    <th>Documents</th>
-                    <th>Status</th>
-                    <th>Submitted</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="bhwAppsBody"></tbody>
-        </table>
+
+    <div class="staff-apps-stats" id="bhwHubStats" aria-live="polite">
+        <div class="staff-apps-stat">
+            <div class="staff-apps-stat__value" id="bhwHubTotal">—</div>
+            <div class="staff-apps-stat__label">Total</div>
+        </div>
+        <div class="staff-apps-stat staff-apps-stat--active">
+            <div class="staff-apps-stat__value" id="bhwHubActive">—</div>
+            <div class="staff-apps-stat__label">Active</div>
+        </div>
+        <div class="staff-apps-stat staff-apps-stat--pending">
+            <div class="staff-apps-stat__value" id="bhwHubPending">—</div>
+            <div class="staff-apps-stat__label">Pending Approval</div>
+        </div>
+        <div class="staff-apps-stat staff-apps-stat--draft">
+            <div class="staff-apps-stat__value" id="bhwHubInactive">—</div>
+            <div class="staff-apps-stat__label">Inactive / Deactivated</div>
+        </div>
     </div>
-</div>
+
+    <div class="staff-apps-card" id="bhwHubListCard">
+        <div class="staff-apps-card__toolbar">
+            <div class="staff-apps-search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="search" id="bhwBrgySearch" class="staff-apps-search__input" placeholder="Search barangay name…" aria-label="Search barangay name">
+            </div>
+            <span class="staff-apps-card__count" id="bhwBrgyCount"></span>
+        </div>
+        <div class="staff-apps-table-wrap">
+            <table class="staff-apps-table" id="bhwBrgyTable">
+                <thead>
+                    <tr>
+                        <th>Barangay</th>
+                        <th>Total BHWs</th>
+                        <th>Active</th>
+                        <th>Pending Approval</th>
+                        <th>Inactive / Deactivated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bhwBrgyBody">
+                    <tr><td colspan="6"><div class="mc-table-empty">Loading barangays…</div></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="staff-apps-card bhw-hub-detail" id="bhwHubDetail" hidden>
+        <div class="bhw-hub-detail__toolbar">
+            <button type="button" class="mc-btn mc-btn--outline mc-btn--sm" id="bhwHubBackBtn">← Back to barangays</button>
+            <div>
+                <h3 class="bhw-hub-detail__title" id="bhwHubDetailTitle">Barangay BHWs</h3>
+                <p class="bhw-hub-detail__sub" id="bhwHubDetailSub"></p>
+            </div>
+        </div>
+        <div class="staff-apps-table-wrap">
+            <table class="staff-apps-table" id="bhwHubDetailTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Documents</th>
+                        <th>Appointment</th>
+                        <th>Approval</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bhwHubDetailBody"></tbody>
+            </table>
+        </div>
+        <div class="bhw-hub-docs" id="bhwHubDocsPanel" hidden>
+            <h4 class="bhw-hub-docs__title" id="bhwHubDocsTitle">Documents</h4>
+            <ul class="bhw-doc-list" id="bhwHubDocsList"></ul>
+        </div>
+    </div>
+</section>
 
 <?php else: ?>
 
@@ -331,21 +357,24 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.7">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=2.0">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
     api: <?= json_encode(ASSET_BASE . '/app/api/admin/bhw_applications.php') ?>,
+    accountStatusApi: <?= json_encode(ASSET_BASE . '/app/api/admin/account_status.php') ?>,
     assetBase: <?= json_encode(ASSET_BASE) ?>,
     initialTab: <?= json_encode($hub_tab) ?>,
     initialStatus: <?= json_encode($initial_app_status) ?>,
     showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>,
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>,
+    canManageAccounts: <?= $is_superadmin_checker ? 'true' : 'false' ?>,
     statusGroups: <?= json_encode(BhwApplicationService::HUB_STATUS_GROUPS, JSON_UNESCAPED_UNICODE) ?>,
     barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.8"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=3.0"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.1"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {

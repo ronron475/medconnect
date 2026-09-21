@@ -9,11 +9,14 @@
   var STORAGE_KEY = 'mc_auth_event';
   var FORM_DRAFT_PREFIX = 'mc_safe_form_draft:';
   var MESSAGE = 'Your session has expired. Please log in again.';
+  var DEACTIVATED_MESSAGE = 'Your account has been deactivated. Please contact the administrator.';
   var SESSION_CODES = {
     session_expired: true,
     session_invalid: true,
     unauthorized: true,
     SESSION_EXPIRED: true,
+    account_deactivated: true,
+    ACCOUNT_DEACTIVATED: true,
   };
   var NON_SESSION_CODES = {
     csrf_invalid: true,
@@ -43,6 +46,10 @@
 
   function sessionExpiredUrl() {
     return assetBase() + '/index.php?session_expired=1';
+  }
+
+  function accountDeactivatedUrl() {
+    return assetBase() + '/index.php?account_deactivated=1';
   }
 
   function signInUrl() {
@@ -202,8 +209,14 @@
     handling = true;
     global.__mcSessionExpired = true;
 
-    var message = (data && data.message) ? String(data.message) : MESSAGE;
-    var redirect = (data && data.redirect) ? String(data.redirect) : sessionExpiredUrl();
+    var code = data && (data.code || data.error) ? String(data.code || data.error) : '';
+    var isDeactivated = code === 'account_deactivated' || code === 'ACCOUNT_DEACTIVATED';
+    var message = (data && data.message)
+      ? String(data.message)
+      : (isDeactivated ? DEACTIVATED_MESSAGE : MESSAGE);
+    var redirect = (data && data.redirect)
+      ? String(data.redirect)
+      : (isDeactivated ? accountDeactivatedUrl() : sessionExpiredUrl());
 
     preserveSafeForms();
     lockUi(message);

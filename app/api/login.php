@@ -83,6 +83,7 @@ try {
     $has_profile_picture = in_array('profile_picture', $user_cols, true);
     $has_must_change = in_array('must_change_password', $user_cols, true);
     $has_lockout = in_array('lockout_until', $user_cols, true);
+    $has_account_status = in_array('account_status', $user_cols, true);
     $select = 'id, first_name, last_name, email, password, role, is_active';
     if ($has_barangay) {
         $select .= ', barangay_id';
@@ -95,6 +96,9 @@ try {
     }
     if ($has_lockout) {
         $select .= ', lockout_until, failed_attempts';
+    }
+    if ($has_account_status) {
+        $select .= ', account_status';
     }
     $stmt = $pdo->prepare("SELECT $select FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
@@ -213,14 +217,17 @@ if (!$user || !password_verify($password, $user['password'])) {
     exit;
 }
 
-if (!$user['is_active']) {
+require_once dirname(dirname(__DIR__)) . '/app/includes/user_account_status.php';
+user_account_status_ensure_schema($pdo);
+if (!user_account_login_allowed_for_row($user)) {
     ob_clean();
-    $inactive_msg = ($user['role'] === 'provider')
-        ? 'Your doctor account is not active yet. Please wait for admin PRC verification.'
-        : (($user['role'] === 'bhw')
-            ? 'Your BHW account is inactive. Contact your administrator.'
-            : 'Your account is inactive.');
-    echo json_encode(['success' => false, 'message' => $inactive_msg]);
+    $denial = user_account_login_denial_message($user) ?: user_account_deactivated_message();
+    $status = user_account_status_effective($user);
+    echo json_encode([
+        'success' => false,
+        'message' => $denial,
+        'code'    => $status === AccountStatus::DEACTIVATED ? 'account_deactivated' : 'account_inactive',
+    ]);
     exit;
 }
 

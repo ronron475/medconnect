@@ -279,6 +279,17 @@
     modal.style.pointerEvents = 'none';
   }
 
+  function notifyHubRefresh() {
+    try {
+      window.dispatchEvent(new CustomEvent('mc:bhw-hub-refresh', { detail: { reason: 'approval' } }));
+    } catch (e) { /* ignore */ }
+    if (typeof window.MCBhwBarangayHub?.refresh === 'function') {
+      window.MCBhwBarangayHub.refresh();
+      return true;
+    }
+    return false;
+  }
+
   approveBtn?.addEventListener('click', async function () {
     const fd = new FormData();
     fd.append('application_id', currentAppId);
@@ -293,6 +304,10 @@
     const json = await res.json();
     if (!json.success) {
       showError(json.message || 'Approval failed.');
+      return;
+    }
+    closeModal();
+    if (notifyHubRefresh()) {
       return;
     }
     if (hubMode) {
@@ -314,6 +329,10 @@
       showError(json.message || 'Rejection failed.');
       return;
     }
+    closeModal();
+    if (notifyHubRefresh()) {
+      return;
+    }
     if (hubMode) {
       redirectWithFlash('rejected');
       return;
@@ -331,6 +350,9 @@
     const json = await res.json();
     if (json.success) {
       closeModal();
+      if (notifyHubRefresh()) {
+        return;
+      }
       if (hubMode) {
         window.location.reload();
         return;

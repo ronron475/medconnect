@@ -117,13 +117,13 @@
     return out;
   }
 
-  function buildBhwApplicationPayload() {
-    function trimmedVal(name) {
-      const el = form?.elements?.[name];
-      const raw = el && typeof el.value === 'string' ? el.value : (el?.value ?? '');
-      return String(raw).trim();
-    }
+  function trimmedVal(name) {
+    const el = form?.elements?.[name];
+    const raw = el && typeof el.value === 'string' ? el.value : (el?.value ?? '');
+    return String(raw).trim();
+  }
 
+  function buildBhwApplicationPayload() {
     const appId = String(document.getElementById('bhwApplicationId')?.value || '');
     const fd = new FormData();
     fd.append('application_id', appId);
@@ -677,7 +677,15 @@
       document.getElementById('bhwApplicationId').value = json.application_id;
       await uploadPendingDocs(json.application_id);
       if (redirect) {
-        window.location.href = cfg.assetBase + '/views/admin/bhw_applications.php?saved=1';
+        closeModal();
+        try {
+          window.dispatchEvent(new CustomEvent('mc:bhw-hub-refresh', {
+            detail: { reason: 'save_draft', application_id: json.application_id, barangay_id: trimmedVal('barangay_id') }
+          }));
+        } catch (e) { /* ignore */ }
+        if (typeof window.MCBhwBarangayHub?.refresh === 'function') {
+          window.MCBhwBarangayHub.refresh();
+        }
       }
       return json.application_id;
     } finally {
@@ -740,7 +748,23 @@
         formUtils.showFormAlert(errorEl, json.message || 'Invite failed.', 'error');
         return;
       }
-      window.location.href = cfg.assetBase + '/views/admin/bhw_applications.php?submitted=1';
+      closeModal();
+      const invitedBarangayId = parseInt(String(trimmedVal('barangay_id') || ''), 10) || 0;
+      try {
+        window.dispatchEvent(new CustomEvent('mc:bhw-hub-refresh', {
+          detail: { reason: action, application_id: appId, barangay_id: invitedBarangayId || null }
+        }));
+      } catch (e) { /* ignore */ }
+      // Soft success without full reload so barangay counts update live.
+      const flashHost = document.querySelector('.staff-apps-page--bhw');
+      if (flashHost && !document.querySelector('.staff-apps-flash--invite-live')) {
+        const note = document.createElement('div');
+        note.className = 'staff-apps-flash staff-apps-flash--success staff-apps-flash--invite-live';
+        note.setAttribute('role', 'status');
+        note.innerHTML = '<div><p class="staff-apps-flash__title">Invitation sent</p><p class="staff-apps-flash__text">The BHW was assigned to the selected barangay. Counts update automatically.</p></div>';
+        flashHost.insertBefore(note, flashHost.firstChild);
+        window.setTimeout(function () { note.remove(); }, 6000);
+      }
     } finally {
       formUtils.setFormLoading(form, false, submitBtn);
     }
@@ -774,7 +798,14 @@
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
   modal?.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-  if (cfg.showApplications !== false) {
+  window.addEventListener('mc:bhw-open-invite', function (ev) {
+    const id = parseInt(String((ev && ev.detail && ev.detail.application_id) || 0), 10) || 0;
+    openModal(id);
+  });
+
+  window.MCBhwInvite = { open: openModal, close: closeModal };
+
+  if (tbody && cfg.showApplications !== false) {
     loadList();
   } else if (barangaysLoaded) {
     fillBarangays();

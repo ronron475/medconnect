@@ -249,6 +249,12 @@ require __DIR__ . '/partials/landing_navbar.php';
               </div>
               <?php endif; ?>
 
+              <?php if (!empty($_GET['account_deactivated'])): ?>
+              <div class="alert alert--error signin-context-alert" style="display:block;" role="alert">
+                Your account has been deactivated. Please contact the administrator.
+              </div>
+              <?php endif; ?>
+
               <?php if (!empty($_GET['signin'])): ?>
               <div class="alert alert--info signin-context-alert" style="display:block;" role="alert">
                 Please sign in to access your portal.

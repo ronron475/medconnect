@@ -39,6 +39,26 @@ if (!portal_is_superadmin() && $action !== 'archive') {
     exit;
 }
 
+$targetRoleStmt = $pdo->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
+$targetRoleStmt->execute([$userId]);
+$targetRole = strtolower(trim((string) ($targetRoleStmt->fetchColumn() ?: '')));
+if (in_array($action, ['deactivate', 'reactivate', 'activate'], true) && !portal_is_superadmin()) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Only the Super Administrator can deactivate or reactivate accounts.',
+    ]);
+    exit;
+}
+if ($targetRole === 'bhw' && !portal_is_superadmin()) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Only the Super Administrator can change BHW account status.',
+    ]);
+    exit;
+}
+
 if (!portal_is_superadmin() && !portal_can_archive_account($pdo, $userId)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'You cannot archive this account.']);
