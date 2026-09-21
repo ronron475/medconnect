@@ -190,7 +190,18 @@ function remember_me_restore_session(PDO $pdo): void
             $pStmt = $pdo->prepare('SELECT verification_status FROM provider_profiles WHERE user_id = ? LIMIT 1');
             $pStmt->execute([(int) $row['user_id']]);
             $verification = $pStmt->fetchColumn();
-            if ($verification && $verification !== 'verified') {
+            if (!$verification || $verification !== 'verified') {
+                remember_me_revoke_selector($pdo, $selector);
+                remember_me_clear_cookie();
+                return;
+            }
+
+            require_once dirname(__DIR__) . '/core/DoctorApplicationService.php';
+            $doctorGate = (new DoctorApplicationService($pdo))->loginDenialReason(
+                (int) $row['user_id'],
+                (string) ($row['email'] ?? '')
+            );
+            if ($doctorGate !== null) {
                 remember_me_revoke_selector($pdo, $selector);
                 remember_me_clear_cookie();
                 return;
