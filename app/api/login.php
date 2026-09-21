@@ -124,6 +124,25 @@ if ($user && !empty($user['lockout_until'])) {
 }
 
 if (!$user || !password_verify($password, $user['password'])) {
+    // Application-only doctors have no users row until Super Admin approval.
+    if (!$user) {
+        try {
+            require_once dirname(dirname(__DIR__)) . '/app/core/DoctorApplicationService.php';
+            require_once dirname(dirname(__DIR__)) . '/app/includes/doctor_application_schema.php';
+            doctor_application_ensure_schema($pdo);
+            $doctorGate = (new DoctorApplicationService($pdo))->loginDenialReason(0, $email);
+            if ($doctorGate !== null) {
+                ob_clean();
+                echo json_encode([
+                    'success' => false,
+                    'message' => $doctorGate,
+                    'code'    => 'doctor_pending_approval',
+                ]);
+                exit;
+            }
+        } catch (Throwable $e) { /* non-fatal */ }
+    }
+
     $failedAttempts = 0;
     $attemptsRemaining = null;
     try {
@@ -237,15 +256,29 @@ if ($user['role'] === 'provider') {
         $p_stmt = $pdo->prepare('SELECT verification_status FROM provider_profiles WHERE user_id = ? LIMIT 1');
         $p_stmt->execute([(int) $user['id']]);
         $verification = $p_stmt->fetchColumn();
-        if ($verification && $verification !== 'verified') {
+        if (!$verification || $verification !== 'verified') {
             ob_clean();
             $msg = $verification === 'rejected'
                 ? 'Your doctor account was rejected. Contact the administrator for assistance.'
-                : 'Your PRC license is pending admin verification. You cannot sign in yet.';
-            echo json_encode(['success' => false, 'message' => $msg]);
+                : 'Your doctor account is not approved yet. A Super Administrator must verify PRC and approve the application before you can sign in.';
+            echo json_encode(['success' => false, 'message' => $msg, 'code' => 'doctor_not_approved']);
             exit;
         }
     } catch (PDOException $e) { /* non-fatal */ }
+
+    // Applications-only doctors cannot sign in until Super Admin approval activates the account.
+    try {
+        require_once dirname(dirname(__DIR__)) . '/app/core/DoctorApplicationService.php';
+        $doctorGate = (new DoctorApplicationService($pdo))->loginDenialReason(
+            (int) $user['id'],
+            (string) $user['email']
+        );
+        if ($doctorGate !== null) {
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => $doctorGate, 'code' => 'doctor_pending_approval']);
+            exit;
+        }
+    } catch (Throwable $e) { /* non-fatal — do not lock out if schema missing */ }
 }
 
 // BHW portal: only Super Admin–approved accounts (invite → onboarding → pending → approve).

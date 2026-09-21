@@ -658,6 +658,10 @@ final class DoctorApplicationService
             $fields[] = 'phone';
             $values[] = $app['phone'];
         }
+        if (in_array('account_status', $columns, true)) {
+            $fields[] = 'account_status';
+            $values[] = 'active';
+        }
         if (in_array('is_email_verified', $columns, true)) {
             $fields[] = 'is_email_verified';
             $fields[] = 'email_verified_at';
@@ -797,6 +801,64 @@ final class DoctorApplicationService
     /**
      * @param array<string, mixed> $row
      */
+    /**
+     * Block doctor sign-in until Super Administrator approval.
+     * Applications store credentials but do not grant portal access until approved.
+     * Returns null when login is allowed.
+     */
+    public function loginDenialReason(int $userId, string $email): ?string
+    {
+        $email = trim($email);
+        $app = null;
+
+        if ($userId > 0) {
+            $stmt = $this->pdo->prepare("
+                SELECT id, status, user_id
+                FROM doctor_applications
+                WHERE user_id = ?
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$userId]);
+            $app = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        }
+
+        if (!$app && $email !== '') {
+            require_once dirname(__DIR__) . '/includes/contact_validation.php';
+            $stmt = $this->pdo->prepare("
+                SELECT id, status, user_id
+                FROM doctor_applications
+                WHERE LOWER(email) = LOWER(?)
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([mc_normalize_email($email)]);
+            $app = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        }
+
+        if ($app) {
+            $status = (string) ($app['status'] ?? '');
+            if (in_array($status, [self::STATUS_ACTIVE, self::STATUS_APPROVED], true)) {
+                return null;
+            }
+            if ($status === self::STATUS_PENDING) {
+                return 'Your doctor application is pending Super Administrator approval. You cannot sign in yet.';
+            }
+            if ($status === self::STATUS_REJECTED) {
+                return 'Your doctor application was rejected. Contact the administrator.';
+            }
+            if ($status === self::STATUS_REQUIRES_DOCUMENTS) {
+                return 'Additional documents are required for your doctor application. Contact the administrator.';
+            }
+
+            return 'Your doctor application is not approved for portal access yet.';
+        }
+
+        // No application row: allow only providers that already have a verified PRC profile
+        // (legacy / direct Super Admin creation). Pending PRC is handled separately at login.
+        return null;
+    }
+
     private function verificationStatusLabel(array $row): string
     {
         if (!empty($row['prc_verification_confirmed'])) {
