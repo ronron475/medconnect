@@ -1292,6 +1292,302 @@ final class BhwApplicationService
         return 'BHW accounts must be created through an Admin invitation and Super Administrator approval.';
     }
 
+    /** Minutes of session activity that count as Online (not Offline). */
+    public const ONLINE_WINDOW_MINUTES = 15;
+
+    /**
+     * Per-barangay BHW summary for Management hub (reuses users + applications + active_sessions).
+     *
+     * Counts:
+     * - total: assigned BHW user accounts (non-archived)
+     * - online: enabled account with recent session (Active / Online)
+     * - offline: enabled account without recent session (Inactive / Offline) — not deactivated
+     * - deactivated: Super Admin disabled account
+     * - pending_approval: applications awaiting Super Admin (not yet users)
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function barangaySummary(): array
+    {
+        require_once dirname(__DIR__) . '/includes/barangays_bago.php';
+        require_once dirname(__DIR__) . '/includes/user_account_status.php';
+        user_account_status_ensure_schema($this->pdo);
+
+        $barangays = [];
+        foreach (barangays_list_bago_city($this->pdo) as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $barangays[$id] = [
+                'barangay_id'      => $id,
+                'barangay_name'    => (string) ($row['name'] ?? ''),
+                'city'             => (string) ($row['city'] ?? 'Bago City'),
+                'total'            => 0,
+                'online'           => 0,
+                'offline'          => 0,
+                'deactivated'      => 0,
+                'pending_approval' => 0,
+            ];
+        }
+
+        $onlineIds = $this->onlineBhwUserIds();
+        $users = $this->listAssignedBhwUsers();
+        foreach ($users as $u) {
+            $bid = (int) ($u['barangay_id'] ?? 0);
+            if ($bid <= 0 || !isset($barangays[$bid])) {
+                continue;
+            }
+            $presence = $this->classifyBhwPresence($u, $onlineIds);
+            $barangays[$bid]['total']++;
+            if ($presence === 'online') {
+                $barangays[$bid]['online']++;
+            } elseif ($presence === 'offline') {
+                $barangays[$bid]['offline']++;
+            } elseif ($presence === 'deactivated') {
+                $barangays[$bid]['deactivated']++;
+            }
+        }
+
+        $pendingStmt = $this->pdo->query("
+            SELECT barangay_id, COUNT(*) AS cnt
+            FROM bhw_applications
+            WHERE status = 'pending_approval'
+              AND barangay_id IS NOT NULL
+              AND barangay_id > 0
+            GROUP BY barangay_id
+        ");
+        if ($pendingStmt) {
+            while ($row = $pendingStmt->fetch(PDO::FETCH_ASSOC)) {
+                $bid = (int) ($row['barangay_id'] ?? 0);
+                if (isset($barangays[$bid])) {
+                    $barangays[$bid]['pending_approval'] = (int) ($row['cnt'] ?? 0);
+                }
+            }
+        }
+
+        $list = array_values($barangays);
+        usort($list, static function (array $a, array $b): int {
+            return strcasecmp((string) $a['barangay_name'], (string) $b['barangay_name']);
+        });
+
+        return $list;
+    }
+
+    /**
+     * BHWs assigned to one barangay with live presence (online / offline / deactivated).
+     *
+     * @return array{barangay_id: int, barangay_name: string, counts: array<string, int>, bhws: list<array<string, mixed>>, pending: list<array<string, mixed>>}
+     */
+    public function barangayDetail(int $barangayId): array
+    {
+        require_once dirname(__DIR__) . '/includes/user_account_status.php';
+        user_account_status_ensure_schema($this->pdo);
+
+        $name = '';
+        foreach ($this->getBarangays() as $b) {
+            if ((int) ($b['id'] ?? 0) === $barangayId) {
+                $name = (string) ($b['name'] ?? '');
+                break;
+            }
+        }
+
+        $onlineIds = $this->onlineBhwUserIds();
+        $counts = [
+            'total'            => 0,
+            'online'           => 0,
+            'offline'          => 0,
+            'deactivated'      => 0,
+            'pending_approval' => 0,
+        ];
+        $bhws = [];
+
+        foreach ($this->listAssignedBhwUsers($barangayId) as $u) {
+            $presence = $this->classifyBhwPresence($u, $onlineIds);
+            $counts['total']++;
+            if (isset($counts[$presence])) {
+                $counts[$presence]++;
+            }
+            $uid = (int) ($u['user_id'] ?? 0);
+            $bhws[] = [
+                'user_id'         => $uid,
+                'display_name'    => trim((string) ($u['first_name'] ?? '') . ' ' . (string) ($u['last_name'] ?? '')),
+                'first_name'      => (string) ($u['first_name'] ?? ''),
+                'last_name'       => (string) ($u['last_name'] ?? ''),
+                'email'           => (string) ($u['email'] ?? ''),
+                'phone'           => (string) ($u['phone'] ?? ''),
+                'barangay_id'     => $barangayId,
+                'barangay_name'   => $name,
+                'account_status'  => (string) ($u['account_status'] ?? 'active'),
+                'is_active'       => (int) ($u['is_active'] ?? 0) === 1,
+                'presence'        => $presence,
+                'presence_label'  => $this->presenceLabel($presence),
+                'last_activity'   => $u['last_activity'] ?? null,
+                'can_deactivate'  => $presence !== 'deactivated',
+                'can_reactivate'  => $presence === 'deactivated',
+            ];
+        }
+
+        $pending = [];
+        $stmt = $this->pdo->prepare("
+            SELECT a.id, a.first_name, a.last_name, a.email, a.phone, a.status, a.bhw_submitted_at, a.submitted_at
+            FROM bhw_applications a
+            WHERE a.barangay_id = ?
+              AND a.status = 'pending_approval'
+            ORDER BY COALESCE(a.bhw_submitted_at, a.submitted_at) DESC, a.id DESC
+        ");
+        $stmt->execute([$barangayId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $counts['pending_approval']++;
+            $pending[] = [
+                'application_id' => (int) ($row['id'] ?? 0),
+                'display_name'   => trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? '')),
+                'email'          => (string) ($row['email'] ?? ''),
+                'phone'          => (string) ($row['phone'] ?? ''),
+                'status'         => self::STATUS_PENDING,
+                'status_label'   => 'Pending Approval',
+                'submitted_at'   => $row['bhw_submitted_at'] ?? $row['submitted_at'] ?? null,
+            ];
+        }
+
+        return [
+            'barangay_id'   => $barangayId,
+            'barangay_name' => $name,
+            'counts'        => $counts,
+            'bhws'          => $bhws,
+            'pending'       => $pending,
+            'online_window_minutes' => self::ONLINE_WINDOW_MINUTES,
+        ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function listAssignedBhwUsers(?int $barangayId = null): array
+    {
+        $cols = $this->pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $hasAccountStatus = in_array('account_status', $cols, true);
+        $hasSessions = $this->activeSessionsTableExists();
+
+        $select = "
+            SELECT u.id AS user_id, u.first_name, u.last_name, u.email, u.phone,
+                   u.barangay_id, u.is_active, u.created_at,
+                   " . ($hasAccountStatus ? 'u.account_status' : "'active' AS account_status") . ",
+                   " . ($hasSessions
+                       ? 's.last_activity'
+                       : 'NULL AS last_activity') . "
+            FROM users u
+        ";
+        if ($hasSessions) {
+            $select .= "
+            LEFT JOIN (
+                SELECT user_id, MAX(last_activity) AS last_activity
+                FROM active_sessions
+                WHERE role = 'bhw'
+                GROUP BY user_id
+            ) s ON s.user_id = u.id
+            ";
+        }
+        $select .= "
+            WHERE LOWER(TRIM(COALESCE(u.role, ''))) = 'bhw'
+              AND u.barangay_id IS NOT NULL
+              AND u.barangay_id > 0
+        ";
+        if ($hasAccountStatus) {
+            $select .= "
+              AND (
+                u.account_status IS NULL
+                OR TRIM(u.account_status) = ''
+                OR LOWER(TRIM(u.account_status)) <> 'archived'
+              )
+            ";
+        }
+        $params = [];
+        if ($barangayId !== null && $barangayId > 0) {
+            $select .= ' AND u.barangay_id = ?';
+            $params[] = $barangayId;
+        }
+        $select .= ' ORDER BY u.last_name ASC, u.first_name ASC';
+
+        $stmt = $this->pdo->prepare($select);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * @return array<int, true>
+     */
+    private function onlineBhwUserIds(): array
+    {
+        if (!$this->activeSessionsTableExists()) {
+            return [];
+        }
+        $mins = self::ONLINE_WINDOW_MINUTES;
+        $stmt = $this->pdo->query("
+            SELECT DISTINCT user_id
+            FROM active_sessions
+            WHERE role = 'bhw'
+              AND last_activity >= DATE_SUB(NOW(), INTERVAL {$mins} MINUTE)
+        ");
+        $ids = [];
+        if ($stmt) {
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $uid = (int) ($row['user_id'] ?? 0);
+                if ($uid > 0) {
+                    $ids[$uid] = true;
+                }
+            }
+        }
+
+        return $ids;
+    }
+
+    private function activeSessionsTableExists(): bool
+    {
+        static $exists = null;
+        if ($exists !== null) {
+            return $exists;
+        }
+        try {
+            $this->pdo->query('SELECT 1 FROM active_sessions LIMIT 1');
+            $exists = true;
+        } catch (Throwable $e) {
+            $exists = false;
+        }
+
+        return $exists;
+    }
+
+    /**
+     * @param array<string, mixed> $user
+     * @param array<int, true> $onlineIds
+     */
+    private function classifyBhwPresence(array $user, array $onlineIds): string
+    {
+        $accountStatus = strtolower(trim((string) ($user['account_status'] ?? 'active')));
+        $isActive = (int) ($user['is_active'] ?? 0) === 1;
+        if (!$isActive || in_array($accountStatus, ['deactivated', 'suspended', 'rejected'], true)) {
+            return 'deactivated';
+        }
+        $uid = (int) ($user['user_id'] ?? 0);
+        if ($uid > 0 && isset($onlineIds[$uid])) {
+            return 'online';
+        }
+
+        return 'offline';
+    }
+
+    private function presenceLabel(string $presence): string
+    {
+        return match ($presence) {
+            'online' => 'Online',
+            'offline' => 'Offline',
+            'deactivated' => 'Deactivated',
+            default => ucfirst($presence),
+        };
+    }
+
     /**
      * @param array<string, mixed> $app
      */

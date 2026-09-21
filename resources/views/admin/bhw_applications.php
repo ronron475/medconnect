@@ -135,6 +135,88 @@ require_once __DIR__ . '/partials/layout_open.php';
     <?php endif; ?>
 </header>
 
+<section class="bhw-brgy-summary" id="bhwBrgySummary" aria-labelledby="bhwBrgySummaryTitle">
+    <div class="bhw-brgy-summary__head">
+        <div>
+            <h2 class="bhw-brgy-summary__title" id="bhwBrgySummaryTitle">Barangay BHW Summary</h2>
+            <p class="bhw-brgy-summary__sub">Live counts by barangay. <strong>Online</strong> = signed in recently; <strong>Offline</strong> = enabled but not signed in; <strong>Deactivated</strong> = Super Admin disabled the account.</p>
+        </div>
+        <div class="bhw-brgy-summary__meta">
+            <span class="bhw-brgy-summary__live" id="bhwBrgyLiveHint" aria-live="polite">Updating…</span>
+        </div>
+    </div>
+
+    <div class="staff-apps-stats bhw-brgy-summary__totals" id="bhwBrgyTotals" aria-live="polite">
+        <div class="staff-apps-stat">
+            <div class="staff-apps-stat__value" id="bhwSumTotal">—</div>
+            <div class="staff-apps-stat__label">Total BHWs</div>
+        </div>
+        <div class="staff-apps-stat staff-apps-stat--active">
+            <div class="staff-apps-stat__value" id="bhwSumOnline">—</div>
+            <div class="staff-apps-stat__label">Active (Online)</div>
+        </div>
+        <div class="staff-apps-stat staff-apps-stat--draft">
+            <div class="staff-apps-stat__value" id="bhwSumOffline">—</div>
+            <div class="staff-apps-stat__label">Inactive / Offline</div>
+        </div>
+        <div class="staff-apps-stat staff-apps-stat--pending">
+            <div class="staff-apps-stat__value" id="bhwSumPending">—</div>
+            <div class="staff-apps-stat__label">Pending Approval</div>
+        </div>
+    </div>
+
+    <div class="bhw-brgy-summary__toolbar">
+        <label class="bhw-brgy-summary__select-label" for="bhwBrgySelect">Select barangay</label>
+        <select id="bhwBrgySelect" class="staff-apps-filter bhw-brgy-summary__select" aria-label="Select barangay to manage BHWs">
+            <option value="">All barangays overview…</option>
+        </select>
+    </div>
+
+    <div class="bhw-brgy-summary__grid-wrap">
+        <table class="staff-apps-table bhw-brgy-summary__table" id="bhwBrgyTable">
+            <thead>
+                <tr>
+                    <th>Barangay</th>
+                    <th>Total</th>
+                    <th>Online</th>
+                    <th>Offline</th>
+                    <th>Deactivated</th>
+                    <th>Pending</th>
+                </tr>
+            </thead>
+            <tbody id="bhwBrgyBody">
+                <tr><td colspan="6"><div class="mc-table-empty">Loading barangay summary…</div></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bhw-brgy-detail" id="bhwBrgyDetail" hidden>
+        <div class="bhw-brgy-detail__head">
+            <h3 class="bhw-brgy-detail__title" id="bhwBrgyDetailTitle">Assigned BHWs</h3>
+            <p class="bhw-brgy-detail__sub" id="bhwBrgyDetailSub"></p>
+        </div>
+        <div class="staff-apps-table-wrap">
+            <table class="staff-apps-table" id="bhwBrgyDetailTable">
+                <thead>
+                    <tr>
+                        <th>BHW</th>
+                        <th>Contact</th>
+                        <th>Presence</th>
+                        <th>Account</th>
+                        <th>Last activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bhwBrgyDetailBody"></tbody>
+            </table>
+        </div>
+        <div class="bhw-brgy-detail__pending" id="bhwBrgyPendingWrap" hidden>
+            <h4 class="bhw-brgy-detail__pending-title">Pending approval (this barangay)</h4>
+            <ul class="bhw-brgy-detail__pending-list" id="bhwBrgyPendingList"></ul>
+        </div>
+    </div>
+</section>
+
 <?php
 $hub_views_base = portal_views_base();
 require __DIR__ . '/partials/staff_hub_tabs.php';
@@ -331,21 +413,24 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.7">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=1.8">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
     api: <?= json_encode(ASSET_BASE . '/app/api/admin/bhw_applications.php') ?>,
+    accountStatusApi: <?= json_encode(ASSET_BASE . '/app/api/admin/account_status.php') ?>,
     assetBase: <?= json_encode(ASSET_BASE) ?>,
     initialTab: <?= json_encode($hub_tab) ?>,
     initialStatus: <?= json_encode($initial_app_status) ?>,
     showApplications: <?= $show_applications_panel ? 'true' : 'false' ?>,
     checkerMode: <?= $is_superadmin_checker ? 'true' : 'false' ?>,
+    canManageAccounts: <?= $is_superadmin_checker ? 'true' : 'false' ?>,
     statusGroups: <?= json_encode(BhwApplicationService::HUB_STATUS_GROUPS, JSON_UNESCAPED_UNICODE) ?>,
     barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.8"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=2.9"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-summary.js?v=1.0"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
