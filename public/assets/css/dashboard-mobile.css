@@ -584,6 +584,31 @@
     gap: var(--mob-portal-gap-sm) !important;
   }
 
+  body.admin-body .adm-overview-card,
+  body.superadmin-body .adm-overview-card {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  body.admin-body .adm-overview-tiles,
+  body.superadmin-body .adm-overview-tiles {
+    flex: none !important;
+    align-content: start !important;
+    min-height: 0 !important;
+    gap: 8px !important;
+  }
+
+  body.admin-body .adm-overview-tile,
+  body.superadmin-body .adm-overview-tile {
+    min-height: 0 !important;
+    padding: 10px 8px !important;
+  }
+
+  body.admin-body .adm-overview-card .adm-chart-card__head,
+  body.superadmin-body .adm-overview-card .adm-chart-card__head {
+    margin-bottom: 8px !important;
+  }
+
   body.admin-body .adm-metric,
   body.superadmin-body .adm-metric,
   body.admin-body .superadmin-stat-card,

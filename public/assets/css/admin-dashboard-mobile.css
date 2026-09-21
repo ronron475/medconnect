@@ -264,6 +264,44 @@
     gap: var(--mob-adm-gap, 10px);
   }
 
+  /* User Overview: kill empty stretch space under the title */
+  body.admin-body .adm-overview-card,
+  body.superadmin-body .adm-overview-card {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  body.admin-body .adm-overview-card .adm-chart-card__head,
+  body.superadmin-body .adm-overview-card .adm-chart-card__head {
+    margin-bottom: 8px !important;
+  }
+
+  body.admin-body .adm-overview-tiles,
+  body.superadmin-body .adm-overview-tiles {
+    flex: none !important;
+    align-content: start !important;
+    min-height: 0 !important;
+    gap: 8px !important;
+  }
+
+  body.admin-body .adm-overview-tile,
+  body.superadmin-body .adm-overview-tile {
+    min-height: 0 !important;
+    padding: 10px 8px !important;
+    gap: 4px;
+  }
+
+  body.admin-body .adm-overview-tile__value,
+  body.superadmin-body .adm-overview-tile__value {
+    font-size: 1.35rem;
+  }
+
+  body.admin-body .adm-chart-card,
+  body.superadmin-body .adm-chart-card {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
   /* ── Metrics + Live Operations notification strip ── */
   body.admin-body .adm-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
