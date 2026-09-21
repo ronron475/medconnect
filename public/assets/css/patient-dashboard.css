@@ -571,7 +571,7 @@
 /* Empty */
 .pdash-empty {
   text-align: center;
-  padding: 28px 16px;
+  padding: 20px 14px;
 }
 
 .pdash-empty__icon {
@@ -886,16 +886,28 @@
 
 @media (max-width: 768px) {
   body.patient-portal:has(#view-dashboard) .portal-page-body {
-    padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .pdash-page {
-    gap: var(--pt-page-gap, 12px);
+    gap: var(--mob-portal-gap, 10px);
+  }
+
+  .pdash-empty {
+    padding: 14px 12px;
+  }
+
+  .pdash-empty__icon {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 8px;
   }
 
   .pdash-hero {
     flex-direction: column;
     align-items: stretch;
+    padding: 12px;
+    gap: 10px;
   }
 
   .pdash-hero__main {

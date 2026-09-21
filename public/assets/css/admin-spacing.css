@@ -432,24 +432,24 @@ body.admin-body .pagination {
 /* ── Mobile: keep compact ── */
 @media (max-width: 768px) {
   body.admin-body {
-    --mob-adm-pad: 12px;
+    --mob-adm-pad: 14px;
     --mob-adm-gap: 10px;
     --mob-adm-card-gap: 8px;
     --mob-adm-section-gap: 10px;
   }
 
   body.admin-body .portal-page-body {
-    padding-left: var(--mob-adm-pad) !important;
-    padding-right: var(--mob-adm-pad) !important;
-    padding-top: calc(var(--mc-header-offset, 64px) + 6px) !important;
-    padding-bottom: calc(var(--mob-adm-pad) * 1.1) !important;
-    gap: var(--mob-adm-gap) !important;
+    padding-left: var(--mob-adm-pad, var(--mob-portal-pad, 14px)) !important;
+    padding-right: var(--mob-adm-pad, var(--mob-portal-pad, 14px)) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-bottom: calc(var(--mob-adm-pad, var(--mob-portal-pad, 14px)) + env(safe-area-inset-bottom, 0px)) !important;
+    gap: var(--mob-adm-gap, var(--mob-portal-gap, 10px)) !important;
   }
 
   body.admin-body:has([data-live-dashboard]) .portal-page-body,
   body.admin-body:has(.adm-charts-section) .portal-page-body {
-    padding-top: calc(var(--mc-header-offset, 64px) + 4px) !important;
-    gap: 8px !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    gap: var(--mob-adm-gap, var(--mob-portal-gap, 10px)) !important;
   }
 
   body.admin-body [data-live-dashboard] {
@@ -505,14 +505,14 @@ body.admin-body .pagination {
 
   body.admin-body .adm-chart-canvas-wrap,
   body.admin-body .mc-chart-canvas-wrap {
-    min-height: 180px !important;
-    height: clamp(180px, 28vh, 240px) !important;
+    min-height: 160px !important;
+    height: clamp(160px, 26vh, 220px) !important;
   }
 
   body.admin-body .adm-chart-canvas-wrap--roles,
   body.admin-body .mc-chart-canvas-wrap--roles {
-    min-height: 220px !important;
-    height: clamp(220px, 32vh, 280px) !important;
+    min-height: 180px !important;
+    height: clamp(180px, 28vh, 240px) !important;
   }
 
   body.admin-body .superadmin-stat-card {
@@ -541,7 +541,7 @@ body.admin-body .pagination {
 
 @media (max-width: 480px) {
   body.admin-body {
-    --mob-adm-pad: 10px;
+    --mob-adm-pad: 12px;
     --mob-adm-gap: 8px;
     --mob-adm-section-gap: 8px;
   }
