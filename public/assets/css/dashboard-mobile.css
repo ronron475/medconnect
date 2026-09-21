@@ -270,6 +270,11 @@
     gap: var(--mob-dash-gap);
   }
 
+  body.provider-body .prov-dash .prov-dash-row {
+    grid-template-columns: 1fr;
+    gap: var(--mob-dash-gap);
+  }
+
   body.patient-portal .prov-dash .prov-dash-main,
   body.provider-body .prov-dash .prov-dash-main,
   body.patient-portal .prov-dash .prov-dash-side,

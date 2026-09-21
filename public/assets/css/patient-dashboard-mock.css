@@ -295,6 +295,20 @@ body.patient-portal .prov-dash-grid, body.provider-body .prov-dash-grid{
   align-items: start;
 }
 
+body.provider-body .prov-dash-grid{
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  align-items: stretch;
+}
+
+body.provider-body .prov-dash-row{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 308px;
+  gap: var(--pt-dash-space);
+  align-items: stretch;
+}
+
 body.patient-portal .prov-dash-main, body.provider-body .prov-dash-main,
 body.patient-portal .prov-dash-side, body.provider-body .prov-dash-side{
   display: flex;
@@ -481,6 +495,10 @@ body.patient-portal .prov-status-item, body.provider-body .prov-status-item{
 
 @media (max-width: 900px) {
   body.patient-portal .prov-dash-grid, body.provider-body .prov-dash-grid{
+    grid-template-columns: 1fr;
+  }
+
+  body.provider-body .prov-dash-row{
     grid-template-columns: 1fr;
   }
 }
