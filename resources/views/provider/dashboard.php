@@ -184,6 +184,49 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
     <!-- Sidebar column -->
     <aside class="prov-dash-side">
 
+      <section class="prov-dash-card">
+        <div class="prov-dash-card__head">
+          <h3 class="prov-dash-card__title">Live Status</h3>
+        </div>
+        <div class="prov-status-list">
+          <div class="prov-status-item">
+            <span class="prov-status-item__label">
+              <span class="prov-status-dot" style="background:#fbbf24;"></span>
+              Waiting
+            </span>
+            <strong data-live-status="waiting"><?= (int) ($stats['pending'] ?? 0) ?></strong>
+          </div>
+          <div class="prov-status-item">
+            <span class="prov-status-item__label">
+              <span class="prov-status-dot" style="background:#3b82f6;"></span>
+              In Consultation
+            </span>
+            <strong data-live-status="ongoing"><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
+          </div>
+          <div class="prov-status-item">
+            <span class="prov-status-item__label">
+              <span class="prov-status-dot" style="background:#22c55e;"></span>
+              Completed (month)
+            </span>
+            <strong data-live-status="completed"><?= (int) ($stats['completed'] ?? 0) ?></strong>
+          </div>
+          <div class="prov-status-item" data-live-slot-wait-wrap<?= empty($stats['slot_waiting']) ? ' hidden' : '' ?>>
+            <span class="prov-status-item__label">
+              <span class="prov-status-dot" style="background:#f59e0b;"></span>
+              Waiting for Doctor Availability
+            </span>
+            <strong data-live-status="slot_waiting"><?= (int) ($stats['slot_waiting'] ?? 0) ?></strong>
+          </div>
+          <div class="prov-status-item" data-live-urgent-wrap style="border-color:#fecaca;background:#fef2f2;"<?= empty($stats['urgent']) ? ' hidden' : '' ?>>
+            <span class="prov-status-item__label">
+              <span class="prov-status-dot" style="background:#ef4444;"></span>
+              Urgent Triage
+            </span>
+            <strong style="color:#dc2626;" data-live-status="urgent"><?= (int) ($stats['urgent'] ?? 0) ?></strong>
+          </div>
+        </div>
+      </section>
+
       <section class="prov-dash-card prov-dash-triage-review">
         <div class="prov-dash-card__head">
           <h3 class="prov-dash-card__title"><?= icon('activity') ?> Review Triage</h3>
@@ -226,49 +269,6 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
         <?php endif; ?>
         </div>
         <a href="<?= ASSET_BASE ?>/views/provider/triage.php" class="mc-btn mc-btn--outline prov-dash-triage-review__cta">Open Triage</a>
-      </section>
-
-      <section class="prov-dash-card">
-        <div class="prov-dash-card__head">
-          <h3 class="prov-dash-card__title">Live Status</h3>
-        </div>
-        <div class="prov-status-list">
-          <div class="prov-status-item">
-            <span class="prov-status-item__label">
-              <span class="prov-status-dot" style="background:#fbbf24;"></span>
-              Waiting
-            </span>
-            <strong data-live-status="waiting"><?= (int) ($stats['pending'] ?? 0) ?></strong>
-          </div>
-          <div class="prov-status-item">
-            <span class="prov-status-item__label">
-              <span class="prov-status-dot" style="background:#3b82f6;"></span>
-              In Consultation
-            </span>
-            <strong data-live-status="ongoing"><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
-          </div>
-          <div class="prov-status-item">
-            <span class="prov-status-item__label">
-              <span class="prov-status-dot" style="background:#22c55e;"></span>
-              Completed (month)
-            </span>
-            <strong data-live-status="completed"><?= (int) ($stats['completed'] ?? 0) ?></strong>
-          </div>
-          <div class="prov-status-item" data-live-slot-wait-wrap<?= empty($stats['slot_waiting']) ? ' hidden' : '' ?>>
-            <span class="prov-status-item__label">
-              <span class="prov-status-dot" style="background:#f59e0b;"></span>
-              Waiting for Doctor Availability
-            </span>
-            <strong data-live-status="slot_waiting"><?= (int) ($stats['slot_waiting'] ?? 0) ?></strong>
-          </div>
-          <div class="prov-status-item" data-live-urgent-wrap style="border-color:#fecaca;background:#fef2f2;"<?= empty($stats['urgent']) ? ' hidden' : '' ?>>
-            <span class="prov-status-item__label">
-              <span class="prov-status-dot" style="background:#ef4444;"></span>
-              Urgent Triage
-            </span>
-            <strong style="color:#dc2626;" data-live-status="urgent"><?= (int) ($stats['urgent'] ?? 0) ?></strong>
-          </div>
-        </div>
       </section>
 
       <section class="prov-dash-card">
