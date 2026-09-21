@@ -60,20 +60,6 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
       <strong data-live-stat="appointments"><?= (int) ($stats['appointments'] ?? 0) ?></strong>
       <span>Today's Appointments</span>
     </div>
-    <div class="prov-dash-stat prov-dash-stat--warn">
-      <span class="prov-dash-stat__icon" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      </span>
-      <strong data-live-stat="pending"><?= (int) ($stats['pending'] ?? 0) ?></strong>
-      <span>Waiting in Queue</span>
-    </div>
-    <div class="prov-dash-stat">
-      <span class="prov-dash-stat__icon" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </span>
-      <strong data-live-stat="ongoing"><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
-      <span>In Consultation</span>
-    </div>
     <div class="prov-dash-stat">
       <span class="prov-dash-stat__icon" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -84,7 +70,7 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
     <?php
     $notif_widget_mode = 'strip';
     $notif_widget_bare = true;
-    $notif_widget_exclude = ['today_appointments'];
+    $notif_widget_exclude = ['today_appointments', 'pending_referrals', 'emergency_alerts'];
     require VIEWS_PATH . '/partials/notification_widgets.php';
     ?>
   </section>
