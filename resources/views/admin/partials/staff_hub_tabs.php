@@ -46,8 +46,7 @@ if (!isset($hub_views_base)) {
 }
 ?>
 <div class="staff-mgmt-filter-group">
-  <div class="staff-mgmt-filter-group__label" id="staffMgmtAccountStatusLabel">Account Status</div>
-  <nav class="staff-mgmt-tabs" aria-labelledby="staffMgmtAccountStatusLabel">
+  <nav class="staff-mgmt-tabs" aria-label="Account status">
     <?php foreach ($hub_tabs as $tabKey => $tabLabel):
         $isTabActive = ($hub_tab === $tabKey);
         $href = $hub_views_base . '/' . $hub_base . ($tabKey === 'all' ? '' : '?tab=' . urlencode($tabKey));

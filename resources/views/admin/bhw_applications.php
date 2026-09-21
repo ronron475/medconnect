@@ -19,22 +19,11 @@ bhw_application_ensure_schema($pdo);
 
 $hub_kind = 'bhw';
 $hub_base = 'bhw_applications.php';
-$hub_tab = $_GET['tab'] ?? 'all';
-$allowed_tabs = ['all', 'drafts', 'pending', 'active', 'rejected', 'archived'];
-if (!in_array($hub_tab, $allowed_tabs, true)) {
-    $hub_tab = 'all';
-}
-
-$show_accounts_panel = in_array($hub_tab, ['active', 'archived'], true);
-$show_applications_panel = !$show_accounts_panel;
-
-$tab_status_map = [
-    'all'      => 'all',
-    'drafts'   => 'draft',
-    'pending'  => 'pending_approval',
-    'rejected' => 'rejected',
-];
-$initial_app_status = $tab_status_map[$hub_tab] ?? 'all';
+$hub_tab = 'all';
+// Barangay-first hub: no All/Drafts/Pending/Active/Rejected/Archived tab bar.
+$show_accounts_panel = false;
+$show_applications_panel = true;
+$initial_app_status = 'all';
 
 /** @var list<array{id: int, name: string, city?: string}> */
 $bhw_invite_barangays = [];
@@ -135,13 +124,6 @@ require_once __DIR__ . '/partials/layout_open.php';
     <?php endif; ?>
 </header>
 
-<?php
-$hub_views_base = portal_views_base();
-require __DIR__ . '/partials/staff_hub_tabs.php';
-?>
-
-<?php if ($show_applications_panel): ?>
-
 <section class="bhw-hub" id="bhwBarangayHub" aria-labelledby="bhwHubTitle">
     <div class="bhw-hub__head">
         <div>
@@ -223,12 +205,6 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
         </div>
     </div>
 </section>
-
-<?php else: ?>
-
-<?php require __DIR__ . '/partials/staff_accounts_panel.php'; ?>
-
-<?php endif; ?>
 
 </article>
 
@@ -399,13 +375,10 @@ window.MC_BHW_APPROVAL = {
 };
 </script>
 <script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.4"></script>
-<?php endif; ?>
-
 <?php
-if ($show_accounts_panel) {
-    $account_status_api = ASSET_BASE . '/app/api/admin/account_status.php';
-    require __DIR__ . '/partials/account_status_modal.php';
-}
+$account_status_api = ASSET_BASE . '/app/api/admin/account_status.php';
+require __DIR__ . '/partials/account_status_modal.php';
+endif;
 ?>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>
