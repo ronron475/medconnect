@@ -172,8 +172,7 @@ $base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
 
     <?php if ($show_prc_subfilters): ?>
     <div class="staff-mgmt-filter-group staff-mgmt-filter-group--prc">
-        <div class="staff-mgmt-filter-group__label" id="staffMgmtPrcStatusLabel">PRC Verification Status</div>
-        <div class="staff-mgmt-subfilters" role="group" aria-labelledby="staffMgmtPrcStatusLabel">
+        <div class="staff-mgmt-subfilters" role="group" aria-label="PRC verification status">
             <?php
             foreach (['all' => 'All PRC Status', 'verified' => 'Verified', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $vf => $vfLabel):
                 $sep = str_contains($base_tab_url, '?') ? '&' : '?';
