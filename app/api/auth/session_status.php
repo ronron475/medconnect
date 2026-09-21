@@ -29,10 +29,15 @@ $payload = [
 if ($authenticated) {
     try {
         user_account_status_ensure_schema($pdo);
-        $stmt = $pdo->prepare('SELECT id, role, is_active, account_status FROM users WHERE id = ? LIMIT 1');
+        $stmt = $pdo->prepare('SELECT id, role, is_active, account_status, session_epoch FROM users WHERE id = ? LIMIT 1');
         $stmt->execute([$uid]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if (!$row || !user_account_login_allowed_for_row($row)) {
+        $epochMismatch = false;
+        if ($row && array_key_exists('session_epoch', $_SESSION)) {
+            $epochMismatch = (int) $_SESSION['session_epoch'] > 0
+                && (int) $_SESSION['session_epoch'] !== (int) ($row['session_epoch'] ?? 1);
+        }
+        if (!$row || !user_account_login_allowed_for_row($row) || $epochMismatch) {
             $status = $row ? user_account_status_effective($row) : AccountStatus::DEACTIVATED;
             // Clear only this browser session; other users are unaffected.
             $_SESSION = [];
@@ -42,12 +47,15 @@ if ($authenticated) {
             if (session_status() === PHP_SESSION_ACTIVE) {
                 session_destroy();
             }
-            $deactivated = !$row || $status === AccountStatus::DEACTIVATED;
+            $deactivated = !$row || $status === AccountStatus::DEACTIVATED || $epochMismatch;
             $payload = $deactivated
                 ? auth_account_deactivated_payload()
                 : auth_session_expired_payload();
             echo json_encode($payload, JSON_UNESCAPED_UNICODE);
             exit;
+        }
+        if (!array_key_exists('session_epoch', $_SESSION)) {
+            $_SESSION['session_epoch'] = (int) ($row['session_epoch'] ?? 1);
         }
     } catch (Throwable $e) {
         // Fall through with session-based auth if probe DB fails.

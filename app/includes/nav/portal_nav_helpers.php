@@ -47,11 +47,15 @@ function portal_nav_group_is_active(string $group, string $current, string $quer
         'doctor_management' => $current === 'doctor_applications.php'
             || $current === 'doctor_approvals.php'
             || ($current === 'staff_management.php' && ($params['role'] ?? '') === 'provider'),
+        'doctor_verification' => $current === 'doctor_applications.php'
+            || $current === 'doctor_approvals.php',
         'consultation_monitoring' => $current === 'live_consultation_monitor.php'
             || $current === 'queue_monitoring.php',
         'bhw_management' => $current === 'bhw_applications.php'
             || $current === 'bhw_approvals.php'
             || ($current === 'staff_management.php' && ($params['role'] ?? '') === 'bhw'),
+        'bhw_verification' => $current === 'bhw_applications.php'
+            || $current === 'bhw_approvals.php',
         'patient_management' => $current === 'user_management.php'
             && ($params['role'] ?? '') === 'patient',
         'administrator_management' => $current === 'user_management.php' && ($params['role'] ?? '') === 'admin',

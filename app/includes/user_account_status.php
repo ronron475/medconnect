@@ -99,8 +99,16 @@ function user_account_deactivated_message(): string
 function user_account_login_allowed_for_row(array $user): bool
 {
     $status = user_account_status_effective($user);
+    if (!AccountStatus::isLoginAllowed($status)) {
+        return false;
+    }
 
-    return AccountStatus::isLoginAllowed($status);
+    // is_active is synced on status change; require it so a lone flag flip also blocks login.
+    if (array_key_exists('is_active', $user) && (int) $user['is_active'] !== 1) {
+        return false;
+    }
+
+    return true;
 }
 
 /**
@@ -127,8 +135,39 @@ function user_account_login_denial_message(array $user): ?string
 }
 
 /**
+ * Destroy one foreign PHP session by id without touching the current request session.
+ */
+function user_account_status_destroy_foreign_php_session(string $targetSessionId): void
+{
+    $targetSessionId = preg_replace('/[^a-zA-Z0-9,-]/', '', $targetSessionId) ?? '';
+    if ($targetSessionId === '') {
+        return;
+    }
+    $currentId = session_id();
+    if ($currentId !== '' && hash_equals($currentId, $targetSessionId)) {
+        return;
+    }
+
+    // File-based handlers (XAMPP default): remove only this user's session file.
+    $savePath = (string) ini_get('session.save_path');
+    if ($savePath === '') {
+        $savePath = (string) session_save_path();
+    }
+    if (str_contains($savePath, ';')) {
+        $parts = explode(';', $savePath);
+        $savePath = (string) end($parts);
+    }
+    if ($savePath !== '') {
+        $file = rtrim($savePath, '/\\') . DIRECTORY_SEPARATOR . 'sess_' . $targetSessionId;
+        if (is_file($file)) {
+            @unlink($file);
+        }
+    }
+}
+
+/**
  * Revoke remember-me tokens and tracked sessions for one user only.
- * Does not touch any other account.
+ * Does not touch any other account. Also destroys that user's PHP session files when known.
  */
 function user_account_status_invalidate_sessions(PDO $pdo, int $userId): void
 {
@@ -141,13 +180,34 @@ function user_account_status_invalidate_sessions(PDO $pdo, int $userId): void
         remember_me_revoke_for_user($pdo, $userId);
     } catch (Throwable $e) { /* non-fatal */ }
 
+    $sessionIds = [];
     try {
         require_once __DIR__ . '/superadmin/schema.php';
         if (function_exists('superadmin_ensure_schema')) {
             superadmin_ensure_schema($pdo);
         }
+        $stmt = $pdo->prepare('SELECT session_id FROM active_sessions WHERE user_id = ?');
+        $stmt->execute([$userId]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $sid = trim((string) ($row['session_id'] ?? ''));
+            if ($sid !== '') {
+                $sessionIds[] = $sid;
+            }
+        }
         $pdo->prepare('DELETE FROM active_sessions WHERE user_id = ?')->execute([$userId]);
     } catch (Throwable $e) { /* non-fatal */ }
+
+    foreach (array_unique($sessionIds) as $sid) {
+        try {
+            user_account_status_destroy_foreign_php_session($sid);
+        } catch (Throwable $e) { /* non-fatal */ }
+    }
+
+    // Invalidate any remaining in-flight sessions for this user (all handlers).
+    try {
+        $pdo->prepare('UPDATE users SET session_epoch = session_epoch + 1, updated_at = NOW() WHERE id = ?')
+            ->execute([$userId]);
+    } catch (Throwable $e) { /* non-fatal if column missing mid-migration */ }
 }
 
 /**
@@ -225,6 +285,12 @@ function user_account_status_ensure_schema(PDO $pdo): void
             $pdo->exec("ALTER TABLE users ADD COLUMN {$col} {$def}");
             $cols[] = $col;
         }
+    }
+
+    // Bumped on deactivate/suspend/etc so existing PHP sessions for that user only stop working.
+    if (!in_array('session_epoch', $cols, true)) {
+        $pdo->exec('ALTER TABLE users ADD COLUMN session_epoch INT UNSIGNED NOT NULL DEFAULT 1');
+        $cols[] = 'session_epoch';
     }
 
     $pdo->exec("

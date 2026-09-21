@@ -174,7 +174,7 @@ function auth_ensure_session_user_valid(PDO $pdo): void
 
     $userId = (int) $_SESSION['user_id'];
     $role = (string) ($_SESSION['user_role'] ?? '');
-    $stmt = $pdo->prepare('SELECT id, role, is_active, account_status FROM users WHERE id = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, role, is_active, account_status, session_epoch FROM users WHERE id = ? LIMIT 1');
     $stmt->execute([$userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -186,12 +186,33 @@ function auth_ensure_session_user_valid(PDO $pdo): void
         auth_destroy_session_and_redirect('session_invalid');
     }
 
+    // Session epoch bumps on deactivate — kicks this user only, even if their PHP session file remains.
+    if (array_key_exists('session_epoch', $_SESSION)) {
+        $sessionEpoch = (int) $_SESSION['session_epoch'];
+        $dbEpoch = (int) ($row['session_epoch'] ?? 1);
+        if ($sessionEpoch > 0 && $sessionEpoch !== $dbEpoch) {
+            if (!user_account_login_allowed_for_row($row)) {
+                $status = user_account_status_effective($row);
+                auth_destroy_session_and_redirect(
+                    $status === AccountStatus::DEACTIVATED ? 'account_deactivated' : 'session_invalid'
+                );
+            }
+            // Stale session after reactivation: end this session and require a fresh login.
+            auth_destroy_session_and_redirect('session_invalid');
+        }
+    }
+
     if (!user_account_login_allowed_for_row($row)) {
         $status = user_account_status_effective($row);
         if ($status === AccountStatus::DEACTIVATED) {
             auth_destroy_session_and_redirect('account_deactivated');
         }
         auth_destroy_session_and_redirect('session_invalid');
+    }
+
+    // Legacy sessions created before session_epoch tracking: stamp current epoch once.
+    if (!array_key_exists('session_epoch', $_SESSION)) {
+        $_SESSION['session_epoch'] = (int) ($row['session_epoch'] ?? 1);
     }
 }
 

@@ -52,7 +52,7 @@ $is_superadmin_checker = portal_is_superadmin_shell() || portal_is_superadmin();
 $show_approved = isset($_GET['approved']);
 $show_rejected = isset($_GET['rejected']);
 if ($is_superadmin_checker) {
-    $page_title = 'Barangay Health Workers';
+    $page_title = 'BHW Applications';
 }
 
 require_once __DIR__ . '/partials/layout_open.php';
@@ -111,7 +111,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
         <p class="staff-apps-hero__desc"><?= $is_superadmin_checker
-            ? 'Manage Barangay Health Workers by barangay. Open a barangay to review applications, documents, and account status. Only Super Administrators can approve, reject, deactivate, or reactivate.'
+            ? 'Final Maker–Checker review for Barangay Health Worker applications. Open a barangay to verify documents and approve or reject pending applications. Only Super Administrators can approve or reject.'
             : 'Invite Barangay Health Workers by barangay. Select an assigned barangay when creating an invite; track each barangay’s BHW counts in real time.' ?></p>
     </div>
     <?php if (!$is_superadmin_checker): ?>
@@ -364,8 +364,8 @@ window.MC_BHW_APP = {
     barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=3.1"></script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=3.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.3"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
@@ -374,7 +374,7 @@ window.MC_BHW_APPROVAL = {
     hubMode: true
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.4"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/superadmin-bhw-approvals.js?v=1.5"></script>
 <?php
 $account_status_api = ASSET_BASE . '/app/api/admin/account_status.php';
 require __DIR__ . '/partials/account_status_modal.php';

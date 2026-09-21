@@ -127,7 +127,7 @@
       }
     }
 
-    if (has('dashboard') || has('queue') || has('triage') || has('appointments')) {
+    if (has('dashboard') || has('queue') || has('triage') || has('appointments') || has('staff_applications')) {
       if (global.MedConnectAdminDashboardLive && typeof global.MedConnectAdminDashboardLive.refresh === 'function') {
         global.MedConnectAdminDashboardLive.refresh();
       }
@@ -139,6 +139,21 @@
       }
       if (typeof global.refreshBhwConsultations === 'function') {
         global.refreshBhwConsultations();
+      }
+    }
+
+    if (has('staff_applications') || has('dashboard')) {
+      if (global.MCBhwBarangayHub && typeof global.MCBhwBarangayHub.refresh === 'function') {
+        global.MCBhwBarangayHub.refresh();
+      }
+      if (global.MCDoctorApplications && typeof global.MCDoctorApplications.refresh === 'function') {
+        global.MCDoctorApplications.refresh();
+      }
+      if (global.MCDoctorApproval && typeof global.MCDoctorApproval.refresh === 'function') {
+        global.MCDoctorApproval.refresh();
+      }
+      if (global.MCBhwApproval && typeof global.MCBhwApproval.refresh === 'function') {
+        global.MCBhwApproval.refresh();
       }
     }
 

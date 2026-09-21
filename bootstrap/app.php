@@ -300,6 +300,17 @@ remember_me_restore_session($pdo);
 require_once BASE_PATH . '/app/includes/session_timeout.php';
 session_timeout_check();
 
+// Enforce deactivation for this user only on authenticated requests.
+// Skip login/logout so a reactivated user can sign in again with a stale cookie.
+$mcScript = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
+$mcSkipAccountEnforce = str_ends_with($mcScript, '/app/api/login.php')
+    || str_ends_with($mcScript, '/app/api/logout.php')
+    || str_contains($mcScript, '/app/controllers/auth/');
+if (!$mcSkipAccountEnforce && !empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+    require_once BASE_PATH . '/app/includes/auth_guard.php';
+    auth_ensure_session_user_valid($pdo);
+}
+
 if (empty($_SESSION['csrf_token'])) {
     // With read_and_close sessions (video room), this only affects the current request arrays.
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));

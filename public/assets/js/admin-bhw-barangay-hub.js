@@ -499,6 +499,13 @@
     refresh();
   });
 
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    const changed = (ev && ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('staff_applications') !== -1 || changed.indexOf('dashboard') !== -1) {
+      refresh();
+    }
+  });
+
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) refresh();
   });
@@ -506,5 +513,10 @@
   window.MCBhwBarangayHub = { refresh: refresh, openBarangay: loadDetail };
 
   refresh();
-  window.setInterval(refresh, POLL_MS);
+  window.setInterval(function () {
+    if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 8000) {
+      return;
+    }
+    refresh();
+  }, POLL_MS);
 })();

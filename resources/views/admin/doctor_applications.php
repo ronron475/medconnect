@@ -42,7 +42,7 @@ $initial_app_status = $tab_status_map[$hub_tab] ?? 'pending_approval';
 
 $page_title = 'Doctor Management';
 if ($is_superadmin_portal) {
-    $page_title = 'Doctors';
+    $page_title = 'Doctor Applications';
 }
 $show_submitted = isset($_GET['submitted']);
 $show_saved = isset($_GET['saved']);
@@ -105,7 +105,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <header class="staff-apps-hero staff-apps-hero--intro">
     <div class="staff-apps-hero__content">
         <p class="staff-apps-hero__desc"><?php if ($is_superadmin_portal): ?>
-            Manage doctor applications and approved accounts. Use the Pending Approval tab to review submissions from administrators.
+            Final Maker–Checker approval for Doctor applications. Review PRC verification and supporting documents, then Approve or Reject. Pending counts update live.
         <?php else: ?>
             Manage doctor applications, PRC verification, supporting documents, and approved doctor accounts from one place.
         <?php endif; ?></p>
@@ -227,7 +227,7 @@ window.MC_DOCTOR_APP = {
     checkerMode: <?= $is_superadmin_portal ? 'true' : 'false' ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.5"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-doctor-applications.js?v=1.6"></script>
 <?php if ($is_superadmin_portal): ?>
 <script>
 window.MC_DOCTOR_APPROVAL = {
@@ -236,7 +236,7 @@ window.MC_DOCTOR_APPROVAL = {
     hubMode: true
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/superadmin-doctor-approvals.js?v=1.2"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/superadmin-doctor-approvals.js?v=1.3"></script>
 <?php endif; ?>
 
 <?php

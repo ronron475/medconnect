@@ -171,7 +171,7 @@ function medconnect_expire_session_cookie(): void
 /**
  * Canonical authenticated identity keys (does not regenerate session id).
  *
- * @param array{id?:int|string,user_id?:int|string,first_name?:string,last_name?:string,email?:string,role?:string,profile_picture?:?string} $user
+ * @param array{id?:int|string,user_id?:int|string,first_name?:string,last_name?:string,email?:string,role?:string,profile_picture?:?string,session_epoch?:int|string} $user
  */
 function medconnect_session_set_identity(array $user): void
 {
@@ -189,6 +189,9 @@ function medconnect_session_set_identity(array $user): void
     $_SESSION['last_name'] = $last;
     if (array_key_exists('profile_picture', $user)) {
         $_SESSION['profile_picture'] = !empty($user['profile_picture']) ? (string) $user['profile_picture'] : null;
+    }
+    if (array_key_exists('session_epoch', $user)) {
+        $_SESSION['session_epoch'] = max(1, (int) $user['session_epoch']);
     }
     $_SESSION['last_activity'] = time();
     if (empty($_SESSION['login_time'])) {

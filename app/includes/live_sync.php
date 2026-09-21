@@ -64,10 +64,12 @@ function live_sync_payload(PDO $pdo, int $userId, string $role): array
         $fingerprints['queue'] = live_sync_admin_queue_fp($pdo, $today);
         $fingerprints['appointments'] = $fingerprints['queue'];
         $fingerprints['triage'] = live_sync_admin_triage_fp($pdo);
+        $fingerprints['staff_applications'] = live_sync_staff_applications_fp($pdo);
         $fingerprints['dashboard'] = live_sync_hash(
             $fingerprints['queue'],
             $fingerprints['triage'],
-            live_sync_admin_users_fp($pdo)
+            live_sync_admin_users_fp($pdo),
+            $fingerprints['staff_applications']
         );
     }
 
@@ -516,6 +518,71 @@ function live_sync_admin_users_fp(PDO $pdo): string
         }
     } catch (Throwable $e) {
         // keep base fingerprint
+    }
+
+    return live_sync_hash(...$parts);
+}
+
+/**
+ * Fingerprint BHW + Doctor application queues (status, docs, onboarding).
+ * Drives Super Admin User Verification live updates without page reload.
+ */
+function live_sync_staff_applications_fp(PDO $pdo): string
+{
+    $parts = [];
+
+    if (live_sync_table_exists($pdo, 'bhw_applications')) {
+        $parts[] = live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(MAX(id),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(updated_at)),0),
+                    COALESCE(SUM(status='pending_approval'),0),
+                    COALESCE(SUM(status='requires_documents'),0),
+                    COALESCE(SUM(status='active'),0),
+                    COALESCE(SUM(status='rejected'),0),
+                    COALESCE(SUM(status='draft'),0),
+                    COALESCE(SUM(status='invited'),0),
+                    COALESCE(SUM(status='onboarding'),0)
+             FROM bhw_applications"
+        );
+    } else {
+        $parts[] = '0';
+    }
+
+    if (live_sync_table_exists($pdo, 'bhw_application_documents')) {
+        $parts[] = live_sync_row(
+            $pdo,
+            'SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(MAX(UNIX_TIMESTAMP(uploaded_at)),0)
+             FROM bhw_application_documents'
+        );
+    } else {
+        $parts[] = '0';
+    }
+
+    if (live_sync_table_exists($pdo, 'doctor_applications')) {
+        $parts[] = live_sync_row(
+            $pdo,
+            "SELECT COUNT(*), COALESCE(MAX(id),0),
+                    COALESCE(MAX(UNIX_TIMESTAMP(updated_at)),0),
+                    COALESCE(SUM(status='pending_approval'),0),
+                    COALESCE(SUM(status='requires_documents'),0),
+                    COALESCE(SUM(status='active'),0),
+                    COALESCE(SUM(status='rejected'),0),
+                    COALESCE(SUM(status='draft'),0)
+             FROM doctor_applications"
+        );
+    } else {
+        $parts[] = '0';
+    }
+
+    if (live_sync_table_exists($pdo, 'doctor_application_documents')) {
+        $parts[] = live_sync_row(
+            $pdo,
+            'SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(MAX(UNIX_TIMESTAMP(uploaded_at)),0)
+             FROM doctor_application_documents'
+        );
+    } else {
+        $parts[] = '0';
     }
 
     return live_sync_hash(...$parts);

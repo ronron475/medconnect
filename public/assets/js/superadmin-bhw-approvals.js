@@ -5,7 +5,6 @@
   const api = cfg.api || '';
   const utils = window.MCStaffApplications || {};
   const currentUserId = cfg.currentUserId || 0;
-  const hubMode = !!cfg.hubMode;
   const tbody = document.getElementById('bhwApprovalBody');
   const modal = document.getElementById('bhwReviewModal');
   const reviewContent = document.getElementById('bhwReviewContent');
@@ -29,15 +28,6 @@
     if (!errorEl) return;
     errorEl.textContent = message || '';
     errorEl.classList.toggle('is-visible', !!message);
-  }
-
-  function redirectWithFlash(flashKey) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('tab', 'pending');
-    url.searchParams.delete('approved');
-    url.searchParams.delete('rejected');
-    url.searchParams.set(flashKey, '1');
-    window.location.href = url.pathname + '?' + url.searchParams.toString();
   }
 
   function computeApprovalStats(rows) {
@@ -282,12 +272,43 @@
   function notifyHubRefresh() {
     try {
       window.dispatchEvent(new CustomEvent('mc:bhw-hub-refresh', { detail: { reason: 'approval' } }));
+      window.dispatchEvent(new CustomEvent('medconnect:nav-badges-refresh'));
     } catch (e) { /* ignore */ }
     if (typeof window.MCBhwBarangayHub?.refresh === 'function') {
       window.MCBhwBarangayHub.refresh();
       return true;
     }
     return false;
+  }
+
+  function showInlineFlash(kind, title, text) {
+    const esc = typeof utils.esc === 'function' ? utils.esc : function (s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    };
+    const page = document.querySelector('.staff-apps-page--bhw');
+    if (!page) return;
+    let flash = document.getElementById('bhwLiveFlash');
+    if (!flash) {
+      flash = document.createElement('div');
+      flash.id = 'bhwLiveFlash';
+      flash.setAttribute('role', 'status');
+      flash.className = 'staff-apps-flash';
+      const hero = page.querySelector('.staff-apps-hero');
+      if (hero && hero.parentNode) {
+        hero.parentNode.insertBefore(flash, hero);
+      } else {
+        page.insertBefore(flash, page.firstChild);
+      }
+    }
+    flash.className = 'staff-apps-flash staff-apps-flash--' + (kind === 'warn' ? 'warn' : 'success');
+    flash.innerHTML =
+      '<div class="staff-apps-flash__icon" aria-hidden="true">' +
+      (kind === 'warn'
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>') +
+      '</div><div><p class="staff-apps-flash__title">' + esc(title) + '</p>' +
+      '<p class="staff-apps-flash__text">' + esc(text) + '</p></div>';
   }
 
   approveBtn?.addEventListener('click', async function () {
@@ -307,14 +328,9 @@
       return;
     }
     closeModal();
-    if (notifyHubRefresh()) {
-      return;
-    }
-    if (hubMode) {
-      redirectWithFlash('approved');
-      return;
-    }
-    window.location.href = window.location.pathname + '?approved=1';
+    showInlineFlash('success', 'BHW application approved', 'The account is now active and the BHW may log in.');
+    if (tbody) loadList();
+    notifyHubRefresh();
   });
 
   document.getElementById('bhwRejectBtn')?.addEventListener('click', async function () {
@@ -330,14 +346,9 @@
       return;
     }
     closeModal();
-    if (notifyHubRefresh()) {
-      return;
-    }
-    if (hubMode) {
-      redirectWithFlash('rejected');
-      return;
-    }
-    window.location.href = window.location.pathname + '?rejected=1';
+    showInlineFlash('warn', 'Application rejected', 'The submitting administrator has been notified.');
+    if (tbody) loadList();
+    notifyHubRefresh();
   });
 
   document.getElementById('bhwRequestDocsBtn')?.addEventListener('click', async function () {
@@ -350,15 +361,9 @@
     const json = await res.json();
     if (json.success) {
       closeModal();
-      if (notifyHubRefresh()) {
-        return;
-      }
-      if (hubMode) {
-        window.location.reload();
-        return;
-      }
-      loadList();
-      alert(json.message);
+      showInlineFlash('success', 'Correction requested', json.message || 'The BHW was notified.');
+      if (tbody) loadList();
+      notifyHubRefresh();
     } else {
       showError(json.message || 'Request failed.');
     }
@@ -376,7 +381,14 @@
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
   modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-  window.MCBhwApproval = { openReview: openReview };
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    const changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('staff_applications') !== -1 || changed.indexOf('dashboard') !== -1) {
+      if (tbody) loadList();
+    }
+  });
+
+  window.MCBhwApproval = { openReview: openReview, refresh: loadList };
 
   if (tbody) {
     loadList();
