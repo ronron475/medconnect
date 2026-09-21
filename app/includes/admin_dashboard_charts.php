@@ -34,12 +34,12 @@ function admin_chart_normalize_date(mixed $value): ?string
     return $ts ? date('Y-m-d', $ts) : null;
 }
 
-/** Allowed Analytics period lengths: Today, Week, Month, Year. */
+/** Allowed Analytics period lengths: Today, Week, Month, 6 Months, Year. */
 function admin_chart_normalize_period_days(int $days): int
 {
     return match ($days) {
-        1, 7, 30, 365 => $days,
-        default => 30,
+        1, 7, 30, 180, 365 => $days,
+        default => 180,
     };
 }
 
@@ -49,8 +49,9 @@ function admin_chart_period_label(int $days): string
         1 => 'Today',
         7 => 'Week',
         30 => 'Month',
+        180 => 'Last 6 Months',
         365 => 'Year',
-        default => 'Month',
+        default => 'Last 6 Months',
     };
 }
 
@@ -60,8 +61,9 @@ function admin_chart_period_range_label(int $days): string
         1 => 'today',
         7 => 'this week',
         30 => 'this month',
+        180 => 'the last 6 months',
         365 => 'this year',
-        default => 'this month',
+        default => 'the last 6 months',
     };
 }
 
@@ -142,6 +144,11 @@ function admin_chart_consultations_daily(PDO $pdo, int $days = 30): array
 /** @return list<array{date:string,label:string,count:int,is_today:bool}> */
 function admin_chart_registrations_daily(PDO $pdo, int $days = 7): array
 {
+    $days = admin_chart_normalize_period_days($days);
+    if ($days >= 180) {
+        return admin_chart_registrations_monthly($pdo, $days === 365 ? 12 : 6);
+    }
+
     $series = admin_chart_last_n_days($days);
     $start = $series[0]['date'] . ' 00:00:00';
 
@@ -157,6 +164,99 @@ function admin_chart_registrations_daily(PDO $pdo, int $days = 7): array
     } catch (Throwable $e) {}
 
     return $series;
+}
+
+/**
+ * Monthly registration totals for trend cards (e.g. Last 6 Months).
+ *
+ * @return list<array{date:string,label:string,count:int,is_today:bool}>
+ */
+function admin_chart_registrations_monthly(PDO $pdo, int $months = 6): array
+{
+    $months = max(1, min(24, $months));
+    $series = [];
+    $counts = [];
+
+    for ($i = $months - 1; $i >= 0; $i--) {
+        $ts = strtotime(date('Y-m-01') . " -{$i} months");
+        $key = date('Y-m', $ts);
+        $series[] = [
+            'date'     => $key . '-01',
+            'label'    => date('M Y', $ts),
+            'count'    => 0,
+            'is_today' => $i === 0,
+        ];
+        $counts[$key] = 0;
+    }
+
+    $start = $series[0]['date'] . ' 00:00:00';
+    try {
+        $stmt = $pdo->prepare("
+            SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS cnt
+            FROM users
+            WHERE created_at >= ?
+            GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+        ");
+        $stmt->execute([$start]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $ym = (string) ($row['ym'] ?? '');
+            if (array_key_exists($ym, $counts)) {
+                $counts[$ym] = (int) ($row['cnt'] ?? 0);
+            }
+        }
+    } catch (Throwable $e) {}
+
+    foreach ($series as &$point) {
+        $ym = substr((string) $point['date'], 0, 7);
+        $point['count'] = (int) ($counts[$ym] ?? 0);
+    }
+    unset($point);
+
+    return $series;
+}
+
+/**
+ * Aggregate system services into Online / Maintenance / Issues for the status card.
+ *
+ * @return array{operational_pct:int,buckets:list<array{key:string,label:string,count:int,pct:int,color:string}>}
+ */
+function admin_chart_system_status_summary(PDO $pdo): array
+{
+    require_once __DIR__ . '/system_health_monitor.php';
+    $snapshot = system_health_snapshot($pdo);
+    $services = is_array($snapshot['services'] ?? null) ? $snapshot['services'] : [];
+
+    $buckets = [
+        'online' => ['key' => 'online', 'label' => 'Online', 'count' => 0, 'color' => '#16a34a'],
+        'maintenance' => ['key' => 'maintenance', 'label' => 'Maintenance', 'count' => 0, 'color' => '#94a3b8'],
+        'issues' => ['key' => 'issues', 'label' => 'Issues', 'count' => 0, 'color' => '#ef4444'],
+    ];
+
+    foreach ($services as $svc) {
+        $status = strtolower(trim((string) ($svc['status'] ?? '')));
+        if (in_array($status, ['online', 'healthy'], true)) {
+            $buckets['online']['count']++;
+        } elseif (in_array($status, ['warning', 'disabled', 'unknown'], true)) {
+            $buckets['maintenance']['count']++;
+        } else {
+            $buckets['issues']['count']++;
+        }
+    }
+
+    $total = max(1, array_sum(array_column(array_values($buckets), 'count')));
+    $out = [];
+    foreach ($buckets as $b) {
+        $b['pct'] = (int) round(($b['count'] / $total) * 100);
+        $out[] = $b;
+    }
+
+    $operationalPct = (int) round(($buckets['online']['count'] / $total) * 100);
+
+    return [
+        'operational_pct' => $operationalPct,
+        'buckets' => $out,
+        'overall_status' => (string) ($snapshot['overall_status'] ?? 'healthy'),
+    ];
 }
 
 /** @return list<array{date:string,label:string,count:int,is_today:bool}> */
@@ -188,14 +288,50 @@ function admin_chart_triage_daily(PDO $pdo, int $days = 30): array
 }
 
 /** @return array<string, mixed> */
-function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
+function admin_dashboard_chart_payload(PDO $pdo, int $days = 180): array
 {
     $days = admin_chart_normalize_period_days($days);
-    $consultations = admin_chart_consultations_daily($pdo, $days);
+    $consultations = admin_chart_consultations_daily($pdo, $days === 180 ? 30 : $days);
     $registrations = admin_chart_registrations_daily($pdo, $days);
-    $triage        = admin_chart_triage_daily($pdo, $days);
+    $triage        = admin_chart_triage_daily($pdo, $days === 180 ? 30 : $days);
     $roles         = admin_chart_user_roles($pdo);
     $status        = admin_chart_consult_status($pdo);
+    $systemStatus  = admin_chart_system_status_summary($pdo);
+
+    $roleMap = [];
+    foreach ($roles as $r) {
+        $roleMap[(string) ($r['role'] ?? '')] = (int) ($r['count'] ?? 0);
+    }
+    $adminTotal = (int) ($roleMap['admin'] ?? 0) + (int) ($roleMap['superadmin'] ?? 0);
+    $overview = [
+        'total_users' => array_sum($roleMap),
+        'doctors' => (int) ($roleMap['provider'] ?? 0),
+        'bhw' => (int) ($roleMap['bhw'] ?? 0),
+        'administrators' => $adminTotal,
+    ];
+
+    // Distribution card matches the 4-role overview (Administrators = admin + superadmin).
+    $distribution = [];
+    foreach ($roles as $r) {
+        $role = (string) ($r['role'] ?? '');
+        if ($role === 'superadmin') {
+            continue;
+        }
+        if ($role === 'admin') {
+            $distribution[] = [
+                'role' => 'admin',
+                'label' => 'Administrators',
+                'count' => $adminTotal,
+                'color' => '#f59e0b',
+            ];
+            continue;
+        }
+        $distribution[] = $r;
+    }
+
+    $consultPeak = array_column($consultations, 'count');
+    $regPeak = array_column($registrations, 'count');
+    $triagePeak = array_column($triage, 'count');
 
     return [
         'generated_at' => date('c'),
@@ -205,20 +341,23 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
         'consultations' => [
             'series' => $consultations,
             'total'  => admin_chart_series_total($consultations),
-            'peak'   => max(0, ...array_column($consultations, 'count')),
+            'peak'   => $consultPeak !== [] ? max(0, ...$consultPeak) : 0,
         ],
         'registrations' => [
             'series' => $registrations,
             'total'  => admin_chart_series_total($registrations),
-            'peak'   => max(0, ...array_column($registrations, 'count')),
+            'peak'   => $regPeak !== [] ? max(0, ...$regPeak) : 0,
         ],
         'triage' => [
             'series' => $triage,
             'total'  => admin_chart_series_total($triage),
-            'peak'   => max(0, ...array_column($triage, 'count')),
+            'peak'   => $triagePeak !== [] ? max(0, ...$triagePeak) : 0,
         ],
         'roles'  => $roles,
+        'distribution' => $distribution,
+        'overview' => $overview,
         'status' => $status,
+        'system_status' => $systemStatus,
     ];
 }
 
