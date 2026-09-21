@@ -28,16 +28,19 @@ body.bhw-body {
   color: var(--landing-navy);
 }
 
-/* Formal BHW topbar — page title only (no "Barangay Health Operations" subtitle). */
+/* Formal BHW topbar — same chrome metrics as Admin/Super Admin (68px). */
 body.bhw-body .topbar--bhw-formal {
   align-items: center;
-  min-height: 64px;
+  height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  min-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
   justify-content: flex-start;
   gap: 12px;
   padding: 0 20px 0 12px;
+  padding-top: var(--mc-safe-top, 0px);
+  box-sizing: border-box;
 }
 
 body.bhw-body .topbar--bhw-formal .topbar-left {

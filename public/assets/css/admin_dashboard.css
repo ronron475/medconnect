@@ -71,12 +71,16 @@ body.admin-body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Logo — brand mark + medConnect only (no role subtitle) */
+/* Logo — brand mark + medConnect only; height matches topbar (--portal-header-h) */
 .adm-logo {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 20px 18px 18px;
+  height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  min-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  max-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  padding: 0 18px;
+  box-sizing: border-box;
   text-decoration: none;
   border-bottom: 1px solid rgba(255,255,255,0.07);
   background: rgba(0,0,0,0.18);
@@ -327,7 +331,10 @@ body.admin-body {
   body.mc-sidebar-mini .adm-logo {
     justify-content: center;
     gap: 0;
-    padding: 14px 10px;
+    padding: 0 10px;
+    height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+    min-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+    max-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
   }
 
   body.mc-sidebar-mini .adm-logo__img,

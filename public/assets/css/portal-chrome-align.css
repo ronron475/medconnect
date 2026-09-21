@@ -4,6 +4,9 @@
  * Pins sidebar + top navbar to the same viewport top edge for every role
  * (Admin, Super Admin, BHW, Provider, Patient). Content/design unchanged.
  *
+ * Admin / Super Admin / BHW share one chrome scale (260×68) so the sidebar
+ * brand band and topbar form a continuous L — same pattern as Patient/Provider.
+ *
  * Floating / OS-float modes are excluded — floating-view.css owns those layouts.
  */
 html {
@@ -11,6 +14,33 @@ html {
   /* Match Admin sidebar brand mark on every portal dashboard */
   --mc-portal-logo-size: 40px;
   --mc-portal-logo-size-mini: 36px;
+  /* Shared Admin / Super Admin / BHW chrome tokens */
+  --portal-sidebar-w: 260px;
+  --portal-header-h: 68px;
+  --adm-sb-w: 260px;
+  --sb-width: 260px;
+  --header-h: 68px;
+}
+
+/* Keep the three staff portals on identical chrome metrics */
+body.admin-body,
+body.superadmin-body,
+body.bhw-body {
+  --portal-sidebar-w: 260px;
+  --portal-header-h: 68px;
+  --adm-sb-w: 260px;
+  --sb-width: 260px;
+  --header-h: 68px;
+}
+
+@media (min-width: 768px) {
+  body.admin-body.mc-sidebar-mini,
+  body.superadmin-body.mc-sidebar-mini,
+  body.bhw-body.mc-sidebar-mini {
+    --portal-sidebar-w: 78px;
+    --adm-sb-w: 78px;
+    --sb-width: 78px;
+  }
 }
 
 @supports (padding-top: constant(safe-area-inset-top)) {
@@ -132,4 +162,80 @@ body.patient-portal .sb-logo-img {
     max-width: var(--mc-portal-logo-size-mini, 36px) !important;
     max-height: var(--mc-portal-logo-size-mini, 36px) !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Admin / Super Admin / BHW — shared chrome geometry
+   Sidebar width, topbar height, left offset, logo band = one L
+═══════════════════════════════════════════════════════════ */
+
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .adm-sidebar,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .adm-sidebar,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .adm-sidebar {
+  width: var(--portal-sidebar-w, 260px) !important;
+}
+
+/* Logo band height locks to topbar (Patient/Provider pattern) */
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .adm-logo,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .adm-logo,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .adm-logo {
+  height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px)) !important;
+  min-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px)) !important;
+  max-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px)) !important;
+  padding: 0 18px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+  margin: 0 !important;
+}
+
+@media (min-width: 768px) {
+  html:not(.mc-floating-view):not(.mc-os-float) body.admin-body.mc-sidebar-mini:not(.mc-true-fullscreen) .adm-logo,
+  html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body.mc-sidebar-mini:not(.mc-true-fullscreen) .adm-logo,
+  html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body.mc-sidebar-mini:not(.mc-true-fullscreen) .adm-logo {
+    padding: 0 10px !important;
+    justify-content: center;
+  }
+}
+
+/* Topbar: same height, left edge, padding, vertical centering */
+@media (min-width: 1025px) {
+  html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .topbar,
+  html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) header.topbar,
+  html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .topbar,
+  html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) header.topbar,
+  html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .topbar,
+  html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) header.topbar,
+  html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .topbar--bhw-formal {
+    left: var(--portal-sidebar-w, 260px) !important;
+    width: calc(100% - var(--portal-sidebar-w, 260px)) !important;
+    right: auto !important;
+    height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px)) !important;
+    min-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px)) !important;
+    max-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px)) !important;
+    padding: 0 20px 0 12px !important;
+    padding-top: var(--mc-safe-top, 0px) !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+  }
+
+  html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .main.portal-main,
+  html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .main.portal-main,
+  html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .main.portal-main {
+    margin-left: var(--portal-sidebar-w, 260px) !important;
+    width: calc(100% - var(--portal-sidebar-w, 260px)) !important;
+  }
+}
+
+/* Shared topbar inner alignment (all breakpoints) */
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .topbar .topbar-left,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .topbar .topbar-left,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .topbar .topbar-left {
+  align-items: center !important;
+}
+
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .topbar .topbar-right,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .topbar .topbar-right,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .topbar .topbar-right {
+  align-items: center !important;
+  margin-left: auto !important;
 }

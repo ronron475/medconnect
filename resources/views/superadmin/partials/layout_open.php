@@ -47,6 +47,8 @@
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
   <!-- Admin spacing must load last so Super Admin matches Admin density -->
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-spacing.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-spacing.css') ?>"/>
+  <!-- Chrome align last so Admin/SA/BHW share sidebar + topbar geometry -->
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal-chrome-align.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/portal-chrome-align.css') ?>"/>
 </head>
 <body
   class="admin-body superadmin-body"
