@@ -322,7 +322,7 @@
   });
 
   document.getElementById('bhwRequestDocsBtn')?.addEventListener('click', async function () {
-    const note = prompt('Specify what the BHW must correct or upload (they will receive an email link):');
+    const note = prompt('Request Correction: specify what the BHW must correct or upload (they will receive an email link):');
     if (!note || !note.trim()) return;
     const fd = new FormData();
     fd.append('application_id', currentAppId);
