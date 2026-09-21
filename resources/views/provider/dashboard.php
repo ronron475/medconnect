@@ -25,9 +25,6 @@ $week_total = $chart_data['total'];
 
 $recordings = consultation_provider_recent_recordings($pdo, $provider_id, 5);
 
-$display_name = $provider['display_name'] ?? trim(($provider['first_name'] ?? '') . ' ' . ($provider['last_name'] ?? ''));
-$last_name = $provider['last_name'] ?? 'Provider';
-
 $pending_triage_cases = array_values(array_filter($triage_cases ?? [], 'provider_triage_case_needs_review'));
 $pending_triage_count = count($pending_triage_cases);
 $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5);
@@ -38,15 +35,9 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
   <!-- Welcome -->
   <section class="prov-dash-welcome prov-dash-welcome--compact">
     <div class="prov-dash-welcome__left">
-      <a href="<?= ASSET_BASE ?>/views/provider/settings.php" data-profile-avatar-wrap title="Profile settings" style="text-decoration:none;flex-shrink:0;">
-        <?= profile_picture_render($provider['initials'] ?? 'DR', $provider['picture_url'] ?? null, '', 'sm') ?>
-      </a>
-      <div class="prov-dash-welcome__text">
-        <div class="prov-dash-welcome__eyebrow"><?= htmlspecialchars($greeting) ?>, Dr. <?= htmlspecialchars($last_name) ?></div>
-        <span class="prov-dash-staff-id">Staff ID: <strong>MC-<?= str_pad((string) $provider_id, 5, '0', STR_PAD_LEFT) ?></strong></span>
-      </div>
+      <span class="prov-dash-staff-id">Staff ID: <strong>MC-<?= str_pad((string) $provider_id, 5, '0', STR_PAD_LEFT) ?></strong></span>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div class="prov-dash-welcome__right">
       <span class="text-xs text-muted" data-live-sync aria-live="polite">Live</span>
       <span class="prov-dash-badge">Active Duty</span>
     </div>
