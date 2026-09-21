@@ -53,11 +53,16 @@
 }
 
 .sb-logo-text {
-  font-size: 15px;
+  font-size: 1.125rem;
   font-weight: 800;
   color: #fff;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.35px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.sb-logo-text span {
+  color: #22D3EE;
 }
 
 /* Section labels */
@@ -286,6 +291,7 @@
   }
 
   body.mc-sidebar-mini .sidebar .sb-label,
+  body.mc-sidebar-mini .sidebar .sb-logo-text,
   body.mc-sidebar-mini .sidebar .sb-profile-info,
   body.mc-sidebar-mini .sidebar .sb-name,
   body.mc-sidebar-mini .sidebar .sb-role,

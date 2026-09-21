@@ -50,11 +50,12 @@
 }
 
 .sba-logo-text {
-  font-size: 19px;
+  font-size: 1.125rem;
   font-weight: 800;
   color: #ffffff;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.35px;
   line-height: 1;
+  white-space: nowrap;
   font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
@@ -291,7 +292,8 @@
     gap: 0;
   }
 
-  body.mc-sidebar-mini .sb-aqua .sba-label {
+  body.mc-sidebar-mini .sb-aqua .sba-label,
+  body.mc-sidebar-mini .sb-aqua .sba-logo-text {
     display: none;
   }
 
