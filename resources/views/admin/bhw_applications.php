@@ -221,10 +221,6 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
                 <tbody id="bhwHubDetailBody"></tbody>
             </table>
         </div>
-        <div class="bhw-hub-docs" id="bhwHubDocsPanel" hidden>
-            <h4 class="bhw-hub-docs__title" id="bhwHubDocsTitle">Documents</h4>
-            <ul class="bhw-doc-list" id="bhwHubDocsList"></ul>
-        </div>
     </div>
 </section>
 
@@ -336,6 +332,25 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
     </div>
 </div>
 
+<div id="bhwHubDocsModal" class="admin-modal-overlay bhw-hub-docs-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="bhwHubDocsTitle">
+    <div class="mc-card admin-modal-dialog bhw-hub-docs-dialog">
+        <div class="admin-modal-header">
+            <div>
+                <h3 class="admin-modal-title" id="bhwHubDocsTitle">Documents</h3>
+                <p class="admin-modal-subtitle" id="bhwHubDocsSub">Uploaded files for this BHW</p>
+            </div>
+            <button type="button" class="admin-modal-close" id="bhwHubDocsClose" aria-label="Close">&times;</button>
+        </div>
+        <div class="admin-modal-body bhw-hub-docs-body">
+            <ul class="bhw-doc-list" id="bhwHubDocsList"></ul>
+            <p class="bhw-hub-docs-empty" id="bhwHubDocsEmpty" hidden>No documents uploaded for this BHW.</p>
+        </div>
+        <div class="admin-modal-actions">
+            <button type="button" class="mc-btn mc-btn--outline" id="bhwHubDocsDone">Close</button>
+        </div>
+    </div>
+</div>
+
 <div id="bhwDocPreviewModal" class="bhw-doc-preview-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="bhwDocPreviewTitle">
     <div class="bhw-doc-preview-dialog">
         <div class="bhw-doc-preview-header">
@@ -357,7 +372,7 @@ require __DIR__ . '/partials/staff_hub_tabs.php';
 <?php endif; ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.4">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=2.0">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-bhw-applications.css?v=2.1">
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-applications.js?v=1.2"></script>
 <script>
 window.MC_BHW_APP = {
@@ -373,8 +388,8 @@ window.MC_BHW_APP = {
     barangays: <?= json_encode($bhw_invite_barangays, JSON_UNESCAPED_UNICODE) ?>
 };
 </script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=3.0"></script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=3.1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.2"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {

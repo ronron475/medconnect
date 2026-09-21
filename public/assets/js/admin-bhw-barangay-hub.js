@@ -23,15 +23,18 @@
   const searchEl = document.getElementById('bhwBrgySearch');
   const countEl = document.getElementById('bhwBrgyCount');
   const liveEl = document.getElementById('bhwHubLive');
-  const docsPanel = document.getElementById('bhwHubDocsPanel');
+  const docsModal = document.getElementById('bhwHubDocsModal');
   const docsList = document.getElementById('bhwHubDocsList');
   const docsTitle = document.getElementById('bhwHubDocsTitle');
+  const docsSub = document.getElementById('bhwHubDocsSub');
+  const docsEmpty = document.getElementById('bhwHubDocsEmpty');
 
   let rows = [];
   let selectedId = 0;
   let detailData = null;
   let inFlight = false;
   let searchQ = '';
+  let openDocsItem = null;
 
   function esc(s) {
     return String(s == null ? '' : s)
@@ -138,41 +141,87 @@
     return map[t] || t || 'Document';
   }
 
-  function showDocs(item) {
-    if (!docsPanel || !docsList) return;
-    const docs = item && item.documents ? item.documents : [];
-    if (!docs.length) {
-      docsPanel.hidden = true;
-      docsList.innerHTML = '';
+  function closeDocsModal() {
+    openDocsItem = null;
+    if (docsModal) {
+      docsModal.style.display = 'none';
+      docsModal.classList.remove('is-open');
+      docsModal.style.pointerEvents = 'none';
+    }
+    if (docsList) docsList.innerHTML = '';
+    if (docsEmpty) docsEmpty.hidden = true;
+  }
+
+  function previewDoc(doc) {
+    if (window.MCBhwInvite && typeof window.MCBhwInvite.openDocPreview === 'function') {
+      window.MCBhwInvite.openDocPreview({
+        id: doc.id,
+        name: doc.original_name || 'Document',
+        type: docTypeLabel(doc.document_type),
+        mime: doc.mime_type || '',
+      });
       return;
     }
-    docsPanel.hidden = false;
-    if (docsTitle) {
-      docsTitle.textContent = 'Documents — ' + (item.display_name || 'BHW');
+    const viewUrl = api + '?action=view&document_id=' + encodeURIComponent(String(doc.id));
+    window.open(viewUrl, '_blank', 'noopener');
+  }
+
+  function openDocsModal(item) {
+    if (!docsModal || !docsList) return;
+    openDocsItem = item || null;
+    const docs = item && Array.isArray(item.documents) ? item.documents : [];
+    const name = (item && item.display_name) || 'BHW';
+
+    if (docsTitle) docsTitle.textContent = 'Documents';
+    if (docsSub) {
+      docsSub.textContent = docs.length
+        ? name + ' · ' + docs.length + ' file' + (docs.length === 1 ? '' : 's')
+        : name + ' · no files uploaded';
     }
-    docsList.innerHTML = docs
-      .map(function (d) {
-        const id = Number(d.id || 0);
-        const viewUrl = api + '?action=view&document_id=' + id;
-        const dlUrl = api + '?action=download&document_id=' + id;
-        return (
-          '<li class="bhw-doc-list__item">' +
-          '<div><strong>' +
-          esc(docTypeLabel(d.document_type)) +
-          '</strong><br><span class="staff-apps-meta">' +
-          esc(d.original_name || '') +
-          '</span></div>' +
-          '<div class="bhw-doc-list__actions">' +
-          '<a class="mc-btn mc-btn--outline mc-btn--sm" href="' +
-          esc(viewUrl) +
-          '" target="_blank" rel="noopener">View</a> ' +
-          '<a class="mc-btn mc-btn--outline mc-btn--sm" href="' +
-          esc(dlUrl) +
-          '">Download</a>' +
-          '</div></li>'
-        );
-      })
-      .join('');
+
+    if (!docs.length) {
+      docsList.innerHTML = '';
+      if (docsEmpty) docsEmpty.hidden = false;
+    } else {
+      if (docsEmpty) docsEmpty.hidden = true;
+      docsList.innerHTML = docs
+        .map(function (d, i) {
+          const id = Number(d.id || 0);
+          const dlUrl = api + '?action=download&document_id=' + id;
+          return (
+            '<li class="bhw-doc-list__item">' +
+            '<div class="bhw-doc-list__meta">' +
+            '<strong>' +
+            esc(docTypeLabel(d.document_type)) +
+            '</strong>' +
+            '<span class="staff-apps-meta">' +
+            esc(d.original_name || 'Untitled file') +
+            '</span>' +
+            '</div>' +
+            '<div class="bhw-doc-list__actions">' +
+            '<button type="button" class="mc-btn mc-btn--primary mc-btn--sm js-bhw-hub-doc-view" data-doc-idx="' +
+            i +
+            '">View</button>' +
+            '<a class="mc-btn mc-btn--outline mc-btn--sm" href="' +
+            esc(dlUrl) +
+            '">Download</a>' +
+            '</div></li>'
+          );
+        })
+        .join('');
+    }
+
+    docsModal.style.display = 'flex';
+    docsModal.classList.add('is-open');
+    docsModal.style.pointerEvents = 'auto';
+  }
+
+  function showDocs(item) {
+    if (!item || !Number(item.document_count || 0)) {
+      closeDocsModal();
+      return;
+    }
+    openDocsModal(item);
   }
 
   function renderDetail() {
@@ -255,6 +304,18 @@
         }
         if (!actions) actions = '<span class="staff-apps-meta">—</span>';
 
+        const docCount = Number(item.document_count || 0);
+        const docsCell =
+          docCount > 0
+            ? '<button type="button" class="bhw-hub-doc-count js-bhw-hub-docs" data-idx="' +
+              idx +
+              '">' +
+              docCount +
+              ' file' +
+              (docCount === 1 ? '' : 's') +
+              '</button>'
+            : '<span class="staff-apps-meta">0 files</span>';
+
         return (
           '<tr>' +
           '<td data-label="Name"><strong>' +
@@ -266,11 +327,9 @@
           '<td data-label="Status"><span class="staff-apps-meta">' +
           esc(item.status_label || item.status || '—') +
           '</span></td>' +
-          '<td data-label="Documents"><span class="staff-apps-meta">' +
-          Number(item.document_count || 0) +
-          ' file' +
-          (Number(item.document_count || 0) === 1 ? '' : 's') +
-          '</span></td>' +
+          '<td data-label="Documents">' +
+          docsCell +
+          '</td>' +
           '<td data-label="Appointment"><span class="staff-apps-meta">' +
           fmtDate(item.appointment_date) +
           '</span></td>' +
@@ -289,9 +348,9 @@
   function showList() {
     selectedId = 0;
     detailData = null;
+    closeDocsModal();
     if (detailCard) detailCard.hidden = true;
     if (listCard) listCard.hidden = false;
-    showDocs(null);
   }
 
   async function loadSummary() {
@@ -405,6 +464,25 @@
         react.getAttribute('data-action') || 'activate',
         react.getAttribute('data-name')
       );
+    }
+  });
+
+  docsList?.addEventListener('click', function (e) {
+    const viewBtn = e.target.closest('.js-bhw-hub-doc-view');
+    if (!viewBtn || !openDocsItem) return;
+    const idx = Number(viewBtn.getAttribute('data-doc-idx') || -1);
+    const doc = (openDocsItem.documents || [])[idx];
+    if (doc) previewDoc(doc);
+  });
+
+  document.getElementById('bhwHubDocsClose')?.addEventListener('click', closeDocsModal);
+  document.getElementById('bhwHubDocsDone')?.addEventListener('click', closeDocsModal);
+  docsModal?.addEventListener('click', function (e) {
+    if (e.target === docsModal) closeDocsModal();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && docsModal && docsModal.classList.contains('is-open')) {
+      closeDocsModal();
     }
   });
 
