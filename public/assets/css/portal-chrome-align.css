@@ -8,6 +8,9 @@
  */
 html {
   --mc-safe-top: env(safe-area-inset-top, 0px);
+  /* Match Admin sidebar brand mark on every portal dashboard */
+  --mc-portal-logo-size: 40px;
+  --mc-portal-logo-size-mini: 36px;
 }
 
 @supports (padding-top: constant(safe-area-inset-top)) {
@@ -90,5 +93,43 @@ html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fu
   html:not(.mc-floating-view):not(.mc-os-float) body.provider-body.mc-sidebar-mini:not(.mc-true-fullscreen) header.pd-header {
     left: var(--pd-sidebar-w, 78px) !important;
     width: calc(100% - var(--pd-sidebar-w, 78px)) !important;
+  }
+}
+
+/* ── Sidebar brand mark: same size as Admin (40×40) on every portal ── */
+body.admin-body .adm-logo__img,
+body.admin-body .adm-logo img,
+body.superadmin-body .adm-logo__img,
+body.superadmin-body .adm-logo img,
+body.bhw-body .adm-logo__img,
+body.bhw-body .adm-logo img,
+body.provider-body .sba-logo img,
+body.provider-body .sba-logo-img,
+body.patient-portal .sb-logo-img {
+  width: var(--mc-portal-logo-size, 40px) !important;
+  height: var(--mc-portal-logo-size, 40px) !important;
+  max-width: var(--mc-portal-logo-size, 40px) !important;
+  max-height: var(--mc-portal-logo-size, 40px) !important;
+  object-fit: contain;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+  display: block;
+}
+
+@media (min-width: 768px) {
+  body.admin-body.mc-sidebar-mini .adm-logo__img,
+  body.admin-body.mc-sidebar-mini .adm-logo img,
+  body.superadmin-body.mc-sidebar-mini .adm-logo__img,
+  body.superadmin-body.mc-sidebar-mini .adm-logo img,
+  body.bhw-body.mc-sidebar-mini .adm-logo__img,
+  body.bhw-body.mc-sidebar-mini .adm-logo img,
+  body.provider-body.mc-sidebar-mini .sba-logo img,
+  body.provider-body.mc-sidebar-mini .sba-logo-img,
+  body.patient-portal.mc-sidebar-mini .sb-logo-img {
+    width: var(--mc-portal-logo-size-mini, 36px) !important;
+    height: var(--mc-portal-logo-size-mini, 36px) !important;
+    max-width: var(--mc-portal-logo-size-mini, 36px) !important;
+    max-height: var(--mc-portal-logo-size-mini, 36px) !important;
   }
 }

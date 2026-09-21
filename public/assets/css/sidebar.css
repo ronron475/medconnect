@@ -43,11 +43,13 @@
 }
 
 .sb-logo-img {
-  height: 34px;
-  width: auto;
+  width: 40px;
+  height: 40px;
   object-fit: contain;
   display: block;
   flex-shrink: 0;
+  border-radius: 50%;
+  background: #fff;
 }
 
 .sb-logo-text {
