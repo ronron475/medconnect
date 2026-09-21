@@ -19,6 +19,7 @@ from app.routers import (
     health,
     medical_text,
     ml,
+    nlp_demo,
     ocr,
     profile,
     root,
@@ -81,6 +82,7 @@ def create_app() -> FastAPI:
     app.include_router(fuzzy.router)
     app.include_router(ocr.router)
     app.include_router(faq_chatbot.router)
+    app.include_router(nlp_demo.router)
 
     return app
 

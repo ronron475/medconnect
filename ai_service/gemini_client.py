@@ -191,3 +191,58 @@ def gemini_health_payload() -> dict[str, Any]:
         "error": health.get("error"),
         "configured": bool(gemini_api_key()),
     }
+
+
+def generate_content(
+    payload: dict[str, Any],
+    *,
+    model: str | None = None,
+    timeout: int | None = None,
+) -> dict[str, Any]:
+    """
+    Proxy generateContent using the Railway AI_API_KEY.
+    Used by Hostinger PHP demos that must not store the Gemini key locally.
+    """
+    key = gemini_api_key()
+    if not key:
+        raise RuntimeError("Gemini API key not configured — set AI_API_KEY on Railway")
+
+    use_model = (model or "").strip() or gemini_model_name()
+    if not use_model.startswith("gemini"):
+        use_model = gemini_model_name()
+    wait = max(5, min(30, int(timeout if timeout is not None else (_env("AI_TIMEOUT") or "15"))))
+
+    body = dict(payload or {})
+    try:
+        data = _post_generate(body, use_model, key, wait)
+    except urllib.error.HTTPError as exc:
+        err_body = ""
+        try:
+            err_body = exc.read().decode("utf-8", errors="replace")[:400]
+        except Exception:
+            pass
+        # Retry without thinkingConfig when the model rejects it (same as PHP demo path).
+        if exc.code == 400:
+            gen = body.get("generationConfig")
+            if isinstance(gen, dict) and "thinkingConfig" in gen:
+                gen = dict(gen)
+                gen.pop("thinkingConfig", None)
+                body = dict(body)
+                body["generationConfig"] = gen
+                try:
+                    data = _post_generate(body, use_model, key, wait)
+                except Exception as retry_exc:
+                    raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from retry_exc
+            else:
+                raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from exc
+        else:
+            raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from exc
+    except urllib.error.URLError as exc:
+        raise RuntimeError(f"Gemini connection error: {exc.reason}") from exc
+
+    text = _extract_gemini_text(data)
+    return {
+        "model": use_model,
+        "text": text,
+        "response": data,
+    }
