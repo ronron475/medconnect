@@ -143,7 +143,13 @@ body.patient-portal .pmh-lead a:hover {
    Two-column layouts — 70% / 30%
    ═══════════════════════════════════════════════════════════════ */
 
-body.patient-portal .pdash-grid,
+body.patient-portal .pdash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--pt-space-lg);
+  align-items: start;
+}
+
 body.patient-portal .psess-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--pt-aside-width);

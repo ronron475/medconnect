@@ -312,57 +312,5 @@ foreach ($upcoming_list as $c) {
       </section>
 
     </div>
-
-    <aside class="pdash-side">
-
-      <section class="pdash-card" data-notif-widgets aria-label="Attention items">
-        <div class="pdash-card__head">
-          <h2 class="pdash-card__title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            Needs Attention
-          </h2>
-        </div>
-        <div class="pdash-alerts">
-          <div class="pdash-alert-widget" data-widget="pending_referrals">
-            <span class="pdash-alert-widget__label">Referrals</span>
-            <span class="pdash-alert-widget__value mc-notif-widget-value">0</span>
-          </div>
-          <div class="pdash-alert-widget pdash-alert-widget--emergency" data-widget="emergency_alerts" id="pdashEmergencyWidget">
-            <span class="pdash-alert-widget__label">Emergency Alerts</span>
-            <span class="pdash-alert-widget__value mc-notif-widget-value">0</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="pdash-card">
-        <div class="pdash-card__head">
-          <h2 class="pdash-card__title">Live Status</h2>
-        </div>
-        <div class="pdash-status-list">
-          <div class="pdash-status-item">
-            <span class="pdash-status-item__label">
-              <span class="pdash-status-dot" style="background:#3b82f6;"></span>
-              In Consultation
-            </span>
-            <strong><?= (int) $dash_in_consultation ?></strong>
-          </div>
-          <div class="pdash-status-item">
-            <span class="pdash-status-item__label">
-              <span class="pdash-status-dot" style="background:#22c55e;"></span>
-              Health Files
-            </span>
-            <strong><?= (int) $dash_records_count ?></strong>
-          </div>
-          <div class="pdash-status-item <?= $dash_urgent_triage > 0 ? 'pdash-status-item--urgent' : '' ?>">
-            <span class="pdash-status-item__label">
-              <span class="pdash-status-dot" style="background:#ef4444;"></span>
-              Priority Visits
-            </span>
-            <strong><?= (int) $dash_urgent_triage ?></strong>
-          </div>
-        </div>
-      </section>
-
-    </aside>
   </div>
 </div>
