@@ -45,17 +45,55 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
     <?php endif; ?>
 </section>
 
+<section aria-label="Platform metrics">
+    <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
+        <div>
+            <h2 class="adm-section-title">Platform Snapshot</h2>
+            <p class="adm-section-sub">Registered users · auto-refreshes</p>
+        </div>
+    </div>
+    <div class="adm-metrics">
+        <div class="adm-metric adm-metric--patients">
+            <div class="adm-metric-icon adm-metric-icon--blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="adm-metric-body">
+                <div class="adm-metric-label">Patients</div>
+                <div class="adm-metric-value" data-live-metric="patients"><?= (int) ($role_counts['patient'] ?? 0) ?></div>
+                <div class="adm-metric-sub">Total Patients</div>
+            </div>
+        </div>
+        <div class="adm-metric adm-metric--doctors">
+            <div class="adm-metric-icon adm-metric-icon--green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>
+            </div>
+            <div class="adm-metric-body">
+                <div class="adm-metric-label">Doctors</div>
+                <div class="adm-metric-value" data-live-metric="providers"><?= (int) ($role_counts['provider'] ?? 0) ?></div>
+                <div class="adm-metric-sub">Total Doctors</div>
+            </div>
+        </div>
+        <div class="adm-metric adm-metric--bhw">
+            <div class="adm-metric-icon adm-metric-icon--purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="adm-metric-body">
+                <div class="adm-metric-label">BHWs</div>
+                <div class="adm-metric-value" data-live-metric="bhw"><?= (int) ($role_counts['bhw'] ?? 0) ?></div>
+                <div class="adm-metric-sub">Total BHWs</div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
 
-<section aria-label="Platform metrics">
+<section aria-label="Platform operations metrics">
     <div class="adm-section-head">
         <h2 class="adm-section-title">Platform Metrics</h2>
         <p class="adm-section-sub">Key totals at a glance · auto-refreshes</p>
     </div>
     <div class="superadmin-stat-grid superadmin-stat-grid--compact">
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="patients"><?= (int) ($role_counts['patient'] ?? 0) ?></div><div class="text-xs text-muted">Patients</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="providers"><?= (int) ($role_counts['provider'] ?? 0) ?></div><div class="text-xs text-muted">Doctors</div></div>
-        <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="bhw"><?= (int) ($role_counts['bhw'] ?? 0) ?></div><div class="text-xs text-muted">BHW</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="total_users"><?= (int) $total_users_live ?></div><div class="text-xs text-muted">Total Users</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="consultations"><?= (int) $stats['total_consultations'] ?></div><div class="text-xs text-muted">Consultations</div></div>
         <div class="mc-card superadmin-stat-card"><div class="text-h1" data-live-metric="emergency_cases" style="color:<?= (int) $stats['emergency_cases'] > 0 ? '#ef233c' : 'inherit' ?>;"><?= (int) $stats['emergency_cases'] ?></div><div class="text-xs text-muted">Emergency Cases</div></div>
