@@ -1,4 +1,4 @@
-"""NLP Step 3 demo helpers — Hostinger PHP calls Railway Gemini key via proxy."""
+"""Gemini generateContent proxy — Hostinger PHP demos use the Railway AI_API_KEY."""
 
 from __future__ import annotations
 
@@ -9,23 +9,19 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-router = APIRouter(tags=["NLP Demo"])
+router = APIRouter(tags=["Gemini"])
 logger = logging.getLogger("medconnect.api")
 
 
 class GeminiGenerateRequest(BaseModel):
-    """Gemini generateContent body as built by NlpStep3DemoGeminiAnswerInterpreter."""
+    """Gemini generateContent body as built by PHP demos."""
 
     payload: dict[str, Any] = Field(default_factory=dict)
     model: str = ""
     timeout: int = Field(default=15, ge=5, le=30)
 
 
-@router.post(
-    "/nlp-step3-demo/gemini-generate",
-    summary="Proxy Gemini generateContent for nlp_step3_demo (Railway key)",
-)
-async def nlp_step3_demo_gemini_generate(body: GeminiGenerateRequest) -> dict:
+async def _gemini_generate(body: GeminiGenerateRequest) -> dict:
     from gemini_client import generate_content
 
     payload = body.payload if isinstance(body.payload, dict) else {}
@@ -41,7 +37,7 @@ async def nlp_step3_demo_gemini_generate(body: GeminiGenerateRequest) -> dict:
         )
     except RuntimeError as exc:
         msg = str(exc)
-        logger.warning("nlp-step3-demo gemini-generate failed: %s", msg)
+        logger.warning("gemini-generate failed: %s", msg)
         code = 503
         if "429" in msg or "quota" in msg.lower():
             code = 429
@@ -49,7 +45,7 @@ async def nlp_step3_demo_gemini_generate(body: GeminiGenerateRequest) -> dict:
             code = 502
         raise HTTPException(status_code=code, detail=msg[:240]) from exc
     except Exception as exc:
-        logger.warning("nlp-step3-demo gemini-generate error: %s", exc)
+        logger.warning("gemini-generate error: %s", exc)
         raise HTTPException(status_code=503, detail="Gemini proxy temporarily unavailable.") from exc
 
     text = str(pack.get("text") or "").strip()
@@ -64,3 +60,19 @@ async def nlp_step3_demo_gemini_generate(body: GeminiGenerateRequest) -> dict:
             "response": pack.get("response"),
         },
     }
+
+
+@router.post(
+    "/gemini/generate",
+    summary="Proxy Gemini generateContent (Railway key)",
+)
+async def gemini_generate(body: GeminiGenerateRequest) -> dict:
+    return await _gemini_generate(body)
+
+
+@router.post(
+    "/nlp-step3-demo/gemini-generate",
+    summary="Proxy Gemini generateContent for nlp_step3_demo (alias)",
+)
+async def nlp_step3_demo_gemini_generate(body: GeminiGenerateRequest) -> dict:
+    return await _gemini_generate(body)
