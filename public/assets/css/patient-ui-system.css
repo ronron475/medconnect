@@ -152,7 +152,7 @@ body.patient-portal .pdash-grid {
 
 body.patient-portal .psess-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--pt-aside-width);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--pt-space-lg);
   align-items: start;
 }

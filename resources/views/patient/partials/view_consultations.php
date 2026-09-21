@@ -54,39 +54,5 @@
       <p id="consult-join-hint" class="psess-join-hint" hidden></p>
 
     </div>
-
-    <aside class="psess-side" aria-label="Session help">
-
-      <details class="psess-flow">
-        <summary class="psess-flow__summary">
-          <span class="psess-flow__summary-icon" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-          </span>
-          How video visits work
-        </summary>
-        <ol class="psess-flow__steps">
-          <li><span class="psess-flow__num">1</span><span><strong>Booked</strong> — slot confirmed.</span></li>
-          <li><span class="psess-flow__num">2</span><span><strong>Wait</strong> — join unlocks on appointment day.</span></li>
-          <li><span class="psess-flow__num">3</span><span><strong>Provider starts</strong> — doctor opens the room.</span></li>
-          <li><span class="psess-flow__num">4</span><span><strong>Join</strong> — button appears here automatically.</span></li>
-        </ol>
-        <p class="psess-flow__note">This page refreshes every few seconds — no manual reload needed.</p>
-      </details>
-
-      <div class="psess-compare">
-        <h3 class="psess-compare__title">My Sessions vs My Health</h3>
-        <dl class="psess-compare__list">
-          <div>
-            <dt>My Sessions</dt>
-            <dd>Upcoming, active, and past video consultations.</dd>
-          </div>
-          <div>
-            <dt>My Health</dt>
-            <dd>Medical history, clinical records, and prescriptions.</dd>
-          </div>
-        </dl>
-      </div>
-
-    </aside>
   </div>
 </div>
