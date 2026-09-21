@@ -19,7 +19,6 @@ $portal_configs = [
     'admin' => [
         'nav_file' => 'admin_nav.php',
         'views_segment' => 'admin',
-        'logo_em' => 'System Administrator',
         'profile_href' => ASSET_BASE . '/views/admin/profile.php',
         'profile_title' => 'Administrator profile settings',
         'profile_role' => 'System Administrator',
@@ -31,7 +30,6 @@ $portal_configs = [
     'superadmin' => [
         'nav_file' => 'superadmin_nav.php',
         'views_segment' => 'superadmin',
-        'logo_em' => 'Super Administrator',
         'profile_href' => ASSET_BASE . '/views/superadmin/profile.php',
         'profile_title' => 'Super Administrator profile',
         'profile_role' => 'Super Administrator',
@@ -43,7 +41,6 @@ $portal_configs = [
     'bhw' => [
         'nav_file' => null,
         'views_segment' => 'bhw',
-        'logo_em' => 'BHW',
         'profile_href' => ASSET_BASE . '/views/bhw/settings/profile.php',
         'profile_title' => 'BHW profile settings',
         'profile_role' => 'BHW',
@@ -103,8 +100,8 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
 <aside class="<?= htmlspecialchars($config['sidebar_class']) ?>"<?= $adm_sidebar_portal === 'bhw' ? ' id="bhw-sidebar"' : '' ?> aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
 
   <a href="<?= htmlspecialchars($dashboard_href) ?>" class="adm-logo">
-    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" style="height: 35px; width: auto; object-fit: contain; margin-right: 10px;">
-    <div class="adm-logo-text">med<span>Connect</span><em><?= htmlspecialchars($config['logo_em']) ?></em></div>
+    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="" class="adm-logo__img" width="40" height="40">
+    <div class="adm-logo-text">med<span>Connect</span></div>
   </a>
 
   <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
