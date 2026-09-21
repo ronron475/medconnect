@@ -108,6 +108,32 @@ final class AiServiceClient
     }
 
     /**
+     * Proxy Gemini generateContent through Railway for nlp_step3_demo (Hostinger has no local key).
+     *
+     * @param array<string, mixed> $payload Gemini generateContent body
+     * @return array{text?: string, model?: string, response?: array}|null
+     */
+    public static function nlpDemoGeminiGenerate(array $payload, ?string $model = null, ?int $timeoutSeconds = null): ?array
+    {
+        $timeout = max(5, min(30, (int) ($timeoutSeconds ?? 15)));
+        $body = [
+            'payload' => $payload,
+            'timeout' => $timeout,
+        ];
+        if (is_string($model) && trim($model) !== '') {
+            $body['model'] = trim($model);
+        }
+
+        $response = self::postJson(
+            AI_SERVICE_BASE_URL . '/nlp-step3-demo/gemini-generate',
+            $body,
+            $timeout
+        );
+
+        return self::extractData($response);
+    }
+
+    /**
      * @param list<string> $symptoms
      * @param list<string> $urgentFlags
      */

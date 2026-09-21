@@ -43,7 +43,7 @@ final class NlpStep3DemoGeminiAnswerInterpreter
             return false;
         }
 
-        return self::apiKey() !== '';
+        return self::apiKey() !== '' || self::shouldUseRailway();
     }
 
     public static function minConfidence(): float
@@ -732,10 +732,76 @@ PROMPT;
      */
     private static function generateFromPayload(array $payload): string
     {
+        if (self::shouldUseRailway()) {
+            try {
+                return self::generateViaRailway($payload);
+            } catch (RuntimeException $e) {
+                if (self::apiKey() === '') {
+                    throw $e;
+                }
+                // Fall through to direct Gemini when Hostinger still has a local key.
+            }
+        }
+
+        if (self::apiKey() === '') {
+            throw new RuntimeException('Gemini API key not configured');
+        }
+
         $url = sprintf(self::ENDPOINT, rawurlencode(self::model()));
         $data = self::httpPostJson($url, $payload, [
             'x-goog-api-key: ' . self::apiKey(),
         ]);
+
+        return self::extractCandidateText($data);
+    }
+
+    /**
+     * Production Hostinger should call Railway so Gemini keys stay on the Python service.
+     */
+    private static function shouldUseRailway(): bool
+    {
+        if (!defined('AI_SERVICE_ENABLED') || !AI_SERVICE_ENABLED) {
+            return false;
+        }
+        if (!defined('AI_SERVICE_BASE_URL') || !is_string(AI_SERVICE_BASE_URL) || AI_SERVICE_BASE_URL === '') {
+            return false;
+        }
+        $url = strtolower(AI_SERVICE_BASE_URL);
+        if (str_contains($url, 'railway.app')) {
+            return true;
+        }
+
+        return function_exists('medconnect_is_production_host') && medconnect_is_production_host();
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private static function generateViaRailway(array $payload): string
+    {
+        if (!class_exists('AiServiceClient')) {
+            throw new RuntimeException('ai client missing');
+        }
+        $data = AiServiceClient::nlpDemoGeminiGenerate($payload, self::model(), self::timeout());
+        if (!is_array($data)) {
+            throw new RuntimeException('empty railway gemini reply');
+        }
+        $text = trim((string) ($data['text'] ?? ''));
+        if ($text === '' && isset($data['response']) && is_array($data['response'])) {
+            $text = self::extractCandidateText($data['response']);
+        }
+        if ($text === '') {
+            throw new RuntimeException('empty Gemini interpretation');
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function extractCandidateText(array $data): string
+    {
         $parts = $data['candidates'][0]['content']['parts'] ?? [];
         $out = '';
         if (is_array($parts)) {

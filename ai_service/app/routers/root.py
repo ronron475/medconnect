@@ -36,6 +36,7 @@ def root() -> dict:
                 "/fuzzy/match-text-queue",
                 "/ocr/extract",
                 "/faq-chatbot/assist",
+                "/nlp-step3-demo/gemini-generate",
             ],
         },
     }
