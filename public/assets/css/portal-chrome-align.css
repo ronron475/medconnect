@@ -52,10 +52,11 @@ html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-f
   left: 0 !important;
   margin: 0 !important;
   margin-top: 0 !important;
-  /* Match header safe-area inset so chrome boxes stay flush while content clears notches */
-  padding-top: var(--mc-safe-top, 0px) !important;
   box-sizing: border-box;
 }
+
+/* Admin/BHW dark sidebars: apply safe-area on the brand strip only via existing logo padding.
+   Provider/Patient light chrome: logo band height already includes --mc-safe-top. */
 
 /* ── Topbars / headers: same top edge as sidebars ── */
 html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .topbar,
