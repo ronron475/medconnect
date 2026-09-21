@@ -153,11 +153,11 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
             </div>
             <div class="adm-actions-body">
                 <a href="<?= ASSET_BASE ?>/views/superadmin/doctor_applications.php?tab=pending" class="adm-action-btn adm-action-btn--primary">
-                    Doctors · Pending Approval
+                    Doctor Applications
                     <span class="adm-pending-badge" data-live-badge-doctor-wrap<?= $pending_doctor_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-doctor><?= $pending_doctor_approvals ?></span></span>
                 </a>
-                <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_applications.php?tab=pending" class="adm-action-btn adm-action-btn--outline">
-                    Barangay Health Workers
+                <a href="<?= ASSET_BASE ?>/views/superadmin/bhw_applications.php" class="adm-action-btn adm-action-btn--outline">
+                    BHW Applications
                     <span class="adm-pending-badge" data-live-badge-bhw-wrap<?= $pending_bhw_approvals > 0 ? '' : ' hidden' ?>><span data-live-badge-bhw><?= $pending_bhw_approvals ?></span></span>
                 </a>
                 <a href="<?= ASSET_BASE ?>/views/superadmin/administrators.php" class="adm-action-btn adm-action-btn--outline">Manage Administrators</a>

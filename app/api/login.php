@@ -78,12 +78,16 @@ try {
 
 try {
     patient_security_ensure_schema($pdo);
+    require_once dirname(dirname(__DIR__)) . '/app/includes/user_account_status.php';
+    user_account_status_ensure_schema($pdo);
     $user_cols = patient_security_user_columns($pdo);
     $has_barangay = in_array('barangay_id', $user_cols, true);
     $has_profile_picture = in_array('profile_picture', $user_cols, true);
     $has_must_change = in_array('must_change_password', $user_cols, true);
     $has_lockout = in_array('lockout_until', $user_cols, true);
     $has_account_status = in_array('account_status', $user_cols, true);
+    // ensure_schema above guarantees session_epoch exists (static column cache may be stale).
+    $has_session_epoch = true;
     $select = 'id, first_name, last_name, email, password, role, is_active';
     if ($has_barangay) {
         $select .= ', barangay_id';
@@ -99,6 +103,9 @@ try {
     }
     if ($has_account_status) {
         $select .= ', account_status';
+    }
+    if ($has_session_epoch) {
+        $select .= ', session_epoch';
     }
     $stmt = $pdo->prepare("SELECT $select FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
@@ -307,6 +314,7 @@ medconnect_session_set_identity([
     'email' => (string) $user['email'],
     'role' => (string) $user['role'],
     'profile_picture' => $user['profile_picture'] ?? null,
+    'session_epoch' => (int) ($user['session_epoch'] ?? 1),
 ]);
 
 try {

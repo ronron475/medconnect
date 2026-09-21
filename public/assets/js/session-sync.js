@@ -363,6 +363,11 @@
     if (document.visibilityState !== 'visible') return;
     if (isPublicLanding()) return;
     if (handling || global.__mcSessionExpired) return;
+    probeAccountStatus();
+  });
+
+  function probeAccountStatus() {
+    if (handling || global.__mcSessionExpired || isPublicLanding()) return;
     fetch(statusUrl(), {
       method: 'GET',
       credentials: 'same-origin',
@@ -380,7 +385,27 @@
         }
       })
       .catch(function () { /* ignore network blips */ });
+  }
+
+  // Poll while the tab is visible so Super Admin deactivation ends access quickly.
+  var statusTimer = null;
+  function startStatusPoll() {
+    if (statusTimer || isPublicLanding()) return;
+    statusTimer = global.setInterval(function () {
+      if (document.hidden) return;
+      probeAccountStatus();
+    }, 12000);
+  }
+  function stopStatusPoll() {
+    if (!statusTimer) return;
+    global.clearInterval(statusTimer);
+    statusTimer = null;
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) stopStatusPoll();
+    else startStatusPoll();
   });
+  startStatusPoll();
 
   // Block native form submits once expired (covers non-fetch posts).
   document.addEventListener('submit', function (ev) {

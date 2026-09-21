@@ -102,6 +102,12 @@ final class Api
                 auth_session_expired_payload()
             );
         }
+
+        global $pdo;
+        if (isset($pdo) && $pdo instanceof PDO) {
+            require_once dirname(__DIR__) . '/includes/auth_guard.php';
+            auth_ensure_session_user_valid($pdo);
+        }
     }
 
     /** Release the PHP session lock so concurrent badge/poll requests are not queued. */

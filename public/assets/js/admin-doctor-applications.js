@@ -181,5 +181,14 @@
   }
   if (statusFilter) statusFilter.addEventListener('change', applyFilters);
 
+  document.addEventListener('medconnect:live-sync', function (ev) {
+    var changed = (ev.detail && ev.detail.changed) || [];
+    if (changed.indexOf('staff_applications') !== -1 || changed.indexOf('dashboard') !== -1) {
+      loadList();
+    }
+  });
+
+  window.MCDoctorApplications = { refresh: loadList };
+
   loadList();
 })();

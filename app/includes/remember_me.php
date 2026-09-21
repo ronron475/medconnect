@@ -153,9 +153,11 @@ function remember_me_restore_session(PDO $pdo): void
     }
 
     remember_me_ensure_schema($pdo);
+    require_once __DIR__ . '/user_account_status.php';
+    user_account_status_ensure_schema($pdo);
     $stmt = $pdo->prepare("
         SELECT rt.id, rt.user_id, rt.validator_hash, rt.expires_at,
-               u.first_name, u.last_name, u.email, u.role, u.is_active, u.account_status
+               u.first_name, u.last_name, u.email, u.role, u.is_active, u.account_status, u.session_epoch
         FROM remember_tokens rt
         JOIN users u ON u.id = rt.user_id
         WHERE rt.selector = ?
@@ -169,7 +171,6 @@ function remember_me_restore_session(PDO $pdo): void
         return;
     }
 
-    require_once __DIR__ . '/user_account_status.php';
     if (!user_account_login_allowed_for_row($row)) {
         remember_me_revoke_selector($pdo, $selector);
         remember_me_clear_cookie();
@@ -231,6 +232,7 @@ function remember_me_restore_session(PDO $pdo): void
         'last_name' => (string) ($row['last_name'] ?? ''),
         'email' => (string) ($row['email'] ?? ''),
         'role' => (string) ($row['role'] ?? ''),
+        'session_epoch' => (int) ($row['session_epoch'] ?? 1),
     ]);
     $_SESSION['remember_me_extended'] = true;
 }

@@ -1524,11 +1524,44 @@ final class BhwApplicationService
                 continue;
             }
 
+            // Orphan active user (no application in this barangay filter): still attach
+            // linked application docs/appointment by user_id or email so the hub never
+            // shows Approved/Active with "0 files" when documents exist.
+            $linked = $this->findLinkedApplicationForHubUser($uid, $email);
+            $docs = [];
+            $docPublic = [];
+            $appointmentDate = null;
+            $applicationId = null;
+            $approvedBy = null;
+            $approvedAt = null;
+            if ($linked) {
+                $applicationId = (int) ($linked['id'] ?? 0);
+                $appointmentDate = $linked['appointment_date'] ?? null;
+                $approvedBy = $linked['approved_by'] ?? null;
+                $approvedAt = $linked['approved_at'] ?? null;
+                $docs = $this->getDocuments($applicationId);
+                foreach ($docs as $d) {
+                    $docPublic[] = [
+                        'id'            => (int) ($d['id'] ?? 0),
+                        'document_type' => (string) ($d['document_type'] ?? ''),
+                        'original_name' => (string) ($d['original_name'] ?? ''),
+                        'mime_type'     => (string) ($d['mime_type'] ?? ''),
+                        'uploaded_at'   => $d['uploaded_at'] ?? null,
+                    ];
+                }
+                if ($applicationId > 0) {
+                    $coveredUserIds[$uid] = true;
+                    if ($email !== '') {
+                        $coveredEmails[$email] = true;
+                    }
+                }
+            }
+
             $bucket = $this->hubUserBucket($user);
             $approval = $this->hubApprovalLabel(self::STATUS_ACTIVE, $user, true);
             $items[] = [
-                'kind'             => 'user_account',
-                'application_id'   => null,
+                'kind'             => $applicationId ? 'application' : 'user_account',
+                'application_id'   => $applicationId ?: null,
                 'user_id'          => $uid,
                 'display_name'     => trim((string) ($user['first_name'] ?? '') . ' ' . (string) ($user['last_name'] ?? '')),
                 'email'            => (string) ($user['email'] ?? ''),
@@ -1537,10 +1570,12 @@ final class BhwApplicationService
                 'status_label'     => $approval['label'],
                 'approval_status'  => $approval['code'],
                 'approval_label'   => $approval['label'],
-                'appointment_date' => null,
+                'appointment_date' => $appointmentDate,
                 'submitted_at'     => $user['created_at'] ?? null,
-                'document_count'   => 0,
-                'documents'        => [],
+                'document_count'   => count($docPublic),
+                'documents'        => $docPublic,
+                'approved_by'      => $approvedBy,
+                'approved_at'      => $approvedAt,
                 'account_status'   => (string) ($user['account_status'] ?? 'active'),
                 'is_active'        => (int) ($user['is_active'] ?? 0) === 1,
                 'can_review'       => false,
@@ -1563,6 +1598,50 @@ final class BhwApplicationService
             'counts'        => $counts,
             'items'         => $items,
         ];
+    }
+
+    /**
+     * Find the best linked BHW application for a live user account.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function findLinkedApplicationForHubUser(int $userId, string $email): ?array
+    {
+        if ($userId <= 0 && $email === '') {
+            return null;
+        }
+
+        if ($userId > 0) {
+            $stmt = $this->pdo->prepare("
+                SELECT id, status, appointment_date, approved_by, approved_at, barangay_id, user_id, email
+                FROM bhw_applications
+                WHERE user_id = ?
+                ORDER BY CASE WHEN status IN ('active', 'approved') THEN 0 ELSE 1 END, id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$userId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                return $row;
+            }
+        }
+
+        if ($email !== '') {
+            $stmt = $this->pdo->prepare("
+                SELECT id, status, appointment_date, approved_by, approved_at, barangay_id, user_id, email
+                FROM bhw_applications
+                WHERE LOWER(email) = LOWER(?)
+                ORDER BY CASE WHEN status IN ('active', 'approved') THEN 0 ELSE 1 END, id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$email]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row) {
+                return $row;
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -278,7 +278,12 @@
     });
     document.addEventListener('medconnect:live-sync', function (ev) {
       var changed = (ev.detail && ev.detail.changed) || [];
-      if (changed.indexOf('dashboard') !== -1 || changed.indexOf('queue') !== -1 || changed.indexOf('triage') !== -1) {
+      if (
+        changed.indexOf('dashboard') !== -1
+        || changed.indexOf('queue') !== -1
+        || changed.indexOf('triage') !== -1
+        || changed.indexOf('staff_applications') !== -1
+      ) {
         refresh();
       }
     });
