@@ -217,7 +217,9 @@ if (!$user['is_active']) {
     ob_clean();
     $inactive_msg = ($user['role'] === 'provider')
         ? 'Your doctor account is not active yet. Please wait for admin PRC verification.'
-        : 'Your account is inactive.';
+        : (($user['role'] === 'bhw')
+            ? 'Your BHW account is inactive. Contact your administrator.'
+            : 'Your account is inactive.');
     echo json_encode(['success' => false, 'message' => $inactive_msg]);
     exit;
 }
@@ -237,6 +239,23 @@ if ($user['role'] === 'provider') {
             exit;
         }
     } catch (PDOException $e) { /* non-fatal */ }
+}
+
+// BHW portal: only Super Admin–approved accounts (invite → onboarding → pending → approve).
+if ($user['role'] === 'bhw') {
+    try {
+        require_once dirname(dirname(__DIR__)) . '/app/core/BhwApplicationService.php';
+        $bhwGate = (new BhwApplicationService($pdo))->loginDenialReason(
+            (int) $user['id'],
+            (string) $user['email'],
+            (int) ($user['barangay_id'] ?? 0)
+        );
+        if ($bhwGate !== null) {
+            ob_clean();
+            echo json_encode(['success' => false, 'message' => $bhwGate]);
+            exit;
+        }
+    } catch (Throwable $e) { /* non-fatal — do not lock out if schema missing */ }
 }
 
 // Prevent session fixation after authentication

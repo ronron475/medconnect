@@ -52,7 +52,7 @@ if ($phone !== '') {
     $phone = mc_canonical_ph_mobile($phone);
 }
 
-if (!in_array($role, ['provider', 'admin', 'bhw'], true)) {
+if (!in_array($role, ['provider', 'admin'], true)) {
     echo json_encode(['success' => false, 'message' => 'Invalid role.']);
     exit;
 }
@@ -62,18 +62,19 @@ if ($role === 'admin' && !portal_is_superadmin()) {
     exit;
 }
 
-if ($role === 'bhw') {
-    echo json_encode([
-        'success' => false,
-        'message' => 'BHW accounts require Maker-Checker approval. Use BHW Management to submit for Super Administrator review.',
-    ]);
-    exit;
-}
-
 if ($role === 'provider') {
     echo json_encode([
         'success' => false,
         'message' => 'Doctor accounts require Maker-Checker approval. Use Doctor Management to submit for Super Administrator review.',
+    ]);
+    exit;
+}
+
+// BHW: never create with a password here — Admin invites only; BHW sets their own password.
+if ((string) ($_POST['role'] ?? '') === 'bhw') {
+    echo json_encode([
+        'success' => false,
+        'message' => 'BHW accounts cannot be created with a password. Use BHW Management to send an invitation; the BHW sets their own password, then Super Admin approves.',
     ]);
     exit;
 }
@@ -214,8 +215,6 @@ try {
     $staffName = trim($first_name . ' ' . $last_name);
     if ($role === 'provider') {
         NotificationEvents::providerRegistered($pdo, $new_user_id, $staffName, (int) $_SESSION['user_id']);
-    } elseif ($role === 'bhw') {
-        NotificationEvents::bhwRegistered($pdo, $new_user_id, $staffName, (int) $_SESSION['user_id']);
     }
 
     $success_message = $role === 'provider'

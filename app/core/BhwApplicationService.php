@@ -2,9 +2,15 @@
 /**
  * Barangay Health Worker applications — invite / self-onboarding / Maker-Checker.
  *
- * Admin: creates assignment + sends invite (no password, no personal ID uploads).
- * BHW: activates account, sets password, completes profile, uploads personal docs.
- * Superadmin: reviews, approves, rejects, or requests corrections.
+ * Exact workflow:
+ * 1. Admin creates invitation (BHW email/Gmail + assigned barangay + institutional docs). Admin never sets a password.
+ * 2. System emails an activation link.
+ * 3. BHW opens the link, creates their own password, completes profile, uploads personal supporting documents.
+ * 4. Status becomes pending_approval.
+ * 5. Super Admin reviews and Approve / Reject / Request Correction.
+ * 6. Only approved (active) BHWs exist in users and may log in to the BHW portal (barangay-scoped).
+ *
+ * No public BHW self-registration without an Admin invitation.
  */
 final class BhwApplicationService
 {
@@ -581,6 +587,7 @@ final class BhwApplicationService
                     checklist_json = ?,
                     invite_token = NULL,
                     invite_expires_at = NULL,
+                    password_hash = NULL,
                     updated_at = NOW()
                 WHERE id = ?
             ")->execute([
@@ -1223,6 +1230,66 @@ final class BhwApplicationService
     public function pendingCount(): int
     {
         return (int) $this->pdo->query("SELECT COUNT(*) FROM bhw_applications WHERE status = 'pending_approval'")->fetchColumn();
+    }
+
+    /**
+     * Login gate: only Super Admin–approved BHWs (status active/approved) may enter the portal.
+     * Legacy seed accounts with no application row may sign in only if barangay_id is set.
+     *
+     * @return string|null Denial message, or null when login is allowed
+     */
+    public function loginDenialReason(int $userId, string $email, int $barangayId = 0): ?string
+    {
+        $email = trim($email);
+        $app = null;
+
+        if ($userId > 0) {
+            $stmt = $this->pdo->prepare("
+                SELECT id, status FROM bhw_applications
+                WHERE user_id = ?
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([$userId]);
+            $app = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        }
+
+        if (!$app && $email !== '') {
+            require_once dirname(__DIR__) . '/includes/contact_validation.php';
+            $stmt = $this->pdo->prepare("
+                SELECT id, status FROM bhw_applications
+                WHERE LOWER(email) = LOWER(?)
+                ORDER BY id DESC
+                LIMIT 1
+            ");
+            $stmt->execute([mc_normalize_email($email)]);
+            $app = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        }
+
+        if ($app) {
+            $status = (string) ($app['status'] ?? '');
+            if (in_array($status, [self::STATUS_ACTIVE, self::STATUS_APPROVED], true)) {
+                return null;
+            }
+            if ($status === self::STATUS_PENDING) {
+                return 'Your BHW application is pending Super Administrator approval. You cannot sign in yet.';
+            }
+            if ($status === self::STATUS_REJECTED) {
+                return 'Your BHW application was rejected. Contact your administrator.';
+            }
+            if (in_array($status, [self::STATUS_INVITED, self::STATUS_ONBOARDING, self::STATUS_REQUIRES_DOCUMENTS], true)) {
+                return 'Complete your BHW invitation and document submission before signing in.';
+            }
+
+            return 'Your BHW account is not approved for portal access yet.';
+        }
+
+        // No application row: allow only legacy active users that already have a barangay assignment.
+        if ($barangayId > 0) {
+            return null;
+        }
+
+        return 'BHW accounts must be created through an Admin invitation and Super Administrator approval.';
     }
 
     /**
