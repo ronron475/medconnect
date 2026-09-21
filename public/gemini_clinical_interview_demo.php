@@ -39,7 +39,8 @@ $assetBase = ASSET_BASE;
       <p class="gci-kicker">DEMO / DEVELOPMENT ONLY · not a production clinical decision tool</p>
       <h1 class="gci-title">Gemini Clinical Interview Demo</h1>
       <p class="gci-sub">
-        Experiment: <strong>Gemini</strong> asks dynamic follow-ups and extracts structured facts.
+        Experiment: <strong>Gemini</strong> first checks that the opening text is a genuine health concern (any language),
+        then asks dynamic follow-ups and extracts structured facts.
         Final acuity is always decided by the existing <strong>ClinicalTriageEngine</strong> (WHO IITT + clinical rules).
         Gemini must not set EMERGENCY / URGENT / NON-URGENT.
       </p>

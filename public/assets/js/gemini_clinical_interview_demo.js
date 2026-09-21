@@ -101,8 +101,12 @@
 
   function applyPayload(payload) {
     if (!payload) return;
-    interviewContext = payload.interview_context || interviewContext;
-    setStatus(payload.status || 'idle', payload.status_label || payload.status);
+    if (payload.needs_health_concern || payload.rejected) {
+      interviewContext = null;
+    } else {
+      interviewContext = payload.interview_context || interviewContext;
+    }
+    setStatus(payload.status || 'idle', payload.status_label || payload.message || payload.status);
     renderConversation(payload.conversation || []);
     renderFacts(payload.clinical_facts, payload.missing_information);
     renderTriage(payload.final_triage);
@@ -118,6 +122,9 @@
     }
     if (payload.status === 'final_triage' && complaintEl) {
       complaintEl.readOnly = true;
+    }
+    if ((payload.needs_health_concern || payload.rejected) && complaintEl) {
+      complaintEl.readOnly = false;
     }
   }
 
@@ -164,11 +171,18 @@
         var payload = unwrap(res.json);
         if (!res.ok || (res.json && res.json.success === false)) {
           var msg = (res.json && (res.json.message || (res.json.error && res.json.error.message))) || 'Start failed';
-          if (payload && payload.demo) {
-            applyPayload(payload.demo || payload);
+          var demoPayload = null;
+          if (payload && payload.demo) demoPayload = payload.demo;
+          else if (res.json && res.json.demo) demoPayload = res.json.demo;
+          else if (payload && payload.needs_health_concern) demoPayload = payload;
+          if (demoPayload) {
+            applyPayload(demoPayload);
           }
-          setStatus('error', msg);
-          renderDebug(payload || res.json);
+          setStatus(
+            (demoPayload && demoPayload.status) || 'error',
+            (demoPayload && (demoPayload.status_label || demoPayload.message)) || msg
+          );
+          renderDebug(demoPayload || payload || res.json);
           return;
         }
         applyPayload(payload);

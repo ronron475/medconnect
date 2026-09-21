@@ -180,9 +180,9 @@
   color: #047857;
 }
 
-.gci-status[data-status="error"] {
-  background: #fef2f2;
-  color: #b91c1c;
+.gci-status[data-status="needs_health_concern"] {
+  background: #fff7ed;
+  color: #c2410c;
 }
 
 .gci-conversation {

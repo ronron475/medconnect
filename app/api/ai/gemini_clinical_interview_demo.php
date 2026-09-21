@@ -107,9 +107,14 @@ if ($action === 'answer') {
 }
 
 if (!empty($result['error'])) {
+    $code = !empty($result['needs_health_concern']) || !empty($result['rejected'])
+        ? 'health_gate_rejected'
+        : 'gemini_demo_error';
     Api::error((string) ($result['message'] ?? 'Demo interview error'), 422, [
-        'code' => 'gemini_demo_error',
+        'code' => $code,
         'demo' => $result,
+        'health_classification' => $result['health_classification'] ?? null,
+        'needs_health_concern' => !empty($result['needs_health_concern']),
     ]);
 }
 
