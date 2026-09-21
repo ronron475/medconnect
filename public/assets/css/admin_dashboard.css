@@ -71,24 +71,35 @@ body.admin-body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Logo */
+/* Logo — brand mark + medConnect only (no role subtitle) */
 .adm-logo {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 22px 20px 18px;
+  gap: 12px;
+  padding: 20px 18px 18px;
   text-decoration: none;
   border-bottom: 1px solid rgba(255,255,255,0.07);
   background: rgba(0,0,0,0.18);
   flex-shrink: 0;
 }
 
+.adm-logo__img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+  border-radius: 50%;
+  background: #fff;
+}
+
 .adm-logo-text {
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 800;
   color: #fff;
-  letter-spacing: -0.3px;
-  line-height: 1.15;
+  letter-spacing: -0.35px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .adm-logo-text span {
@@ -96,14 +107,7 @@ body.admin-body {
 }
 
 .adm-logo-text em {
-  display: block;
-  font-style: normal;
-  font-size: 9.5px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.38);
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  margin-top: 1px;
+  display: none;
 }
 
 /* Nav */
@@ -326,9 +330,11 @@ body.admin-body {
     padding: 14px 10px;
   }
 
+  body.mc-sidebar-mini .adm-logo__img,
   body.mc-sidebar-mini .adm-logo img {
     margin-right: 0 !important;
-    height: 34px !important;
+    width: 36px !important;
+    height: 36px !important;
   }
 
   body.mc-sidebar-mini .adm-logo-text {

@@ -84,13 +84,13 @@ textarea,
 /* ── Admin + SuperAdmin dashboard ── */
 body.admin-body .adm-logo-text,
 body.superadmin-body .adm-logo-text {
-  font-size: 1rem;
-  line-height: 1.15;
+  font-size: 1.125rem;
+  line-height: 1;
 }
 
 body.admin-body .adm-logo-text em,
 body.superadmin-body .adm-logo-text em {
-  font-size: 0.6875rem;
+  display: none;
 }
 
 body.admin-body .adm-nav-item,
