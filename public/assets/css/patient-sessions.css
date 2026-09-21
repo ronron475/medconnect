@@ -28,9 +28,9 @@
   text-decoration: underline;
 }
 
-/* Two-column layout */
+/* Layout */
 .psess-layout {
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--pt-space-lg, 16px);
   margin: 0;
 }
