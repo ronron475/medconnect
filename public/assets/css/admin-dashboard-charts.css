@@ -267,16 +267,27 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
   gap: 16px;
 }
 
+/* Overview is tiles, not a chart — never inherit chart-card min-height */
+.adm-chart-card.adm-overview-card {
+  min-height: 0 !important;
+  height: auto !important;
+  justify-content: flex-start !important;
+}
+
 .adm-overview-card .adm-chart-card__head {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .adm-overview-tiles {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  flex: 1;
-  align-content: center;
+  flex: none;
+  align-content: start;
+  align-self: stretch;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
 }
 
 .adm-overview-tile {
@@ -288,7 +299,7 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
   gap: 6px;
   padding: 16px 10px;
   border-radius: 12px;
-  min-height: 132px;
+  min-height: 0;
 }
 
 .adm-overview-tile__icon {
@@ -470,32 +481,53 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
   }
 }
 
+/* Desktop only: center tiles when grid stretches card to match chart neighbors */
+@media (min-width: 901px) {
+  .adm-overview-tiles {
+    flex: 1 1 auto;
+    align-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .adm-overview-grid {
-    gap: 10px;
+    gap: 10px !important;
   }
 
+  .adm-chart-card.adm-overview-card,
   .adm-overview-card {
     min-height: 0 !important;
     height: auto !important;
+    max-height: none !important;
+    justify-content: flex-start !important;
+    padding: 12px !important;
+    gap: 0 !important;
   }
 
   .adm-overview-card .adm-chart-card__head {
-    margin-bottom: 8px;
+    margin-bottom: 8px !important;
+    flex-shrink: 0;
   }
 
-  /* Do not stretch/center tiles to chart-card height on phones */
   .adm-overview-tiles {
-    flex: none;
-    align-content: start;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    flex: 0 0 auto !important;
+    align-content: start !important;
+    align-items: stretch !important;
+    justify-content: start !important;
     min-height: 0 !important;
-    gap: 8px;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 8px !important;
   }
 
   .adm-overview-tile {
-    min-height: 0;
-    padding: 10px 8px;
-    gap: 4px;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 10px 8px !important;
+    gap: 4px !important;
   }
 
   .adm-overview-tile__icon {
@@ -520,6 +552,7 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
     min-height: 0 !important;
     height: auto !important;
     padding: 12px !important;
+    justify-content: flex-start;
   }
 
   .adm-chart-card__head {
@@ -534,7 +567,7 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
 
 @media (max-width: 640px) {
   .adm-overview-tiles {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr !important;
   }
 
   .adm-sys-status {

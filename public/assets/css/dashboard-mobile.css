@@ -585,16 +585,21 @@
   }
 
   body.admin-body .adm-overview-card,
-  body.superadmin-body .adm-overview-card {
+  body.superadmin-body .adm-overview-card,
+  body.admin-body .adm-chart-card.adm-overview-card,
+  body.superadmin-body .adm-chart-card.adm-overview-card {
     min-height: 0 !important;
     height: auto !important;
+    justify-content: flex-start !important;
   }
 
   body.admin-body .adm-overview-tiles,
   body.superadmin-body .adm-overview-tiles {
-    flex: none !important;
+    flex: 0 0 auto !important;
     align-content: start !important;
     min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
     gap: 8px !important;
   }
 

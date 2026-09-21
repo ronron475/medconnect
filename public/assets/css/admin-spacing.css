@@ -341,15 +341,28 @@ body.admin-body .adm-chart-canvas-wrap--trend {
   height: clamp(220px, 28vh, 300px) !important;
 }
 
-body.admin-body .adm-overview-card {
+body.admin-body .adm-overview-card,
+body.superadmin-body .adm-overview-card,
+body.admin-body .adm-chart-card.adm-overview-card,
+body.superadmin-body .adm-chart-card.adm-overview-card {
   min-height: 0 !important;
   height: auto !important;
+  justify-content: flex-start !important;
 }
 
-body.admin-body .adm-overview-tiles {
-  min-height: 0;
-  flex: 1;
-  align-content: center;
+body.admin-body .adm-overview-tiles,
+body.superadmin-body .adm-overview-tiles {
+  min-height: 0 !important;
+  flex: none;
+  align-content: start;
+}
+
+@media (min-width: 901px) {
+  body.admin-body .adm-overview-tiles,
+  body.superadmin-body .adm-overview-tiles {
+    flex: 1 1 auto;
+    align-content: center;
+  }
 }
 
 body.admin-body .adm-sys-status {
@@ -497,30 +510,44 @@ body.admin-body .pagination {
     padding: 12px !important;
   }
 
-  body.admin-body .adm-overview-card {
+  body.admin-body .adm-overview-card,
+  body.superadmin-body .adm-overview-card,
+  body.admin-body .adm-chart-card.adm-overview-card,
+  body.superadmin-body .adm-chart-card.adm-overview-card {
     min-height: 0 !important;
     height: auto !important;
+    max-height: none !important;
+    justify-content: flex-start !important;
+    padding: 12px !important;
   }
 
-  body.admin-body .adm-overview-tiles {
-    flex: none !important;
+  body.admin-body .adm-overview-tiles,
+  body.superadmin-body .adm-overview-tiles {
+    flex: 0 0 auto !important;
     align-content: start !important;
+    align-items: stretch !important;
     min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
     gap: 8px !important;
   }
 
-  body.admin-body .adm-overview-tile {
+  body.admin-body .adm-overview-tile,
+  body.superadmin-body .adm-overview-tile {
     min-height: 0 !important;
     padding: 10px 8px !important;
     gap: 4px;
   }
 
-  body.admin-body .adm-overview-card .adm-chart-card__head {
+  body.admin-body .adm-overview-card .adm-chart-card__head,
+  body.superadmin-body .adm-overview-card .adm-chart-card__head {
     margin-bottom: 8px !important;
   }
 
   body.admin-body .adm-charts-grid,
-  body.admin-body .adm-overview-grid {
+  body.admin-body .adm-overview-grid,
+  body.superadmin-body .adm-charts-grid,
+  body.superadmin-body .adm-overview-grid {
     gap: 10px !important;
   }
 

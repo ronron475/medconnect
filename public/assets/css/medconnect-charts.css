@@ -24,6 +24,13 @@
   min-height: 260px;
 }
 
+/* User Overview uses metric tiles — do not force chart canvas height */
+.adm-chart-card.adm-overview-card {
+  min-height: 0;
+  height: auto;
+  justify-content: flex-start;
+}
+
 .mc-chart-card__head,
 .adm-chart-card__head {
   display: flex;
