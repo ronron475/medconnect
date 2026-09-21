@@ -535,9 +535,9 @@ body.provider-body .provider-page-body > * {
   body.provider-body .provider-page-body,
   body.provider-body .provider-page-body:has(.mr-page),
   body.provider-body .provider-page-body:has(.ps-page) {
-    padding: calc(var(--mc-header-offset, 64px) + var(--pv-space-sm))
-             var(--pv-space-md)
-             var(--pv-space-md);
+    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px))
+             var(--mob-portal-pad, 14px)
+             var(--mob-portal-pad, 14px);
   }
 
   body.provider-body .provider-page-body .prov-dash-grid,
@@ -558,8 +558,8 @@ body.provider-body .provider-page-body > * {
 
 @media (max-width: 425px) {
   body.provider-body .provider-page-body {
-    padding-left: var(--pv-space-sm);
-    padding-right: var(--pv-space-sm);
+    padding-left: var(--mob-portal-pad, 12px);
+    padding-right: var(--mob-portal-pad, 12px);
   }
 
   body.provider-body .provider-page-body .prov-dash-metrics--unified,
@@ -570,7 +570,7 @@ body.provider-body .provider-page-body > * {
 
 @media (max-width: 320px) {
   body.provider-body .provider-page-body {
-    padding-left: var(--pv-space-sm);
-    padding-right: var(--pv-space-sm);
+    padding-left: var(--mob-portal-pad, 12px);
+    padding-right: var(--mob-portal-pad, 12px);
   }
 }

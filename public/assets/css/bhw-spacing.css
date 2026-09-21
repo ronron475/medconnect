@@ -488,11 +488,11 @@ body.bhw-body .mc-chart-filters {
 /* ── Mobile ── */
 @media (max-width: 768px) {
   body.bhw-body .portal-page-body {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
-    padding-top: calc(var(--mc-header-offset, 64px) + 6px) !important;
-    padding-bottom: 12px !important;
-    gap: 10px !important;
+    padding-left: var(--mob-portal-pad, 14px) !important;
+    padding-right: var(--mob-portal-pad, 14px) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-bottom: calc(var(--mob-portal-pad, 14px) + env(safe-area-inset-bottom, 0px)) !important;
+    gap: var(--mob-portal-gap, 10px) !important;
   }
 
   body.bhw-body .bhw-page-intro,
@@ -523,7 +523,7 @@ body.bhw-body .mc-chart-filters {
   }
 
   body.bhw-body .bhw-dash {
-    gap: 8px !important;
+    gap: var(--mob-portal-gap, 10px) !important;
   }
 
   body.bhw-body .bhw-dash .mc-chart-canvas-wrap,
@@ -541,8 +541,8 @@ body.bhw-body .mc-chart-filters {
 
 @media (max-width: 480px) {
   body.bhw-body .portal-page-body {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    gap: 8px !important;
+    padding-left: var(--mob-portal-pad, 12px) !important;
+    padding-right: var(--mob-portal-pad, 12px) !important;
+    gap: var(--mob-portal-gap, 8px) !important;
   }
 }

@@ -510,11 +510,15 @@ body.patient-portal .portal-page-body {
 
     body.patient-portal .portal-page-body {
 
-        padding-left: 16px !important;
+        padding-left: var(--mob-portal-pad, 14px) !important;
 
-        padding-right: 16px !important;
+        padding-right: var(--mob-portal-pad, 14px) !important;
 
-        padding-top: calc(var(--mc-header-offset, 72px) + 12px) !important;
+        padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+
+        padding-bottom: calc(var(--mob-portal-pad, 14px) + env(safe-area-inset-bottom, 0px)) !important;
+
+        gap: var(--mob-portal-gap, 10px) !important;
 
     }
 

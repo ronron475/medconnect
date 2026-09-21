@@ -18,11 +18,11 @@
   body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding-left: 16px !important;
-    padding-right: 16px !important;
-    padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 10px) !important;
-    padding-bottom: 22px !important;
+    gap: var(--mob-portal-gap, 10px);
+    padding-left: var(--mob-portal-pad, 14px) !important;
+    padding-right: var(--mob-portal-pad, 14px) !important;
+    padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-bottom: calc(var(--mob-portal-pad, 14px) + env(safe-area-inset-bottom, 0px)) !important;
     overflow-x: hidden;
     width: 100%;
     min-width: 0;
@@ -308,9 +308,9 @@
 
 @media (max-width: 480px) {
   body.bhw-body .portal-page-body:not(:has(#bhwMetricsRow)) {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
-    gap: 12px;
+    padding-left: var(--mob-portal-pad, 12px) !important;
+    padding-right: var(--mob-portal-pad, 12px) !important;
+    gap: var(--mob-portal-gap, 8px);
   }
 
   body.bhw-body .bhw-profile-metrics .col-sm-6 {

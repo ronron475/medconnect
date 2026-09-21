@@ -82,13 +82,20 @@ html[data-theme-resolved='dark'] body.provider-body .sched-page-header.provider-
 }
 
 @media (max-width: 768px) {
+  body.provider-body .provider-page-body {
+    padding-left: var(--mob-portal-pad, 14px) !important;
+    padding-right: var(--mob-portal-pad, 14px) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    gap: var(--mob-portal-gap, 10px) !important;
+  }
+
   body.provider-body .provider-page-intro,
   body.provider-body .greeting-banner.provider-page-intro,
   body.provider-body .queue-hero.provider-page-intro,
   body.provider-body .fu-hero.provider-page-intro,
   body.provider-body .pch-hero.provider-page-intro,
   body.provider-body .sched-page-header.provider-page-intro {
-    margin-bottom: 12px;
-    gap: 10px;
+    margin-bottom: 8px;
+    gap: 8px;
   }
 }

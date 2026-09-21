@@ -5,11 +5,11 @@
 
 @media (max-width: 768px) {
   body.admin-body {
-    --mob-adm-pad: 16px;
-    --mob-adm-gap: 20px;
+    --mob-adm-pad: 14px;
+    --mob-adm-gap: 10px;
     --mob-adm-radius: 12px;
-    --mob-adm-card-gap: 12px;
-    --mob-adm-section-gap: 28px;
+    --mob-adm-card-gap: 8px;
+    --mob-adm-section-gap: 10px;
   }
 
   /* ── Header grid (overrides portal_shell flex-wrap) ── */
@@ -152,13 +152,13 @@
 
   /* ── Page body ── */
   body.admin-body .portal-page-body {
-    padding-left: var(--mob-adm-pad) !important;
-    padding-right: var(--mob-adm-pad) !important;
-    padding-top: calc(var(--mc-header-offset, 64px) + 10px) !important;
-    padding-bottom: calc(var(--mob-adm-pad) * 1.5) !important;
+    padding-left: var(--mob-adm-pad, var(--mob-portal-pad, 14px)) !important;
+    padding-right: var(--mob-adm-pad, var(--mob-portal-pad, 14px)) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-bottom: calc(var(--mob-adm-pad, var(--mob-portal-pad, 14px)) + env(safe-area-inset-bottom, 0px)) !important;
     display: flex;
     flex-direction: column;
-    gap: var(--mob-adm-gap);
+    gap: var(--mob-adm-gap, var(--mob-portal-gap, 10px));
     overflow-x: visible;
     overflow-y: visible;
   }
@@ -184,30 +184,30 @@
   body.admin-body [data-live-dashboard] > section {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
   }
 
   body.admin-body [data-live-dashboard] .adm-charts-section {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
   }
 
   /* ── Welcome banner ── */
   body.admin-body .adm-banner {
-    padding: 18px 16px;
+    padding: 12px 14px;
     border-radius: var(--mob-adm-radius);
     margin: 0;
   }
 
   body.admin-body .adm-banner-eyebrow {
     font-size: 10px;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   body.admin-body .adm-banner-title {
-    font-size: clamp(1.1rem, 4.5vw, 1.35rem);
-    margin-bottom: 6px;
+    font-size: clamp(1.05rem, 4.5vw, 1.25rem);
+    margin-bottom: 4px;
   }
 
   body.admin-body .adm-banner-sub {
@@ -240,12 +240,12 @@
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    gap: 12px;
+    gap: 8px;
     margin-bottom: 0;
   }
 
   body.admin-body .adm-charts-section {
-    gap: 16px;
+    gap: var(--mob-adm-section-gap, 10px);
   }
 
   body.admin-body .adm-charts-filters {
@@ -261,7 +261,7 @@
 
   body.admin-body .adm-charts-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: var(--mob-adm-gap, 10px);
   }
 
   /* ── Metrics + Live Operations notification strip ── */
@@ -271,7 +271,7 @@
   }
 
   body.admin-body .adm-metric {
-    padding: 16px 14px;
+    padding: 10px 12px;
   }
 
   body.admin-body .mc-notif-widgets--dashboard {
@@ -282,8 +282,8 @@
   }
 
   body.admin-body .mc-notif-widget {
-    min-height: 84px;
-    padding: 14px 14px;
+    min-height: 72px;
+    padding: 10px 12px;
     border-radius: var(--mob-adm-radius);
     box-sizing: border-box;
   }
@@ -482,9 +482,9 @@
 
 @media (max-width: 480px) {
   body.admin-body {
-    --mob-adm-pad: 14px;
-    --mob-adm-card-gap: 12px;
-    --mob-adm-section-gap: 26px;
+    --mob-adm-pad: 12px;
+    --mob-adm-card-gap: 8px;
+    --mob-adm-section-gap: 8px;
   }
 
   body.admin-body .adm-metrics,
@@ -494,8 +494,8 @@
   }
 
   body.admin-body .mc-notif-widget {
-    min-height: 80px;
-    padding: 13px 12px;
+    min-height: 68px;
+    padding: 10px 12px;
   }
 
   body.admin-body .adm-metric-value,

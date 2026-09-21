@@ -6,22 +6,22 @@
 
 @media (max-width: 768px) {
   body.bhw-body {
-    --mob-dash-pad: 16px;
-    --mob-dash-gap: 14px;
+    --mob-dash-pad: 14px;
+    --mob-dash-gap: 10px;
     --mob-dash-gap-sm: 8px;
     --mob-dash-card-pad: 12px;
     --mob-dash-strip-pad: 10px;
     --mob-dash-radius: 12px;
-    --mob-dash-stat-min-h: 84px;
+    --mob-dash-stat-min-h: 72px;
     --mob-dash-shadow: 0 1px 6px rgba(1, 42, 74, 0.05);
-    /* Readable dashboard typography (slightly above prior Admin-aligned tokens) */
+    /* Readable dashboard typography */
     --mob-bhw-title: 1.05rem;
     --mob-bhw-section: 0.9375rem;
     --mob-bhw-body: 0.875rem;
     --mob-bhw-label: 0.75rem;
     --mob-bhw-sub: 0.8125rem;
     --mob-bhw-btn: 0.875rem;
-    --mob-bhw-stat: 1.65rem;
+    --mob-bhw-stat: 1.5rem;
   }
 
   /* ── Mobile header (Admin-style grid + readable wrap) ── */
@@ -151,14 +151,14 @@
 
   /* ── Formal dashboard page shell ── */
   body.bhw-body .portal-page-body:has(.bhw-dash) {
-    padding-left: var(--mob-dash-pad) !important;
-    padding-right: var(--mob-dash-pad) !important;
-    padding-top: calc(var(--mc-header-offset, 64px) + 10px) !important;
-    padding-bottom: calc(var(--mob-dash-pad) * 1.35) !important;
+    padding-left: var(--mob-portal-pad, var(--mob-dash-pad, 14px)) !important;
+    padding-right: var(--mob-portal-pad, var(--mob-dash-pad, 14px)) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-bottom: calc(var(--mob-portal-pad, var(--mob-dash-pad, 14px)) + env(safe-area-inset-bottom, 0px)) !important;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    gap: var(--mob-dash-gap);
+    gap: var(--mob-portal-gap, var(--mob-dash-gap, 10px));
   }
 
   body.bhw-body .bhw-dash {
@@ -361,23 +361,23 @@
 /* Narrow phones — keep type readable; only trim spacing */
 @media (max-width: 480px) {
   body.bhw-body {
-    --mob-dash-pad: 14px;
-    --mob-dash-gap: 12px;
-    --mob-bhw-stat: 1.55rem;
-    --mob-dash-stat-min-h: 80px;
+    --mob-dash-pad: 12px;
+    --mob-dash-gap: 8px;
+    --mob-bhw-stat: 1.45rem;
+    --mob-dash-stat-min-h: 68px;
   }
 
   body.bhw-body .bhw-dash-stats {
-    gap: 10px;
-    padding: 10px;
+    gap: 8px;
+    padding: 8px;
   }
 
   body.bhw-body .bhw-dash-stat {
-    padding: 14px 12px;
+    padding: 12px 10px;
   }
 
   body.bhw-body .bhw-dash-stat__val {
-    font-size: clamp(1.3rem, 5.5vw, 1.4rem);
+    font-size: clamp(1.25rem, 5.5vw, 1.35rem);
     margin-top: 0;
     text-align: left;
   }

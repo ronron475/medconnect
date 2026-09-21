@@ -47,6 +47,20 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-lead.patien
 }
 
 @media (max-width: 768px) {
+  body.patient-portal .portal-page-body {
+    padding-left: var(--mob-portal-pad, 14px) !important;
+    padding-right: var(--mob-portal-pad, 14px) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-bottom: calc(var(--mob-portal-pad, 14px) + env(safe-area-inset-bottom, 0px)) !important;
+    gap: var(--mob-portal-gap, 10px) !important;
+  }
+
+  /* Keep space for floating actions / remedy on dashboard */
+  body.patient-portal:has(#view-dashboard) .portal-page-body,
+  body.patient-portal:has(.pdash-page) .portal-page-body {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
   body.patient-portal .patient-page-intro,
   body.patient-portal .phs-hero.patient-page-intro,
   body.patient-portal .pmh-detail__head.patient-page-intro {
