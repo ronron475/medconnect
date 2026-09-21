@@ -281,11 +281,8 @@ body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value {
 }
 
 body.provider-body .prov-dash-welcome--compact {
-    padding: 8px 12px;
-}
-
-body.provider-body .prov-dash-welcome--compact .prov-dash-welcome__eyebrow {
-    font-size: 12px;
+    padding: 10px 14px;
+    align-items: center;
 }
 
 body.provider-body .prov-chart {
