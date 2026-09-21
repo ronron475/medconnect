@@ -64,8 +64,6 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
 
 <div data-live-dashboard="admin">
 
-<?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
-
 <!-- Platform snapshot -->
 <section aria-label="Platform metrics">
     <div class="adm-section-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;">
@@ -107,6 +105,8 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
         </div>
     </div>
 </section>
+
+<?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
 
 <!-- Main content -->
 <div class="adm-grid">
