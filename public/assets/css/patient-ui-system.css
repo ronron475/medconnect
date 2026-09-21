@@ -108,6 +108,11 @@ body.patient-portal .patient-page .mc-card {
   padding: var(--pt-card-pad);
 }
 
+/* Visit history owns its own internal padding (filters + table) */
+body.patient-portal .patient-page .mc-card.patient-triage-history {
+  padding: 0;
+}
+
 body.patient-portal .patient-page .text-h3.mb-md {
   margin-bottom: var(--pt-space-md);
 }

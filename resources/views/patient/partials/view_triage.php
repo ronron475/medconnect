@@ -463,7 +463,7 @@ mc_render_loader_panel([
 ]);
 ?>
 
-<h3 class="text-h3 mb-md patient-triage-history-title">Visit History</h3>
+<h3 class="text-h3 patient-triage-history-title">Visit History</h3>
 <p class="text-muted patient-triage-history-lead">
   Submitted health concerns with the original AI assessment, the doctor’s final assessment, and the official decision.
   A visit is confirmed only when status shows <strong>Visit booked</strong>.
