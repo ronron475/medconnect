@@ -45,7 +45,7 @@ $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'prof
 <aside class="sidebar">
 
   <a href="<?= ASSET_BASE ?>/views/<?= $role_path ?>/dashboard.php" class="sb-logo">
-    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" class="sb-logo-img">
+    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" class="sb-logo-img" width="40" height="40">
   </a>
 
   <nav class="sb-nav" aria-label="Patient portal navigation">

@@ -84,8 +84,8 @@ body.admin-body {
 }
 
 .adm-logo__img {
-  width: 40px;
-  height: 40px;
+  width: var(--mc-portal-logo-size, 40px);
+  height: var(--mc-portal-logo-size, 40px);
   object-fit: contain;
   flex-shrink: 0;
   display: block;
@@ -333,8 +333,8 @@ body.admin-body {
   body.mc-sidebar-mini .adm-logo__img,
   body.mc-sidebar-mini .adm-logo img {
     margin-right: 0 !important;
-    width: 36px !important;
-    height: 36px !important;
+    width: var(--mc-portal-logo-size-mini, 36px) !important;
+    height: var(--mc-portal-logo-size-mini, 36px) !important;
   }
 
   body.mc-sidebar-mini .adm-logo-text {

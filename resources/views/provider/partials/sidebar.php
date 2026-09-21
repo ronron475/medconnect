@@ -56,7 +56,7 @@ function provider_nav_is_active(string $file, string $current_page, string $curr
 <aside class="sb-aqua sidebar">
 
   <a href="<?= htmlspecialchars($provider_base, ENT_QUOTES) ?>/dashboard.php" class="sba-logo">
-    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" class="sba-logo-img">
+    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="medConnect" class="sba-logo-img" width="40" height="40">
   </a>
 
   <nav class="sba-nav">

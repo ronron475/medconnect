@@ -51,7 +51,11 @@ body.patient-portal .sb-logo {
   align-items: center;
   justify-content: center;
   margin: 0;
-  padding: 14px 20px 18px;
+  padding: 0 16px;
+  height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  min-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  max-height: calc(var(--portal-header-h, 68px) + var(--mc-safe-top, 0px));
+  box-sizing: border-box;
   background: transparent;
   border-bottom: 1px solid var(--mc-border-thin);
   flex-shrink: 0;
@@ -62,14 +66,17 @@ body.patient-portal .sb-logo:hover {
 }
 
 body.patient-portal .sb-logo-img {
-  height: 68px;
-  width: auto;
-  max-width: 100%;
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   padding: 0;
-  background: transparent;
-  border-radius: 0;
+  background: #fff;
+  border-radius: 50%;
   box-shadow: none;
   object-fit: contain;
+  display: block;
+  flex-shrink: 0;
 }
 
 body.patient-portal .sb-nav {
@@ -88,11 +95,14 @@ body.patient-portal .sb-nav {
   }
 
   body.patient-portal.mc-sidebar-mini .sb-logo {
-    padding: 12px 10px 12px;
+    padding: 0 8px;
   }
 
   body.patient-portal.mc-sidebar-mini .sb-logo-img {
-    height: 34px;
+    width: 36px;
+    height: 36px;
+    max-width: 36px;
+    max-height: 36px;
   }
 
   body.patient-portal.mc-sidebar-mini .sb-nav {
