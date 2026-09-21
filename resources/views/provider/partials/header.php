@@ -13,7 +13,6 @@
     $fullscreen_btn_class = 'pd-notif-btn';
     require_once VIEWS_PATH . '/partials/fullscreen_toggle.php';
     ?>
-    <div class="pd-header-clock" id="pdClock"></div>
     <?php
     $bell_class = 'pd-notif-btn mc-notif-btn';
     require_once VIEWS_PATH . '/partials/notification_bell.php';
