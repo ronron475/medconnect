@@ -981,6 +981,14 @@ html[data-theme-resolved='dark'] body.superadmin-body .bhw-pending-badge {
   color: #d4d4d8 !important;
 }
 
+/* Maker-Checker "Draft" pill — keep readable contrast on dark pending rows */
+html[data-theme-resolved='dark'] body.admin-body .adm-pending-badge,
+html[data-theme-resolved='dark'] body.superadmin-body .adm-pending-badge {
+  background: rgba(45, 212, 191, 0.18) !important;
+  border: 1px solid rgba(45, 212, 191, 0.35) !important;
+  color: #5eead4 !important;
+}
+
 html[data-theme-resolved='dark'] body.admin-body .staff-app-status--pending,
 html[data-theme-resolved='dark'] body.superadmin-body .staff-app-status--pending,
 html[data-theme-resolved='dark'] body.admin-body .bhw-status--pending,
