@@ -373,13 +373,17 @@ body.provider-body .prov-dash-welcome--compact .prov-dash-badge {
 
 body.provider-body .prov-dash-metrics--unified {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: var(--pt-dash-space-sm);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--pt-dash-space-sm, 8px);
+  width: 100%;
 }
 
 body.provider-body .prov-dash-metrics--unified > .prov-dash-stat,
 body.provider-body .prov-dash-metrics--unified > .mc-notif-widget {
   min-height: 64px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 body.provider-body .prov-dash-stat {
@@ -522,6 +526,12 @@ body.provider-body .mc-notif-recent-panel__body {
 @media (max-width: 900px) {
   body.provider-body .prov-dash-metrics--unified {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  body.provider-body .prov-dash-metrics--unified {
+    grid-template-columns: 1fr;
   }
 }
 

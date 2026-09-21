@@ -243,8 +243,9 @@ html[data-theme-resolved='dark'] body.provider-body .pd-header-user {
 /* ── Provider dashboard: compact layout (wins over patient-dashboard-mock.css) ── */
 body.provider-body .prov-dash-metrics--unified {
     display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
 }
 
 body.provider-body .prov-dash-metrics--unified > .prov-dash-stat,
@@ -252,6 +253,9 @@ body.provider-body .prov-dash-metrics--unified > .mc-notif-widget,
 body.provider-body .prov-dash-stat {
     min-height: 64px;
     padding: 8px 10px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 body.provider-body .prov-dash-stat__icon {
@@ -333,5 +337,11 @@ body.provider-body .mc-notif-list--feed .mc-notif-item {
 @media (max-width: 900px) {
     body.provider-body .prov-dash-metrics--unified {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 560px) {
+    body.provider-body .prov-dash-metrics--unified {
+        grid-template-columns: 1fr;
     }
 }
