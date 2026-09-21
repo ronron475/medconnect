@@ -304,12 +304,13 @@
   margin-top: 4px;
 }
 
-/* Quick links */
+/* Quick links — same 4-column track as metrics */
 .pdash-quick {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: var(--pt-card-gap, 12px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--pt-stat-gap, 16px);
   margin-bottom: 0;
+  padding: 0;
 }
 
 .pdash-quick__link {
