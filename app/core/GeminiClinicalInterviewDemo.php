@@ -1018,6 +1018,24 @@ PROMPT;
                 $model = $envModel;
             }
         }
+
+        if (self::shouldUseRailway()) {
+            try {
+                return self::generateViaRailway($payload, $model);
+            } catch (RuntimeException $e) {
+                if (self::apiKey() === '') {
+                    // Soft-fail thinkingConfig 400 so complete() can retry without it.
+                    if (str_contains($e->getMessage(), 'Gemini HTTP 400')
+                        && !empty($payload['generationConfig']['thinkingConfig'])
+                    ) {
+                        return '';
+                    }
+                    throw $e;
+                }
+                // Fall through to direct Gemini when a local key exists.
+            }
+        }
+
         $key = self::apiKey();
         if ($key === '') {
             throw new RuntimeException('Gemini API key missing');
@@ -1036,6 +1054,57 @@ PROMPT;
             }
             throw $e;
         }
+
+        return self::extractCandidateText($data);
+    }
+
+    /**
+     * Production Hostinger should call Railway so Gemini keys stay on the Python service.
+     */
+    private static function shouldUseRailway(): bool
+    {
+        if (!defined('AI_SERVICE_ENABLED') || !AI_SERVICE_ENABLED) {
+            return false;
+        }
+        if (!defined('AI_SERVICE_BASE_URL') || !is_string(AI_SERVICE_BASE_URL) || AI_SERVICE_BASE_URL === '') {
+            return false;
+        }
+        $url = strtolower(AI_SERVICE_BASE_URL);
+        if (str_contains($url, 'railway.app')) {
+            return true;
+        }
+
+        return function_exists('medconnect_is_production_host') && medconnect_is_production_host();
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private static function generateViaRailway(array $payload, string $model): string
+    {
+        if (!class_exists('AiServiceClient')) {
+            throw new RuntimeException('ai client missing');
+        }
+        $data = AiServiceClient::geminiGenerateContent($payload, $model, 25);
+        if (!is_array($data)) {
+            throw new RuntimeException('empty railway gemini reply');
+        }
+        $text = trim((string) ($data['text'] ?? ''));
+        if ($text === '' && isset($data['response']) && is_array($data['response'])) {
+            $text = self::extractCandidateText($data['response']);
+        }
+        if ($text === '') {
+            throw new RuntimeException('empty Gemini response');
+        }
+
+        return $text;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function extractCandidateText(array $data): string
+    {
         $parts = $data['candidates'][0]['content']['parts'] ?? [];
         $out = '';
         if (is_array($parts)) {
@@ -1205,7 +1274,7 @@ PROMPT;
             return false;
         }
 
-        return self::apiKey() !== '';
+        return self::apiKey() !== '' || self::shouldUseRailway();
     }
 
     private static function apiKey(): string
