@@ -335,9 +335,23 @@ body.admin-body .mc-chart-canvas-wrap {
 }
 
 body.admin-body .adm-chart-canvas-wrap--roles,
-body.admin-body .mc-chart-canvas-wrap--roles {
-  min-height: 240px !important;
-  height: clamp(240px, 28vh, 320px) !important;
+body.admin-body .mc-chart-canvas-wrap--roles,
+body.admin-body .adm-chart-canvas-wrap--trend {
+  min-height: 220px !important;
+  height: clamp(220px, 28vh, 300px) !important;
+}
+
+body.admin-body .adm-overview-card {
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+body.admin-body .adm-overview-tiles {
+  min-height: 160px;
+}
+
+body.admin-body .adm-sys-status {
+  min-height: 200px;
 }
 
 body.admin-body .mc-chart-canvas-wrap--tall {

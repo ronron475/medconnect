@@ -23,7 +23,7 @@
     var el = root();
     if (!el) return '';
     var base = document.body.dataset.assetBase || '';
-    var days = el.getAttribute('data-days') || '30';
+    var days = el.getAttribute('data-days') || '180';
     return base + '/app/api/admin/dashboard_charts.php?days=' + encodeURIComponent(days);
   }
 
@@ -34,7 +34,7 @@
     }
   }
 
-  function setKpi(id, value) {
+  function setText(id, value) {
     var el = document.getElementById(id);
     if (el) el.textContent = value;
   }
@@ -48,49 +48,6 @@
     } catch (e) {
       el.textContent = 'Live data';
     }
-  }
-
-  function makeBarChart(canvasId, series, color, todayColor) {
-    if (typeof Chart === 'undefined' || !T()) return;
-    var el = document.getElementById(canvasId);
-    if (!el) return;
-    destroy(canvasId);
-    T().syncColors();
-    T().applyDefaults();
-    var normalized = (series || []).map(function (p) {
-      return {
-        label: p.label,
-        count: p.count != null ? p.count : 0,
-        is_today: !!p.is_today,
-      };
-    });
-    var today = todayColor || T().colors.teal;
-    charts[canvasId] = new Chart(el, {
-      type: 'bar',
-      data: {
-        labels: T().labelsFromSeries(normalized),
-        datasets: [T().barDataset(normalized, color, today)],
-      },
-      options: T().cartesianOptions(null, T().suggestedMaxForSeries(normalized)),
-    });
-    charts[canvasId].$mcWeekSeries = normalized;
-  }
-
-  function makeLineChart(canvasId, series, color) {
-    if (typeof Chart === 'undefined' || !T()) return;
-    var el = document.getElementById(canvasId);
-    if (!el) return;
-    destroy(canvasId);
-    T().syncColors();
-    T().applyDefaults();
-    charts[canvasId] = new Chart(el, {
-      type: 'line',
-      data: {
-        labels: T().labelsFromSeries(series),
-        datasets: [T().lineDataset(series, color)],
-      },
-      options: T().cartesianOptions(),
-    });
   }
 
   function normalizeRoleRows(rows) {
@@ -114,36 +71,43 @@
     });
   }
 
-  function setUsersKpi(rows, selectedIndex) {
-    var total = rows.reduce(function (s, r) { return s + (r.count || 0); }, 0);
-    var kpiLabel = document.getElementById('admKpiUsersLabel');
-    if (selectedIndex != null && selectedIndex >= 0 && rows[selectedIndex]) {
-      var sel = rows[selectedIndex];
-      setKpi('admKpiUsersTotal', Number(sel.count || 0).toLocaleString());
-      if (kpiLabel) kpiLabel.textContent = sel.label || 'Selected role';
-      return;
-    }
-    setKpi('admKpiUsersTotal', Number(total).toLocaleString());
-    if (kpiLabel) kpiLabel.textContent = 'Total users';
+  function makeLineChart(canvasId, series, color) {
+    if (typeof Chart === 'undefined' || !T()) return;
+    var el = document.getElementById(canvasId);
+    if (!el) return;
+    destroy(canvasId);
+    T().syncColors();
+    T().applyDefaults();
+    var ds = T().lineDataset(series, color || T().colors.teal);
+    ds.pointRadius = 4;
+    ds.pointHoverRadius = 6;
+    ds.borderWidth = 2.5;
+    ds.backgroundColor = T().hexToRgba(color || T().colors.teal, 0.16);
+    charts[canvasId] = new Chart(el, {
+      type: 'line',
+      data: {
+        labels: T().labelsFromSeries(series),
+        datasets: [ds],
+      },
+      options: T().cartesianOptions({
+        plugins: Object.assign({}, T().basePlugins(), {
+          legend: { display: false },
+        }),
+      }, T().suggestedMaxForSeries(series)),
+    });
   }
 
   function makeHBarChart(canvasId, rows) {
     if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
-    // Always rebuild: Chart.js category-axis ticks often stay stale with update('none'),
-    // which made BHW (and other role) labels fail to refresh after live data changes.
     destroy(canvasId);
     T().syncColors();
     T().applyDefaults();
 
     var normalized = normalizeRoleRows(rows);
     var selectedIndex = -1;
-
-    // Bake live counts into axis labels so role/count cannot drift apart.
-    var labels = normalized.map(function (r) {
-      return String(r.label || '') + '  ' + Number(r.count || 0).toLocaleString();
-    });
+    var labels = normalized.map(function (r) { return String(r.label || ''); });
     var data = normalized.map(function (r) { return r.count; });
     var colors = roleBarColors(normalized, selectedIndex);
 
@@ -154,14 +118,13 @@
         datasets: [{
           data: data,
           backgroundColor: colors,
-          borderRadius: 4,
-          maxBarThickness: 36,
+          borderRadius: 6,
+          maxBarThickness: 28,
           minBarLength: 4,
         }],
       },
       options: T().cartesianOptions({
         indexAxis: 'y',
-        // Horizontal bars: index along Y so hover/click maps to the role category.
         interaction: { mode: 'index', axis: 'y', intersect: false },
         onClick: function (evt, elements) {
           var chart = charts[canvasId];
@@ -175,9 +138,9 @@
           }
           chart.data.datasets[0].backgroundColor = roleBarColors(rowsLocal, chart.$mcSelectedIndex);
           chart.update('none');
-          setUsersKpi(rowsLocal, chart.$mcSelectedIndex);
         },
         plugins: Object.assign({}, T().basePlugins(), {
+          legend: { display: false },
           tooltip: Object.assign({}, T().basePlugins().tooltip, {
             callbacks: {
               title: function (items) {
@@ -207,22 +170,8 @@
             border: { display: false },
             ticks: {
               autoSkip: false,
-              font: { size: 11, weight: '500' },
+              font: { size: 12, weight: '600' },
               color: T().colors.text,
-              callback: function (value, index) {
-                var chart = charts[canvasId];
-                var rowsLocal = (chart && chart.$mcRoleRows) || normalized;
-                var i = (typeof index === 'number' && index >= 0)
-                  ? index
-                  : (typeof value === 'number' ? value : -1);
-                if (i >= 0 && rowsLocal[i]) {
-                  return rowsLocal[i].label + '  ' + Number(rowsLocal[i].count || 0).toLocaleString();
-                }
-                if (typeof value === 'number' && labels[value] != null) {
-                  return labels[value];
-                }
-                return String(value);
-              },
             },
           },
         },
@@ -230,92 +179,117 @@
     });
     charts[canvasId].$mcRoleRows = normalized;
     charts[canvasId].$mcSelectedIndex = selectedIndex;
-    setUsersKpi(normalized, selectedIndex);
   }
 
-  function makeDoughnutChart(canvasId, rows) {
+  function makeSysStatusChart(canvasId, buckets, operationalPct) {
     if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
     T().syncColors();
     T().applyDefaults();
+
+    var rows = buckets || [];
+    var values = rows.map(function (r) { return Math.max(0, Number(r.count) || 0); });
+    var sum = values.reduce(function (s, n) { return s + n; }, 0);
+    if (sum <= 0) {
+      values = [1, 0, 0];
+      rows = [
+        { label: 'Online', color: '#16a34a', count: 1, pct: 100 },
+        { label: 'Maintenance', color: '#94a3b8', count: 0, pct: 0 },
+        { label: 'Issues', color: '#ef4444', count: 0, pct: 0 },
+      ];
+    }
+
     charts[canvasId] = new Chart(el, {
       type: 'doughnut',
       data: {
-        labels: (rows || []).map(function (r) { return r.label; }),
+        labels: rows.map(function (r) { return r.label; }),
         datasets: [{
-          data: (rows || []).map(function (r) { return r.count; }),
-          backgroundColor: (rows || []).map(function (r, i) {
-            return r.color || T().palette[i % T().palette.length];
-          }),
+          data: values,
+          backgroundColor: rows.map(function (r) { return r.color || '#94a3b8'; }),
           borderColor: T().segmentBorderColor(),
           borderWidth: 2,
-          hoverOffset: 6,
+          hoverOffset: 4,
         }],
       },
-      options: T().ringOptions(),
+      options: T().ringOptions({
+        cutout: '72%',
+        plugins: Object.assign({}, T().basePlugins(), {
+          legend: { display: false },
+          tooltip: Object.assign({}, T().basePlugins().tooltip, {
+            callbacks: {
+              label: function (ctx) {
+                var row = rows[ctx.dataIndex] || {};
+                return ' ' + (row.label || '') + ': ' + Number(row.count || 0).toLocaleString();
+              },
+            },
+          }),
+        }),
+      }),
     });
+
+    setText('admSysOpPct', String(operationalPct != null ? operationalPct : 0) + '%');
+  }
+
+  function renderOverview(overview) {
+    var o = overview || {};
+    setText('admOverviewTotal', Number(o.total_users || 0).toLocaleString());
+    setText('admOverviewDoctors', Number(o.doctors || 0).toLocaleString());
+    setText('admOverviewBhw', Number(o.bhw || 0).toLocaleString());
+    setText('admOverviewAdmins', Number(o.administrators || 0).toLocaleString());
+  }
+
+  function renderSysStatusList(buckets) {
+    var list = document.getElementById('admSysStatusList');
+    if (!list) return;
+    var rows = buckets || [];
+    if (!rows.length) {
+      list.innerHTML = '';
+      return;
+    }
+    list.innerHTML = rows.map(function (r) {
+      var color = r.color || '#94a3b8';
+      return (
+        '<li class="adm-sys-status__row">' +
+          '<span class="adm-sys-status__dot" style="background:' + color + '"></span>' +
+          '<span class="adm-sys-status__name">' + (r.label || '') + '</span>' +
+          '<span class="adm-sys-status__pct">' + Number(r.pct || 0) + '%</span>' +
+          '<span class="adm-sys-status__count">' + Number(r.count || 0).toLocaleString() + '</span>' +
+        '</li>'
+      );
+    }).join('');
   }
 
   function render(data) {
     if (!data || !T()) return;
     lastPayload = data;
 
-    var consult = data.consultations || {};
     var reg = data.registrations || {};
-    var triage = data.triage || {};
-    var roles = data.roles || [];
-    var status = data.status || [];
+    var overview = data.overview || {};
+    var distribution = data.distribution || data.roles || [];
+    var sys = data.system_status || {};
 
-    setKpi('admKpiConsultTotal', Number(consult.total || 0).toLocaleString());
-    setKpi('admKpiRegTotal', Number(reg.total || 0).toLocaleString());
-
-    var periodLabel = data.period_label || (T().periodLabel ? T().periodLabel(data.days) : 'Month');
-    var periodRange = data.period_range_label || (T().periodRangeLabel ? T().periodRangeLabel(data.days) : 'this month');
-    var consultSub = document.getElementById('admChartConsultSub');
-    if (consultSub) consultSub.textContent = 'Daily volume — ' + periodLabel;
+    var periodLabel = data.period_label || 'Last 6 Months';
     var regSub = document.getElementById('admChartRegSub');
-    if (regSub) regSub.textContent = 'User sign-ups — ' + periodLabel;
-    var regKpiLabel = document.getElementById('admKpiRegLabel');
-    if (regKpiLabel) regKpiLabel.textContent = 'Period total';
+    if (regSub) regSub.textContent = 'New user sign-ups per month';
 
-    var statusTotal = status.reduce(function (s, r) { return s + (r.count || 0); }, 0);
-    var fourthTitle = document.getElementById('admChartFourthTitle');
-    var fourthSub = document.getElementById('admChartFourthSub');
-    var fourthKpi = document.getElementById('admKpiFourthTotal');
-    var fourthKpiLabel = document.getElementById('admKpiFourthLabel');
-
-    var statusCanvas = document.getElementById('admChartStatus');
-    var triageCanvas = document.getElementById('admChartTriage');
-
-    if (status.length > 0) {
-      if (fourthTitle) fourthTitle.textContent = 'Consultation Status';
-      if (fourthSub) fourthSub.textContent = 'Live breakdown by workflow state';
-      if (fourthKpi) fourthKpi.textContent = Number(statusTotal).toLocaleString();
-      if (fourthKpiLabel) fourthKpiLabel.textContent = 'All consultations';
-      if (statusCanvas) statusCanvas.style.display = 'block';
-      if (triageCanvas) triageCanvas.style.display = 'none';
-      makeDoughnutChart('admChartStatus', status);
-      destroy('admChartTriage');
-    } else {
-      if (fourthTitle) fourthTitle.textContent = 'AI Triage Volume';
-      if (fourthSub) {
-        fourthSub.textContent = 'Daily assessments — ' + periodRange;
-      }
-      if (fourthKpi) fourthKpi.textContent = Number(triage.total || 0).toLocaleString();
-      if (fourthKpiLabel) fourthKpiLabel.textContent = 'Period total';
-      if (statusCanvas) statusCanvas.style.display = 'none';
-      if (triageCanvas) triageCanvas.style.display = 'block';
-      makeLineChart('admChartTriage', triage.series || [], T().colors.red);
-      destroy('admChartStatus');
-    }
-
-    makeBarChart('admChartConsult', consult.series || [], T().colors.blue, T().colors.teal);
+    renderOverview(overview);
     makeLineChart('admChartReg', reg.series || [], T().colors.teal);
-    makeHBarChart('admChartRoles', roles);
-
+    makeHBarChart('admChartRoles', distribution);
+    makeSysStatusChart('admChartSysStatus', sys.buckets || [], sys.operational_pct);
+    renderSysStatusList(sys.buckets || []);
     setUpdated(data.generated_at);
+
+    // Keep period select label in sync if server remapped days
+    var daysSel = document.getElementById('admChartsDays');
+    if (daysSel && data.days != null && String(daysSel.value) !== String(data.days)) {
+      var opt = daysSel.querySelector('option[value="' + data.days + '"]');
+      if (opt) daysSel.value = String(data.days);
+    }
+    if (regSub && periodLabel && data.days && Number(data.days) < 180) {
+      regSub.textContent = 'New user sign-ups — ' + periodLabel;
+    }
   }
 
   function fetchAndRender() {

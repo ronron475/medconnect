@@ -1,8 +1,8 @@
 <?php
 /**
  * Live dashboard chart data (Admin + Super Admin).
- * GET /app/api/admin/dashboard_charts.php?days=30
- * Allowed days: 1 (Today), 7 (Week), 30 (Month), 365 (Year).
+ * GET /app/api/admin/dashboard_charts.php?days=180
+ * Allowed days: 1, 7, 30, 180 (Last 6 Months), 365 (Year).
  */
 header('Content-Type: application/json; charset=utf-8');
 
@@ -11,7 +11,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/api/admin/_auth.php';
 require_once BASE_PATH . '/app/includes/admin_dashboard_charts.php';
 
-$days = isset($_GET['days']) ? (int) $_GET['days'] : 30;
+$days = isset($_GET['days']) ? (int) $_GET['days'] : 180;
 
 echo json_encode([
     'success' => true,
