@@ -67,9 +67,9 @@ final class GeminiClinicalInterviewDemo
                     'health_gate' => [
                         'classification' => self::CLASS_UNCLEAR,
                         'confidence' => null,
-                        'reason' => 'gemini_unavailable_or_invalid_json',
                         'normalized_health_concern' => '',
                         'passed' => false,
+                        'error' => 'gemini_unavailable_or_invalid_json',
                     ],
                 ]
             );
@@ -82,8 +82,8 @@ final class GeminiClinicalInterviewDemo
         if (($gate['classification'] ?? '') !== self::CLASS_HEALTH) {
             $class = (string) ($gate['classification'] ?? self::CLASS_UNCLEAR);
             $msg = $class === self::CLASS_NON_HEALTH
-                ? 'That does not look like a health concern. Please describe a symptom or medical problem you are experiencing (any language is OK).'
-                : 'Please describe your health concern more clearly so we can continue (symptoms, pain, fever, etc.).';
+                ? 'That does not look like a health concern. Please describe a health problem or symptom you are experiencing.'
+                : 'Please describe your health concern more clearly so we can continue.';
 
             return self::rejectNonHealth($context, $class, $msg, [
                 'health_gate' => $gate,
@@ -420,7 +420,6 @@ final class GeminiClinicalInterviewDemo
             : [
                 'classification' => $classification,
                 'confidence' => null,
-                'reason' => '',
                 'normalized_health_concern' => '',
                 'passed' => false,
             ];
@@ -460,21 +459,26 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
+     * Normalize and whitelist Gemini health-gate classification.
+     * Only HEALTH_RELATED | NON_HEALTH_RELATED | UNCLEAR are accepted; anything else fails closed.
+     *
      * @param array<string, mixed> $gemini
-     * @return array{classification:string,confidence:float|null,reason:string,normalized_health_concern:string,passed:bool}
+     * @return array{classification:string,confidence:float|null,normalized_health_concern:string,passed:bool}
      */
     private static function normalizeHealthGate(array $gemini): array
     {
         $class = strtoupper(trim((string) ($gemini['classification'] ?? '')));
         $class = str_replace([' ', '-'], '_', $class);
-        if (in_array($class, ['HEALTH', 'HEALTH_RELATED', 'MEDICAL', 'VALID_MEDICAL', 'VALID_MEDICAL_COMPLAINT'], true)) {
+
+        // Strict allow-list only (plus trivial spelling aliases of the three labels).
+        if ($class === 'HEALTH' || $class === 'HEALTH_RELATED') {
             $class = self::CLASS_HEALTH;
-        } elseif (in_array($class, ['NON_HEALTH', 'NON_HEALTH_RELATED', 'NOT_HEALTH', 'OUT_OF_SCOPE', 'GREETING', 'PRANK', 'NONSENSE'], true)) {
+        } elseif ($class === 'NON_HEALTH' || $class === 'NON_HEALTH_RELATED') {
             $class = self::CLASS_NON_HEALTH;
-        } elseif (in_array($class, ['UNCLEAR', 'AMBIGUOUS', 'UNKNOWN'], true)) {
+        } elseif ($class === 'UNCLEAR') {
             $class = self::CLASS_UNCLEAR;
         } else {
-            // Unknown label → fail closed (do not start interview).
+            // Unexpected label → fail closed (do not start interview).
             $class = self::CLASS_UNCLEAR;
         }
 
@@ -490,7 +494,6 @@ final class GeminiClinicalInterviewDemo
         return [
             'classification' => $class,
             'confidence' => $confidence,
-            'reason' => trim((string) ($gemini['reason'] ?? '')),
             'normalized_health_concern' => trim((string) ($gemini['normalized_health_concern'] ?? '')),
             'passed' => $class === self::CLASS_HEALTH,
         ];
@@ -860,16 +863,15 @@ final class GeminiClinicalInterviewDemo
 
         if ($mode === 'start') {
             return "MODE: START_INTERVIEW\n"
-                . "First classify whether the patient's opening text is a genuine health/medical concern.\n"
-                . "Supported languages: English, Hiligaynon/Ilonggo, Tagalog, mixed, informal, misspelled, abbreviated, local expressions.\n"
-                . "Latin/ASCII characters do NOT mean the text is English — local languages often use Latin script.\n"
-                . "Short but medical phrases (pain, fever, cough, diarrhea, dizziness, difficulty breathing, sakit, hilanat, galupot, etc.) can be HEALTH_RELATED.\n"
-                . "Greetings, weather, sports, jokes, politics, tech questions, spam, nonsense → NON_HEALTH_RELATED or UNCLEAR.\n\n"
-                . "Original patient opening (preserve exactly; do not rewrite as the complaint):\n"
+                . "Decide whether the patient's opening text is a genuine health/medical concern by MEANING, not by keywords or language labels.\n"
+                . "Understand the input in whatever language it is written in (including local, informal, slang, misspelled, abbreviated, mixed, or previously unseen expressions).\n"
+                . "Do not assume language from alphabet/script alone.\n"
+                . "Do not use a fixed phrase list. Classify from semantic intent only.\n\n"
+                . "Original patient opening (preserve exactly; do not rewrite as the stored complaint):\n"
                 . (string) ($context['chief_complaint'] ?? '') . "\n\n"
-                . "Return JSON with classification fields ALWAYS, plus interview fields ONLY when classification is HEALTH_RELATED.\n"
-                . "If NON_HEALTH_RELATED or UNCLEAR: set question_needed=false, interview_sufficient=false, next_question=\"\", clinical_facts empty.\n"
-                . "If HEALTH_RELATED: ask at most ONE next_question in the patient's language.";
+                . "Return JSON with gate fields ALWAYS.\n"
+                . "If classification is NON_HEALTH_RELATED or UNCLEAR: question_needed=false, interview_sufficient=false, next_question=\"\", empty clinical_facts.\n"
+                . "If classification is HEALTH_RELATED: ask at most ONE next_question in the same language the patient used.";
         }
 
         return "MODE: INTERPRET_ANSWER\n"
@@ -883,7 +885,7 @@ final class GeminiClinicalInterviewDemo
             . "Already collected clinical_facts (JSON):\n" . $factsJson . "\n\n"
             . "Previously listed missing_information (JSON):\n" . $missingJson . "\n\n"
             . "Return the required JSON. Update clinical_facts with anything newly learned "
-            . "(including negatives like wala/indi). Ask at most ONE next_question if still needed.";
+            . "(including clear negative or uncertain replies). Ask at most ONE next_question if still needed.";
     }
 
     private static function systemPrompt(): string
@@ -891,20 +893,25 @@ final class GeminiClinicalInterviewDemo
         return <<<'PROMPT'
 You are a clinical interview assistant for a MedConnect DEMO page.
 
-Health gate (START_INTERVIEW only):
-Classify the opening patient text as exactly one of:
-- HEALTH_RELATED — genuine symptom/medical/health concern in ANY language (English, Hiligaynon/Ilonggo, Tagalog, mixed). Informal, misspelled, abbreviated, or local expressions count when reasonably medical.
-- NON_HEALTH_RELATED — greetings, casual chat, weather, sports, school, tech, politics, entertainment, jokes, spam, profanity without a health concern, unrelated questions.
-- UNCLEAR — empty of meaning, random/nonsense, or too ambiguous to treat as a health concern.
+Health gate (START_INTERVIEW only) — UNIVERSAL SEMANTIC VALIDATION:
+Decide whether the opening patient text means a genuine health/medical concern.
 
-Do NOT reject Hiligaynon/Tagalog/local medical phrases merely because they use Latin characters.
-Do NOT rely on English keyword lists only — decide semantically.
+Return exactly one classification:
+- HEALTH_RELATED — the meaning is a health problem, symptom, injury, or medical concern (any language, style, length, or phrasing Gemini can understand, including previously unseen expressions).
+- NON_HEALTH_RELATED — the meaning is not a health concern (for example greetings, casual chat, jokes/pranks, spam, or unrelated topics).
+- UNCLEAR — the text has no clear health meaning (nonsense, empty of meaning, or too ambiguous to treat as a health concern).
 
-Your clinical interview jobs (only after HEALTH_RELATED):
-1) Understand the patient's complaint and answers (English, Hiligaynon/Ilonggo, Tagalog, or mixed).
+Rules for the gate:
+- Judge MEANING, not keywords, not a phrase dictionary, and not character-set/language assumptions.
+- Do not require English medical terms.
+- Do not reject local-language health expressions merely because they use Latin script.
+- Do not invent special-case word lists.
+
+Clinical interview jobs (only when classification is HEALTH_RELATED):
+1) Understand the patient's complaint and answers in their language.
 2) Extract structured clinical facts.
 3) Ask exactly ONE relevant follow-up question when information is still missing for safe triage.
-4) Stop when clinically sufficient for triage (interview_sufficient=true, question_needed=false).
+4) Stop when clinically sufficient (interview_sufficient=true, question_needed=false).
 
 You MUST NOT:
 - Assign EMERGENCY, URGENT, or NON-URGENT
@@ -914,9 +921,9 @@ You MUST NOT:
 - Replace the patient's original wording
 - Start a clinical interview for NON_HEALTH_RELATED or UNCLEAR
 
-Pain rule: if pain/sakit/kasakit/hapdi is present, collect pain_score 1–10 before finishing, and do not ask for pain score again after a valid score.
+Pain severity: when the case involves pain, collect a 1–10 severity score before finishing; do not re-ask after a valid score.
 
-Short answers such as yes, no, oo, indi, wala, wala man, not sure, indi ko sure, depende can be VALID, UNCERTAIN, or carry negative findings — do not mark them UNRELATED just because they are short.
+Short affirmative, negative, or uncertain replies in any language can be valid answers — do not reject them only because they are short.
 
 answer_status values (interview turns):
 - VALID: answers the question usefully (including clear yes/no/negative)
@@ -928,8 +935,7 @@ Respond with JSON ONLY matching this schema:
 {
   "classification": "HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR",
   "confidence": 0.0,
-  "reason": "short explanation",
-  "normalized_health_concern": "short semantic representation or empty",
+  "normalized_health_concern": "",
   "answer_status": "VALID|UNCERTAIN|UNCLEAR|UNRELATED",
   "clinical_facts": {
     "symptom": string|null,
@@ -951,11 +957,11 @@ Respond with JSON ONLY matching this schema:
 }
 
 For START_INTERVIEW:
-- Always include classification/confidence/reason/normalized_health_concern.
-- Only when classification is HEALTH_RELATED: set question_needed true (unless already sufficient) and provide next_question in the patient's language.
+- Always include classification, confidence, and normalized_health_concern (short semantic gloss, or empty when not health-related).
+- Only when classification is HEALTH_RELATED: provide interview fields and at most one next_question in the patient's language (unless already sufficient).
 - When NON_HEALTH_RELATED or UNCLEAR: question_needed=false, interview_sufficient=false, next_question="", empty clinical_facts.
 
-For INTERPRET_ANSWER: classification may be omitted or HEALTH_RELATED; focus on answer_status and clinical_facts.
+For INTERPRET_ANSWER: focus on answer_status and clinical_facts; classification may be omitted or HEALTH_RELATED.
 PROMPT;
     }
 
@@ -1132,8 +1138,8 @@ PROMPT;
             $gate = self::normalizeHealthGate($decoded);
             $decoded['classification'] = $gate['classification'];
             $decoded['confidence'] = $gate['confidence'];
-            $decoded['reason'] = $gate['reason'];
             $decoded['normalized_health_concern'] = $gate['normalized_health_concern'];
+            unset($decoded['reason']);
 
             if ($gate['classification'] !== self::CLASS_HEALTH) {
                 // Non-health / unclear: interview fields optional; force no question.
