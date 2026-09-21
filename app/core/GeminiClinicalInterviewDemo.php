@@ -14,6 +14,11 @@ final class GeminiClinicalInterviewDemo
     public const STATUS_SUFFICIENT = 'information_sufficient';
     public const STATUS_FINAL = 'final_triage';
     public const STATUS_ERROR = 'error';
+    public const STATUS_NEEDS_HEALTH = 'needs_health_concern';
+
+    public const CLASS_HEALTH = 'HEALTH_RELATED';
+    public const CLASS_NON_HEALTH = 'NON_HEALTH_RELATED';
+    public const CLASS_UNCLEAR = 'UNCLEAR';
 
     private const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent';
     private const MAX_TURNS = 12;
@@ -22,19 +27,22 @@ final class GeminiClinicalInterviewDemo
     /**
      * Start interview from a primary complaint.
      *
+     * Gate: Gemini must classify HEALTH_RELATED before any clinical interview begins.
+     * NON_HEALTH_RELATED / UNCLEAR / unavailable Gemini → reject (fail closed).
+     *
      * @return array<string, mixed>
      */
     public static function start(string $complaint): array
     {
         $complaint = trim($complaint);
         if ($complaint === '') {
-            return self::errorResult(self::blankContext(), 'Enter a patient complaint.', null);
+            return self::errorResult(self::blankContext(), 'Enter a health concern or symptom you are experiencing.', null);
         }
         if (mb_strlen($complaint) > 1000) {
             return self::errorResult(self::blankContext(), 'Complaint is too long (max 1000 characters).', null);
         }
         if (!self::geminiReady()) {
-            return self::errorResult(self::blankContext($complaint), 'Gemini is not configured or disabled (AI_ENABLED / API key).', null);
+            return self::errorResult(self::blankContext($complaint), 'Gemini is not configured or disabled (AI_ENABLED / API key). Health gate cannot run — interview not started.', null);
         }
 
         $context = self::blankContext($complaint);
@@ -44,13 +52,49 @@ final class GeminiClinicalInterviewDemo
             'kind' => 'complaint',
         ];
 
+        // One Gemini start call: health gate + first interview question (only if HEALTH_RELATED).
         $gemini = self::callGemini('start', $context, '');
         if ($gemini === null) {
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
 
-            return self::errorResult($context, 'Gemini unavailable or returned invalid JSON. Interview stopped safely.' . $detail, [
-                'raw_error' => self::$lastError,
+            // Fail closed: never start interview when gate/parser fails.
+            return self::rejectNonHealth(
+                $context,
+                self::CLASS_UNCLEAR,
+                'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail,
+                [
+                    'raw_error' => self::$lastError,
+                    'health_gate' => [
+                        'classification' => self::CLASS_UNCLEAR,
+                        'confidence' => null,
+                        'reason' => 'gemini_unavailable_or_invalid_json',
+                        'normalized_health_concern' => '',
+                        'passed' => false,
+                    ],
+                ]
+            );
+        }
+
+        $gate = self::normalizeHealthGate($gemini);
+        $context['health_gate'] = $gate;
+        $context['gemini_called'] = true;
+
+        if (($gate['classification'] ?? '') !== self::CLASS_HEALTH) {
+            $class = (string) ($gate['classification'] ?? self::CLASS_UNCLEAR);
+            $msg = $class === self::CLASS_NON_HEALTH
+                ? 'That does not look like a health concern. Please describe a symptom or medical problem you are experiencing (any language is OK).'
+                : 'Please describe your health concern more clearly so we can continue (symptoms, pain, fever, etc.).';
+
+            return self::rejectNonHealth($context, $class, $msg, [
+                'health_gate' => $gate,
+                'gemini_raw_structured' => $gemini,
             ]);
+        }
+
+        // Preserve original wording; optional semantic gloss is debug-only / additive.
+        $normalized = trim((string) ($gate['normalized_health_concern'] ?? ''));
+        if ($normalized !== '') {
+            $context['normalized_health_concern'] = $normalized;
         }
 
         return self::applyGeminiTurn($context, $gemini, true);
@@ -323,17 +367,20 @@ final class GeminiClinicalInterviewDemo
             'final_triage' => is_array($context['final_triage'] ?? null) ? $context['final_triage'] : null,
             'interview_context' => $context,
             'gemini_called' => !empty($context['gemini_called']),
+            'health_gate' => is_array($context['health_gate'] ?? null) ? $context['health_gate'] : null,
             'debug' => [
                 'gemini_raw_structured' => $debugGemini,
+                'health_gate' => is_array($context['health_gate'] ?? null) ? $context['health_gate'] : null,
                 'engine_case_text' => (string) ($context['engine_case_text'] ?? ''),
                 'engine_mapped_facts' => $context['engine_mapped_facts'] ?? null,
                 'engine_result' => $context['engine_result'] ?? null,
-                'pipeline' => 'Gemini interview → collected facts → ClinicalTriageEngine → final triage',
+                'pipeline' => 'Gemini health gate → Gemini interview → collected facts → ClinicalTriageEngine → final triage',
                 'gemini_must_not' => [
                     'set_final_triage',
                     'diagnose',
                     'prescribe',
                     'bypass_who_iitt',
+                    'start_interview_on_non_health',
                 ],
             ],
         ];
@@ -356,6 +403,50 @@ final class GeminiClinicalInterviewDemo
         return $pack;
     }
 
+    /**
+     * Reject opening input that is not a confirmed health concern. Interview must not start.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed>|null $extra
+     * @return array<string, mixed>
+     */
+    private static function rejectNonHealth(array $context, string $classification, string $message, ?array $extra): array
+    {
+        $context['status'] = self::STATUS_NEEDS_HEALTH;
+        $context['awaiting_question'] = '';
+        $context['chief_complaint'] = ''; // do not lock a non-health opening as the complaint
+        $gate = is_array($extra['health_gate'] ?? null)
+            ? $extra['health_gate']
+            : [
+                'classification' => $classification,
+                'confidence' => null,
+                'reason' => '',
+                'normalized_health_concern' => '',
+                'passed' => false,
+            ];
+        $gate['passed'] = false;
+        $context['health_gate'] = $gate;
+        $context['conversation'][] = [
+            'role' => 'system',
+            'text' => $message,
+            'kind' => 'health_gate_reject',
+        ];
+
+        $pack = self::pack($context, $message, is_array($extra['gemini_raw_structured'] ?? null) ? $extra['gemini_raw_structured'] : null);
+        $pack['error'] = true;
+        $pack['rejected'] = true;
+        $pack['needs_health_concern'] = true;
+        $pack['health_classification'] = $classification;
+        // Do not leave a half-started interview context for the client.
+        $pack['interview_context'] = [];
+        $pack['awaiting_question'] = '';
+        if (is_array($extra)) {
+            $pack['debug'] = array_merge(is_array($pack['debug'] ?? null) ? $pack['debug'] : [], $extra);
+        }
+
+        return $pack;
+    }
+
     private static function statusLabel(string $status): string
     {
         return match ($status) {
@@ -363,8 +454,46 @@ final class GeminiClinicalInterviewDemo
             self::STATUS_SUFFICIENT => 'Information sufficient',
             self::STATUS_FINAL => 'Final triage',
             self::STATUS_ERROR => 'Error',
+            self::STATUS_NEEDS_HEALTH => 'Needs a health concern',
             default => $status,
         };
+    }
+
+    /**
+     * @param array<string, mixed> $gemini
+     * @return array{classification:string,confidence:float|null,reason:string,normalized_health_concern:string,passed:bool}
+     */
+    private static function normalizeHealthGate(array $gemini): array
+    {
+        $class = strtoupper(trim((string) ($gemini['classification'] ?? '')));
+        $class = str_replace([' ', '-'], '_', $class);
+        if (in_array($class, ['HEALTH', 'HEALTH_RELATED', 'MEDICAL', 'VALID_MEDICAL', 'VALID_MEDICAL_COMPLAINT'], true)) {
+            $class = self::CLASS_HEALTH;
+        } elseif (in_array($class, ['NON_HEALTH', 'NON_HEALTH_RELATED', 'NOT_HEALTH', 'OUT_OF_SCOPE', 'GREETING', 'PRANK', 'NONSENSE'], true)) {
+            $class = self::CLASS_NON_HEALTH;
+        } elseif (in_array($class, ['UNCLEAR', 'AMBIGUOUS', 'UNKNOWN'], true)) {
+            $class = self::CLASS_UNCLEAR;
+        } else {
+            // Unknown label → fail closed (do not start interview).
+            $class = self::CLASS_UNCLEAR;
+        }
+
+        $confidence = null;
+        if (isset($gemini['confidence']) && is_numeric($gemini['confidence'])) {
+            $confidence = (float) $gemini['confidence'];
+            if ($confidence > 1.0 && $confidence <= 100.0) {
+                $confidence /= 100.0;
+            }
+            $confidence = max(0.0, min(1.0, $confidence));
+        }
+
+        return [
+            'classification' => $class,
+            'confidence' => $confidence,
+            'reason' => trim((string) ($gemini['reason'] ?? '')),
+            'normalized_health_concern' => trim((string) ($gemini['normalized_health_concern'] ?? '')),
+            'passed' => $class === self::CLASS_HEALTH,
+        ];
     }
 
     /**
@@ -682,7 +811,7 @@ final class GeminiClinicalInterviewDemo
         self::$lastError = '';
         try {
             $raw = self::complete(self::buildUserPrompt($mode, $context, $latestAnswer));
-            $parsed = self::parseJson($raw);
+            $parsed = self::parseJson($raw, $mode);
             if ($parsed === null) {
                 self::$lastError = 'unparseable: ' . mb_substr($raw, 0, 200);
 
@@ -731,10 +860,16 @@ final class GeminiClinicalInterviewDemo
 
         if ($mode === 'start') {
             return "MODE: START_INTERVIEW\n"
-                . "Original patient complaint (preserve exactly; do not rewrite):\n"
+                . "First classify whether the patient's opening text is a genuine health/medical concern.\n"
+                . "Supported languages: English, Hiligaynon/Ilonggo, Tagalog, mixed, informal, misspelled, abbreviated, local expressions.\n"
+                . "Latin/ASCII characters do NOT mean the text is English — local languages often use Latin script.\n"
+                . "Short but medical phrases (pain, fever, cough, diarrhea, dizziness, difficulty breathing, sakit, hilanat, galupot, etc.) can be HEALTH_RELATED.\n"
+                . "Greetings, weather, sports, jokes, politics, tech questions, spam, nonsense → NON_HEALTH_RELATED or UNCLEAR.\n\n"
+                . "Original patient opening (preserve exactly; do not rewrite as the complaint):\n"
                 . (string) ($context['chief_complaint'] ?? '') . "\n\n"
-                . "Already collected clinical_facts (JSON):\n" . $factsJson . "\n\n"
-                . "Return the required JSON. Ask at most ONE next_question in the patient's language.";
+                . "Return JSON with classification fields ALWAYS, plus interview fields ONLY when classification is HEALTH_RELATED.\n"
+                . "If NON_HEALTH_RELATED or UNCLEAR: set question_needed=false, interview_sufficient=false, next_question=\"\", clinical_facts empty.\n"
+                . "If HEALTH_RELATED: ask at most ONE next_question in the patient's language.";
         }
 
         return "MODE: INTERPRET_ANSWER\n"
@@ -756,7 +891,16 @@ final class GeminiClinicalInterviewDemo
         return <<<'PROMPT'
 You are a clinical interview assistant for a MedConnect DEMO page.
 
-Your ONLY jobs:
+Health gate (START_INTERVIEW only):
+Classify the opening patient text as exactly one of:
+- HEALTH_RELATED — genuine symptom/medical/health concern in ANY language (English, Hiligaynon/Ilonggo, Tagalog, mixed). Informal, misspelled, abbreviated, or local expressions count when reasonably medical.
+- NON_HEALTH_RELATED — greetings, casual chat, weather, sports, school, tech, politics, entertainment, jokes, spam, profanity without a health concern, unrelated questions.
+- UNCLEAR — empty of meaning, random/nonsense, or too ambiguous to treat as a health concern.
+
+Do NOT reject Hiligaynon/Tagalog/local medical phrases merely because they use Latin characters.
+Do NOT rely on English keyword lists only — decide semantically.
+
+Your clinical interview jobs (only after HEALTH_RELATED):
 1) Understand the patient's complaint and answers (English, Hiligaynon/Ilonggo, Tagalog, or mixed).
 2) Extract structured clinical facts.
 3) Ask exactly ONE relevant follow-up question when information is still missing for safe triage.
@@ -768,12 +912,13 @@ You MUST NOT:
 - Prescribe treatment
 - Invent facts the patient did not say
 - Replace the patient's original wording
+- Start a clinical interview for NON_HEALTH_RELATED or UNCLEAR
 
 Pain rule: if pain/sakit/kasakit/hapdi is present, collect pain_score 1–10 before finishing, and do not ask for pain score again after a valid score.
 
 Short answers such as yes, no, oo, indi, wala, wala man, not sure, indi ko sure, depende can be VALID, UNCERTAIN, or carry negative findings — do not mark them UNRELATED just because they are short.
 
-answer_status values:
+answer_status values (interview turns):
 - VALID: answers the question usefully (including clear yes/no/negative)
 - UNCERTAIN: patient unsure
 - UNCLEAR: unreadable / nonsense
@@ -781,6 +926,10 @@ answer_status values:
 
 Respond with JSON ONLY matching this schema:
 {
+  "classification": "HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR",
+  "confidence": 0.0,
+  "reason": "short explanation",
+  "normalized_health_concern": "short semantic representation or empty",
   "answer_status": "VALID|UNCERTAIN|UNCLEAR|UNRELATED",
   "clinical_facts": {
     "symptom": string|null,
@@ -801,8 +950,12 @@ Respond with JSON ONLY matching this schema:
   "interview_sufficient": boolean
 }
 
-For START_INTERVIEW, answer_status may be "VALID". next_question must be non-empty unless interview_sufficient is true.
-Ask the next_question in the same language the patient is using.
+For START_INTERVIEW:
+- Always include classification/confidence/reason/normalized_health_concern.
+- Only when classification is HEALTH_RELATED: set question_needed true (unless already sufficient) and provide next_question in the patient's language.
+- When NON_HEALTH_RELATED or UNCLEAR: question_needed=false, interview_sufficient=false, next_question="", empty clinical_facts.
+
+For INTERPRET_ANSWER: classification may be omitted or HEALTH_RELATED; focus on answer_status and clinical_facts.
 PROMPT;
     }
 
@@ -957,7 +1110,7 @@ PROMPT;
     /**
      * @return array<string, mixed>|null
      */
-    private static function parseJson(string $raw): ?array
+    private static function parseJson(string $raw, string $mode = 'answer'): ?array
     {
         $raw = trim(str_replace("\r\n", "\n", $raw));
         $raw = preg_replace('/^```(?:json)?\s*/i', '', $raw) ?? $raw;
@@ -970,7 +1123,34 @@ PROMPT;
         if (!is_array($decoded)) {
             return null;
         }
-        // Minimal schema validation.
+
+        if ($mode === 'start') {
+            // Health gate is mandatory on start — missing/invalid classification fails closed.
+            if (!array_key_exists('classification', $decoded)) {
+                return null;
+            }
+            $gate = self::normalizeHealthGate($decoded);
+            $decoded['classification'] = $gate['classification'];
+            $decoded['confidence'] = $gate['confidence'];
+            $decoded['reason'] = $gate['reason'];
+            $decoded['normalized_health_concern'] = $gate['normalized_health_concern'];
+
+            if ($gate['classification'] !== self::CLASS_HEALTH) {
+                // Non-health / unclear: interview fields optional; force no question.
+                if (!isset($decoded['clinical_facts']) || !is_array($decoded['clinical_facts'])) {
+                    $decoded['clinical_facts'] = self::blankFacts();
+                }
+                $decoded['question_needed'] = false;
+                $decoded['interview_sufficient'] = false;
+                $decoded['next_question'] = '';
+                $decoded['missing_information'] = [];
+                $decoded['answer_status'] = 'UNCLEAR';
+
+                return $decoded;
+            }
+        }
+
+        // Interview schema (required for answer mode, and for HEALTH_RELATED start).
         if (!array_key_exists('question_needed', $decoded) && !array_key_exists('interview_sufficient', $decoded)) {
             return null;
         }
