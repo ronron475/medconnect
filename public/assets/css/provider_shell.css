@@ -251,37 +251,34 @@ body.provider-body .prov-dash-metrics--unified {
 body.provider-body .prov-dash-metrics--unified > .prov-dash-stat,
 body.provider-body .prov-dash-metrics--unified > .mc-notif-widget,
 body.provider-body .prov-dash-stat {
-    min-height: 64px;
-    padding: 8px 10px;
+    min-height: 88px;
+    padding: 14px 16px;
     width: 100%;
     min-width: 0;
     box-sizing: border-box;
 }
 
-body.provider-body .prov-dash-stat__icon {
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
+body.provider-body .prov-dash-stat__icon,
+body.provider-body .prov-dash-metrics--unified .prov-dash-stat__icon {
+    display: none !important;
 }
 
 body.provider-body .prov-dash-stat strong {
-    font-size: 1.2rem;
-    padding-right: 28px;
+    font-size: 1.5rem;
+    padding-right: 0;
 }
 
 body.provider-body .prov-dash-metrics--unified > .mc-notif-widget {
-    padding: 8px 10px;
-    gap: 1px 6px;
+    padding: 14px 16px;
+    gap: 2px 0;
 }
 
 body.provider-body .prov-dash-metrics--unified > .mc-notif-widget::before {
-    width: 24px;
-    height: 24px;
+    display: none !important;
 }
 
 body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value {
-    font-size: 1.05rem;
+    font-size: 1.5rem;
 }
 
 body.provider-body .prov-dash-welcome--compact {

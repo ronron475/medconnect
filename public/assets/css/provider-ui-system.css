@@ -248,20 +248,16 @@ body.provider-body .provider-page-body .prov-dash-metrics--unified > .mc-notif-w
 }
 
 body.provider-body .provider-page-body .prov-dash-stat__icon {
-  top: var(--pv-space-sm);
-  right: var(--pv-space-sm);
-  width: 24px;
-  height: 24px;
+  display: none !important;
 }
 
 body.provider-body .provider-page-body .prov-dash-metrics--unified > .mc-notif-widget {
-  padding: var(--pv-space-md) var(--pv-space-sm);
-  gap: var(--pv-space-xs);
+  padding: 14px 16px;
+  gap: 2px 0;
 }
 
 body.provider-body .provider-page-body .prov-dash-metrics--unified > .mc-notif-widget::before {
-  width: 24px;
-  height: 24px;
+  display: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════

@@ -45,16 +45,10 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
 
   <section class="prov-dash-metrics prov-dash-metrics--unified" data-notif-widgets aria-label="Operations summary">
     <div class="prov-dash-stat prov-dash-stat--ok">
-      <span class="prov-dash-stat__icon" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>
-      </span>
       <strong data-live-stat="appointments"><?= (int) ($stats['appointments'] ?? 0) ?></strong>
       <span>Today's Appointments</span>
     </div>
     <div class="prov-dash-stat">
-      <span class="prov-dash-stat__icon" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      </span>
       <strong data-live-stat="completed"><?= (int) ($stats['completed'] ?? 0) ?></strong>
       <span>Completed (Month)</span>
     </div>
