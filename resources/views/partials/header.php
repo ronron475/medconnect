@@ -23,7 +23,6 @@ if ($user_role === 'admin') {
 // Server-side seed for clock
 $today = date('F j, Y');
 $now   = date('h:i A');
-$header_date_caps = strtoupper(date('l, M j, Y'));
 $is_bhw_portal = $user_role === 'bhw';
 $is_admin_portal = ($user_role === 'admin') || ($user_role === 'superadmin');
 /* Admin/SuperAdmin/BHW: page title only — no role subtitle above the title. */
@@ -39,7 +38,7 @@ $compact_topbar = $is_admin_portal
     </svg>
   </button>
 
-  <!-- ── Left: Date + page title (patient) or breadcrumb + title ── -->
+  <!-- ── Left: page title (patient) or breadcrumb + title ── -->
   <div class="topbar-left">
     <?php if (!$is_patient_portal && !$is_bhw_portal && !$compact_topbar): ?>
     <a class="topbar-brand" href="<?= ASSET_BASE ?>/views/<?= htmlspecialchars($user_role === 'provider' ? 'provider' : ($user_role === 'superadmin' ? 'superadmin' : ($user_role === 'bhw' ? 'bhw' : 'patient'))) ?>/dashboard.php" aria-label="Home">
@@ -48,7 +47,6 @@ $compact_topbar = $is_admin_portal
     <?php endif; ?>
     <?php if ($is_patient_portal): ?>
     <div class="topbar-title-block">
-      <div class="topbar-eyebrow topbar-date-label"><?= htmlspecialchars($header_date_caps) ?></div>
       <h1 class="topbar-title"><?= htmlspecialchars($page_title) ?></h1>
     </div>
     <?php else: ?>
