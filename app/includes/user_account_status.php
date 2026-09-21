@@ -294,11 +294,6 @@ function user_account_status_allowed_actions_for_role(string $currentStatus, boo
         return $actions;
     }
 
-    // Regular Admin cannot deactivate, reactivate, approve, or reject BHW accounts.
-    if ($targetRole === 'bhw') {
-        return [];
-    }
-
     if (in_array($targetRole, ['admin', 'superadmin'], true)) {
         return [];
     }
