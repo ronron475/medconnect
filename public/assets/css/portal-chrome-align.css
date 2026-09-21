@@ -1,0 +1,93 @@
+/**
+ * medConnect — Universal portal chrome top alignment
+ *
+ * Pins sidebar + top navbar to the same viewport top edge for every role
+ * (Admin, Super Admin, BHW, Provider, Patient). Content/design unchanged.
+ *
+ * Floating / OS-float modes are excluded — floating-view.css owns those layouts.
+ */
+html {
+  --mc-safe-top: env(safe-area-inset-top, 0px);
+}
+
+@supports (padding-top: constant(safe-area-inset-top)) {
+  html {
+    --mc-safe-top: constant(safe-area-inset-top);
+  }
+}
+
+/* No document-level offset above the app chrome */
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen),
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen),
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen),
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen),
+html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-fullscreen) {
+  margin: 0;
+  padding: 0;
+  padding-top: 0 !important;
+}
+
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .portal-shell,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .portal-shell,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .portal-shell,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .root-wrapper,
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) .root-wrapper,
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) .provider-shell,
+html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-fullscreen) .root-wrapper,
+html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-fullscreen) .portal-shell {
+  margin: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* ── Sidebars: flush to viewport top ── */
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .adm-sidebar,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .adm-sidebar,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .adm-sidebar,
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) .sb-aqua,
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) .pd-sidebar,
+html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-fullscreen) .sidebar {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  /* Match header safe-area inset so chrome boxes stay flush while content clears notches */
+  padding-top: var(--mc-safe-top, 0px) !important;
+  box-sizing: border-box;
+}
+
+/* ── Topbars / headers: same top edge as sidebars ── */
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) .topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.admin-body:not(.mc-true-fullscreen) header.topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) .topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.superadmin-body:not(.mc-true-fullscreen) header.topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) .topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.bhw-body:not(.mc-true-fullscreen) header.topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-fullscreen) .topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.patient-portal:not(.mc-true-fullscreen) header.topbar,
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) .pd-header,
+html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) header.pd-header {
+  position: fixed !important;
+  top: 0 !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  padding-top: var(--mc-safe-top, 0px) !important;
+  box-sizing: border-box;
+}
+
+/* Keep provider header beside the sidebar on desktop (not under it) */
+@media (min-width: 1025px) {
+  html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) .pd-header,
+  html:not(.mc-floating-view):not(.mc-os-float) body.provider-body:not(.mc-true-fullscreen) header.pd-header {
+    left: var(--pd-sidebar-w, 260px) !important;
+    width: calc(100% - var(--pd-sidebar-w, 260px)) !important;
+    right: auto !important;
+  }
+
+  html:not(.mc-floating-view):not(.mc-os-float) body.provider-body.mc-sidebar-mini:not(.mc-true-fullscreen) .pd-header,
+  html:not(.mc-floating-view):not(.mc-os-float) body.provider-body.mc-sidebar-mini:not(.mc-true-fullscreen) header.pd-header {
+    left: var(--pd-sidebar-w, 78px) !important;
+    width: calc(100% - var(--pd-sidebar-w, 78px)) !important;
+  }
+}

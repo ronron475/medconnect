@@ -34,6 +34,11 @@ $floatingViewCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/floating-view.cs
 $floatingViewVer = ($floatingViewCss && file_exists($floatingViewCss)) ? (int) filemtime($floatingViewCss) : time();
 ?>
 <link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/floating-view.css?v=<?= $floatingViewVer ?>"/>
+<?php
+$chromeAlignCss = defined('ASSETS_PATH') ? ASSETS_PATH . '/css/portal-chrome-align.css' : '';
+$chromeAlignVer = ($chromeAlignCss && file_exists($chromeAlignCss)) ? (int) filemtime($chromeAlignCss) : time();
+?>
+<link rel="stylesheet" href="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/css/portal-chrome-align.css?v=<?= $chromeAlignVer ?>"/>
 <?php require_once __DIR__ . '/mobile_scroll_assets.php'; ?>
 <?php else: ?>
 <?php $mobileNavJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/mobile-nav.js' : ''); ?>
