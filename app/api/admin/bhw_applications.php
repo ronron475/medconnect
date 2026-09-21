@@ -148,6 +148,45 @@ try {
             echo json_encode($service->resendInvite($adminId, (int) ($_POST['application_id'] ?? 0)));
             break;
 
+        case 'barangay_hub_summary':
+            header('Content-Type: application/json; charset=utf-8');
+            $rows = $service->barangayHubSummary();
+            $totals = [
+                'total'            => 0,
+                'active'           => 0,
+                'pending_approval' => 0,
+                'inactive'         => 0,
+                'in_progress'      => 0,
+            ];
+            foreach ($rows as $row) {
+                foreach ($totals as $k => $_) {
+                    $totals[$k] += (int) ($row[$k] ?? 0);
+                }
+            }
+            echo json_encode([
+                'success' => true,
+                'data'    => [
+                    'barangays'           => $rows,
+                    'totals'              => $totals,
+                    'can_manage_accounts' => $isSuper,
+                    'generated_at'        => date('c'),
+                ],
+            ]);
+            break;
+
+        case 'barangay_hub_detail':
+            header('Content-Type: application/json; charset=utf-8');
+            $barangayId = (int) ($_GET['barangay_id'] ?? $_POST['barangay_id'] ?? 0);
+            if ($barangayId <= 0) {
+                echo json_encode(['success' => false, 'message' => 'Barangay ID is required.']);
+                break;
+            }
+            $detail = $service->barangayHubDetail($barangayId);
+            $detail['can_manage_accounts'] = $isSuper;
+            $detail['generated_at'] = date('c');
+            echo json_encode(['success' => true, 'data' => $detail]);
+            break;
+
         case 'upload_document':
             header('Content-Type: application/json; charset=utf-8');
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

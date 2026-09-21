@@ -85,6 +85,71 @@ final class AccountStatus
     }
 }
 
+/** Canonical message shown to deactivated users (login + forced logout). */
+function user_account_deactivated_message(): string
+{
+    return 'Your account has been deactivated. Please contact the administrator.';
+}
+
+/**
+ * Resolve whether a user row may authenticate / keep a session.
+ *
+ * @param array<string, mixed> $user Must include role; prefers account_status + is_active
+ */
+function user_account_login_allowed_for_row(array $user): bool
+{
+    $status = user_account_status_effective($user);
+
+    return AccountStatus::isLoginAllowed($status);
+}
+
+/**
+ * Login denial message for a blocked account (null when login is allowed).
+ *
+ * @param array<string, mixed> $user
+ */
+function user_account_login_denial_message(array $user): ?string
+{
+    if (user_account_login_allowed_for_row($user)) {
+        return null;
+    }
+
+    $status = user_account_status_effective($user);
+
+    return match ($status) {
+        AccountStatus::DEACTIVATED => user_account_deactivated_message(),
+        AccountStatus::SUSPENDED   => 'Your account is currently suspended. Please contact the administrator.',
+        AccountStatus::REJECTED    => 'Your account was rejected. Please contact the administrator.',
+        AccountStatus::ARCHIVED    => 'Your account is no longer available. Please contact the administrator.',
+        AccountStatus::PENDING_APPROVAL => 'Your account is pending approval and cannot sign in yet.',
+        default                    => user_account_deactivated_message(),
+    };
+}
+
+/**
+ * Revoke remember-me tokens and tracked sessions for one user only.
+ * Does not touch any other account.
+ */
+function user_account_status_invalidate_sessions(PDO $pdo, int $userId): void
+{
+    if ($userId <= 0) {
+        return;
+    }
+
+    try {
+        require_once __DIR__ . '/remember_me.php';
+        remember_me_revoke_for_user($pdo, $userId);
+    } catch (Throwable $e) { /* non-fatal */ }
+
+    try {
+        require_once __DIR__ . '/superadmin/schema.php';
+        if (function_exists('superadmin_ensure_schema')) {
+            superadmin_ensure_schema($pdo);
+        }
+        $pdo->prepare('DELETE FROM active_sessions WHERE user_id = ?')->execute([$userId]);
+    } catch (Throwable $e) { /* non-fatal */ }
+}
+
 /**
  * @return array{allowed: bool, message: string, code?: string}
  */
@@ -294,6 +359,10 @@ function user_account_status_allowed_actions_for_role(string $currentStatus, boo
         return $actions;
     }
 
+    if ($targetRole === 'bhw') {
+        return [];
+    }
+
     if (in_array($targetRole, ['admin', 'superadmin'], true)) {
         return [];
     }
@@ -469,6 +538,11 @@ function user_account_status_change(
         }
     }
 
+    // Global rule: only Super Admin may deactivate or restore login for any role.
+    if ($action === 'deactivate' && $performerRole !== 'superadmin') {
+        return ['success' => false, 'message' => 'Only the Super Administrator can deactivate accounts.'];
+    }
+
     if ($action === 'restore' && $performerRole !== 'superadmin') {
         return ['success' => false, 'message' => 'Only the Super Administrator can restore archived accounts.'];
     }
@@ -492,6 +566,15 @@ function user_account_status_change(
         $action = 'reactivate';
     }
 
+    // Reactivation / activate-from-deactivated is Super Admin only (all roles).
+    if (
+        $performerRole !== 'superadmin'
+        && in_array($action, ['activate', 'reactivate'], true)
+        && in_array($previousStatus, [AccountStatus::DEACTIVATED, AccountStatus::SUSPENDED], true)
+    ) {
+        return ['success' => false, 'message' => 'Only the Super Administrator can reactivate accounts.'];
+    }
+
     if (!in_array($action, $allowed, true)) {
         return [
             'success' => false,
@@ -510,10 +593,16 @@ function user_account_status_change(
 
     $isActive = user_account_status_sync_is_active($newStatus);
 
+    // Scope update to this user id only — never touch other accounts.
     $pdo->prepare('UPDATE users SET account_status = ?, is_active = ?, updated_at = NOW() WHERE id = ?')
         ->execute([$newStatus, $isActive, $targetUserId]);
 
     user_account_status_apply_metadata($pdo, $targetUserId, $action, $reason, $performedBy);
+
+    // If this account can no longer sign in, drop only its sessions/tokens immediately.
+    if (!AccountStatus::isLoginAllowed($newStatus)) {
+        user_account_status_invalidate_sessions($pdo, $targetUserId);
+    }
 
     if (($target['role'] ?? '') === 'provider' && in_array($action, ['approve', 'activate', 'reactivate'], true)) {
         require_once __DIR__ . '/provider_verification.php';

@@ -566,7 +566,8 @@ body.landing-page.signin-active #signin-modal {
 .landing-page .hero-signin-panel .signin-card .alert[style]:not(.signin-context-alert),
 .landing-page .hero-signin-panel .signin-card .alert.alert--info:not(.signin-context-alert),
 .landing-page .hero-signin-panel .signin-card .alert.alert--success:not(.signin-context-alert),
-.landing-page .hero-signin-panel .signin-card .alert.alert--warning:not(.signin-context-alert) {
+.landing-page .hero-signin-panel .signin-card .alert.alert--warning:not(.signin-context-alert),
+.landing-page .hero-signin-panel .signin-card .alert.alert--error:not(.signin-context-alert) {
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 0.8125rem;
@@ -599,6 +600,7 @@ body.landing-page.signin-active #signin-modal {
   color: #fef3c7 !important;
 }
 
+.landing-page .hero-signin-panel .signin-card .alert.alert--error,
 .landing-page .hero-signin-panel .signin-card .alert.error {
   background: rgba(248, 113, 113, 0.16) !important;
   border: 1px solid rgba(252, 165, 165, 0.4) !important;
@@ -1249,6 +1251,8 @@ body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.alert
   color: #fef3c7 !important;
 }
 
+html[data-theme-resolved='light'] .landing-page .hero-signin-panel .signin-card .alert.alert--error,
+body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.alert--error,
 html[data-theme-resolved='light'] .landing-page .hero-signin-panel .signin-card .alert.error,
 body.landing-page.landing-bg--light .hero-signin-panel .signin-card .alert.error {
   background: rgba(248, 113, 113, 0.16) !important;

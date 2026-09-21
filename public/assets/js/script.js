@@ -625,7 +625,7 @@ if (!isLandingPage) {
     }, { passive: true });
   }
 
-  const AUTH_MODAL_PARAMS = ['registered', 'session_expired', 'setup_complete', 'signin'];
+  const AUTH_MODAL_PARAMS = ['registered', 'session_expired', 'account_deactivated', 'setup_complete', 'signin'];
 
   function stripAuthModalParams() {
     const url = new URL(window.location.href);

@@ -33,6 +33,11 @@ function auth_session_expired_url(): string
     return auth_landing_url(['session_expired' => '1']);
 }
 
+function auth_account_deactivated_url(): string
+{
+    return auth_landing_url(['account_deactivated' => '1']);
+}
+
 /**
  * Canonical JSON payload for expired/invalid authenticated sessions.
  * Keep `code` for existing clients; `error` mirrors the same signal.
@@ -48,6 +53,25 @@ function auth_session_expired_payload(?string $redirect = null): array
         'error' => 'SESSION_EXPIRED',
         'message' => 'Your session has expired. Please log in again.',
         'code' => 'session_expired',
+        'redirect' => $redirect,
+    ];
+}
+
+/**
+ * @return array{success:bool,authenticated:bool,error:string,message:string,code:string,redirect:string}
+ */
+function auth_account_deactivated_payload(?string $redirect = null): array
+{
+    if (!function_exists('user_account_deactivated_message')) {
+        require_once __DIR__ . '/user_account_status.php';
+    }
+    $redirect = $redirect ?: auth_account_deactivated_url();
+    return [
+        'success' => false,
+        'authenticated' => false,
+        'error' => 'ACCOUNT_DEACTIVATED',
+        'message' => user_account_deactivated_message(),
+        'code' => 'account_deactivated',
         'redirect' => $redirect,
     ];
 }
@@ -75,6 +99,27 @@ function auth_respond_session_expired(?string $redirect = null): void
 }
 
 /**
+ * Emit 401/redirect for a deactivated account (session already cleared by caller).
+ */
+function auth_respond_account_deactivated(?string $redirect = null): void
+{
+    $payload = auth_account_deactivated_payload($redirect);
+    require_once BASE_PATH . '/app/includes/request_helpers.php';
+    if (request_wants_json()) {
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+            header('X-Content-Type-Options: nosniff');
+            header('Cache-Control: no-store');
+        }
+        http_response_code(401);
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    header('Location: ' . $payload['redirect']);
+    exit;
+}
+
+/**
  * Clear session and return visitor to the public landing / sign-in flow.
  */
 function auth_destroy_session_and_redirect(string $reason = 'signin'): void
@@ -95,6 +140,10 @@ function auth_destroy_session_and_redirect(string $reason = 'signin'): void
         session_destroy();
     }
 
+    if ($reason === 'account_deactivated') {
+        auth_respond_account_deactivated(auth_account_deactivated_url());
+    }
+
     if ($reason === 'session_expired' || $reason === 'session_invalid') {
         auth_respond_session_expired(auth_session_expired_url());
     }
@@ -111,7 +160,8 @@ function auth_destroy_session_and_redirect(string $reason = 'signin'): void
 }
 
 /**
- * Reject sessions whose user row was removed or is no longer active.
+ * Reject sessions whose user row was removed or may no longer sign in.
+ * Deactivation applies only to that specific account.
  */
 function auth_ensure_session_user_valid(PDO $pdo): void
 {
@@ -119,9 +169,12 @@ function auth_ensure_session_user_valid(PDO $pdo): void
         return;
     }
 
+    require_once __DIR__ . '/user_account_status.php';
+    user_account_status_ensure_schema($pdo);
+
     $userId = (int) $_SESSION['user_id'];
     $role = (string) ($_SESSION['user_role'] ?? '');
-    $stmt = $pdo->prepare('SELECT id, role, account_status FROM users WHERE id = ? LIMIT 1');
+    $stmt = $pdo->prepare('SELECT id, role, is_active, account_status FROM users WHERE id = ? LIMIT 1');
     $stmt->execute([$userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -133,8 +186,11 @@ function auth_ensure_session_user_valid(PDO $pdo): void
         auth_destroy_session_and_redirect('session_invalid');
     }
 
-    $status = strtolower((string) ($row['account_status'] ?? 'active'));
-    if ($status !== '' && $status !== 'active') {
+    if (!user_account_login_allowed_for_row($row)) {
+        $status = user_account_status_effective($row);
+        if ($status === AccountStatus::DEACTIVATED) {
+            auth_destroy_session_and_redirect('account_deactivated');
+        }
         auth_destroy_session_and_redirect('session_invalid');
     }
 }
@@ -173,8 +229,13 @@ function auth_redirect_if_logged_in(): void
         auth_ensure_session_user_valid($pdo);
     }
 
-    // Keep landing for post-registration, password-setup, or session-timeout messaging.
-    if (isset($_GET['registered']) || isset($_GET['setup_complete']) || isset($_GET['session_expired'])) {
+    // Keep landing for post-registration, password-setup, session-timeout, or deactivation messaging.
+    if (
+        isset($_GET['registered'])
+        || isset($_GET['setup_complete'])
+        || isset($_GET['session_expired'])
+        || isset($_GET['account_deactivated'])
+    ) {
         return;
     }
 
