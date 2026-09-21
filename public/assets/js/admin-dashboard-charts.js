@@ -155,8 +155,8 @@
           data: data,
           backgroundColor: colors,
           borderRadius: 4,
-          maxBarThickness: 28,
-          minBarLength: 2,
+          maxBarThickness: 36,
+          minBarLength: 4,
         }],
       },
       options: T().cartesianOptions({

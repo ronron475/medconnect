@@ -296,24 +296,24 @@ body.admin-body .admin-modal-dialog {
   padding-bottom: 16px;
 }
 
-/* ── Charts: compact cards, no oversized empty canvas ── */
+/* ── Charts: larger canvases for System Admin + Super Admin ── */
 body.admin-body .adm-chart-card,
 body.admin-body .mc-chart-card {
   min-height: 0 !important;
   height: auto !important;
-  padding: 10px 12px 8px !important;
+  padding: 14px 16px 12px !important;
   gap: 0 !important;
 }
 
 body.admin-body .adm-chart-card__head,
 body.admin-body .mc-chart-card__head {
-  margin-bottom: 6px !important;
-  gap: 8px !important;
+  margin-bottom: 10px !important;
+  gap: 10px !important;
 }
 
 body.admin-body .adm-chart-card__sub,
 body.admin-body .mc-chart-card__sub {
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 body.admin-body .adm-chart-kpi,
@@ -323,31 +323,31 @@ body.admin-body .mc-chart-kpi {
 
 body.admin-body .adm-chart-kpi strong,
 body.admin-body .mc-chart-kpi strong {
-  font-size: 1.2rem !important;
+  font-size: 1.35rem !important;
   line-height: 1.1;
 }
 
 body.admin-body .adm-chart-canvas-wrap,
 body.admin-body .mc-chart-canvas-wrap {
   flex: 0 0 auto !important;
-  min-height: 110px !important;
-  height: clamp(110px, 16vh, 150px) !important;
+  min-height: 200px !important;
+  height: clamp(200px, 26vh, 280px) !important;
 }
 
 body.admin-body .adm-chart-canvas-wrap--roles,
 body.admin-body .mc-chart-canvas-wrap--roles {
-  min-height: 130px !important;
-  height: clamp(130px, 18vh, 170px) !important;
+  min-height: 240px !important;
+  height: clamp(240px, 28vh, 320px) !important;
 }
 
 body.admin-body .mc-chart-canvas-wrap--tall {
-  min-height: 130px !important;
-  height: clamp(130px, 18vh, 170px) !important;
+  min-height: 240px !important;
+  height: clamp(240px, 28vh, 320px) !important;
 }
 
 body.admin-body .mc-chart-canvas-wrap--ring {
-  min-height: 120px !important;
-  height: clamp(120px, 16vh, 150px) !important;
+  min-height: 220px !important;
+  height: clamp(220px, 26vh, 300px) !important;
 }
 
 body.admin-body .adm-bar-chart {
@@ -478,7 +478,7 @@ body.admin-body .pagination {
 
   body.admin-body .adm-chart-card,
   body.admin-body .mc-chart-card {
-    padding: 10px !important;
+    padding: 12px !important;
   }
 
   body.admin-body .adm-charts-section > .adm-section-head {
@@ -486,19 +486,19 @@ body.admin-body .pagination {
   }
 
   body.admin-body .adm-charts-grid {
-    gap: 8px !important;
+    gap: 10px !important;
   }
 
   body.admin-body .adm-chart-canvas-wrap,
   body.admin-body .mc-chart-canvas-wrap {
-    min-height: 100px !important;
-    height: clamp(100px, 22vh, 140px) !important;
+    min-height: 180px !important;
+    height: clamp(180px, 28vh, 240px) !important;
   }
 
   body.admin-body .adm-chart-canvas-wrap--roles,
   body.admin-body .mc-chart-canvas-wrap--roles {
-    min-height: 120px !important;
-    height: clamp(120px, 24vh, 160px) !important;
+    min-height: 220px !important;
+    height: clamp(220px, 32vh, 280px) !important;
   }
 
   body.admin-body .superadmin-stat-card {
