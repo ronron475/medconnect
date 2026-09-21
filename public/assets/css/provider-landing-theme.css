@@ -57,8 +57,10 @@ body.provider-body .sb-aqua {
 body.provider-body .sba-logo {
   background: transparent;
   border-bottom: 1px solid var(--mc-border-thin);
-  justify-content: center;
+  display: flex;
+  justify-content: flex-start;
   align-items: center;
+  gap: 12px;
   box-sizing: border-box;
   height: calc(var(--provider-header-h, 68px) + var(--mc-safe-top, 0px));
   min-height: calc(var(--provider-header-h, 68px) + var(--mc-safe-top, 0px));
@@ -66,14 +68,27 @@ body.provider-body .sba-logo {
   padding: 0 16px !important;
   margin: 0 !important;
   flex-shrink: 0;
+  text-decoration: none;
 }
 
 body.provider-body .sba-logo:hover {
   background: rgba(6, 147, 150, 0.04);
 }
 
+/* Match Admin wordmark size; navy + teal for light provider chrome */
 body.provider-body .sba-logo-text {
-  display: none;
+  display: block;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--landing-navy, #012A4A);
+  letter-spacing: -0.35px;
+  line-height: 1;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+body.provider-body .sba-logo-text span {
+  color: var(--landing-teal, #069396);
 }
 
 body.provider-body .sba-logo img,
@@ -104,6 +119,8 @@ body.provider-body .sba-nav {
   }
 
   body.provider-body.mc-sidebar-mini .sba-logo {
+    justify-content: center;
+    gap: 0;
     padding: 0 8px !important;
     height: calc(var(--provider-header-h, 68px) + var(--mc-safe-top, 0px));
     min-height: calc(var(--provider-header-h, 68px) + var(--mc-safe-top, 0px));
@@ -116,6 +133,10 @@ body.provider-body .sba-nav {
     height: 36px !important;
     max-width: 36px;
     max-height: 36px;
+  }
+
+  body.provider-body.mc-sidebar-mini .sba-logo-text {
+    display: none;
   }
 
   body.provider-body.mc-sidebar-mini .sba-nav {
