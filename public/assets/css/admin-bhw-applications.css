@@ -454,3 +454,151 @@
   .bhw-doc-preview-header { flex-direction: column; }
   .bhw-doc-list li { flex-direction: column; align-items: flex-start; }
 }
+
+/* Barangay BHW Summary */
+.bhw-brgy-summary {
+  margin: 0 0 28px;
+  padding: 20px 22px 22px;
+  border: 1px solid rgba(209, 228, 248, 0.95);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 48%);
+  box-shadow: 0 8px 24px rgba(15, 55, 95, 0.04);
+}
+.bhw-brgy-summary__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.bhw-brgy-summary__title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f2942;
+}
+.bhw-brgy-summary__sub {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #5b6f86;
+}
+.bhw-brgy-summary__live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f766e;
+  background: #ecfdf5;
+  border: 1px solid #99f6e4;
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+.bhw-brgy-summary__totals {
+  margin-bottom: 16px;
+}
+.bhw-brgy-summary__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.bhw-brgy-summary__select-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #334155;
+}
+.bhw-brgy-summary__select {
+  min-width: min(100%, 320px);
+}
+.bhw-brgy-summary__grid-wrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(209, 228, 248, 0.9);
+  background: #fff;
+}
+.bhw-brgy-summary__table {
+  margin: 0;
+}
+.bhw-brgy-row {
+  cursor: pointer;
+}
+.bhw-brgy-row:hover,
+.bhw-brgy-row:focus-visible {
+  background: #f0f9ff;
+  outline: none;
+}
+.bhw-brgy-row--selected {
+  background: #e0f2fe;
+}
+.bhw-brgy-detail {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(209, 228, 248, 0.95);
+}
+.bhw-brgy-detail__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f2942;
+}
+.bhw-brgy-detail__sub {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+.bhw-brgy-detail__pending {
+  margin-top: 14px;
+}
+.bhw-brgy-detail__pending-title {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #92400e;
+}
+.bhw-brgy-detail__pending-list {
+  margin: 0;
+  padding: 12px 14px 12px 28px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  color: #78350f;
+  font-size: 0.9rem;
+}
+.bhw-presence {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+.bhw-presence--online {
+  background: #dcfce7;
+  color: #166534;
+}
+.bhw-presence--offline {
+  background: #e2e8f0;
+  color: #475569;
+}
+.bhw-presence--deactivated {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 720px) {
+  .bhw-brgy-summary {
+    padding: 16px 14px 18px;
+  }
+  .bhw-brgy-summary__select {
+    width: 100%;
+    min-width: 0;
+  }
+}
