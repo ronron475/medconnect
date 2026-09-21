@@ -128,12 +128,18 @@
   overflow: hidden;
 }
 
-/* Main 2-column grid */
+/* Main grid — paired rows so left/right cards share top edges */
 .prov-dash-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.prov-dash-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 28%);
   gap: 16px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .prov-dash-main,
@@ -142,6 +148,27 @@
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  height: 100%;
+}
+
+.prov-dash-row > .prov-dash-main > .prov-dash-card,
+.prov-dash-row > .prov-dash-main > .prov-dash-notif-wrap,
+.prov-dash-row > .prov-dash-side > .prov-dash-card:only-child {
+  flex: 1 1 auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.prov-dash-row > .prov-dash-main > .prov-dash-notif-wrap,
+.prov-dash-row > .prov-dash-main > .prov-dash-notif-wrap > .mc-notif-recent-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.prov-dash-row > .prov-dash-main > .prov-dash-notif-wrap > .mc-notif-recent-panel {
+  flex: 1 1 auto;
 }
 
 .prov-dash-card {
@@ -561,7 +588,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .prov-dash-grid {
+  .prov-dash-row {
     grid-template-columns: 1fr;
   }
 }

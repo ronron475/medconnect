@@ -435,13 +435,37 @@ body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value {
 }
 
 body.provider-body .prov-dash-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pt-dash-space);
+  grid-template-columns: none;
+}
+
+body.provider-body .prov-dash-row {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
   gap: var(--pt-dash-space);
+  align-items: stretch;
 }
 
 body.provider-body .prov-dash-main,
 body.provider-body .prov-dash-side {
   gap: var(--pt-dash-space);
+  height: 100%;
+}
+
+body.provider-body .prov-dash-row > .prov-dash-main > .prov-dash-card,
+body.provider-body .prov-dash-row > .prov-dash-side > .prov-dash-card:only-child {
+  flex: 1 1 auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+body.provider-body .prov-dash-row > .prov-dash-side > .prov-dash-card:only-child .prov-status-list,
+body.provider-body .prov-dash-row > .prov-dash-side > .prov-dash-card:only-child [data-live-triage],
+body.provider-body .prov-dash-row > .prov-dash-side > .prov-dash-card:only-child .prov-triage-preview__empty {
+  flex: 1 1 auto;
 }
 
 body.provider-body .prov-dash-card__head {
@@ -526,6 +550,10 @@ body.provider-body .mc-notif-recent-panel__body {
 @media (max-width: 900px) {
   body.provider-body .prov-dash-metrics--unified {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body.provider-body .prov-dash-row {
+    grid-template-columns: 1fr;
   }
 }
 
