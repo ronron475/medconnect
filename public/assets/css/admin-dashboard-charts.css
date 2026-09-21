@@ -470,6 +470,68 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
   }
 }
 
+@media (max-width: 768px) {
+  .adm-overview-grid {
+    gap: 10px;
+  }
+
+  .adm-overview-card {
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
+  .adm-overview-card .adm-chart-card__head {
+    margin-bottom: 8px;
+  }
+
+  /* Do not stretch/center tiles to chart-card height on phones */
+  .adm-overview-tiles {
+    flex: none;
+    align-content: start;
+    min-height: 0 !important;
+    gap: 8px;
+  }
+
+  .adm-overview-tile {
+    min-height: 0;
+    padding: 10px 8px;
+    gap: 4px;
+  }
+
+  .adm-overview-tile__icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .adm-overview-tile__icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .adm-overview-tile__value {
+    font-size: 1.35rem;
+  }
+
+  .adm-overview-tile__label {
+    font-size: 11px;
+  }
+
+  .adm-chart-card {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 12px !important;
+  }
+
+  .adm-chart-card__head {
+    margin-bottom: 8px;
+  }
+
+  .adm-sys-status {
+    min-height: 0;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 640px) {
   .adm-overview-tiles {
     grid-template-columns: 1fr 1fr;

@@ -347,7 +347,9 @@ body.admin-body .adm-overview-card {
 }
 
 body.admin-body .adm-overview-tiles {
-  min-height: 160px;
+  min-height: 0;
+  flex: 1;
+  align-content: center;
 }
 
 body.admin-body .adm-sys-status {
@@ -495,12 +497,35 @@ body.admin-body .pagination {
     padding: 12px !important;
   }
 
-  body.admin-body .adm-charts-section > .adm-section-head {
-    gap: 6px;
+  body.admin-body .adm-overview-card {
+    min-height: 0 !important;
+    height: auto !important;
   }
 
-  body.admin-body .adm-charts-grid {
+  body.admin-body .adm-overview-tiles {
+    flex: none !important;
+    align-content: start !important;
+    min-height: 0 !important;
+    gap: 8px !important;
+  }
+
+  body.admin-body .adm-overview-tile {
+    min-height: 0 !important;
+    padding: 10px 8px !important;
+    gap: 4px;
+  }
+
+  body.admin-body .adm-overview-card .adm-chart-card__head {
+    margin-bottom: 8px !important;
+  }
+
+  body.admin-body .adm-charts-grid,
+  body.admin-body .adm-overview-grid {
     gap: 10px !important;
+  }
+
+  body.admin-body .adm-charts-section > .adm-section-head {
+    gap: 6px;
   }
 
   body.admin-body .adm-chart-canvas-wrap,
