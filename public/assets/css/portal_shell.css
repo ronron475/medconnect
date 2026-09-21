@@ -22,8 +22,8 @@ html {
 
 }
 
-/* Desktop "mini" (icon-only) sidebar — burger toggles this */
-@media (min-width: 1025px) {
+/* Desktop "mini" (icon-only) sidebar — burger toggles this; keep in sync with Admin/SA/BHW */
+@media (min-width: 768px) {
     body.mc-sidebar-mini {
         --portal-sidebar-w: 78px;
     }

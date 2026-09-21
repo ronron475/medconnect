@@ -7,6 +7,8 @@ body.bhw-body {
   --adm-sb-w: 260px;
   --portal-sidebar-w: 260px;
   --sb-width: 260px;
+  --portal-header-h: 68px;
+  --header-h: 68px;
 }
 
 @media (min-width: 768px) {

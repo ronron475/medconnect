@@ -276,6 +276,8 @@
   $bhwSpacingVer = file_exists($bhwSpacingCss) ? (int) filemtime($bhwSpacingCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/bhw-spacing.css?v=<?= $bhwSpacingVer ?>"/>
+  <!-- Chrome align last so BHW matches Admin/SA sidebar + topbar geometry -->
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal-chrome-align.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/portal-chrome-align.css') ?>"/>
 </head>
 <body
   class="bhw-body"
