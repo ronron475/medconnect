@@ -51,12 +51,6 @@ foreach ($upcoming_list as $c) {
     data-patient-name="<?= $pt_display ?>"
   >
     <div class="pdash-hero__main">
-      <span class="pdash-hero__icon" data-pdash-greeting-icon aria-hidden="true">
-        <svg class="pdash-hero__icon-svg" data-icon="morning" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="4"/>
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-        </svg>
-      </span>
       <div class="pdash-hero__content">
         <h1 class="pdash-hero__title">
           <span data-pdash-greeting-period>Good morning</span>, <?= $pt_display ?>
