@@ -803,7 +803,7 @@
     openModal(id);
   });
 
-  window.MCBhwInvite = { open: openModal, close: closeModal };
+  window.MCBhwInvite = { open: openModal, close: closeModal, openDocPreview: openDocPreview };
 
   if (tbody && cfg.showApplications !== false) {
     loadList();
