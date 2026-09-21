@@ -5,7 +5,8 @@
 
 :root {
     --pd-sidebar-w: 260px;
-    --provider-header-h: 64px;
+    /* Match patient portal top chrome band */
+    --provider-header-h: 68px;
 }
 
 body.provider-body {
@@ -269,7 +270,7 @@ body.provider-body .provider-page-body {
 
 .pd-header {
     background: var(--card-bg);
-    height: var(--provider-header-h);
+    height: var(--provider-header-h, 68px);
     padding: 0 20px 0 12px;
     display: flex;
     align-items: center;
