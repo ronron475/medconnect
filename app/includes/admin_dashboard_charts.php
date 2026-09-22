@@ -337,12 +337,13 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 180): array
     $adminTotal = (int) ($roleMap['admin'] ?? 0) + (int) ($roleMap['superadmin'] ?? 0);
     $overview = [
         'total_users' => array_sum($roleMap),
+        'patients' => (int) ($roleMap['patient'] ?? 0),
         'doctors' => (int) ($roleMap['provider'] ?? 0),
         'bhw' => (int) ($roleMap['bhw'] ?? 0),
         'administrators' => $adminTotal,
     ];
 
-    // Distribution card matches the 4-role overview (Administrators = admin + superadmin).
+    // Distribution card matches overview roles (Administrators = admin + superadmin).
     $distribution = [];
     foreach ($roles as $r) {
         $role = (string) ($r['role'] ?? '');
