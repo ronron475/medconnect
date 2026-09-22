@@ -40,9 +40,6 @@ $profile_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?
 $profile_display_name = trim(($admin_user['first_name'] ?? '') . ' ' . ($admin_user['last_name'] ?? '')) ?: 'Administrator';
 $profile_role_label = $is_superadmin_portal ? 'Super Administrator' : 'System Administrator';
 $profile_upload_layout = 'portal';
-$portal_eyebrow = $is_superadmin_portal ? 'Super Administration · Account Settings' : 'Administration · Account Settings';
-$portal_heading = $is_superadmin_portal ? 'Super Administrator Profile' : 'Administrator Profile';
-$portal_portal_name = $is_superadmin_portal ? 'Super Admin portal' : 'admin portal';
 
 $member_since = !empty($admin_user['created_at'])
     ? date('M j, Y', strtotime($admin_user['created_at']))
@@ -58,15 +55,9 @@ require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-portal-profile.css?v=1.0">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-portal-profile.css?v=1.1">
 
 <article class="portal-profile-page staff-apps-page">
-
-<header class="staff-apps-hero staff-apps-hero--intro">
-    <div class="staff-apps-hero__content">
-        <p class="staff-apps-hero__desc">Manage your profile photo and review your account details for the medConnect <?= htmlspecialchars($portal_portal_name) ?>.</p>
-    </div>
-</header>
 
 <div class="portal-profile-grid">
     <section class="portal-profile-card portal-profile-card--photo" aria-labelledby="portalProfilePhotoTitle">
