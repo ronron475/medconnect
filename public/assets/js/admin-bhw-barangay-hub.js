@@ -105,22 +105,22 @@
         const id = Number(r.barangay_id || 0);
         return (
           '<tr>' +
-          '<td data-label="Barangay"><strong>' +
+          '<td class="bhw-brgy-col--name" data-label="Barangay"><strong>' +
           esc(r.barangay_name || '—') +
           '</strong></td>' +
-          '<td data-label="Total">' +
+          '<td class="bhw-brgy-col--num" data-label="Total">' +
           Number(r.total || 0) +
           '</td>' +
-          '<td data-label="Active">' +
+          '<td class="bhw-brgy-col--num" data-label="Active">' +
           Number(r.active || 0) +
           '</td>' +
-          '<td data-label="Pending">' +
+          '<td class="bhw-brgy-col--num" data-label="Pending">' +
           Number(r.pending_approval || 0) +
           '</td>' +
-          '<td data-label="Inactive">' +
+          '<td class="bhw-brgy-col--num" data-label="Inactive">' +
           Number(r.inactive || 0) +
           '</td>' +
-          '<td data-label="Actions">' +
+          '<td class="bhw-brgy-col--actions" data-label="Actions">' +
           '<button type="button" class="mc-btn mc-btn--outline mc-btn--sm js-bhw-view-brgy" data-barangay-id="' +
           id +
           '">View</button>' +
