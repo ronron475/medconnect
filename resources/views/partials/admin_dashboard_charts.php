@@ -9,7 +9,7 @@ if (!isset($pdo)) {
 
 require_once BASE_PATH . '/app/includes/admin_dashboard_charts.php';
 
-$chart_days = admin_chart_normalize_period_days((int) ($chart_days ?? 180));
+$chart_days = admin_chart_normalize_period_days((int) ($chart_days ?? 30));
 $chart_period_label = admin_chart_period_label($chart_days);
 $chart_js_ver = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-charts.js');
 $chart_theme_js_ver = (int) @filemtime(ASSETS_PATH . '/js/medconnect-chart-theme.js');
@@ -77,9 +77,10 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
         <div class="adm-chart-period">
           <label class="visually-hidden" for="admChartsDays">Period</label>
           <select id="admChartsDays" class="form-select adm-chart-period__select" aria-label="Registration trend period">
-            <option value="30"<?= $chart_days === 30 ? ' selected' : '' ?>>Last Month</option>
-            <option value="180"<?= $chart_days === 180 ? ' selected' : '' ?>>Last 6 Months</option>
-            <option value="365"<?= $chart_days === 365 ? ' selected' : '' ?>>Last Year</option>
+            <option value="1"<?= $chart_days === 1 ? ' selected' : '' ?>>1 Day</option>
+            <option value="7"<?= $chart_days === 7 ? ' selected' : '' ?>>1 Week</option>
+            <option value="30"<?= $chart_days === 30 ? ' selected' : '' ?>>1 Month</option>
+            <option value="365"<?= $chart_days === 365 ? ' selected' : '' ?>>1 Year</option>
           </select>
         </div>
       </div>

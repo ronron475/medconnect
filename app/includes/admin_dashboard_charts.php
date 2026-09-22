@@ -34,36 +34,36 @@ function admin_chart_normalize_date(mixed $value): ?string
     return $ts ? date('Y-m-d', $ts) : null;
 }
 
-/** Allowed Analytics period lengths: Today, Week, Month, 6 Months, Year. */
+/** Allowed registration-trend periods: 1 Day, 1 Week, 1 Month, 1 Year. */
 function admin_chart_normalize_period_days(int $days): int
 {
     return match ($days) {
-        1, 7, 30, 180, 365 => $days,
-        default => 180,
+        1, 7, 30, 365 => $days,
+        // Legacy clients that still request 180 → treat as 1 Year
+        180 => 365,
+        default => 30,
     };
 }
 
 function admin_chart_period_label(int $days): string
 {
     return match (admin_chart_normalize_period_days($days)) {
-        1 => 'Today',
-        7 => 'Week',
-        30 => 'Month',
-        180 => 'Last 6 Months',
-        365 => 'Year',
-        default => 'Last 6 Months',
+        1 => '1 Day',
+        7 => '1 Week',
+        30 => '1 Month',
+        365 => '1 Year',
+        default => '1 Month',
     };
 }
 
 function admin_chart_period_range_label(int $days): string
 {
     return match (admin_chart_normalize_period_days($days)) {
-        1 => 'today',
-        7 => 'this week',
-        30 => 'this month',
-        180 => 'the last 6 months',
-        365 => 'this year',
-        default => 'the last 6 months',
+        1 => 'the last day',
+        7 => 'the last week',
+        30 => 'the last month',
+        365 => 'the last year',
+        default => 'the last month',
     };
 }
 
@@ -173,8 +173,9 @@ function admin_chart_users_not_soft_deleted_sql(PDO $pdo, string $alias = ''): s
 function admin_chart_registrations_daily(PDO $pdo, int $days = 7): array
 {
     $days = admin_chart_normalize_period_days($days);
-    if ($days >= 180) {
-        return admin_chart_registrations_monthly($pdo, $days === 365 ? 12 : 6);
+    // Year view: monthly buckets keep the axis readable while staying live from DB.
+    if ($days >= 365) {
+        return admin_chart_registrations_monthly($pdo, 12);
     }
 
     $series = admin_chart_last_n_days($days);
@@ -197,7 +198,7 @@ function admin_chart_registrations_daily(PDO $pdo, int $days = 7): array
 }
 
 /**
- * Monthly registration totals for trend cards (e.g. Last 6 Months).
+ * Monthly registration totals for year trend cards.
  *
  * @return list<array{date:string,label:string,count:int,is_today:bool}>
  */
@@ -320,12 +321,14 @@ function admin_chart_triage_daily(PDO $pdo, int $days = 30): array
 }
 
 /** @return array<string, mixed> */
-function admin_dashboard_chart_payload(PDO $pdo, int $days = 180): array
+function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
 {
     $days = admin_chart_normalize_period_days($days);
-    $consultations = admin_chart_consultations_daily($pdo, $days === 180 ? 30 : $days);
+    // Overview companion series stay short; registration trends use the selected period.
+    $companionDays = $days > 30 ? 30 : $days;
+    $consultations = admin_chart_consultations_daily($pdo, $companionDays);
     $registrations = admin_chart_registrations_daily($pdo, $days);
-    $triage        = admin_chart_triage_daily($pdo, $days === 180 ? 30 : $days);
+    $triage        = admin_chart_triage_daily($pdo, $companionDays);
     $roles         = admin_chart_user_roles($pdo);
     $status        = admin_chart_consult_status($pdo);
     $systemStatus  = admin_chart_system_status_summary($pdo);

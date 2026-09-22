@@ -23,7 +23,7 @@
     var el = root();
     if (!el) return '';
     var base = document.body.dataset.assetBase || '';
-    var days = el.getAttribute('data-days') || '180';
+    var days = el.getAttribute('data-days') || '30';
     return base + '/app/api/admin/dashboard_charts.php?days=' + encodeURIComponent(days);
   }
 
@@ -271,9 +271,11 @@
     var distribution = data.distribution || data.roles || [];
     var sys = data.system_status || {};
 
-    var periodLabel = data.period_label || 'Last 6 Months';
+    var periodLabel = data.period_label || '1 Month';
     var regSub = document.getElementById('admChartRegSub');
-    if (regSub) regSub.textContent = 'New user sign-ups per month';
+    if (regSub) {
+      regSub.textContent = 'New user sign-ups — ' + periodLabel;
+    }
 
     renderOverview(overview);
     makeLineChart('admChartReg', reg.series || [], T().colors.teal);
@@ -287,9 +289,6 @@
     if (daysSel && data.days != null && String(daysSel.value) !== String(data.days)) {
       var opt = daysSel.querySelector('option[value="' + data.days + '"]');
       if (opt) daysSel.value = String(data.days);
-    }
-    if (regSub && periodLabel && data.days && Number(data.days) < 180) {
-      regSub.textContent = 'New user sign-ups — ' + periodLabel;
     }
   }
 
