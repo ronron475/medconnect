@@ -37,6 +37,13 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
           <div class="adm-overview-tile__value" id="admOverviewTotal" data-live-metric="total_users">—</div>
           <div class="adm-overview-tile__label">Total Users</div>
         </div>
+        <div class="adm-overview-tile adm-overview-tile--patients">
+          <div class="adm-overview-tile__icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="adm-overview-tile__value" id="admOverviewPatients" data-live-metric="patients">—</div>
+          <div class="adm-overview-tile__label">Patients</div>
+        </div>
         <div class="adm-overview-tile adm-overview-tile--doctors">
           <div class="adm-overview-tile__icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></svg>

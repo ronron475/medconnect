@@ -280,7 +280,7 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
 
 .adm-overview-tiles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   flex: none;
   align-content: start;
@@ -332,6 +332,15 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
 .adm-overview-tile--total .adm-overview-tile__icon {
   background: rgba(15, 118, 110, 0.12);
   color: #0f766e;
+}
+
+.adm-overview-tile--patients {
+  background: #f0fdfa;
+  color: #0f766e;
+}
+.adm-overview-tile--patients .adm-overview-tile__icon {
+  background: rgba(13, 148, 136, 0.14);
+  color: #0d9488;
 }
 
 .adm-overview-tile--doctors {
@@ -604,6 +613,7 @@ html[data-theme-resolved='dark'] .adm-chart-period__select {
 }
 
 html[data-theme-resolved='dark'] .adm-overview-tile--total { background: rgba(15, 118, 110, 0.18); }
+html[data-theme-resolved='dark'] .adm-overview-tile--patients { background: rgba(13, 148, 136, 0.18); }
 html[data-theme-resolved='dark'] .adm-overview-tile--doctors { background: rgba(37, 99, 235, 0.18); }
 html[data-theme-resolved='dark'] .adm-overview-tile--bhw { background: rgba(124, 58, 237, 0.18); }
 html[data-theme-resolved='dark'] .adm-overview-tile--admins { background: rgba(234, 88, 12, 0.18); }

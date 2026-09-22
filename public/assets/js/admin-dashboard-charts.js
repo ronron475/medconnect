@@ -235,6 +235,7 @@
   function renderOverview(overview) {
     var o = overview || {};
     setText('admOverviewTotal', Number(o.total_users || 0).toLocaleString());
+    setText('admOverviewPatients', Number(o.patients || 0).toLocaleString());
     setText('admOverviewDoctors', Number(o.doctors || 0).toLocaleString());
     setText('admOverviewBhw', Number(o.bhw || 0).toLocaleString());
     setText('admOverviewAdmins', Number(o.administrators || 0).toLocaleString());
