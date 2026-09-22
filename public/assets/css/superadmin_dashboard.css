@@ -117,6 +117,20 @@ html[data-theme-resolved='dark'] body.superadmin-body .adm-sidebar--superadmin {
 
 .superadmin-dashboard-grid {
   margin-top: 0;
+  align-items: stretch;
+}
+
+/* Keep side panels (notifications + health) even with activities/logins */
+.superadmin-dashboard-grid > .adm-grid-side > .adm-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.superadmin-dashboard-grid > .adm-grid-side > .adm-card > .adm-actions-body {
+  flex: 1;
+  min-height: 0;
 }
 
 .superadmin-health-pill {
