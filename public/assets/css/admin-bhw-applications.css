@@ -491,6 +491,45 @@
   white-space: nowrap;
 }
 
+/* Barangay list table — balanced columns, centered counts */
+#bhwBrgyTable {
+  table-layout: fixed;
+  min-width: 0;
+  width: 100%;
+}
+
+#bhwBrgyTable .bhw-brgy-col--name {
+  text-align: left;
+  width: 26%;
+}
+
+#bhwBrgyTable .bhw-brgy-col--num {
+  text-align: center;
+  width: 14%;
+  font-variant-numeric: tabular-nums;
+}
+
+#bhwBrgyTable .bhw-brgy-col--actions {
+  text-align: center;
+  width: 12%;
+}
+
+#bhwBrgyTable th.bhw-brgy-col--num,
+#bhwBrgyTable th.bhw-brgy-col--actions {
+  text-align: center;
+  white-space: normal;
+  line-height: 1.35;
+  vertical-align: bottom;
+}
+
+#bhwBrgyTable td.bhw-brgy-col--name {
+  padding-right: 12px;
+}
+
+#bhwBrgyTable td.bhw-brgy-col--actions .mc-btn {
+  margin-inline: auto;
+}
+
 /* Slightly larger summary cards on BHW Management */
 .bhw-hub .staff-apps-stats {
   gap: 18px;
@@ -667,5 +706,22 @@
   .bhw-hub-detail__toolbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  #bhwBrgyTable {
+    table-layout: auto;
+    min-width: 0;
+  }
+
+  #bhwBrgyTable .bhw-brgy-col--name,
+  #bhwBrgyTable .bhw-brgy-col--num,
+  #bhwBrgyTable .bhw-brgy-col--actions {
+    width: auto;
+    text-align: left;
+  }
+
+  #bhwBrgyTable th.bhw-brgy-col--num,
+  #bhwBrgyTable th.bhw-brgy-col--actions {
+    text-align: left;
   }
 }

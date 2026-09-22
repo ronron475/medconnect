@@ -164,12 +164,12 @@ require_once __DIR__ . '/partials/layout_open.php';
             <table class="staff-apps-table" id="bhwBrgyTable">
                 <thead>
                     <tr>
-                        <th>Barangay</th>
-                        <th>Total BHWs</th>
-                        <th>Active</th>
-                        <th>Pending Approval</th>
-                        <th>Inactive / Deactivated</th>
-                        <th>Actions</th>
+                        <th class="bhw-brgy-col--name">Barangay</th>
+                        <th class="bhw-brgy-col--num">Total BHWs</th>
+                        <th class="bhw-brgy-col--num">Active</th>
+                        <th class="bhw-brgy-col--num">Pending Approval</th>
+                        <th class="bhw-brgy-col--num">Inactive / Deactivated</th>
+                        <th class="bhw-brgy-col--actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="bhwBrgyBody">
@@ -365,7 +365,7 @@ window.MC_BHW_APP = {
 };
 </script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-applications.js?v=3.2"></script>
-<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/admin-bhw-barangay-hub.js?v=1.4"></script>
 <?php if ($is_superadmin_checker): ?>
 <script>
 window.MC_BHW_APPROVAL = {
