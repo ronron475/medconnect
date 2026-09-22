@@ -23,6 +23,8 @@ return [
 
     ['section' => 'Administration', 'items' => [
 
+        ['user_management.php', 'Patient Accounts', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>', 'role=patient', 'patient_management'],
+
         ['administrators.php', 'Administrator Management', '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>'],
 
         ['password_policies.php', 'Role & Permissions', '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'],
