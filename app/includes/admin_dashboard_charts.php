@@ -141,6 +141,34 @@ function admin_chart_consultations_daily(PDO $pdo, int $days = 30): array
     return $series;
 }
 
+/**
+ * SQL predicate: user row is not archived (NULL/blank account_status still counts).
+ * Optional table alias, e.g. 'u' → "u.account_status ...".
+ */
+function admin_chart_users_not_archived_sql(string $alias = ''): string
+{
+    $prefix = $alias !== '' ? rtrim($alias, '.') . '.' : '';
+    return "({$prefix}account_status IS NULL OR TRIM({$prefix}account_status) = '' OR LOWER(TRIM({$prefix}account_status)) <> 'archived')";
+}
+
+/**
+ * Optional archived_at IS NULL when the column exists.
+ */
+function admin_chart_users_not_soft_deleted_sql(PDO $pdo, string $alias = ''): string
+{
+    $prefix = $alias !== '' ? rtrim($alias, '.') . '.' : '';
+    $parts = [admin_chart_users_not_archived_sql($alias)];
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        if (in_array('archived_at', $cols, true)) {
+            $parts[] = "{$prefix}archived_at IS NULL";
+        }
+    } catch (Throwable $e) {
+        // keep account_status predicate only
+    }
+    return implode(' AND ', $parts);
+}
+
 /** @return list<array{date:string,label:string,count:int,is_today:bool}> */
 function admin_chart_registrations_daily(PDO $pdo, int $days = 7): array
 {
@@ -151,12 +179,14 @@ function admin_chart_registrations_daily(PDO $pdo, int $days = 7): array
 
     $series = admin_chart_last_n_days($days);
     $start = $series[0]['date'] . ' 00:00:00';
+    $alive = admin_chart_users_not_soft_deleted_sql($pdo);
 
     try {
         $stmt = $pdo->prepare("
             SELECT DATE(created_at) AS d, COUNT(*) AS cnt
             FROM users
             WHERE created_at >= ?
+              AND {$alive}
             GROUP BY DATE(created_at)
         ");
         $stmt->execute([$start]);
@@ -190,11 +220,13 @@ function admin_chart_registrations_monthly(PDO $pdo, int $months = 6): array
     }
 
     $start = $series[0]['date'] . ' 00:00:00';
+    $alive = admin_chart_users_not_soft_deleted_sql($pdo);
     try {
         $stmt = $pdo->prepare("
             SELECT DATE_FORMAT(created_at, '%Y-%m') AS ym, COUNT(*) AS cnt
             FROM users
             WHERE created_at >= ?
+              AND {$alive}
             GROUP BY DATE_FORMAT(created_at, '%Y-%m')
         ");
         $stmt->execute([$start]);
@@ -422,7 +454,7 @@ function admin_chart_role_counts_map(PDO $pdo): array
 
         // Source: users accounts only. No barangay / session / LIMIT / JOIN filters.
         // Exclude only explicitly archived accounts. NULL/blank account_status must still count
-        // (SQL `<> 'archived'` alone would drop NULL rows and under-count BHW).
+        // (SQL `<> 'archived'` alone would drop NULL rows and under-count patients/BHW).
         $where = [
             "LOWER(TRIM(COALESCE(role, ''))) IN ('patient','provider','bhw','admin','superadmin')",
         ];
@@ -430,7 +462,7 @@ function admin_chart_role_counts_map(PDO $pdo): array
             $where[] = 'archived_at IS NULL';
         }
         if ($hasAccountStatus) {
-            $where[] = "(account_status IS NULL OR TRIM(account_status) = '' OR LOWER(TRIM(account_status)) <> 'archived')";
+            $where[] = admin_chart_users_not_archived_sql('');
         }
 
         $sql = '

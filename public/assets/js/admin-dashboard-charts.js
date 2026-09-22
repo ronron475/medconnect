@@ -345,6 +345,16 @@
       });
     }
 
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (
+        changed.indexOf('dashboard') !== -1
+        || changed.indexOf('staff_applications') !== -1
+      ) {
+        fetchAndRender();
+      }
+    });
+
     if (typeof Chart !== 'undefined') {
       boot();
       return;

@@ -49,6 +49,9 @@ final class AccountStatus
     public static function normalize(string $status): string
     {
         $status = strtolower(trim(str_replace('-', '_', $status)));
+        if ($status === '' || $status === 'active') {
+            return self::ACTIVE;
+        }
         if ($status === 'pending') {
             return self::PENDING_APPROVAL;
         }
@@ -332,6 +335,13 @@ function user_account_status_backfill(PDO $pdo): void
             WHERE is_active = 1
               AND (account_status IS NULL OR account_status = '' OR account_status = 'active')
         ");
+        // Blank status on inactive rows → deactivated (normalize used to treat '' as deactivated anyway)
+        $pdo->exec("
+            UPDATE users
+            SET account_status = 'deactivated'
+            WHERE is_active = 0
+              AND (account_status IS NULL OR TRIM(account_status) = '')
+        ");
 
         $pdo->exec("
             UPDATE users u
@@ -531,6 +541,8 @@ function user_account_status_matches_filter(string $effectiveStatus, string $sta
         AccountStatus::RESTRICTED       => $effective === AccountStatus::RESTRICTED,
         AccountStatus::PENDING_APPROVAL => $effective === AccountStatus::PENDING_APPROVAL,
         AccountStatus::SUSPENDED        => $effective === AccountStatus::SUSPENDED,
+        AccountStatus::DEACTIVATED      => $effective === AccountStatus::DEACTIVATED,
+        AccountStatus::REJECTED         => $effective === AccountStatus::REJECTED,
         AccountStatus::ARCHIVED         => $effective === AccountStatus::ARCHIVED,
         default                         => true,
     };
@@ -936,16 +948,15 @@ function user_account_status_fetch_users(PDO $pdo, array $options = []): array
 
     $dbRole = user_account_role_filter_to_db($roleFilter);
     if ($dbRole !== null) {
-        $query .= ' AND u.role = ?';
+        $query .= ' AND LOWER(TRIM(u.role)) = ?';
         $params[] = $dbRole;
     }
 
+    // NULL/blank account_status must still appear (SQL `!= 'archived'` drops NULL rows).
     if ($archivedOnly) {
-        $query .= " AND u.account_status = 'archived'";
-    } elseif ($statusFilter !== 'all') {
-        $query .= " AND u.account_status != 'archived'";
+        $query .= " AND LOWER(TRIM(COALESCE(u.account_status, ''))) = 'archived'";
     } else {
-        $query .= " AND u.account_status != 'archived'";
+        $query .= " AND (u.account_status IS NULL OR TRIM(u.account_status) = '' OR LOWER(TRIM(u.account_status)) <> 'archived')";
     }
 
     if ($search !== '') {

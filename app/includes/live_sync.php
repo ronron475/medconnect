@@ -500,16 +500,34 @@ function live_sync_admin_users_fp(PDO $pdo): string
         return live_sync_hash('0');
     }
 
-    // Include role breakdown + updated_at so add/remove/role/status changes
-    // (e.g. new BHW) invalidate Admin/SuperAdmin dashboard + charts immediately.
-    $parts = [
-        live_sync_row(
+    // Include role breakdown + status/active flags so add/remove/activate/deactivate
+    // invalidate Admin/SuperAdmin dashboard + charts immediately.
+    $parts = [];
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $hasUpdated = in_array('updated_at', $cols, true);
+        $hasAccountStatus = in_array('account_status', $cols, true);
+        $updatedExpr = $hasUpdated ? 'COALESCE(UNIX_TIMESTAMP(MAX(updated_at)),0)' : '0';
+        $statusExpr = $hasAccountStatus
+            ? "COALESCE(SUM(LOWER(TRIM(COALESCE(account_status,'')))='archived'),0),
+               COALESCE(SUM(LOWER(TRIM(COALESCE(account_status,'')))='deactivated'),0),
+               COALESCE(SUM(LOWER(TRIM(COALESCE(account_status,'')))='active' OR TRIM(COALESCE(account_status,''))=''),0)"
+            : '0,0,0';
+        $parts[] = live_sync_row(
             $pdo,
-            'SELECT COUNT(*), COALESCE(MAX(id),0), COALESCE(UNIX_TIMESTAMP(MAX(updated_at)),0),
+            "SELECT COUNT(*), COALESCE(MAX(id),0), {$updatedExpr},
+                    COALESCE(SUM(is_active=1),0), COALESCE(SUM(is_active=0),0),
+                    {$statusExpr}
+             FROM users"
+        );
+    } catch (Throwable $e) {
+        $parts[] = live_sync_row(
+            $pdo,
+            'SELECT COUNT(*), COALESCE(MAX(id),0),
                     COALESCE(SUM(is_active=1),0), COALESCE(SUM(is_active=0),0)
              FROM users'
-        ),
-    ];
+        );
+    }
     try {
         require_once __DIR__ . '/admin_dashboard_charts.php';
         $map = admin_chart_role_counts_map($pdo);
