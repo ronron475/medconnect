@@ -168,36 +168,6 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                 <?php endif; ?>
             </div>
         </div>
-
-        <div class="adm-card">
-            <div class="adm-card-head">
-                <div class="adm-card-head-icon adm-card-head-icon--blue">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                </div>
-                <div>
-                    <div class="adm-card-head-title">Quick Actions</div>
-                    <div class="adm-card-head-sub">Common administrator tasks</div>
-                </div>
-            </div>
-            <div class="adm-actions-body">
-                <a href="<?= ASSET_BASE ?>/views/admin/doctor_applications.php" class="adm-action-btn adm-action-btn--primary">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
-                    Submit Doctor Application
-                </a>
-                <a href="<?= ASSET_BASE ?>/views/admin/bhw_applications.php" class="adm-action-btn adm-action-btn--outline">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                    Submit BHW Application
-                </a>
-                <a href="<?= ASSET_BASE ?>/views/admin/user_management.php" class="adm-action-btn adm-action-btn--outline">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Manage Users
-                </a>
-                <a href="<?= ASSET_BASE ?>/views/admin/audit_logs.php" class="adm-action-btn adm-action-btn--outline">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    Audit Logs
-                </a>
-            </div>
-        </div>
     </aside>
 </div>
 
