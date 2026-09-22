@@ -304,16 +304,31 @@ body.superadmin-body .um-accounts-table td {
 
 body.admin-body .um-accounts-table .um-col--name,
 body.superadmin-body .um-accounts-table .um-col--name {
-  width: 26%;
+  width: 24%;
   text-align: left;
   padding-left: 16px;
+  padding-right: 12px;
 }
 
 body.admin-body .um-accounts-table .um-col--email,
 body.superadmin-body .um-accounts-table .um-col--email {
-  width: 24%;
+  width: 22%;
   text-align: left;
+  padding-left: 12px;
+  padding-right: 12px;
   word-break: break-word;
+}
+
+body.admin-body .um-accounts-table th.um-col--name,
+body.admin-body .um-accounts-table td.um-col--name,
+body.admin-body .um-accounts-table th.um-col--email,
+body.admin-body .um-accounts-table td.um-col--email,
+body.superadmin-body .um-accounts-table th.um-col--name,
+body.superadmin-body .um-accounts-table td.um-col--name,
+body.superadmin-body .um-accounts-table th.um-col--email,
+body.superadmin-body .um-accounts-table td.um-col--email {
+  text-align: left;
+  vertical-align: middle;
 }
 
 body.admin-body .um-accounts-table .um-col--role,
@@ -324,25 +339,62 @@ body.admin-body .um-accounts-table .um-col--joined,
 body.superadmin-body .um-accounts-table .um-col--joined,
 body.admin-body .um-accounts-table .um-col--prc,
 body.superadmin-body .um-accounts-table .um-col--prc {
-  width: 12%;
+  width: 13%;
   text-align: center;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 body.admin-body .um-accounts-table .um-col--actions,
 body.superadmin-body .um-accounts-table .um-col--actions {
-  width: 14%;
+  width: 15%;
   text-align: center;
   padding-right: 16px;
 }
 
+/* Patient Accounts: keep Name + Email adjacent with shared left edge rhythm */
 body.admin-body .um-accounts-table--patients .um-col--name,
 body.superadmin-body .um-accounts-table--patients .um-col--name {
-  width: 28%;
+  width: 22%;
+  padding-left: 18px;
+  padding-right: 8px;
 }
 
 body.admin-body .um-accounts-table--patients .um-col--email,
 body.superadmin-body .um-accounts-table--patients .um-col--email {
-  width: 26%;
+  width: 24%;
+  padding-left: 8px;
+  padding-right: 12px;
+}
+
+body.admin-body .um-accounts-table--patients th.um-col--name,
+body.admin-body .um-accounts-table--patients td.um-col--name,
+body.superadmin-body .um-accounts-table--patients th.um-col--name,
+body.superadmin-body .um-accounts-table--patients td.um-col--name {
+  padding-left: 18px;
+  padding-right: 8px;
+}
+
+body.admin-body .um-accounts-table--patients th.um-col--email,
+body.admin-body .um-accounts-table--patients td.um-col--email,
+body.superadmin-body .um-accounts-table--patients th.um-col--email,
+body.superadmin-body .um-accounts-table--patients td.um-col--email {
+  padding-left: 8px;
+  padding-right: 12px;
+}
+
+body.admin-body .um-accounts-table--patients .um-col--role,
+body.admin-body .um-accounts-table--patients .um-col--status,
+body.admin-body .um-accounts-table--patients .um-col--joined,
+body.superadmin-body .um-accounts-table--patients .um-col--role,
+body.superadmin-body .um-accounts-table--patients .um-col--status,
+body.superadmin-body .um-accounts-table--patients .um-col--joined {
+  width: 13.5%;
+}
+
+body.admin-body .um-accounts-table--patients .um-col--actions,
+body.superadmin-body .um-accounts-table--patients .um-col--actions {
+  width: 13.5%;
 }
 
 body.admin-body .um-accounts-table .um-col--role .mc-badge,
