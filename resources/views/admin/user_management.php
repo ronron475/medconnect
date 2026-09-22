@@ -170,7 +170,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 <?php endif; ?>
 
 <div class="mc-card" style="padding: 0; overflow: hidden;">
-    <table class="mc-table admin-stack-table">
+    <table class="mc-table admin-stack-table um-accounts-table<?= $is_patient_view ? ' um-accounts-table--patients' : '' ?>">
         <thead>
             <tr>
                 <?php if ($is_archived_view): ?>
@@ -192,15 +192,15 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <th>Archive Reason</th>
                 <th>Actions</th>
                 <?php else: ?>
-                <th>Name & ID</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
+                <th class="um-col--name">Name & ID</th>
+                <th class="um-col--email">Email</th>
+                <th class="um-col--role">Role</th>
+                <th class="um-col--status">Status</th>
                 <?php if ($show_prc_column): ?>
-                <th>PRC</th>
+                <th class="um-col--prc">PRC</th>
                 <?php endif; ?>
-                <th>Joined</th>
-                <th>Actions</th>
+                <th class="um-col--joined">Joined</th>
+                <th class="um-col--actions">Actions</th>
                 <?php endif; ?>
             </tr>
         </thead>
@@ -220,24 +220,24 @@ require_once __DIR__ . '/partials/layout_open.php';
                 $archiver_name = trim(($u['archiver_first_name'] ?? '') . ' ' . ($u['archiver_last_name'] ?? ''));
             ?>
             <tr>
-                <td data-label="Name &amp; ID">
-                    <div style="display: flex; align-items: center; gap: 12px;">
+                <td class="um-col--name" data-label="Name &amp; ID">
+                    <div class="um-user-cell">
                         <?php if ($picture_url): ?>
                             <?= profile_picture_render($initials, $picture_url, '', 'sm') ?>
                         <?php else: ?>
-                        <div style="width: 32px; height: 32px; background: var(--mc-ice-blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; color: var(--mc-aqua-medium); border: 1px solid var(--mc-border-thin);">
+                        <div class="um-user-avatar">
                             <?= $initials ?>
                         </div>
                         <?php endif; ?>
                         <div>
-                            <div style="font-weight: 700; color: var(--mc-navy-dark);"><?= htmlspecialchars($u['first_name'].' '.$u['last_name']) ?></div>
+                            <div class="um-user-name"><?= htmlspecialchars($u['first_name'].' '.$u['last_name']) ?></div>
                             <div class="text-xs text-muted">#USR-<?= str_pad((string) $u['id'], 5, '0', STR_PAD_LEFT) ?></div>
                         </div>
                     </div>
                 </td>
-                <td data-label="Email"><span class="text-sm"><?= htmlspecialchars($u['email']) ?></span></td>
-                <td data-label="Role"><span class="mc-badge"><?= htmlspecialchars(user_account_role_label((string) $u['role'])) ?></span></td>
-                <td data-label="Status">
+                <td class="um-col--email" data-label="Email"><span class="text-sm"><?= htmlspecialchars($u['email']) ?></span></td>
+                <td class="um-col--role" data-label="Role"><span class="mc-badge"><?= htmlspecialchars(user_account_role_label((string) $u['role'])) ?></span></td>
+                <td class="um-col--status" data-label="Status">
                     <span class="mc-badge <?= htmlspecialchars($badge['class'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                         <?= htmlspecialchars($badge['label']) ?>
                     </span>
@@ -266,7 +266,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                 </td>
                 <?php else: ?>
                 <?php if ($show_prc_column): ?>
-                <td data-label="PRC">
+                <td class="um-col--prc" data-label="PRC">
                     <?php if ($is_provider && !empty($u['prc_license_number'])): ?>
                         <span class="text-xs"><?= htmlspecialchars($u['prc_license_number']) ?></span>
                     <?php else: ?>
@@ -274,8 +274,8 @@ require_once __DIR__ . '/partials/layout_open.php';
                     <?php endif; ?>
                 </td>
                 <?php endif; ?>
-                <td data-label="Joined"><span class="text-xs text-muted"><?= date('M j, Y', strtotime($u['created_at'])) ?></span></td>
-                <td data-label="Actions">
+                <td class="um-col--joined" data-label="Joined"><span class="text-xs text-muted"><?= date('M j, Y', strtotime($u['created_at'])) ?></span></td>
+                <td class="um-col--actions" data-label="Actions">
                     <?php if (!empty($allowed_actions)): ?>
                     <div class="mc-status-actions">
                         <?php foreach ($allowed_actions as $act):
