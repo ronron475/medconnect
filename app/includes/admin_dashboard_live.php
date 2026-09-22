@@ -54,7 +54,11 @@ function admin_dashboard_live_payload(PDO $pdo, int $adminId): array
 
     $recentUsers = $pdo->query(
         "SELECT id, first_name, last_name, email, role, is_active, created_at
-         FROM users ORDER BY created_at DESC LIMIT 8"
+         FROM users
+         WHERE LOWER(TRIM(COALESCE(role,''))) IN ('patient','provider','bhw','admin','superadmin')
+           AND " . admin_chart_users_not_soft_deleted_sql($pdo) . "
+         ORDER BY created_at DESC
+         LIMIT 8"
     )->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
     $roleLabels = [
