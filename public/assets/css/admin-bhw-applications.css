@@ -491,39 +491,57 @@
   white-space: nowrap;
 }
 
-/* Barangay list table — balanced columns, centered counts */
+/* Barangay list table — name on the left, compact count cluster */
 #bhwBrgyTable {
-  table-layout: fixed;
+  table-layout: auto;
   min-width: 0;
   width: 100%;
+  border-collapse: collapse;
+}
+
+#bhwBrgyTable th,
+#bhwBrgyTable td {
+  padding: 11px 12px;
 }
 
 #bhwBrgyTable .bhw-brgy-col--name {
   text-align: left;
-  width: 26%;
+  width: 100%;
+  padding-left: 18px;
+  padding-right: 20px;
 }
 
 #bhwBrgyTable .bhw-brgy-col--num {
   text-align: center;
-  width: 14%;
+  width: 1%;
+  white-space: nowrap;
+  padding-left: 14px;
+  padding-right: 14px;
   font-variant-numeric: tabular-nums;
 }
 
 #bhwBrgyTable .bhw-brgy-col--actions {
   text-align: center;
-  width: 12%;
+  width: 1%;
+  white-space: nowrap;
+  padding-left: 12px;
+  padding-right: 18px;
 }
 
-#bhwBrgyTable th.bhw-brgy-col--num,
-#bhwBrgyTable th.bhw-brgy-col--actions {
+#bhwBrgyTable th.bhw-brgy-col--num {
   text-align: center;
   white-space: normal;
-  line-height: 1.35;
+  line-height: 1.25;
   vertical-align: bottom;
+  max-width: 7.5rem;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
-#bhwBrgyTable td.bhw-brgy-col--name {
-  padding-right: 12px;
+#bhwBrgyTable th.bhw-brgy-col--actions {
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 
 #bhwBrgyTable td.bhw-brgy-col--actions .mc-btn {
