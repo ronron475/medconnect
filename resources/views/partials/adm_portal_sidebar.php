@@ -174,6 +174,11 @@ $adm_render_nav_item = static function (
   <?php if ($nav_standalone_sections !== []): ?>
   <div class="adm-nav-footer" aria-label="Account">
     <?php foreach ($nav_standalone_sections as $section):
+      if (!empty($section['section'])): ?>
+    <div class="adm-nav-section" style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);">
+      <?= htmlspecialchars($section['section']) ?>
+    </div>
+    <?php endif;
       foreach ($section['items'] as $item) {
           $adm_render_nav_item($item, $views_base, $adm_sidebar_portal, $current, $current_query, $portal_nav_badge_counts_data, 'adm-nav-item--standalone');
       }
