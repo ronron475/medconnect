@@ -124,6 +124,7 @@ $patient_initials = strtoupper(
     substr($_SESSION['first_name'] ?? 'P', 0, 1) . substr($_SESSION['last_name'] ?? '', 0, 1)
 );
 $patientMessagesCssVer = (int) @filemtime(ASSETS_PATH . '/css/patient-messages.css');
+$messagesLayoutCssVer = (int) @filemtime(ASSETS_PATH . '/css/messages-layout.css');
 $patient_page_stylesheets = [
     ASSET_BASE . '/assets/css/messages-delete.css?v=2',
 ];
@@ -132,10 +133,11 @@ $patient_page_stylesheets = [
 <html lang="en">
 <head>
 <?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
-<style>.msg-alert{display:none;margin:0 18px 14px;padding:10px 12px;border-radius:9px;font-size:12.5px;font-weight:800}.msg-alert.show{display:block}.msg-alert.error{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}.msg-alert.success{background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}</style>
+<style>.msg-alert{display:none;margin:0;padding:7px 12px;font-size:12px;font-weight:700}.msg-alert.show{display:block}.msg-alert.error{background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca}.msg-alert.success{background:#ecfdf5;color:#047857;border-bottom:1px solid #a7f3d0}</style>
 </head>
 <body class="patient-portal" data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_open.php'; ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/messages-layout.css?v=<?= $messagesLayoutCssVer ?>"/>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-messages.css?v=<?= $patientMessagesCssVer ?>"/>
 
     <div class="messages-page">

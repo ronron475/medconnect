@@ -59,7 +59,12 @@ body.provider-body .pch-hero.provider-page-intro .pch-hero__title-row {
 body.provider-body .messages-page-head.provider-page-intro {
   align-items: center;
   justify-content: flex-end;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+/* Messages uses shared compact head; avoid extra intro gap */
+body.provider-body .messages-page > .messages-page-head {
+  margin-bottom: 0;
 }
 
 body.provider-body .ps-page-header.provider-page-intro {
