@@ -1,0 +1,844 @@
+/* ==========================================================================
+   MedConnect — Shared Messages layout (Patient + Provider)
+   Compact two-pane chat; role CSS only adds role-specific chrome.
+   ========================================================================== */
+
+:root {
+  --mc-msg-gap: 8px;
+  --mc-msg-radius: 10px;
+  --mc-msg-border: #e2e8f0;
+  --mc-msg-canvas: #f8fafc;
+  --mc-msg-teal: #018a93;
+  --mc-msg-active: #eef6ff;
+  --mc-msg-active-line: #3b82f6;
+  --mc-msg-incoming: #f1f5f9;
+  --mc-msg-outgoing: #dbeafe;
+  --mc-msg-text: #0f172a;
+  --mc-msg-muted: #64748b;
+  --mc-msg-list-w: minmax(240px, 32%);
+  --mc-msg-shell-h: calc(100vh - var(--mc-header-offset, 64px) - 36px);
+  --mc-msg-shell-h-svh: calc(100svh - var(--mc-header-offset, 64px) - 36px);
+}
+
+/* Page shell */
+body.patient-portal .portal-page-body:has(.messages-page),
+body.provider-body .provider-page-body:has(.messages-page) {
+  padding-bottom: 8px;
+}
+
+body.patient-portal .messages-page,
+body.provider-body .provider-page-body .messages-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mc-msg-gap);
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  min-height: 0;
+  padding: 0;
+}
+
+body.patient-portal .messages-page-head,
+body.provider-body .provider-page-body .messages-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  min-height: 0;
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+/* Kill leftover intro spacing on Messages only */
+body.provider-body .messages-page-head.provider-page-intro {
+  margin: 0 !important;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Inbox / Archived / All */
+body.patient-portal .mc-msg-filters,
+body.provider-body .provider-page-body .mc-msg-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+body.patient-portal .mc-msg-filter,
+body.provider-body .provider-page-body .mc-msg-filter {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  text-decoration: none;
+  color: var(--mc-msg-muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+body.patient-portal .mc-msg-filter:hover,
+body.provider-body .provider-page-body .mc-msg-filter:hover {
+  border-color: rgba(1, 138, 147, 0.35);
+  color: var(--mc-msg-teal);
+}
+
+body.patient-portal .mc-msg-filter.is-active,
+body.provider-body .provider-page-body .mc-msg-filter.is-active {
+  background: rgba(1, 138, 147, 0.10);
+  border-color: rgba(1, 138, 147, 0.28);
+  color: var(--mc-msg-teal);
+}
+
+body.patient-portal .messages-page-count,
+body.provider-body .provider-page-body .messages-page-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--mc-msg-muted);
+  white-space: nowrap;
+}
+
+body.provider-body .provider-page-body .messages-refresh-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(1, 138, 147, 0.08);
+  border: 1px solid rgba(1, 138, 147, 0.16);
+  color: var(--mc-msg-teal);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+/* Two-pane shell — balanced list / thread */
+body.patient-portal .messages-shell,
+body.provider-body .provider-page-body .messages-shell {
+  display: grid !important;
+  grid-template-columns: var(--mc-msg-list-w) minmax(0, 1fr) !important;
+  gap: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  height: var(--mc-msg-shell-h);
+  min-height: 460px;
+  background: #fff;
+  border: 1px solid var(--mc-msg-border);
+  border-radius: var(--mc-msg-radius);
+  box-shadow: 0 2px 14px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+}
+
+body.patient-portal .msg-panel,
+body.provider-body .provider-page-body .msg-panel {
+  background: #fff;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+body.patient-portal .msg-panel--list,
+body.provider-body .provider-page-body .msg-panel--list {
+  border-right: 1px solid var(--mc-msg-border);
+}
+
+/* Search */
+body.patient-portal .msg-sidebar-top,
+body.provider-body .provider-page-body .msg-sidebar-top {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--mc-msg-border);
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-search-wrap,
+body.provider-body .provider-page-body .msg-search-wrap {
+  position: relative;
+}
+
+body.patient-portal .msg-search-wrap .msg-search-icon,
+body.provider-body .provider-page-body .msg-search-wrap .msg-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--mc-msg-muted);
+  pointer-events: none;
+  display: inline-flex;
+}
+
+body.patient-portal .msg-search-wrap input,
+body.provider-body .provider-page-body .msg-search-wrap input {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--mc-msg-border);
+  border-radius: 999px;
+  background: var(--mc-msg-canvas);
+  color: var(--mc-msg-text);
+  padding: 0 10px 0 32px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+body.patient-portal .msg-search-wrap input:focus,
+body.provider-body .provider-page-body .msg-search-wrap input:focus {
+  border-color: rgba(1, 138, 147, 0.45);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(1, 138, 147, 0.1);
+}
+
+/* Conversation list */
+body.patient-portal .msg-list,
+body.provider-body .provider-page-body .msg-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.patient-portal .msg-list-empty {
+  padding: 16px 12px;
+  color: var(--mc-msg-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+body.patient-portal .msg-item,
+body.provider-body .provider-page-body .msg-item {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fff;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+/* Patient keeps status chip as 4th column when space allows */
+body.patient-portal .msg-item {
+  grid-template-columns: 36px minmax(0, 1fr) auto auto;
+}
+
+body.patient-portal .msg-item.is-unread .msg-name,
+body.patient-portal .msg-item.is-unread .msg-preview,
+body.provider-body .provider-page-body .msg-item.is-unread .msg-name,
+body.provider-body .provider-page-body .msg-item.is-unread .msg-preview {
+  font-weight: 800;
+  color: var(--mc-msg-text);
+}
+
+body.patient-portal .msg-item:hover,
+body.provider-body .provider-page-body .msg-item:hover {
+  background: #f8fafc;
+}
+
+body.patient-portal .msg-item.active,
+body.provider-body .provider-page-body .msg-item.active {
+  background: var(--mc-msg-active);
+  box-shadow: inset 3px 0 0 var(--mc-msg-active-line);
+}
+
+body.patient-portal .msg-avatar,
+body.provider-body .provider-page-body .msg-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-item-body,
+body.provider-body .provider-page-body .msg-item-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+body.patient-portal .msg-name-row,
+body.provider-body .provider-page-body .msg-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+body.patient-portal .msg-name,
+body.provider-body .provider-page-body .msg-name {
+  color: var(--mc-msg-text);
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.patient-portal .msg-time,
+body.provider-body .provider-page-body .msg-time {
+  color: var(--mc-msg-muted);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-preview,
+body.provider-body .provider-page-body .msg-preview {
+  color: var(--mc-msg-muted);
+  font-size: 12px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.patient-portal .msg-actions,
+body.provider-body .provider-page-body .msg-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.patient-portal .msg-unread-badge,
+body.provider-body .provider-page-body .msg-unread-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+body.patient-portal .msg-kebab,
+body.provider-body .provider-page-body .msg-kebab {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+  color: var(--mc-msg-text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.patient-portal .msg-kebab:hover,
+body.provider-body .provider-page-body .msg-kebab:hover {
+  background: #f8fafc;
+}
+
+body.patient-portal .msg-kebab__dots,
+body.provider-body .provider-page-body .msg-kebab__dots {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #0f172a;
+  box-shadow: 0 -5px 0 #0f172a, 0 5px 0 #0f172a;
+  opacity: 0.7;
+}
+
+body.patient-portal .msg-item[data-thread-busy="1"],
+body.provider-body .provider-page-body .msg-item[data-thread-busy="1"] {
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Status chips (patient list + thread) */
+body.patient-portal .msg-status-pill {
+  align-self: center;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(1, 138, 147, 0.18);
+  color: var(--mc-msg-teal);
+  background: rgba(1, 138, 147, 0.08);
+  white-space: nowrap;
+}
+
+body.patient-portal .msg-status-pill--completed {
+  background: rgba(22, 163, 74, 0.1);
+  border-color: rgba(22, 163, 74, 0.2);
+  color: #16a34a;
+}
+
+body.patient-portal .msg-status-pill--cancelled {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.18);
+  color: #dc2626;
+}
+
+body.patient-portal .msg-status-pill--pending,
+body.patient-portal .msg-status-pill--scheduled,
+body.patient-portal .msg-status-pill--in_consultation {
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.18);
+  color: #0284c7;
+}
+
+/* Thread header */
+body.patient-portal .msg-thread-header,
+body.provider-body .provider-page-body .msg-thread-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--mc-msg-border);
+  background: #fff;
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+body.patient-portal .msg-thread-header-left,
+body.provider-body .provider-page-body .msg-thread-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+body.patient-portal .msg-thread-header-left .msg-avatar,
+body.provider-body .provider-page-body .msg-thread-header-left .msg-avatar {
+  width: 34px;
+  height: 34px;
+  font-size: 11px;
+}
+
+body.patient-portal .msg-thread-head-text,
+body.provider-body .provider-page-body .msg-thread-head-text {
+  min-width: 0;
+}
+
+body.patient-portal .msg-presence,
+body.provider-body .provider-page-body .msg-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 1px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mc-msg-muted);
+}
+
+body.patient-portal .msg-presence-dot,
+body.provider-body .provider-page-body .msg-presence-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  flex-shrink: 0;
+}
+
+body.patient-portal .msg-presence.is-online .msg-presence-dot,
+body.provider-body .provider-page-body .msg-presence.is-online .msg-presence-dot {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+body.patient-portal .msg-presence.is-online,
+body.provider-body .provider-page-body .msg-presence.is-online {
+  color: #16a34a;
+}
+
+body.provider-body .provider-page-body .msg-thread-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+body.provider-body .provider-page-body .msg-icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--mc-msg-border);
+  background: #fff;
+  color: var(--mc-msg-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+body.provider-body .provider-page-body .msg-icon-btn:hover {
+  background: var(--mc-msg-canvas);
+  border-color: #cbd5e1;
+}
+
+body.provider-body .provider-page-body .msg-icon-btn.primary {
+  background: var(--mc-msg-teal);
+  border-color: var(--mc-msg-teal);
+  color: #fff;
+}
+
+body.provider-body .provider-page-body .msg-icon-btn.primary:hover {
+  background: #01757d;
+}
+
+body.provider-body .provider-page-body .msg-icon-btn:disabled,
+body.provider-body .provider-page-body .msg-icon-btn.is-schedule-blocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Provider clinical context strip */
+body.provider-body .provider-page-body .msg-clinical-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 8px 10px;
+  margin: 0 0 10px;
+  border: 1px solid var(--mc-msg-border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+body.provider-body .provider-page-body .clinical-label {
+  color: var(--mc-msg-muted);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+body.provider-body .provider-page-body .clinical-value {
+  color: var(--mc-msg-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Thread body + bubbles */
+body.patient-portal .thread-body,
+body.provider-body .provider-page-body .thread-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 12px;
+  background: var(--mc-msg-canvas);
+  min-height: 0;
+}
+
+body.patient-portal .msg-thread-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 160px;
+  color: var(--mc-msg-muted);
+  text-align: center;
+}
+
+body.patient-portal .msg-thread-empty[hidden] {
+  display: none !important;
+}
+
+body.patient-portal .msg-thread-empty p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--mc-msg-text);
+}
+
+body.patient-portal .msg-thread-empty span {
+  font-size: 12px;
+}
+
+body.patient-portal .bubble-row,
+body.provider-body .provider-page-body .bubble-row {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+body.patient-portal .bubble-row.mine,
+body.provider-body .provider-page-body .bubble-row.provider {
+  flex-direction: row-reverse;
+}
+
+body.patient-portal .bubble-row .msg-avatar,
+body.provider-body .provider-page-body .bubble-row .msg-avatar,
+body.provider-body .provider-page-body .bubble-row .pd-avatar {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 9px !important;
+  flex-shrink: 0;
+}
+
+body.patient-portal .bubble,
+body.provider-body .provider-page-body .bubble {
+  max-width: min(72%, 520px);
+  border-radius: 12px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+body.patient-portal .bubble.provider,
+body.patient-portal .bubble.patient,
+body.provider-body .provider-page-body .bubble.patient {
+  background: var(--mc-msg-incoming);
+  border: 0;
+  color: var(--mc-msg-text);
+  border-bottom-left-radius: 4px;
+}
+
+body.patient-portal .bubble.mine,
+body.provider-body .provider-page-body .bubble.provider {
+  background: var(--mc-msg-outgoing);
+  border: 0;
+  color: var(--mc-msg-text);
+  border-bottom-right-radius: 4px;
+}
+
+body.patient-portal .bubble-time,
+body.provider-body .provider-page-body .bubble-time {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mc-msg-muted);
+}
+
+/* Alerts */
+body.patient-portal .msg-alert,
+body.provider-body .provider-page-body .msg-alert {
+  display: none;
+  margin: 0;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  border-bottom: 1px solid transparent;
+}
+
+body.patient-portal .msg-alert.show,
+body.provider-body .provider-page-body .msg-alert.show {
+  display: block;
+}
+
+body.patient-portal .msg-alert.error,
+body.provider-body .provider-page-body .msg-alert.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border-bottom-color: #fecaca;
+}
+
+body.patient-portal .msg-alert.success,
+body.provider-body .provider-page-body .msg-alert.success {
+  background: #ecfdf5;
+  color: #047857;
+  border-bottom-color: #a7f3d0;
+}
+
+body.provider-body .provider-page-body .msg-alert.info {
+  background: #eff6ff;
+  color: #1e40af;
+  border-bottom-color: #bfdbfe;
+}
+
+/* Composer */
+body.patient-portal .composer,
+body.provider-body .provider-page-body .composer {
+  padding: 8px 10px;
+  border-top: 1px solid var(--mc-msg-border);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+body.patient-portal .composer-inner,
+body.provider-body .provider-page-body .composer-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--mc-msg-border);
+  border-radius: 999px;
+  padding: 3px 4px 3px 12px;
+  background: var(--mc-msg-canvas);
+}
+
+body.patient-portal .composer input,
+body.provider-body .provider-page-body .composer input {
+  flex: 1;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--mc-msg-text);
+  outline: none;
+  min-width: 0;
+}
+
+body.patient-portal .composer .msg-send-btn,
+body.provider-body .provider-page-body .composer .msg-send-btn {
+  height: 30px;
+  min-width: 64px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--mc-msg-teal);
+  color: #fff;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+body.patient-portal .composer .msg-send-btn:disabled,
+body.provider-body .provider-page-body .composer .msg-send-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+body.provider-body .provider-page-body .composer .msg-send-btn:hover {
+  background: #01757d;
+}
+
+/* Mobile back */
+body.patient-portal .msg-back,
+body.provider-body .provider-page-body .msg-back {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--mc-msg-border);
+  background: #fff;
+  color: var(--mc-msg-teal);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  :root {
+    --mc-msg-list-w: minmax(220px, 36%);
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-strip > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Mobile: single-panel toggle */
+@media (max-width: 767.98px) {
+  body.patient-portal .messages-shell,
+  body.provider-body .provider-page-body .messages-shell {
+    display: block !important;
+    height: var(--mc-msg-shell-h-svh);
+    min-height: 0;
+    border-radius: 10px;
+  }
+
+  body.patient-portal .messages-shell:not(.is-thread-open) .msg-panel--thread,
+  body.provider-body .provider-page-body .messages-shell:not(.is-thread-open) .msg-panel--thread {
+    display: none;
+  }
+
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--list,
+  body.provider-body .provider-page-body .messages-shell.is-thread-open .msg-panel--list {
+    display: none;
+  }
+
+  body.patient-portal .msg-panel--list,
+  body.patient-portal .msg-panel--thread,
+  body.provider-body .provider-page-body .msg-panel--list,
+  body.provider-body .provider-page-body .msg-panel--thread {
+    height: 100%;
+  }
+
+  body.patient-portal .msg-panel--list,
+  body.provider-body .provider-page-body .msg-panel--list {
+    border-right: 0;
+  }
+
+  body.patient-portal .msg-back,
+  body.provider-body .provider-page-body .msg-back {
+    display: inline-flex;
+  }
+
+  body.patient-portal .msg-status-pill {
+    display: none;
+  }
+
+  body.patient-portal .msg-item {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  body.patient-portal .bubble,
+  body.provider-body .provider-page-body .bubble {
+    max-width: 86%;
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-strip {
+    grid-template-columns: 1fr;
+  }
+
+  body.patient-portal .msg-thread-header,
+  body.provider-body .provider-page-body .msg-thread-header {
+    padding: 8px 10px;
+  }
+}
+
+@media (min-width: 768px) {
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--list,
+  body.patient-portal .messages-shell.is-thread-open .msg-panel--thread,
+  body.provider-body .provider-page-body .messages-shell.is-thread-open .msg-panel--list,
+  body.provider-body .provider-page-body .messages-shell.is-thread-open .msg-panel--thread {
+    display: flex !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.patient-portal .msg-item,
+  body.provider-body .provider-page-body .msg-item,
+  body.provider-body .provider-page-body .msg-icon-btn {
+    transition: none;
+  }
+}

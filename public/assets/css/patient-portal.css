@@ -1323,12 +1323,13 @@ body.mc-tips-ready-modal-open {
   animation: patientPulse 2s infinite;
 }
 
-/* ── Messages (standalone page) ── */
+/* ── Messages (standalone page) — superseded by messages-layout.css ── */
 .patient-portal .messages-shell {
+  /* Legacy two-card grid kept as fallback only when layout CSS is missing */
   display: grid;
-  grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
-  gap: 16px;
-  min-height: calc(100vh - var(--portal-header-h, 64px) - 48px);
+  grid-template-columns: minmax(240px, 32%) minmax(0, 1fr);
+  gap: 0;
+  min-height: calc(100vh - var(--portal-header-h, 64px) - 36px);
 }
 
 .patient-portal .msg-panel {

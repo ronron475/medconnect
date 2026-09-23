@@ -8,6 +8,7 @@ require_once BASE_PATH . '/app/includes/message_deletion.php';
 
 $page_styles = ['provider_session_alert.css', 'messages-delete.css'];
 $provider_messages_css_ver = (int) @filemtime(ASSETS_PATH . '/css/provider-messages.css');
+$messages_layout_css_ver = (int) @filemtime(ASSETS_PATH . '/css/messages-layout.css');
 
 $provider_id = (int)($_SESSION['user_id'] ?? 0);
 $box = strtolower(trim((string) ($_GET['box'] ?? 'inbox'))); // inbox|archived|all
@@ -186,18 +187,18 @@ $active_msg = $conversations[0] ?? [
 require __DIR__ . '/partials/layout_open.php';
 ?>
 
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/messages-layout.css?v=<?= $messages_layout_css_ver ?>"/>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-messages.css?v=<?= $provider_messages_css_ver ?>"/>
 
 <div class="messages-page">
-  <header class="messages-page-head provider-page-intro">
+  <header class="messages-page-head">
+    <div class="mc-msg-filters" role="tablist" aria-label="Conversation filter">
+      <a class="mc-msg-filter <?= $box === 'inbox' ? 'is-active' : '' ?>" href="?box=inbox" role="tab" aria-selected="<?= $box === 'inbox' ? 'true' : 'false' ?>">Inbox</a>
+      <a class="mc-msg-filter <?= $box === 'archived' ? 'is-active' : '' ?>" href="?box=archived" role="tab" aria-selected="<?= $box === 'archived' ? 'true' : 'false' ?>">Archived</a>
+      <a class="mc-msg-filter <?= $box === 'all' ? 'is-active' : '' ?>" href="?box=all" role="tab" aria-selected="<?= $box === 'all' ? 'true' : 'false' ?>">All</a>
+    </div>
     <span class="messages-refresh-badge" id="refreshStatus">Auto-refresh on</span>
   </header>
-
-  <div class="mc-msg-filters" role="tablist" aria-label="Conversation filter">
-    <a class="mc-msg-filter <?= $box === 'inbox' ? 'is-active' : '' ?>" href="?box=inbox" role="tab" aria-selected="<?= $box === 'inbox' ? 'true' : 'false' ?>">Inbox</a>
-    <a class="mc-msg-filter <?= $box === 'archived' ? 'is-active' : '' ?>" href="?box=archived" role="tab" aria-selected="<?= $box === 'archived' ? 'true' : 'false' ?>">Archived</a>
-    <a class="mc-msg-filter <?= $box === 'all' ? 'is-active' : '' ?>" href="?box=all" role="tab" aria-selected="<?= $box === 'all' ? 'true' : 'false' ?>">All</a>
-  </div>
 
   <div class="messages-shell" id="messagesShell">
     <aside class="msg-panel msg-panel--list">
