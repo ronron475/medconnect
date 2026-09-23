@@ -635,23 +635,23 @@ body.admin-body .pagination {
 /* ── Mobile: keep compact ── */
 @media (max-width: 768px) {
   body.admin-body {
-    --mob-adm-pad: 14px;
+    --mob-adm-pad: 12px;
     --mob-adm-gap: 10px;
     --mob-adm-card-gap: 8px;
     --mob-adm-section-gap: 10px;
   }
 
   body.admin-body .portal-page-body {
-    padding-left: var(--mob-adm-pad, var(--mob-portal-pad, 14px)) !important;
-    padding-right: var(--mob-adm-pad, var(--mob-portal-pad, 14px)) !important;
-    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
-    padding-bottom: calc(var(--mob-adm-pad, var(--mob-portal-pad, 14px)) + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: var(--mob-adm-pad, var(--mob-portal-pad, 12px)) !important;
+    padding-right: var(--mob-adm-pad, var(--mob-portal-pad, 12px)) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px)) !important;
+    padding-bottom: calc(var(--mob-adm-pad, var(--mob-portal-pad, 12px)) + env(safe-area-inset-bottom, 0px)) !important;
     gap: var(--mob-adm-gap, var(--mob-portal-gap, 10px)) !important;
   }
 
   body.admin-body:has([data-live-dashboard]) .portal-page-body,
   body.admin-body:has(.adm-charts-section) .portal-page-body {
-    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px)) !important;
     gap: var(--mob-adm-gap, var(--mob-portal-gap, 10px)) !important;
   }
 
@@ -695,7 +695,7 @@ body.admin-body .pagination {
 
   body.admin-body .adm-chart-card,
   body.admin-body .mc-chart-card {
-    padding: 12px !important;
+    padding: var(--mob-portal-card-pad, 12px) !important;
   }
 
   body.admin-body .adm-overview-card,
@@ -706,7 +706,7 @@ body.admin-body .pagination {
     height: auto !important;
     max-height: none !important;
     justify-content: flex-start !important;
-    padding: 12px !important;
+    padding: var(--mob-portal-card-pad, 12px) !important;
   }
 
   body.admin-body .adm-overview-tiles,
@@ -781,7 +781,7 @@ body.admin-body .pagination {
 
 @media (max-width: 480px) {
   body.admin-body {
-    --mob-adm-pad: 12px;
+    --mob-adm-pad: 10px;
     --mob-adm-gap: 8px;
     --mob-adm-section-gap: 8px;
   }

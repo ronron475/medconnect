@@ -532,12 +532,23 @@ body.provider-body .provider-page-body > * {
 }
 
 @media (max-width: 768px) {
+  body.provider-body {
+    --pv-space-lg: 12px;
+    --pv-space-xl: 14px;
+    --pv-space-2xl: 16px;
+    --pv-card-pad: 12px;
+    --pv-card-gap: 10px;
+    --pv-stat-gap: 10px;
+    --pv-section-gap: 10px;
+    --pv-page-gap: 10px;
+  }
+
   body.provider-body .provider-page-body,
   body.provider-body .provider-page-body:has(.mr-page),
   body.provider-body .provider-page-body:has(.ps-page) {
-    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px))
-             var(--mob-portal-pad, 14px)
-             var(--mob-portal-pad, 14px);
+    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px))
+             var(--mob-portal-pad, 12px)
+             var(--mob-portal-pad, 12px);
   }
 
   body.provider-body .provider-page-body .prov-dash-grid,
@@ -557,9 +568,18 @@ body.provider-body .provider-page-body > * {
 }
 
 @media (max-width: 425px) {
+  body.provider-body {
+    --pv-space-lg: 10px;
+    --pv-space-xl: 12px;
+    --pv-space-2xl: 14px;
+    --pv-card-pad: 10px;
+    --pv-section-gap: 8px;
+    --pv-page-gap: 8px;
+  }
+
   body.provider-body .provider-page-body {
-    padding-left: var(--mob-portal-pad, 12px);
-    padding-right: var(--mob-portal-pad, 12px);
+    padding-left: var(--mob-portal-pad, 10px);
+    padding-right: var(--mob-portal-pad, 10px);
   }
 
   body.provider-body .provider-page-body .prov-dash-metrics--unified,
@@ -570,7 +590,7 @@ body.provider-body .provider-page-body > * {
 
 @media (max-width: 320px) {
   body.provider-body .provider-page-body {
-    padding-left: var(--mob-portal-pad, 12px);
-    padding-right: var(--mob-portal-pad, 12px);
+    padding-left: var(--mob-portal-pad, 10px);
+    padding-right: var(--mob-portal-pad, 10px);
   }
 }
