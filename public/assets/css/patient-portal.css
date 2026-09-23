@@ -1224,14 +1224,14 @@ body.mc-tips-ready-modal-open {
     padding: 12px !important;
   }
 
-  .patient-portal .mc-card {
+  .patient-portal .mc-card:not(.patient-triage-history):not(.mc-notif-recent-panel) {
     padding: var(--mob-portal-card-pad, 12px) !important;
   }
 
   .patient-portal .mc-card-header {
     flex-direction: column;
     align-items: flex-start !important;
-    gap: 10px;
+    gap: 8px;
   }
 
   .patient-portal .mc-card-header .mc-btn {
@@ -1243,7 +1243,7 @@ body.mc-tips-ready-modal-open {
     overflow-x: auto;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 8px;
+    padding-bottom: 6px;
   }
 
   .patient-portal .tab-btn {
@@ -1254,6 +1254,44 @@ body.mc-tips-ready-modal-open {
     max-width: 160px;
     white-space: normal !important;
     word-break: break-word;
+  }
+
+  .patient-portal .folder-grid {
+    gap: var(--mob-portal-gap, 10px);
+    margin-bottom: var(--mob-portal-gap, 10px);
+  }
+
+  .patient-portal .folder-card {
+    padding: 12px 10px;
+    gap: 8px;
+  }
+
+  .patient-page .patient-section-title {
+    margin-bottom: var(--mob-portal-gap-sm, 8px);
+    gap: 8px;
+  }
+
+  .patient-page .patient-data-card {
+    padding: var(--mob-portal-card-pad, 12px) !important;
+    margin-bottom: var(--mob-portal-gap, 10px) !important;
+  }
+
+  .patient-page .patient-empty {
+    padding: 16px 12px !important;
+  }
+
+  .patient-portal .rec-filter-bar {
+    margin-bottom: var(--mob-portal-gap, 10px);
+    gap: 8px;
+  }
+
+  .patient-triage-schedule {
+    padding: var(--mob-portal-card-pad, 12px);
+    margin-bottom: var(--mob-portal-gap, 10px);
+  }
+
+  .patient-triage-form {
+    margin-bottom: var(--mob-portal-gap, 10px);
   }
 }
 
@@ -2944,7 +2982,7 @@ body.patient-portal .patient-triage-history .mc-table td.patient-triage-history_
   }
 
   .patient-triage-page .patient-triage-history .mc-table-empty {
-    padding: 24px 16px;
+    padding: 16px 12px;
   }
 
   .patient-triage-page .patient-triage-care-link {

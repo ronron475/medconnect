@@ -6,13 +6,13 @@
 
 @media (max-width: 768px) {
   body.bhw-body {
-    --mob-dash-pad: 14px;
+    --mob-dash-pad: 12px;
     --mob-dash-gap: 10px;
     --mob-dash-gap-sm: 8px;
     --mob-dash-card-pad: 12px;
     --mob-dash-strip-pad: 10px;
     --mob-dash-radius: 12px;
-    --mob-dash-stat-min-h: 72px;
+    --mob-dash-stat-min-h: 68px;
     --mob-dash-shadow: 0 1px 6px rgba(1, 42, 74, 0.05);
     /* Readable dashboard typography */
     --mob-bhw-title: 1.05rem;
@@ -216,7 +216,7 @@
 
   /* KPI cards — Admin-matched layout on mobile */
   body.bhw-body .bhw-dash-stats {
-    gap: 12px;
+    gap: var(--mob-dash-gap-sm, 8px);
     padding: 12px;
   }
 
@@ -361,10 +361,10 @@
 /* Narrow phones — keep type readable; only trim spacing */
 @media (max-width: 480px) {
   body.bhw-body {
-    --mob-dash-pad: 12px;
+    --mob-dash-pad: 10px;
     --mob-dash-gap: 8px;
     --mob-bhw-stat: 1.45rem;
-    --mob-dash-stat-min-h: 68px;
+    --mob-dash-stat-min-h: 64px;
   }
 
   body.bhw-body .bhw-dash-stats {

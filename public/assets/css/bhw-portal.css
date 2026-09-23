@@ -556,6 +556,23 @@ body.bhw-body .bhw-afu-live.is-offline::before {
 }
 
 @media (max-width: 767.98px) {
+  .bhw-referral-header {
+    margin-bottom: var(--mob-portal-gap, 10px);
+    padding-bottom: var(--mob-portal-gap-sm, 8px);
+  }
+
+  .bhw-referral-card {
+    padding: var(--mob-portal-card-pad, 12px);
+  }
+
+  .bhw-followup-empty {
+    padding: 16px 12px;
+  }
+
+  .bhw-module-nav {
+    margin: 8px 0 10px;
+  }
+
   .bhw-followup-toolbar {
     flex-wrap: wrap;
   }

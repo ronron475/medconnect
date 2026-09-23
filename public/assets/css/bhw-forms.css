@@ -1080,23 +1080,23 @@
   }
 
   .bhw-form-card {
-    padding: 20px 18px;
+    padding: var(--mob-portal-card-pad, 12px);
   }
 
   .bhw-update-search-strip {
-    padding: 16px 18px;
+    padding: 10px 12px;
   }
 
   .bhw-update-empty {
-    padding: 40px 20px 48px;
+    padding: 16px 12px 20px;
   }
 
   .bhw-update-hero-inner {
-    padding: 18px 20px;
+    padding: 12px 14px;
   }
 
   .bhw-update-tab-panels {
-    padding: 18px 20px 22px;
+    padding: 12px 14px 16px;
   }
 
   .bhw-update-dl-row {

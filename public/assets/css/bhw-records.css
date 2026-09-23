@@ -590,11 +590,11 @@
   }
 
   .bhw-records-section {
-    padding: 18px 16px;
+    padding: var(--mob-portal-card-pad, 12px);
   }
 
   .bhw-records-form-actions {
-    padding: 16px;
+    padding: 10px 12px;
   }
 
   .bhw-records-btn {

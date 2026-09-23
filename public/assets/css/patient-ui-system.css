@@ -750,10 +750,21 @@ body.patient-portal .portal-page-body > .view-container.active {
 }
 
 @media (max-width: 768px) {
+  body.patient-portal {
+    --pt-space-lg: 12px;
+    --pt-space-xl: 14px;
+    --pt-space-2xl: 16px;
+    --pt-card-pad: 12px;
+    --pt-card-gap: 10px;
+    --pt-stat-gap: 10px;
+    --pt-section-gap: 10px;
+    --pt-page-gap: 10px;
+  }
+
   body.patient-portal .portal-page-body {
-    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px))
-             var(--mob-portal-pad, 14px)
-             calc(var(--mob-portal-pad, 14px) + env(safe-area-inset-bottom, 0px));
+    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px))
+             var(--mob-portal-pad, 12px)
+             calc(var(--mob-portal-pad, 12px) + env(safe-area-inset-bottom, 0px));
     gap: var(--mob-portal-gap, 10px);
   }
 
@@ -781,9 +792,18 @@ body.patient-portal .portal-page-body > .view-container.active {
 }
 
 @media (max-width: 425px) {
+  body.patient-portal {
+    --pt-space-lg: 10px;
+    --pt-space-xl: 12px;
+    --pt-space-2xl: 14px;
+    --pt-card-pad: 10px;
+    --pt-section-gap: 8px;
+    --pt-page-gap: 8px;
+  }
+
   body.patient-portal .portal-page-body {
-    padding-left: var(--mob-portal-pad, 12px);
-    padding-right: var(--mob-portal-pad, 12px);
+    padding-left: var(--mob-portal-pad, 10px);
+    padding-right: var(--mob-portal-pad, 10px);
   }
 
   body.patient-portal .pdash-metrics,
@@ -796,7 +816,7 @@ body.patient-portal .portal-page-body > .view-container.active {
 
 @media (max-width: 320px) {
   body.patient-portal .portal-page-body {
-    padding-left: var(--mob-portal-pad, 12px);
-    padding-right: var(--mob-portal-pad, 12px);
+    padding-left: var(--mob-portal-pad, 10px);
+    padding-right: var(--mob-portal-pad, 10px);
   }
 }

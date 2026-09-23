@@ -574,7 +574,7 @@
 
 @media (max-width: 768px) {
   .staff-apps-hero {
-    padding: 22px 20px;
+    padding: var(--mob-portal-card-pad, 12px);
   }
 
   .staff-apps-hero__actions {
@@ -663,11 +663,11 @@
 @media (max-width: 480px) {
   .staff-apps-stats {
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: var(--mob-adm-card-gap, 8px);
   }
 
   .staff-apps-stat {
-    padding: 14px 16px;
+    padding: 10px 12px;
   }
 
   .staff-apps-stat__value {

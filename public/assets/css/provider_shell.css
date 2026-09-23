@@ -93,7 +93,7 @@ body.provider-body .provider-page-body {
         gap: 6px 10px;
         align-items: center;
         flex-wrap: nowrap !important;
-        padding: 10px var(--mob-portal-pad, 14px) !important;
+        padding: 10px var(--mob-portal-pad, 12px) !important;
         padding-top: calc(10px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
         min-height: auto !important;
     }
@@ -195,9 +195,9 @@ body.provider-body .provider-page-body {
     }
 
     body.provider-body .provider-page-body {
-        padding-left: var(--mob-portal-pad, 14px) !important;
-        padding-right: var(--mob-portal-pad, 14px) !important;
-        padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
+        padding-left: var(--mob-portal-pad, 12px) !important;
+        padding-right: var(--mob-portal-pad, 12px) !important;
+        padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px)) !important;
         gap: var(--mob-portal-gap, 10px) !important;
     }
 

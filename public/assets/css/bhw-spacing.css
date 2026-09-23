@@ -488,10 +488,10 @@ body.bhw-body .mc-chart-filters {
 /* ── Mobile ── */
 @media (max-width: 768px) {
   body.bhw-body .portal-page-body {
-    padding-left: var(--mob-portal-pad, 14px) !important;
-    padding-right: var(--mob-portal-pad, 14px) !important;
-    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 8px)) !important;
-    padding-bottom: calc(var(--mob-portal-pad, 14px) + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: var(--mob-portal-pad, 12px) !important;
+    padding-right: var(--mob-portal-pad, 12px) !important;
+    padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px)) !important;
+    padding-bottom: calc(var(--mob-portal-pad, 12px) + env(safe-area-inset-bottom, 0px)) !important;
     gap: var(--mob-portal-gap, 10px) !important;
   }
 
@@ -541,8 +541,8 @@ body.bhw-body .mc-chart-filters {
 
 @media (max-width: 480px) {
   body.bhw-body .portal-page-body {
-    padding-left: var(--mob-portal-pad, 12px) !important;
-    padding-right: var(--mob-portal-pad, 12px) !important;
+    padding-left: var(--mob-portal-pad, 10px) !important;
+    padding-right: var(--mob-portal-pad, 10px) !important;
     gap: var(--mob-portal-gap, 8px) !important;
   }
 }
