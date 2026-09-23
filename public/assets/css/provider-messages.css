@@ -1,5 +1,6 @@
 /* ==========================================================================
    MedConnect — Provider Messages (role chrome on shared messages-layout.css)
+   Conversation hierarchy, clinical summary, and bubble polish.
    ========================================================================== */
 
 body.provider-body .provider-page-body .messages-shell,
@@ -30,6 +31,266 @@ body.provider-body .provider-page-body .msg-avatar {
   color: #fff;
 }
 
+/* Header hierarchy: name primary, presence secondary, status pill muted */
+body.provider-body .provider-page-body .msg-thread-header {
+  align-items: center;
+  gap: 10px 12px;
+  padding: 10px 12px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--mc-msg-border, #e2e8f0);
+}
+
+body.provider-body .provider-page-body .msg-thread-head-text .msg-name {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+body.provider-body .provider-page-body .msg-presence {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--mc-msg-muted, #64748b);
+  text-transform: capitalize;
+}
+
+body.provider-body .provider-page-body .msg-thread-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* Status pill — visible but visually secondary */
+body.provider-body .provider-page-body .msg-status-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 110px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(100, 116, 139, 0.28);
+  background: rgba(148, 163, 184, 0.12);
+  color: #64748b;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.92;
+}
+
+body.provider-body .provider-page-body .msg-status-pill--cancelled,
+body.provider-body .provider-page-body .msg-status-pill--canceled {
+  border-color: rgba(220, 38, 38, 0.22);
+  background: rgba(254, 226, 226, 0.65);
+  color: #b91c1c;
+  opacity: 0.88;
+  font-weight: 700;
+}
+
+body.provider-body .provider-page-body .msg-status-pill--completed {
+  border-color: rgba(22, 163, 74, 0.22);
+  background: rgba(220, 252, 231, 0.7);
+  color: #15803d;
+}
+
+body.provider-body .provider-page-body .msg-status-pill--pending,
+body.provider-body .provider-page-body .msg-status-pill--scheduled,
+body.provider-body .provider-page-body .msg-status-pill--in_consultation {
+  border-color: rgba(2, 132, 199, 0.2);
+  background: rgba(224, 242, 254, 0.75);
+  color: #0369a1;
+}
+
+/* Consultation summary — balanced, readable, not cramped */
+body.provider-body .provider-page-body .msg-clinical-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: 10px 14px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--mc-msg-border, #e2e8f0);
+  border-radius: 0;
+  background: var(--card-bg, #fff);
+  flex-shrink: 0;
+}
+
+body.provider-body .provider-page-body .msg-clinical-cell {
+  min-width: 0;
+}
+
+body.provider-body .provider-page-body .clinical-label {
+  color: var(--mc-msg-muted, #64748b);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+body.provider-body .provider-page-body .clinical-value {
+  color: var(--mc-msg-text, #0f172a);
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  /* Allow longer complaints to wrap instead of harsh truncation */
+  display: block;
+  max-height: 4.35em; /* ~3 lines */
+  overflow: hidden;
+}
+
+body.provider-body .provider-page-body .msg-clinical-cell--complaint .clinical-value {
+  font-weight: 700;
+  max-height: 5.8em; /* ~4 lines for complaint */
+}
+
+body.provider-body .provider-page-body .msg-clinical-cell--triage .clinical-value {
+  font-weight: 800;
+}
+
+/* Message area — pack content to top, reduce empty void */
+body.provider-body .provider-page-body .msg-panel--thread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body.provider-body .provider-page-body .thread-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0;
+  padding: 12px 14px 8px;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Bubbles — left patient / right provider */
+body.provider-body .provider-page-body .bubble-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 12px;
+}
+
+body.provider-body .provider-page-body .bubble-row:last-child {
+  margin-bottom: 4px;
+}
+
+body.provider-body .provider-page-body .bubble-row.provider {
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+}
+
+body.provider-body .provider-page-body .msg-bubble-stack {
+  min-width: 0;
+  max-width: min(78%, 440px);
+  display: flex;
+  flex-direction: column;
+}
+
+body.provider-body .provider-page-body .bubble-row.provider .msg-bubble-stack {
+  align-items: flex-end;
+}
+
+body.provider-body .provider-page-body .bubble-row:not(.provider) .msg-bubble-stack {
+  align-items: flex-start;
+}
+
+body.provider-body .provider-page-body .bubble-row .msg-avatar,
+body.provider-body .provider-page-body .bubble-row .pd-avatar {
+  width: 30px !important;
+  height: 30px !important;
+  font-size: 10px !important;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+body.provider-body .provider-page-body .bubble-row .pd-avatar {
+  background: linear-gradient(135deg, #0f766e, #1d4ed8);
+  color: #fff;
+}
+
+body.provider-body .provider-page-body .bubble {
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-sizing: border-box;
+}
+
+body.provider-body .provider-page-body .bubble.patient {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 0;
+  border-bottom-left-radius: 4px;
+}
+
+body.provider-body .provider-page-body .bubble.provider {
+  background: #dbeafe;
+  color: #0f172a;
+  border: 0;
+  border-bottom-right-radius: 4px;
+}
+
+body.provider-body .provider-page-body .bubble-time {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--mc-msg-muted, #64748b);
+  line-height: 1.2;
+}
+
+body.provider-body .provider-page-body .bubble-time.is-mine {
+  text-align: right;
+  width: 100%;
+}
+
+/* Composer sticky at bottom with comfortable spacing */
+body.provider-body .provider-page-body .composer {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--mc-msg-border, #e2e8f0);
+  background: var(--card-bg, #fff);
+}
+
+body.provider-body .provider-page-body .composer-inner {
+  gap: 8px;
+  padding: 4px 5px 4px 12px;
+}
+
+body.provider-body .provider-page-body .composer input {
+  height: 36px;
+  font-size: 13.5px;
+}
+
+body.provider-body .provider-page-body .composer .msg-send-btn {
+  height: 32px;
+  min-width: 72px;
+  padding: 0 14px;
+}
+
 body.provider-body .provider-page-body .msg-item.mc-row-reinsert {
   animation: mcRowReinsert 220ms ease-out both;
 }
@@ -37,6 +298,70 @@ body.provider-body .provider-page-body .msg-item.mc-row-reinsert {
 @keyframes mcRowReinsert {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  body.provider-body .provider-page-body .msg-clinical-strip {
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+    gap: 10px 12px;
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-cell--address {
+    grid-column: 1 / -1;
+  }
+
+  body.provider-body .provider-page-body .msg-bubble-stack {
+    max-width: min(82%, 400px);
+  }
+}
+
+@media (max-width: 767.98px) {
+  body.provider-body .provider-page-body .msg-thread-header {
+    padding: 8px 10px;
+    min-height: 48px;
+  }
+
+  body.provider-body .provider-page-body .msg-status-pill {
+    max-width: 84px;
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-strip {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-cell--address {
+    grid-column: auto;
+  }
+
+  body.provider-body .provider-page-body .clinical-value {
+    max-height: none;
+  }
+
+  body.provider-body .provider-page-body .msg-clinical-cell--complaint .clinical-value {
+    max-height: 6.5em;
+  }
+
+  body.provider-body .provider-page-body .thread-body {
+    padding: 10px 10px 6px;
+  }
+
+  body.provider-body .provider-page-body .msg-bubble-stack {
+    max-width: calc(100% - 40px);
+  }
+
+  body.provider-body .provider-page-body .bubble {
+    font-size: 13px;
+    padding: 9px 11px;
+  }
+
+  body.provider-body .provider-page-body .composer {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Toast / confirm / thread menu */
