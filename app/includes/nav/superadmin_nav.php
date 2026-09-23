@@ -45,8 +45,8 @@ return [
 
     ]],
 
-    // Standalone — My Profile / Settings above profile chip + logout
-    ['section' => 'My Profile', 'standalone' => true, 'items' => [
+    // Same section spacing as above; sits above profile chip + logout
+    ['section' => 'My Profile', 'items' => [
 
         ['profile.php', 'Settings', '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'],
 
