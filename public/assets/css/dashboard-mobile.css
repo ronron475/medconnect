@@ -758,7 +758,7 @@
   }
 }
 
-/* Phones in the 320–430px range (also covers up to 480) */
+/* Phones 320–430px (max-width 480 covers that range) — all roles */
 @media (max-width: 480px) {
   body.patient-portal,
   body.provider-body,
@@ -786,39 +786,63 @@
     --pt-card-pad: 10px;
     --pt-section-gap: 8px;
     --pt-page-gap: 8px;
+    --pt-stat-gap: 6px;
     --pv-space-lg: 10px;
     --pv-space-xl: 12px;
     --pv-space-2xl: 14px;
     --pv-card-pad: 10px;
     --pv-section-gap: 8px;
     --pv-page-gap: 8px;
+    --pv-stat-gap: 6px;
   }
 
-  body.patient-portal .prov-dash .prov-dash-stat strong,
-  body.provider-body .prov-dash .prov-dash-stat strong,
-  body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value,
-  body.provider-body .prov-dash-stat strong {
-    font-size: 1.25rem !important;
-  }
-
-  body.provider-body .provider-page-body {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  body.patient-portal .pdash-hero {
-    padding: 10px !important;
+  /* Shared page shells */
+  body.patient-portal .pdash-page,
+  body.provider-body .prov-dash,
+  body.bhw-body .bhw-dash,
+  body.admin-body [data-live-dashboard],
+  body.superadmin-body [data-live-dashboard] {
     gap: 8px !important;
+  }
+
+  /* Prevent welcome/hero voids across roles (space-between + flex-grow) */
+  body.patient-portal .pdash-hero,
+  body.patient-portal .pdash-hero--welcome,
+  body.patient-portal .prov-dash-welcome,
+  body.patient-portal .adm-banner.patient-dash-banner,
+  body.provider-body .prov-dash-welcome,
+  body.provider-body .queue-hero,
+  body.provider-body .greeting-banner,
+  body.provider-body .provider-page-intro,
+  body.bhw-body .bhw-dash-header,
+  body.bhw-body .bhw-page-intro,
+  body.admin-body .adm-banner,
+  body.superadmin-body .adm-banner,
+  body.admin-body .admin-page-intro,
+  body.superadmin-body .admin-page-intro {
     justify-content: flex-start !important;
+    align-content: flex-start !important;
     height: auto !important;
     min-height: 0 !important;
+    max-height: none !important;
+    padding: 10px !important;
+    gap: 8px !important;
+    margin-bottom: 0 !important;
+  }
+
+  body.patient-portal .pdash-hero,
+  body.patient-portal .pdash-hero--welcome {
     flex-direction: column !important;
     flex-wrap: nowrap !important;
-    align-content: flex-start !important;
+    align-items: stretch !important;
   }
 
   body.patient-portal .pdash-hero__main,
   body.patient-portal .pdash-hero__content,
-  body.patient-portal .pdash-hero__actions {
+  body.patient-portal .pdash-hero__actions,
+  body.provider-body .prov-dash-welcome__left,
+  body.provider-body .prov-dash-welcome__meta,
+  body.provider-body .provider-page-intro__actions {
     flex: 0 0 auto !important;
     flex-basis: auto !important;
     min-height: 0 !important;
@@ -828,8 +852,8 @@
 
   body.patient-portal .pdash-hero__actions {
     flex-direction: column !important;
-    gap: 6px !important;
     width: 100%;
+    gap: 6px !important;
   }
 
   body.patient-portal .pdash-hero__actions .pdash-btn {
@@ -839,18 +863,101 @@
     padding: 8px 12px !important;
   }
 
-  body.patient-portal .pdash-page {
-    gap: 8px !important;
+  body.patient-portal .pdash-hero__title {
+    margin: 0 0 4px !important;
   }
 
+  body.patient-portal .pdash-hero__badges {
+    margin: 0 !important;
+    gap: 6px !important;
+  }
+
+  /* Shared cards / heads */
+  body.patient-portal .pdash-card,
   body.patient-portal .pdash-card--complaint,
   body.patient-portal .pdash-card--review,
-  body.patient-portal #pdashPrimaryCard .pdash-card {
+  body.provider-body .prov-dash-card,
+  body.provider-body .mc-card,
+  body.provider-body .queue-panel,
+  body.provider-body .pd-panel,
+  body.bhw-body .bhw-card,
+  body.bhw-body .mc-card,
+  body.bhw-body .adm-card,
+  body.admin-body .adm-card,
+  body.admin-body .mc-card,
+  body.admin-body .mc-chart-card,
+  body.admin-body .adm-chart-card,
+  body.superadmin-body .adm-card,
+  body.superadmin-body .mc-card,
+  body.superadmin-body .mc-chart-card,
+  body.superadmin-body .adm-chart-card {
     padding: 10px !important;
+  }
+
+  body.patient-portal .pdash-card__head,
+  body.provider-body .prov-dash-card__head,
+  body.bhw-body .bhw-card__head,
+  body.bhw-body .bhw-dash-panel__head,
+  body.admin-body .adm-card-head,
+  body.superadmin-body .adm-card-head {
+    margin-bottom: 8px !important;
+    gap: 6px !important;
+  }
+
+  /* Stats / metrics / tiles */
+  body.patient-portal .pdash-metrics,
+  body.patient-portal .pdash-quick,
+  body.provider-body .prov-dash-stats,
+  body.provider-body .prov-dash-metrics,
+  body.provider-body .prov-dash-metrics--unified,
+  body.provider-body .prov-dash-widget-strip,
+  body.bhw-body .bhw-dash-stats,
+  body.admin-body .adm-metrics,
+  body.admin-body .stats-grid,
+  body.superadmin-body .adm-metrics,
+  body.superadmin-body .stats-grid,
+  body.admin-body .superadmin-stat-grid,
+  body.superadmin-body .superadmin-stat-grid {
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-metric,
+  body.provider-body .prov-dash-stat,
+  body.bhw-body .bhw-dash-stat,
+  body.admin-body .adm-metric,
+  body.superadmin-body .adm-metric,
+  body.admin-body .superadmin-stat-card,
+  body.superadmin-body .superadmin-stat-card {
+    padding: 8px 6px !important;
+    min-height: 0 !important;
+  }
+
+  body.patient-portal .pdash-metric__value,
+  body.provider-body .prov-dash .prov-dash-stat strong,
+  body.provider-body .prov-dash-metrics--unified > .mc-notif-widget-value,
+  body.provider-body .prov-dash-stat strong,
+  body.bhw-body .bhw-dash-stat__val,
+  body.admin-body .adm-metric-value,
+  body.superadmin-body .adm-metric-value {
+    font-size: 1.2rem !important;
+  }
+
+  body.patient-portal .pdash-quick__link {
+    padding: 8px 10px !important;
+    min-height: 40px;
+  }
+
+  body.patient-portal .pdash-quick__icon {
+    width: 28px;
+    height: 28px;
   }
 
   body.patient-portal .pdash-care__top {
     margin-bottom: 8px !important;
+  }
+
+  body.patient-portal .pdash-care__lead {
+    display: none !important;
   }
 
   body.patient-portal .pdash-care-form__hint {
@@ -862,24 +969,21 @@
     min-height: 40px;
   }
 
-  body.patient-portal .pdash-metrics,
-  body.patient-portal .pdash-quick {
-    gap: 6px !important;
+  body.provider-body .prov-dash .prov-dash-grid,
+  body.provider-body .prov-dash .prov-dash-row,
+  body.provider-body .prov-dash .prov-dash-main,
+  body.provider-body .prov-dash .prov-dash-side,
+  body.bhw-body .bhw-dash-charts,
+  body.bhw-body .bhw-dash-charts-grid,
+  body.admin-body .adm-grid,
+  body.admin-body .adm-charts-grid,
+  body.superadmin-body .adm-grid,
+  body.superadmin-body .adm-charts-grid {
+    gap: 8px !important;
   }
 
-  body.patient-portal .pdash-metric {
-    padding: 8px 6px !important;
-    min-height: 0 !important;
-  }
-
-  body.patient-portal .pdash-quick__link {
-    padding: 8px 10px !important;
-    min-height: 40px;
-  }
-
-  body.patient-portal .pdash-quick__icon {
-    width: 28px;
-    height: 28px;
+  body.provider-body .provider-page-body {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   body.patient-portal .portal-page-body .form-group,
@@ -899,6 +1003,15 @@
   body.admin-body .mc-table-empty,
   body.superadmin-body .mc-table-empty {
     padding: 14px 10px !important;
+  }
+
+  body.admin-body .adm-overview-tile,
+  body.superadmin-body .adm-overview-tile {
+    padding: 8px 6px !important;
+  }
+
+  body.bhw-body .bhw-dash-stats {
+    padding: 8px !important;
   }
 }
 

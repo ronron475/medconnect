@@ -97,5 +97,70 @@ html[data-theme-resolved='dark'] body.provider-body .sched-page-header.provider-
   body.provider-body .sched-page-header.provider-page-intro {
     margin-bottom: 8px;
     gap: 8px;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  body.provider-body .prov-dash-welcome {
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  body.provider-body .prov-dash-welcome__left,
+  body.provider-body .prov-dash-welcome__meta,
+  body.provider-body .provider-page-intro__actions {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
   }
 }
+
+@media (max-width: 430px) {
+  body.provider-body .prov-dash {
+    gap: 8px !important;
+  }
+
+  body.provider-body .prov-dash-welcome,
+  body.provider-body .queue-hero,
+  body.provider-body .greeting-banner,
+  body.provider-body .provider-page-intro {
+    padding: 10px !important;
+    gap: 8px !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  body.provider-body .prov-dash-card,
+  body.provider-body .mc-card,
+  body.provider-body .queue-panel,
+  body.provider-body .pd-panel {
+    padding: 10px !important;
+  }
+
+  body.provider-body .prov-dash-card__head {
+    margin-bottom: 8px !important;
+  }
+
+  body.provider-body .prov-dash-stats,
+  body.provider-body .prov-dash-metrics,
+  body.provider-body .prov-dash-metrics--unified,
+  body.provider-body .prov-dash-widget-strip {
+    gap: 6px !important;
+  }
+
+  body.provider-body .prov-dash-stat {
+    padding: 8px 6px !important;
+    min-height: 0 !important;
+  }
+
+  body.provider-body .prov-dash .prov-dash-grid,
+  body.provider-body .prov-dash .prov-dash-row,
+  body.provider-body .prov-dash .prov-dash-main,
+  body.provider-body .prov-dash .prov-dash-side {
+    gap: 8px !important;
+  }
+}
+

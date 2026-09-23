@@ -546,3 +546,50 @@ body.bhw-body .mc-chart-filters {
     gap: var(--mob-portal-gap, 8px) !important;
   }
 }
+
+@media (max-width: 430px) {
+  body.bhw-body .bhw-dash {
+    gap: 8px !important;
+  }
+
+  body.bhw-body .bhw-dash-header,
+  body.bhw-body .bhw-page-intro,
+  body.bhw-body .bhw-dash-header.bhw-page-intro {
+    padding: 10px !important;
+    gap: 8px !important;
+    margin-bottom: 0 !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  body.bhw-body .bhw-card,
+  body.bhw-body .mc-card,
+  body.bhw-body .adm-card,
+  body.bhw-body .bhw-form-card {
+    padding: 10px !important;
+  }
+
+  body.bhw-body .bhw-dash-panel__head,
+  body.bhw-body .bhw-card__head {
+    padding: 8px 10px !important;
+    margin-bottom: 0 !important;
+    gap: 6px !important;
+  }
+
+  body.bhw-body .bhw-dash-stats {
+    gap: 6px !important;
+    padding: 8px !important;
+  }
+
+  body.bhw-body .bhw-dash-stat {
+    padding: 8px 6px !important;
+    min-height: 0 !important;
+  }
+
+  body.bhw-body .bhw-dash-charts,
+  body.bhw-body .bhw-dash-charts-grid {
+    gap: 8px !important;
+  }
+}
+
