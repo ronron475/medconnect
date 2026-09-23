@@ -34,7 +34,7 @@ $admin_user = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 $is_superadmin_portal = (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin')
     || (($admin_user['role'] ?? $_SESSION['user_role'] ?? '') === 'superadmin');
 
-$page_title = 'My Profile';
+$page_title = 'Settings';
 $profile_initials = profile_picture_initials($admin_user['first_name'] ?? '', $admin_user['last_name'] ?? '');
 $profile_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
 $profile_display_name = trim(($admin_user['first_name'] ?? '') . ' ' . ($admin_user['last_name'] ?? '')) ?: 'Administrator';
