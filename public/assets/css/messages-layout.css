@@ -510,37 +510,36 @@ body.provider-body .provider-page-body .msg-icon-btn.is-schedule-blocked {
   pointer-events: none;
 }
 
-/* Provider clinical context strip */
+/* Provider clinical context strip (base; provider-messages.css refines hierarchy) */
 body.provider-body .provider-page-body .msg-clinical-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  padding: 8px 10px;
-  margin: 0 0 10px;
-  border: 1px solid var(--mc-msg-border);
-  border-radius: 8px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.75fr) minmax(0, 1fr);
+  gap: 10px 14px;
+  padding: 10px 12px;
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--mc-msg-border);
+  border-radius: 0;
   background: #fff;
+  flex-shrink: 0;
 }
 
 body.provider-body .provider-page-body .clinical-label {
   color: var(--mc-msg-muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 body.provider-body .provider-page-body .clinical-value {
   color: var(--mc-msg-text);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Thread body + bubbles */
@@ -758,7 +757,7 @@ body.provider-body .provider-page-body .msg-back {
   }
 
   body.provider-body .provider-page-body .msg-clinical-strip {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
   }
 
   body.provider-body .provider-page-body .msg-clinical-strip > :last-child {

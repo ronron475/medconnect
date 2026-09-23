@@ -257,6 +257,14 @@ require __DIR__ . '/partials/layout_open.php';
           </div>
         </div>
         <div class="msg-thread-actions">
+          <?php
+            $activeStatusKey = preg_replace('/[^a-z0-9_-]/', '', strtolower((string) ($active_msg['status'] ?? 'pending')));
+            $activeStatusLabel = ucwords(str_replace('_', ' ', (string) ($active_msg['status'] ?? 'pending')));
+          ?>
+          <span
+            class="msg-status-pill msg-status-pill--<?= htmlspecialchars($activeStatusKey) ?>"
+            id="activeStatusPill"
+          ><?= htmlspecialchars($activeStatusLabel) ?></span>
           <button type="button" class="msg-icon-btn primary" id="videoButton" title="Start video" aria-label="Start video">
             <?= icon_sm('video') ?>
           </button>
@@ -266,39 +274,39 @@ require __DIR__ . '/partials/layout_open.php';
         </div>
       </div>
 
+      <div class="msg-clinical-strip" aria-label="Consultation summary">
+        <div class="msg-clinical-cell msg-clinical-cell--complaint">
+          <div class="clinical-label">Consultation</div>
+          <div class="clinical-value" id="activeComplaint"><?= htmlspecialchars($active_msg['complaint']) ?></div>
+        </div>
+        <div class="msg-clinical-cell msg-clinical-cell--triage">
+          <div class="clinical-label">AI Triage</div>
+          <div class="clinical-value" id="activeTriage"><?= htmlspecialchars($active_msg['triage']) ?></div>
+        </div>
+        <div class="msg-clinical-cell msg-clinical-cell--address">
+          <div class="clinical-label">Address</div>
+          <div class="clinical-value" id="activeAddress"><?= htmlspecialchars($active_msg['address']) ?></div>
+        </div>
+      </div>
+
       <div id="messageAlert" class="msg-alert"></div>
 
       <div class="thread-body" id="threadBody">
-        <div class="msg-clinical-strip">
-          <div>
-            <div class="clinical-label">Consultation</div>
-            <div class="clinical-value" id="activeComplaint"><?= htmlspecialchars($active_msg['complaint']) ?></div>
-          </div>
-          <div>
-            <div class="clinical-label">AI Triage</div>
-            <div class="clinical-value" id="activeTriage"><?= htmlspecialchars($active_msg['triage']) ?></div>
-          </div>
-          <div>
-            <div class="clinical-label">Address</div>
-            <div class="clinical-value" id="activeAddress"><?= htmlspecialchars($active_msg['address']) ?></div>
-          </div>
-        </div>
-
         <div class="bubble-row seed-message">
           <div class="msg-avatar" id="patientBubbleInitials" aria-hidden="true"><?= htmlspecialchars($active_msg['initials']) ?></div>
-          <div>
+          <div class="msg-bubble-stack">
             <div class="bubble patient" id="patientPreview"><?= htmlspecialchars($active_msg['preview']) ?></div>
             <div class="bubble-time" id="patientPreviewTime"><?= htmlspecialchars($active_msg['time']) ?></div>
           </div>
         </div>
 
         <div class="bubble-row provider seed-message">
-          <div class="pd-avatar" style="width:32px;height:32px;font-size:10px"><?= htmlspecialchars($provider['initials']) ?></div>
-          <div>
+          <div class="pd-avatar" aria-hidden="true"><?= htmlspecialchars($provider['initials']) ?></div>
+          <div class="msg-bubble-stack">
             <div class="bubble provider">
               I can review this from the consultation session. Use the phone icon to open the clinical workspace, or video to start the secure room.
             </div>
-            <div class="bubble-time" style="text-align:right">Ready to connect</div>
+            <div class="bubble-time is-mine">Ready to connect</div>
           </div>
         </div>
       </div>
@@ -337,6 +345,7 @@ const refreshStatus = document.getElementById('refreshStatus');
 const messagesShell = document.getElementById('messagesShell');
 const msgBackBtn = document.getElementById('msgBackBtn');
 const activePresence = document.getElementById('activePresence');
+const activeStatusPill = document.getElementById('activeStatusPill');
 const providerInitials = <?= json_encode($provider['initials'] ?? 'DR') ?>;
 const currentUserId = <?= (int)$provider_id ?>;
 const assetBase = <?= json_encode(ASSET_BASE) ?>;
@@ -352,18 +361,41 @@ let realtimePoller = null;
 function presenceForStatus(status) {
   const normalized = String(status || '').toLowerCase();
   if (normalized === 'in_consultation') {
-    return { label: 'Online', online: true };
+    return { label: 'In consultation', online: true };
   }
   if (normalized === 'scheduled') {
     return { label: 'Scheduled', online: false };
   }
   if (normalized === 'pending') {
-    return { label: 'Pending', online: false };
+    return { label: 'Pending review', online: false };
+  }
+  if (normalized === 'completed') {
+    return { label: 'Completed', online: false };
+  }
+  if (normalized === 'cancelled' || normalized === 'canceled') {
+    return { label: 'Session unavailable', online: false };
   }
   if (normalized === 'empty' || normalized === 'message only') {
-    return { label: 'Unavailable', online: false };
+    return { label: 'No active session', online: false };
   }
   return { label: normalized.replace(/_/g, ' '), online: false };
+}
+
+function statusPillMeta(status) {
+  const normalized = String(status || 'pending').toLowerCase().replace(/[^a-z0-9_-]+/g, '');
+  const label = String(status || 'pending').replace(/_/g, ' ');
+  return {
+    key: normalized || 'pending',
+    label: label.replace(/\b\w/g, (c) => c.toUpperCase()),
+  };
+}
+
+function updateStatusPill(item) {
+  if (!activeStatusPill) return;
+  const meta = statusPillMeta(item?.status);
+  activeStatusPill.className = 'msg-status-pill msg-status-pill--' + meta.key;
+  activeStatusPill.textContent = meta.label;
+  activeStatusPill.hidden = !item || !item.status || item.status === 'empty';
 }
 
 function isMobileMessages() {
@@ -438,10 +470,10 @@ function renderThread(item) {
     const row = document.createElement('div');
     row.className = 'bubble-row dynamic-message' + (isMine ? ' provider' : '');
     row.innerHTML = `
-      <div class="${isMine ? 'pd-avatar' : 'msg-avatar'}" style="width:36px;height:36px;font-size:12px">${escapeHtml(isMine ? providerInitials : item.initials)}</div>
-      <div>
+      <div class="${isMine ? 'pd-avatar' : 'msg-avatar'}" aria-hidden="true">${escapeHtml(isMine ? providerInitials : item.initials)}</div>
+      <div class="msg-bubble-stack">
         ${MedConnectMessages.buildBubbleHtml(message, isMine ? 'provider' : 'patient')}
-        <div class="bubble-time" style="${isMine ? 'text-align:right' : ''}">${escapeHtml(message.time || '')}</div>
+        <div class="bubble-time${isMine ? ' is-mine' : ''}">${escapeHtml(message.time || '')}</div>
       </div>
     `;
     fragment.appendChild(row);
@@ -519,6 +551,7 @@ function setActiveConversation(index) {
   activeInitials.textContent = item.initials;
   activeName.textContent = item.name;
   updatePresence(item);
+  updateStatusPill(item);
   activeComplaint.textContent = item.complaint;
   activeTriage.textContent = item.triage;
   activeAddress.textContent = item.address;
