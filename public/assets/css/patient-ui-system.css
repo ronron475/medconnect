@@ -762,7 +762,7 @@ body.patient-portal .portal-page-body > .view-container.active {
   }
 
   body.patient-portal .portal-page-body {
-    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px))
+    padding: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 4px))
              var(--mob-portal-pad, 12px)
              calc(var(--mob-portal-pad, 12px) + env(safe-area-inset-bottom, 0px));
     gap: var(--mob-portal-gap, 10px);
