@@ -152,20 +152,27 @@ body.admin-body {
   padding: 12px 12px 4px;
 }
 
+/* When My Profile/Settings live in the footer, keep main nav content-sized so
+   the REPORTS → MY PROFILE gap matches other section gaps (not a flex void). */
+.adm-sidebar:not(.adm-sidebar--bhw):has(.adm-nav-footer) .adm-nav {
+  flex: 0 1 auto;
+}
+
 /* Standalone items (Settings) sit outside section lists, above profile/logout.
-   Horizontal padding must match .adm-nav (incl. typography override: 10px). */
+   Horizontal padding must match .adm-nav (incl. typography override: 10px).
+   No top border/extra top pad — section heading margin provides the gap. */
 .adm-sidebar:not(.adm-sidebar--bhw) .adm-nav-footer {
   flex-shrink: 0;
-  margin-top: auto;
-  padding: 10px 10px 4px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  margin-top: 0;
+  padding: 0 10px 4px;
+  border-top: none;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
 .adm-sidebar:not(.adm-sidebar--bhw):has(.adm-nav-footer) .adm-profile {
-  margin-top: 8px;
+  margin-top: auto;
 }
 
 .adm-sidebar:not(.adm-sidebar--bhw) .adm-profile {
