@@ -280,9 +280,9 @@ body.patient-portal .portal-page-body {
 
         flex-wrap: nowrap !important;
 
-        padding: 10px var(--mob-dash-pad, 16px) !important;
+        padding: 8px var(--mob-dash-pad, 12px) !important;
 
-        padding-top: calc(10px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
+        padding-top: calc(8px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
 
         min-height: auto !important;
 
@@ -296,9 +296,9 @@ body.patient-portal .portal-page-body {
 
         display: inline-flex !important;
 
-        width: 44px;
+        width: 40px;
 
-        height: 44px;
+        height: 40px;
 
         margin: 0;
 
@@ -456,13 +456,13 @@ body.patient-portal .portal-page-body {
 
     body.patient-portal .topbar--clinical .mc-fullscreen-btn {
 
-        width: 44px;
+        width: 40px;
 
-        height: 44px;
+        height: 40px;
 
-        min-width: 44px;
+        min-width: 40px;
 
-        min-height: 44px;
+        min-height: 40px;
 
     }
 
@@ -476,13 +476,13 @@ body.patient-portal .portal-page-body {
 
         justify-content: center;
 
-        width: 44px;
+        width: 40px;
 
-        height: 44px;
+        height: 40px;
 
-        min-width: 44px;
+        min-width: 40px;
 
-        min-height: 44px;
+        min-height: 40px;
 
         padding: 0 !important;
 

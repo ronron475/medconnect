@@ -16,7 +16,7 @@
     --mob-portal-gap-sm: 8px;
     --mob-portal-card-pad: 12px;
     --mob-portal-radius: 12px;
-    --mob-portal-header-gap: 6px;
+    --mob-portal-header-gap: 4px;
     --mob-dash-pad: 12px;
     --mob-dash-gap: 10px;
     --mob-dash-gap-sm: 8px;
@@ -318,18 +318,35 @@
     font-size: 11px;
   }
 
-  /* Patient pdash welcome / cards */
+  /* Patient pdash welcome / cards — dense hero stack */
   body.patient-portal .pdash-hero {
-    padding: 12px !important;
-    gap: 10px !important;
+    padding: 10px !important;
+    gap: 8px !important;
   }
 
   body.patient-portal .pdash-hero__title {
-    margin-bottom: 6px !important;
+    margin: 0 0 4px !important;
+    font-size: 1rem !important;
+    line-height: 1.25 !important;
+  }
+
+  body.patient-portal .pdash-hero__badges {
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-badge {
+    padding: 4px 8px !important;
+    font-size: 0.65rem !important;
   }
 
   body.patient-portal .pdash-hero__actions {
-    gap: 8px;
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-hero__actions .pdash-btn {
+    min-height: 40px !important;
+    padding: 8px 14px !important;
+    font-size: 0.8125rem !important;
   }
 
   body.patient-portal .pdash-card {
@@ -725,7 +742,7 @@
     --mob-portal-gap: 8px;
     --mob-portal-gap-sm: 6px;
     --mob-portal-card-pad: 10px;
-    --mob-portal-header-gap: 6px;
+    --mob-portal-header-gap: 4px;
     --mob-dash-pad: 10px;
     --mob-dash-gap: 8px;
     --mob-dash-gap-sm: 6px;
@@ -759,6 +776,20 @@
 
   body.provider-body .provider-page-body {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body.patient-portal .pdash-hero {
+    padding: 8px !important;
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-hero__actions {
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-hero__actions .pdash-btn {
+    min-height: 40px !important;
+    padding: 7px 12px !important;
   }
 
   body.patient-portal .portal-page-body .form-group,

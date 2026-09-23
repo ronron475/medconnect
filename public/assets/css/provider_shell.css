@@ -88,29 +88,29 @@ body.provider-body .provider-page-body {
 @media (max-width: 768px) {
     body.provider-body .pd-header {
         display: grid !important;
-        grid-template-columns: 44px 44px minmax(0, 1fr) auto;
+        grid-template-columns: 40px 40px minmax(0, 1fr) auto;
         grid-template-areas: "hamburger brand title actions";
-        gap: 6px 10px;
+        gap: 6px 8px;
         align-items: center;
         flex-wrap: nowrap !important;
-        padding: 10px var(--mob-portal-pad, 12px) !important;
-        padding-top: calc(10px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
+        padding: 8px var(--mob-portal-pad, 12px) !important;
+        padding-top: calc(8px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
         min-height: auto !important;
     }
 
     body.provider-body .pd-hamburger {
         grid-area: hamburger;
         display: inline-flex !important;
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
         margin: 0;
     }
 
     body.provider-body .pd-brand {
         grid-area: brand;
         display: inline-flex;
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
     }
 
     body.provider-body .pd-header-title {
@@ -162,10 +162,10 @@ body.provider-body .provider-page-body {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
         padding: 0 !important;
         margin-left: 0 !important;
         border-radius: 10px;
@@ -176,18 +176,18 @@ body.provider-body .provider-page-body {
     }
 
     body.provider-body .mc-theme-toggle__btn {
-        min-width: 44px;
-        min-height: 44px;
-        padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
+        padding: 6px;
     }
 
     body.provider-body .pd-notif-btn,
     body.provider-body .mc-notif-btn,
     body.provider-body .mc-fullscreen-btn {
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
-        min-height: 44px;
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     body.provider-body .mc-notif-panel {
@@ -197,7 +197,7 @@ body.provider-body .provider-page-body {
     body.provider-body .provider-page-body {
         padding-left: var(--mob-portal-pad, 12px) !important;
         padding-right: var(--mob-portal-pad, 12px) !important;
-        padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 6px)) !important;
+        padding-top: calc(var(--mc-header-offset, 64px) + var(--mob-portal-header-gap, 4px)) !important;
         gap: var(--mob-portal-gap, 10px) !important;
     }
 

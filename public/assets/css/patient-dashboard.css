@@ -891,45 +891,47 @@
   }
 
   .pdash-page {
-    gap: var(--mob-portal-gap, 10px);
+    gap: var(--mob-portal-gap, 8px);
   }
 
   .pdash-empty {
-    padding: 14px 12px;
+    padding: 12px 10px;
   }
 
   .pdash-empty__icon {
-    width: 40px;
-    height: 40px;
-    margin: 0 auto 8px;
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 6px;
   }
 
   .pdash-hero {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px;
-    gap: 10px;
+    padding: 10px !important;
+    gap: 8px !important;
   }
 
   .pdash-hero__main {
     width: 100%;
     align-items: flex-start;
+    gap: 8px;
   }
 
   .pdash-hero__icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
   }
 
   .pdash-hero__icon-svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
 
   .pdash-hero__title {
-    font-size: 1.0625rem;
-    margin-bottom: 8px;
+    font-size: 1rem;
+    margin: 0 0 4px !important;
+    line-height: 1.25;
   }
 
   .pdash-hero__badges {
@@ -937,8 +939,8 @@
   }
 
   .pdash-badge {
-    font-size: 0.68rem;
-    padding: 5px 10px;
+    font-size: 0.65rem;
+    padding: 4px 8px;
   }
 
   .pdash-hero__content {
@@ -946,24 +948,27 @@
   }
 
   .pdash-hero__sub {
-    font-size: 0.82rem;
-    margin-bottom: 10px;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
     max-width: none;
   }
 
   .pdash-hero__actions {
     width: 100%;
+    gap: 6px !important;
   }
 
   .pdash-hero__actions .pdash-btn {
     flex: 1 1 auto;
-    min-height: 44px;
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 0.8125rem;
   }
 
   .pdash-metrics {
     order: 3;
-    gap: 10px;
-    margin-bottom: 4px;
+    gap: 8px;
+    margin-bottom: 0;
   }
 
   .pdash-card--complaint,
@@ -985,11 +990,11 @@
   }
 
   .pdash-metric {
-    padding: 10px 8px;
+    padding: 8px;
   }
 
   .pdash-metric__value {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
 
   .pdash-metric__label {
@@ -1093,17 +1098,21 @@
 
 @media (max-width: 560px) {
   .pdash-hero {
-    padding: 16px 14px;
+    padding: 10px !important;
+    gap: 8px !important;
   }
 
   .pdash-hero__actions {
     flex-direction: column;
+    gap: 6px !important;
   }
 
   .pdash-hero__actions .pdash-btn {
     flex: none;
     width: 100%;
     justify-content: center;
+    min-height: 40px;
+    padding: 8px 14px;
   }
 
   .pdash-care__top {

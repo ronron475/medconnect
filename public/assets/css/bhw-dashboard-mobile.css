@@ -27,13 +27,13 @@
   /* ── Mobile header (Admin-style grid + readable wrap) ── */
   body.bhw-body .topbar {
     display: grid !important;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: 40px minmax(0, 1fr) auto;
     grid-template-areas: "toggle title actions";
-    gap: 6px 10px;
+    gap: 6px 8px;
     align-items: center;
     flex-wrap: nowrap !important;
-    padding: 10px var(--mob-dash-pad) !important;
-    padding-top: calc(10px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
+    padding: 8px var(--mob-dash-pad) !important;
+    padding-top: calc(8px + var(--mc-safe-top, env(safe-area-inset-top, 0px))) !important;
     min-height: auto !important;
     height: auto !important;
     row-gap: 0 !important;
@@ -42,8 +42,8 @@
   body.bhw-body .topbar .mc-nav-toggle {
     grid-area: toggle;
     display: inline-flex !important;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     margin: 0;
     flex-shrink: 0;
   }
@@ -125,24 +125,24 @@
   body.bhw-body .mc-notif-btn,
   body.bhw-body .topbar-icon-btn,
   body.bhw-body .mc-fullscreen-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
 
   body.bhw-body .mc-theme-toggle__btn {
-    padding: 8px;
+    padding: 6px;
   }
 
   body.bhw-body .topbar-logout {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
     padding: 0 !important;
     margin: 0 !important;
     border-radius: 10px;
