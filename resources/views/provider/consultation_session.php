@@ -176,7 +176,7 @@ if ($csp_original_complaint === '') {
 $session_messages = [];
 try {
     consultation_messages_ensure_schema($pdo);
-    $session_messages = message_fetch_consultation_messages($pdo, $consultation_id, (int)$_SESSION['user_id']);
+    $session_messages = message_fetch_pair_messages($pdo, $consultation_id, (int)$_SESSION['user_id']);
     foreach ($session_messages as &$session_message) {
         $session_message['time'] = $session_message['time'] ?? date('M j, g:i A', strtotime($session_message['created_at']));
     }

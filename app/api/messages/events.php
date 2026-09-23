@@ -31,20 +31,26 @@ try {
 
     consultation_messages_ensure_schema($pdo);
 
-    $access = message_assert_participant($pdo, $consultationId, $userId);
-    if (!$access['success']) {
+    $pair = message_resolve_pair($pdo, $consultationId, $userId);
+    if (!$pair['success']) {
         ob_end_clean();
         http_response_code(403);
-        echo json_encode(['success' => false, 'message' => $access['message']]);
+        echo json_encode(['success' => false, 'message' => $pair['message']]);
         exit;
     }
 
-    $sql = '
+    $pairIds = message_pair_consultation_ids($pdo, (int) $pair['patient_id'], (int) $pair['provider_id']);
+    if (!$pairIds) {
+        $pairIds = [$consultationId];
+    }
+    $placeholders = implode(',', array_fill(0, count($pairIds), '?'));
+
+    $sql = "
         SELECT id, consultation_id, message_id, event_type, actor_user_id, payload, created_at
         FROM message_chat_events
-        WHERE consultation_id = ?
-    ';
-    $params = [$consultationId];
+        WHERE consultation_id IN ($placeholders)
+    ";
+    $params = $pairIds;
     if ($sinceId > 0) {
         $sql .= ' AND id > ?';
         $params[] = $sinceId;

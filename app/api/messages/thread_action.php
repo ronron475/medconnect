@@ -56,24 +56,15 @@ try {
         exit;
     }
 
-    if ($action === 'archive') {
-        consultation_thread_state_upsert($pdo, $consultationId, $userId, ['is_archived' => 1]);
-    } elseif ($action === 'restore') {
-        consultation_thread_state_upsert($pdo, $consultationId, $userId, ['is_archived' => 0]);
-    } elseif ($action === 'delete') {
-        consultation_thread_state_upsert($pdo, $consultationId, $userId, ['is_deleted' => 1]);
-    } elseif ($action === 'undelete') {
-        consultation_thread_state_upsert($pdo, $consultationId, $userId, ['is_deleted' => 0]);
-    }
-
-    $state = consultation_thread_state_get($pdo, $consultationId, $userId);
+    // Archive / soft-hide applies to the whole patient–provider conversation (no row deletes).
+    $state = message_pair_thread_state_action($pdo, $consultationId, $userId, $action);
 
     ob_end_clean();
     echo json_encode([
         'success' => true,
         'message' => 'Updated.',
         'state' => [
-            'consultation_id' => $consultationId,
+            'consultation_id' => (int) ($state['consultation_id'] ?? $consultationId),
             'is_archived' => (int) ($state['is_archived'] ?? 0),
             'is_deleted' => (int) ($state['is_deleted'] ?? 0),
         ],

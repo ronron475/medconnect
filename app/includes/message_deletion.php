@@ -555,6 +555,457 @@ function message_mark_consultation_read(PDO $pdo, int $consultationId, int $view
 }
 
 /**
+ * Patient–provider pair for a consultation the viewer participates in.
+ *
+ * @return array{success:bool,message:string,patient_id?:int,provider_id?:int,consultation?:array}
+ */
+function message_resolve_pair(PDO $pdo, int $consultationId, int $userId): array
+{
+    $access = message_assert_participant($pdo, $consultationId, $userId);
+    if (!$access['success']) {
+        return $access;
+    }
+    $c = $access['consultation'];
+    $patientId = (int) ($c['patient_id'] ?? 0);
+    $providerId = (int) ($c['provider_id'] ?? 0);
+    if ($patientId <= 0 || $providerId <= 0) {
+        return ['success' => false, 'message' => 'Conversation pair is incomplete.'];
+    }
+    return [
+        'success' => true,
+        'message' => 'ok',
+        'patient_id' => $patientId,
+        'provider_id' => $providerId,
+        'consultation' => $c,
+    ];
+}
+
+/**
+ * All consultation IDs for a patient–provider pair (existing rows only; never creates).
+ *
+ * @return int[]
+ */
+function message_pair_consultation_ids(PDO $pdo, int $patientId, int $providerId): array
+{
+    if ($patientId <= 0 || $providerId <= 0) {
+        return [];
+    }
+    $stmt = $pdo->prepare('
+        SELECT id
+        FROM consultations
+        WHERE patient_id = ? AND provider_id = ?
+        ORDER BY id ASC
+    ');
+    $stmt->execute([$patientId, $providerId]);
+    return array_values(array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN) ?: []));
+}
+
+/**
+ * Canonical consultation for messaging within a pair (reuses existing rows only).
+ * Prefers active clinical statuses, then the consultation with the latest message, then newest id.
+ */
+function message_pair_canonical_consultation_id(PDO $pdo, int $patientId, int $providerId): int
+{
+    $ids = message_pair_consultation_ids($pdo, $patientId, $providerId);
+    if (!$ids) {
+        return 0;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $pdo->prepare("
+        SELECT id, status
+        FROM consultations
+        WHERE id IN ($placeholders)
+        ORDER BY
+            CASE LOWER(TRIM(COALESCE(status, '')))
+                WHEN 'in_consultation' THEN 1
+                WHEN 'scheduled' THEN 2
+                WHEN 'pending' THEN 3
+                ELSE 4
+            END,
+            COALESCE(consult_date, '1970-01-01') DESC,
+            COALESCE(consult_time, '00:00:00') DESC,
+            id DESC
+        LIMIT 1
+    ");
+    $stmt->execute($ids);
+    $preferred = (int) ($stmt->fetchColumn() ?: 0);
+
+    $msgStmt = $pdo->prepare("
+        SELECT consultation_id
+        FROM consultation_messages
+        WHERE consultation_id IN ($placeholders)
+          AND is_deleted_for_everyone = 0
+        ORDER BY created_at DESC, id DESC
+        LIMIT 1
+    ");
+    $msgStmt->execute($ids);
+    $withMessages = (int) ($msgStmt->fetchColumn() ?: 0);
+
+    // Prefer an open consult when available; otherwise stay on the thread that already has history.
+    if ($preferred > 0) {
+        $st = $pdo->prepare('SELECT status FROM consultations WHERE id = ? LIMIT 1');
+        $st->execute([$preferred]);
+        $status = strtolower(trim((string) ($st->fetchColumn() ?: '')));
+        if (in_array($status, ['in_consultation', 'scheduled', 'pending'], true)) {
+            return $preferred;
+        }
+    }
+
+    return $withMessages > 0 ? $withMessages : ($preferred > 0 ? $preferred : (int) max($ids));
+}
+
+/**
+ * Whether the viewer has soft-deleted the entire patient–provider conversation.
+ */
+function message_pair_is_deleted_for_user(PDO $pdo, int $patientId, int $providerId, int $userId): bool
+{
+    $ids = message_pair_consultation_ids($pdo, $patientId, $providerId);
+    if (!$ids) {
+        return false;
+    }
+    consultation_thread_state_ensure_schema($pdo);
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $params = array_merge([$userId], $ids);
+    $stmt = $pdo->prepare("
+        SELECT c.id, COALESCE(ts.is_deleted, 0) AS is_deleted
+        FROM consultations c
+        LEFT JOIN consultation_thread_state ts
+          ON ts.consultation_id = c.id AND ts.user_id = ?
+        WHERE c.id IN ($placeholders)
+    ");
+    $stmt->execute($params);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    if (!$rows) {
+        return false;
+    }
+    foreach ($rows as $row) {
+        if ((int) ($row['is_deleted'] ?? 0) === 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+/**
+ * Soft-undelete a pair conversation for one user (does not remove message rows).
+ */
+function message_pair_clear_deleted_for_user(PDO $pdo, int $patientId, int $providerId, int $userId): void
+{
+    foreach (message_pair_consultation_ids($pdo, $patientId, $providerId) as $cid) {
+        consultation_thread_state_upsert($pdo, $cid, $userId, ['is_deleted' => 0]);
+    }
+}
+
+/**
+ * Apply archive/restore/delete/undelete across every consultation in the pair for one user.
+ *
+ * @return array{consultation_id:int,is_archived:int,is_deleted:int,pair_ids:int[]}
+ */
+function message_pair_thread_state_action(PDO $pdo, int $consultationId, int $userId, string $action): array
+{
+    $pair = message_resolve_pair($pdo, $consultationId, $userId);
+    if (!$pair['success']) {
+        throw new RuntimeException($pair['message'] ?? 'Access denied.');
+    }
+
+    $patientId = (int) $pair['patient_id'];
+    $providerId = (int) $pair['provider_id'];
+    $ids = message_pair_consultation_ids($pdo, $patientId, $providerId);
+    if (!$ids) {
+        $ids = [$consultationId];
+    }
+
+    $patch = [];
+    if ($action === 'archive') {
+        $patch = ['is_archived' => 1];
+    } elseif ($action === 'restore') {
+        $patch = ['is_archived' => 0];
+    } elseif ($action === 'delete') {
+        $patch = ['is_deleted' => 1];
+    } elseif ($action === 'undelete') {
+        $patch = ['is_deleted' => 0];
+    } else {
+        throw new InvalidArgumentException('Invalid thread action.');
+    }
+
+    foreach ($ids as $cid) {
+        consultation_thread_state_upsert($pdo, $cid, $userId, $patch);
+    }
+
+    $canonical = message_pair_canonical_consultation_id($pdo, $patientId, $providerId) ?: $consultationId;
+    $state = consultation_thread_state_get($pdo, $canonical, $userId);
+
+    return [
+        'consultation_id' => $canonical,
+        'is_archived' => (int) ($state['is_archived'] ?? ($patch['is_archived'] ?? 0)),
+        'is_deleted' => (int) ($state['is_deleted'] ?? ($patch['is_deleted'] ?? 0)),
+        'pair_ids' => $ids,
+    ];
+}
+
+/**
+ * Merged message history for a patient–provider pair (preserves ids, times, senders).
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function message_fetch_pair_messages(PDO $pdo, int $consultationId, int $viewerUserId): array
+{
+    consultation_messages_ensure_schema($pdo);
+    $pair = message_resolve_pair($pdo, $consultationId, $viewerUserId);
+    if (!$pair['success']) {
+        return [];
+    }
+
+    $ids = message_pair_consultation_ids($pdo, (int) $pair['patient_id'], (int) $pair['provider_id']);
+    if (!$ids) {
+        return message_fetch_consultation_messages($pdo, $consultationId, $viewerUserId);
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $pdo->prepare("
+        SELECT cm.*, u.first_name, u.last_name, u.role
+        FROM consultation_messages cm
+        JOIN users u ON u.id = cm.sender_id
+        WHERE cm.consultation_id IN ($placeholders)
+        ORDER BY cm.created_at ASC, cm.id ASC
+    ");
+    $stmt->execute($ids);
+
+    $messages = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $formatted = message_format_for_viewer($row, $viewerUserId);
+        if ($formatted !== null) {
+            $messages[] = $formatted;
+        }
+    }
+    return $messages;
+}
+
+/**
+ * Mark unread messages as read across the whole patient–provider pair.
+ */
+function message_mark_pair_read(PDO $pdo, int $consultationId, int $viewerUserId): int
+{
+    consultation_messages_ensure_schema($pdo);
+    consultation_thread_state_ensure_schema($pdo);
+
+    $pair = message_resolve_pair($pdo, $consultationId, $viewerUserId);
+    if (!$pair['success']) {
+        return 0;
+    }
+
+    $ids = message_pair_consultation_ids($pdo, (int) $pair['patient_id'], (int) $pair['provider_id']);
+    if (!$ids) {
+        return message_mark_consultation_read($pdo, $consultationId, $viewerUserId);
+    }
+
+    $changed = 0;
+    foreach ($ids as $cid) {
+        $changed += message_mark_consultation_read($pdo, $cid, $viewerUserId);
+    }
+    return $changed;
+}
+
+/**
+ * Conversation list grouped by patient–provider pair (one row per relationship).
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function message_list_pair_conversations(PDO $pdo, int $userId, string $role, string $box = 'inbox', int $limit = 50): array
+{
+    consultation_messages_ensure_schema($pdo);
+    consultation_thread_state_ensure_schema($pdo);
+
+    $box = strtolower(trim($box));
+    if (!in_array($box, ['inbox', 'archived', 'all'], true)) {
+        $box = 'inbox';
+    }
+    $limit = max(1, min(100, $limit));
+
+    if ($role === 'provider') {
+        $stmt = $pdo->prepare("
+            SELECT
+                c.id AS consultation_id,
+                c.patient_id,
+                c.provider_id,
+                c.consult_type,
+                c.status,
+                c.consult_date,
+                c.consult_time,
+                c.created_at,
+                CONCAT(u.first_name, ' ', u.last_name) AS name,
+                CONCAT(UPPER(LEFT(u.first_name,1)), UPPER(LEFT(u.last_name,1))) AS initials,
+                COALESCE(ts.is_archived, 0) AS is_archived,
+                COALESCE(ts.is_deleted, 0) AS is_deleted
+            FROM consultations c
+            JOIN users u ON u.id = c.patient_id
+            LEFT JOIN consultation_thread_state ts
+              ON ts.consultation_id = c.id AND ts.user_id = ?
+            WHERE c.provider_id = ?
+              AND c.patient_id IS NOT NULL
+              AND c.patient_id > 0
+            ORDER BY c.id DESC
+        ");
+        $stmt->execute([$userId, $userId]);
+    } else {
+        $stmt = $pdo->prepare("
+            SELECT
+                c.id AS consultation_id,
+                c.patient_id,
+                c.provider_id,
+                c.consult_type,
+                c.status,
+                c.consult_date,
+                c.consult_time,
+                c.created_at,
+                c.provider_name,
+                CONCAT('Dr. ', COALESCE(NULLIF(CONCAT(u.first_name, ' ', u.last_name), ''), NULLIF(c.provider_name,''), 'Healthcare Provider')) AS name,
+                CONCAT(UPPER(LEFT(COALESCE(u.first_name,'D'),1)), UPPER(LEFT(COALESCE(u.last_name,''),1))) AS initials,
+                COALESCE(ts.is_archived, 0) AS is_archived,
+                COALESCE(ts.is_deleted, 0) AS is_deleted
+            FROM consultations c
+            LEFT JOIN users u ON u.id = c.provider_id
+            LEFT JOIN consultation_thread_state ts
+              ON ts.consultation_id = c.id AND ts.user_id = ?
+            WHERE c.patient_id = ?
+              AND c.provider_id IS NOT NULL
+              AND c.provider_id > 0
+            ORDER BY c.id DESC
+        ");
+        $stmt->execute([$userId, $userId]);
+    }
+
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    $groups = [];
+    foreach ($rows as $row) {
+        $patientId = (int) ($row['patient_id'] ?? 0);
+        $providerId = (int) ($row['provider_id'] ?? 0);
+        if ($patientId <= 0 || $providerId <= 0) {
+            continue;
+        }
+        $key = $patientId . ':' . $providerId;
+        if (!isset($groups[$key])) {
+            $groups[$key] = [
+                'patient_id' => $patientId,
+                'provider_id' => $providerId,
+                'name' => (string) ($row['name'] ?? ''),
+                'initials' => (string) ($row['initials'] ?? 'MC'),
+                'rows' => [],
+            ];
+        }
+        $groups[$key]['rows'][] = $row;
+        if ($groups[$key]['name'] === '' && !empty($row['name'])) {
+            $groups[$key]['name'] = (string) $row['name'];
+        }
+    }
+
+    $items = [];
+    foreach ($groups as $group) {
+        $pairRows = $group['rows'];
+        $ids = array_map(static fn($r) => (int) $r['consultation_id'], $pairRows);
+        if (!$ids) {
+            continue;
+        }
+
+        $allDeleted = true;
+        $allArchived = true;
+        foreach ($pairRows as $r) {
+            if ((int) ($r['is_deleted'] ?? 0) === 0) {
+                $allDeleted = false;
+            }
+            if ((int) ($r['is_archived'] ?? 0) === 0) {
+                $allArchived = false;
+            }
+        }
+        if ($allDeleted) {
+            continue;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $lastStmt = $pdo->prepare("
+            SELECT message, created_at, consultation_id
+            FROM consultation_messages
+            WHERE consultation_id IN ($placeholders)
+              AND is_deleted_for_everyone = 0
+            ORDER BY created_at DESC, id DESC
+            LIMIT 1
+        ");
+        $lastStmt->execute($ids);
+        $last = $lastStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $unreadStmt = $pdo->prepare("
+            SELECT id, is_deleted_for_everyone, deleted_for_me_users
+            FROM consultation_messages
+            WHERE consultation_id IN ($placeholders)
+              AND receiver_id = ?
+              AND is_read = 0
+              AND is_deleted_for_everyone = 0
+        ");
+        $unreadStmt->execute(array_merge($ids, [$userId]));
+        $unread = 0;
+        foreach ($unreadStmt->fetchAll(PDO::FETCH_ASSOC) as $urow) {
+            if (!message_is_hidden_for_user($urow, $userId)) {
+                $unread++;
+            }
+        }
+
+        if ($box === 'inbox' && $allArchived && $unread <= 0) {
+            continue;
+        }
+        if ($box === 'archived' && !$allArchived) {
+            continue;
+        }
+
+        $canonical = message_pair_canonical_consultation_id($pdo, (int) $group['patient_id'], (int) $group['provider_id']);
+        if ($canonical <= 0) {
+            $canonical = (int) $ids[0];
+        }
+
+        $fallbackPreview = '';
+        $fallbackAt = '';
+        foreach ($pairRows as $r) {
+            if ((int) $r['consultation_id'] === $canonical) {
+                $fallbackPreview = (string) ($r['consult_type'] ?? 'Consultation');
+                $fallbackAt = trim(($r['consult_date'] ?? '') . ' ' . ($r['consult_time'] ?? ''));
+                if ($fallbackAt === '') {
+                    $fallbackAt = (string) ($r['created_at'] ?? '');
+                }
+                break;
+            }
+        }
+        if ($fallbackPreview === '' && $pairRows) {
+            $fallbackPreview = (string) ($pairRows[0]['consult_type'] ?? 'Consultation');
+            $fallbackAt = (string) ($pairRows[0]['created_at'] ?? '');
+        }
+
+        $items[] = [
+            'consultation_id' => $canonical,
+            'patient_id' => (int) $group['patient_id'],
+            'provider_id' => (int) $group['provider_id'],
+            'name' => (string) $group['name'],
+            'initials' => (string) ($group['initials'] ?: 'MC'),
+            'preview' => $last ? (string) $last['message'] : $fallbackPreview,
+            'last_at' => $last ? (string) $last['created_at'] : $fallbackAt,
+            'unread' => $unread,
+            'is_archived' => $allArchived ? 1 : 0,
+            'pair_consultation_ids' => $ids,
+        ];
+    }
+
+    usort($items, static function (array $a, array $b): int {
+        $ta = strtotime((string) ($a['last_at'] ?? '')) ?: 0;
+        $tb = strtotime((string) ($b['last_at'] ?? '')) ?: 0;
+        if ($ta === $tb) {
+            return ((int) $b['consultation_id']) <=> ((int) $a['consultation_id']);
+        }
+        return $tb <=> $ta;
+    });
+
+    return array_slice($items, 0, $limit);
+}
+
+/**
  * Require authenticated patient or provider; block patients who must complete account setup.
  */
 function messages_api_require_auth(PDO $pdo): void

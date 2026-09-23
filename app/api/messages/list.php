@@ -31,16 +31,15 @@ try {
     consultation_messages_ensure_schema($pdo);
     consultation_thread_state_ensure_schema($pdo);
 
-    $access = message_assert_participant($pdo, $consultation_id, $user_id);
-    if (!$access['success']) {
+    $pair = message_resolve_pair($pdo, $consultation_id, $user_id);
+    if (!$pair['success']) {
         ob_end_clean();
         http_response_code(403);
-        echo json_encode(['success' => false, 'message' => $access['message']]);
+        echo json_encode(['success' => false, 'message' => $pair['message']]);
         exit;
     }
 
-    $state = consultation_thread_state_get($pdo, $consultation_id, $user_id);
-    if (!empty($state['is_deleted'])) {
+    if (message_pair_is_deleted_for_user($pdo, (int) $pair['patient_id'], (int) $pair['provider_id'], $user_id)) {
         ob_end_clean();
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Conversation not found.']);
@@ -48,7 +47,8 @@ try {
     }
 
     // IMPORTANT: This endpoint is read-only. Mark-as-read must go through POST mark_read.php with CSRF.
-    $messages = message_fetch_consultation_messages($pdo, $consultation_id, $user_id);
+    // Load the full patient–provider history (all consultations in the pair).
+    $messages = message_fetch_pair_messages($pdo, $consultation_id, $user_id);
 
     ob_end_clean();
     echo json_encode([

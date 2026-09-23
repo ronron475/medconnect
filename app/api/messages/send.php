@@ -64,25 +64,17 @@ if (!mb_check_encoding($message, 'UTF-8')) {
 try {
     consultation_messages_ensure_schema($pdo);
 
-    $stmt = $pdo->prepare("
-        SELECT id, patient_id, provider_id
-        FROM consultations
-        WHERE id = ? AND (patient_id = ? OR provider_id = ?)
-        LIMIT 1
-    ");
-    $stmt->execute([$consultation_id, $sender_id, $sender_id]);
-    $consultation = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$consultation) {
+    $pair = message_resolve_pair($pdo, $consultation_id, $sender_id);
+    if (!$pair['success']) {
         ob_end_clean();
         http_response_code(403);
         echo json_encode(['success' => false, 'message' => 'Consultation not found or access denied.']);
         exit;
     }
 
-    $receiver_id = ((int)$consultation['patient_id'] === $sender_id)
-        ? (int)$consultation['provider_id']
-        : (int)$consultation['patient_id'];
+    $patientId = (int) $pair['patient_id'];
+    $providerId = (int) $pair['provider_id'];
+    $receiver_id = ($patientId === $sender_id) ? $providerId : $patientId;
 
     if (!$receiver_id) {
         ob_end_clean();
@@ -90,11 +82,21 @@ try {
         exit;
     }
 
+    // Continue the existing patient–provider thread on the canonical consultation when possible.
+    $targetConsultationId = message_pair_canonical_consultation_id($pdo, $patientId, $providerId);
+    if ($targetConsultationId <= 0) {
+        $targetConsultationId = $consultation_id;
+    }
+
+    // New activity restores a soft-hidden conversation for both participants (never deletes history).
+    message_pair_clear_deleted_for_user($pdo, $patientId, $providerId, $sender_id);
+    message_pair_clear_deleted_for_user($pdo, $patientId, $providerId, $receiver_id);
+
     $stmt = $pdo->prepare("
         INSERT INTO consultation_messages (consultation_id, sender_id, receiver_id, message, message_kind)
         VALUES (?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$consultation_id, $sender_id, $receiver_id, $message, $message_kind]);
+    $stmt->execute([$targetConsultationId, $sender_id, $receiver_id, $message, $message_kind]);
 
     $id = (int)$pdo->lastInsertId();
     $stmt = $pdo->prepare("
@@ -123,7 +125,7 @@ try {
                 $sender_id,
                 $senderName ?: 'Patient',
                 $sender_id,
-                $consultation_id
+                $targetConsultationId
             );
         } elseif ($_SESSION['user_role'] === 'provider' && $receiver_id) {
             NotificationEvents::providerMessage(
@@ -132,7 +134,7 @@ try {
                 $sender_id,
                 $senderName ?: 'Your healthcare provider',
                 $sender_id,
-                $consultation_id
+                $targetConsultationId
             );
         }
     }
