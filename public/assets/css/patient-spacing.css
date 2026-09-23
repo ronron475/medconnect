@@ -67,4 +67,144 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-triage-lead.patien
     margin-bottom: 0;
     gap: var(--pt-space-sm, 8px) var(--pt-space-md, 12px);
   }
+
+  /* Column hero must not stretch (space-between + flex-grow caused the void) */
+  body.patient-portal .pdash-hero,
+  body.patient-portal .pdash-hero--welcome {
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  body.patient-portal .pdash-hero__main,
+  body.patient-portal .pdash-hero__content,
+  body.patient-portal .pdash-hero__actions {
+    flex: 0 0 auto !important;
+    flex-basis: auto !important;
+    min-height: 0 !important;
+  }
 }
+
+/* Patient Dashboard phones 320–430px — compact density (loads last) */
+@media (max-width: 430px) {
+  body.patient-portal .pdash-page {
+    gap: 8px !important;
+  }
+
+  body.patient-portal .pdash-hero,
+  body.patient-portal .pdash-hero--welcome {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    align-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 10px !important;
+    gap: 8px !important;
+  }
+
+  body.patient-portal .pdash-hero__main,
+  body.patient-portal .pdash-hero__content,
+  body.patient-portal .pdash-hero__actions {
+    flex: 0 0 auto !important;
+    flex-grow: 0 !important;
+    flex-basis: auto !important;
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+  }
+
+  body.patient-portal .pdash-hero__title {
+    margin: 0 0 4px !important;
+  }
+
+  body.patient-portal .pdash-hero__badges {
+    margin: 0 !important;
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-hero__actions {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 6px !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  body.patient-portal .pdash-hero__actions .pdash-btn {
+    width: 100% !important;
+    flex: none !important;
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+
+  body.patient-portal .pdash-card,
+  body.patient-portal .pdash-card--complaint,
+  body.patient-portal .pdash-card--review,
+  body.patient-portal #pdashPrimaryCard .pdash-card {
+    padding: 10px !important;
+  }
+
+  body.patient-portal .pdash-card__head {
+    margin-bottom: 8px !important;
+  }
+
+  body.patient-portal .pdash-care__top {
+    margin-bottom: 8px !important;
+    gap: 8px !important;
+  }
+
+  body.patient-portal .pdash-care__lead {
+    display: none !important;
+  }
+
+  body.patient-portal .pdash-care-form__label {
+    margin: 0 0 4px !important;
+  }
+
+  body.patient-portal .pdash-care-form__input,
+  body.patient-portal #chief_complaint,
+  body.patient-portal #pdashSymptomsComplaint {
+    min-height: 64px !important;
+  }
+
+  body.patient-portal .pdash-care-form__hint {
+    margin: 6px 0 8px !important;
+  }
+
+  body.patient-portal .pdash-care-form__submit {
+    margin: 0 !important;
+    min-height: 40px;
+  }
+
+  body.patient-portal .pdash-metrics,
+  body.patient-portal .pdash-quick {
+    gap: 6px !important;
+  }
+
+  body.patient-portal .pdash-metric {
+    padding: 8px 6px !important;
+    min-height: 0 !important;
+  }
+
+  body.patient-portal .pdash-quick__link {
+    padding: 8px 10px !important;
+    min-height: 40px;
+  }
+
+  body.patient-portal .pdash-quick__icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  body.patient-portal .pdash-grid,
+  body.patient-portal .pdash-main,
+  body.patient-portal .pdash-side {
+    gap: 8px !important;
+  }
+}
+
