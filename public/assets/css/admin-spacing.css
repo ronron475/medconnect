@@ -786,3 +786,70 @@ body.admin-body .pagination {
     --mob-adm-section-gap: 8px;
   }
 }
+
+@media (max-width: 430px) {
+  body.admin-body [data-live-dashboard],
+  body.superadmin-body [data-live-dashboard] {
+    gap: 8px !important;
+  }
+
+  body.admin-body .adm-banner,
+  body.superadmin-body .adm-banner,
+  body.admin-body .admin-page-intro,
+  body.superadmin-body .admin-page-intro {
+    padding: 10px !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    justify-content: flex-start !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  body.admin-body .adm-card,
+  body.admin-body .mc-card,
+  body.admin-body .mc-chart-card,
+  body.admin-body .adm-chart-card,
+  body.superadmin-body .adm-card,
+  body.superadmin-body .mc-card,
+  body.superadmin-body .mc-chart-card,
+  body.superadmin-body .adm-chart-card {
+    padding: 10px !important;
+  }
+
+  body.admin-body .adm-card-head,
+  body.superadmin-body .adm-card-head {
+    padding: 8px 10px !important;
+    margin-bottom: 0 !important;
+    gap: 6px !important;
+  }
+
+  body.admin-body .adm-metrics,
+  body.admin-body .stats-grid,
+  body.superadmin-body .adm-metrics,
+  body.superadmin-body .stats-grid,
+  body.admin-body .superadmin-stat-grid,
+  body.superadmin-body .superadmin-stat-grid {
+    gap: 6px !important;
+  }
+
+  body.admin-body .adm-metric,
+  body.superadmin-body .adm-metric,
+  body.admin-body .superadmin-stat-card,
+  body.superadmin-body .superadmin-stat-card {
+    padding: 8px 6px !important;
+    min-height: 0 !important;
+  }
+
+  body.admin-body .adm-overview-tile,
+  body.superadmin-body .adm-overview-tile {
+    padding: 8px 6px !important;
+  }
+
+  body.admin-body .adm-grid,
+  body.admin-body .adm-charts-grid,
+  body.superadmin-body .adm-grid,
+  body.superadmin-body .adm-charts-grid {
+    gap: 8px !important;
+  }
+}
+
