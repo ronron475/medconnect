@@ -158,6 +158,17 @@ body.admin-body {
   flex-shrink: 0;
 }
 
+/* Visually separate standalone items (e.g. Settings) from the last section */
+.adm-nav-standalone-gap {
+  height: 0;
+  margin: 10px 4px 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.adm-nav-item--standalone {
+  margin-top: 2px;
+}
+
 .adm-nav-item {
   display: flex;
   align-items: center;

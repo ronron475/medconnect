@@ -106,10 +106,13 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
 
   <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
     <?php foreach ($nav_sections as $section):
+      $sectionStandalone = !empty($section['standalone']);
       if (!empty($section['section'])): ?>
     <div class="adm-nav-section" style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);">
       <?= htmlspecialchars($section['section']) ?>
     </div>
+    <?php elseif ($sectionStandalone): ?>
+    <div class="adm-nav-standalone-gap" role="presentation" aria-hidden="true"></div>
     <?php endif;
       foreach ($section['items'] as $item):
         [$file, $label, $icon_path] = $item;
@@ -123,9 +126,10 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
         }
         $badgeKey = portal_nav_badge_key_for_item($adm_sidebar_portal, $file, $itemQuery);
         $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
+        $itemClass = 'adm-nav-item' . ($is_active ? ' is-active' : '') . ($sectionStandalone ? ' adm-nav-item--standalone' : '');
     ?>
     <a href="<?= htmlspecialchars($href) ?>"
-       class="adm-nav-item <?= $is_active ? 'is-active' : '' ?>"
+       class="<?= htmlspecialchars($itemClass) ?>"
        <?= $is_active ? 'aria-current="page"' : '' ?><?= $navAttr ?>>
       <svg class="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

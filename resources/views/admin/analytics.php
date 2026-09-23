@@ -16,8 +16,6 @@ $page_title = 'Operational Reports & Analytics';
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
-<?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
-
 <div class="mc-card" style="padding: 14px 16px;">
     <h3 class="text-h3 mb-md" style="margin-bottom: 10px;">Available Report Modules</h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;">
