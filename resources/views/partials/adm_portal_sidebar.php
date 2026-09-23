@@ -96,37 +96,43 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
         $portal_nav_badge_counts_data = [];
     }
 }
-?>
-<aside class="<?= htmlspecialchars($config['sidebar_class']) ?>"<?= $adm_sidebar_portal === 'bhw' ? ' id="bhw-sidebar"' : '' ?> aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
 
-  <a href="<?= htmlspecialchars($dashboard_href) ?>" class="adm-logo">
-    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="" class="adm-logo__img" width="40" height="40">
-    <div class="adm-logo-text">med<span>Connect</span></div>
-  </a>
+$nav_main_sections = [];
+$nav_standalone_sections = [];
+foreach ($nav_sections as $section) {
+    if (!empty($section['standalone'])) {
+        $nav_standalone_sections[] = $section;
+    } else {
+        $nav_main_sections[] = $section;
+    }
+}
 
-  <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
-    <?php foreach ($nav_sections as $section):
-      $sectionStandalone = !empty($section['standalone']);
-      if (!empty($section['section'])): ?>
-    <div class="adm-nav-section" style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);">
-      <?= htmlspecialchars($section['section']) ?>
-    </div>
-    <?php elseif ($sectionStandalone): ?>
-    <div class="adm-nav-standalone-gap" role="presentation" aria-hidden="true"></div>
-    <?php endif;
-      foreach ($section['items'] as $item):
-        [$file, $label, $icon_path] = $item;
-        $itemQuery = $item[3] ?? null;
-        $navGroup = $item[4] ?? null;
-        $href = $views_base . '/' . $file . ($itemQuery ? '?' . $itemQuery : '');
-        if ($adm_sidebar_portal === 'bhw') {
-            $is_active = portal_nav_bhw_is_active((string) $file, $current);
-        } else {
-            $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery, $navGroup);
-        }
-        $badgeKey = portal_nav_badge_key_for_item($adm_sidebar_portal, $file, $itemQuery);
-        $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
-        $itemClass = 'adm-nav-item' . ($is_active ? ' is-active' : '') . ($sectionStandalone ? ' adm-nav-item--standalone' : '');
+/**
+ * Render one sidebar nav link (shared by main + standalone footer).
+ *
+ * @param array{0:string,1:string,2:string,3?:?string,4?:?string} $item
+ */
+$adm_render_nav_item = static function (
+    array $item,
+    string $views_base,
+    string $adm_sidebar_portal,
+    string $current,
+    string $current_query,
+    array $portal_nav_badge_counts_data,
+    string $extraClass = ''
+): void {
+    [$file, $label, $icon_path] = $item;
+    $itemQuery = $item[3] ?? null;
+    $navGroup = $item[4] ?? null;
+    $href = $views_base . '/' . $file . ($itemQuery ? '?' . $itemQuery : '');
+    if ($adm_sidebar_portal === 'bhw') {
+        $is_active = portal_nav_bhw_is_active((string) $file, $current);
+    } else {
+        $is_active = portal_nav_is_active($file, $current, $current_query, $itemQuery, $navGroup);
+    }
+    $badgeKey = portal_nav_badge_key_for_item($adm_sidebar_portal, $file, $itemQuery);
+    $navAttr = portal_nav_badge_nav_link_attr($badgeKey);
+    $itemClass = trim('adm-nav-item' . ($is_active ? ' is-active' : '') . ($extraClass !== '' ? ' ' . $extraClass : ''));
     ?>
     <a href="<?= htmlspecialchars($href) ?>"
        class="<?= htmlspecialchars($itemClass) ?>"
@@ -142,8 +148,38 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
           require VIEWS_PATH . '/partials/portal_nav_badge.php';
       endif; ?>
     </a>
-    <?php endforeach; endforeach; ?>
+    <?php
+};
+?>
+<aside class="<?= htmlspecialchars($config['sidebar_class']) ?>"<?= $adm_sidebar_portal === 'bhw' ? ' id="bhw-sidebar"' : '' ?> aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
+
+  <a href="<?= htmlspecialchars($dashboard_href) ?>" class="adm-logo">
+    <img src="<?= ASSET_BASE ?>/assets/img/medcon_logo.png" alt="" class="adm-logo__img" width="40" height="40">
+    <div class="adm-logo-text">med<span>Connect</span></div>
+  </a>
+
+  <nav class="adm-nav" data-portal-nav="<?= htmlspecialchars($adm_sidebar_portal) ?>" aria-label="<?= htmlspecialchars($config['aria_label']) ?>">
+    <?php foreach ($nav_main_sections as $section):
+      if (!empty($section['section'])): ?>
+    <div class="adm-nav-section" style="padding: 12px 16px 4px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45);">
+      <?= htmlspecialchars($section['section']) ?>
+    </div>
+    <?php endif;
+      foreach ($section['items'] as $item) {
+          $adm_render_nav_item($item, $views_base, $adm_sidebar_portal, $current, $current_query, $portal_nav_badge_counts_data);
+      }
+    endforeach; ?>
   </nav>
+
+  <?php if ($nav_standalone_sections !== []): ?>
+  <div class="adm-nav-footer" aria-label="Account">
+    <?php foreach ($nav_standalone_sections as $section):
+      foreach ($section['items'] as $item) {
+          $adm_render_nav_item($item, $views_base, $adm_sidebar_portal, $current, $current_query, $portal_nav_badge_counts_data, 'adm-nav-item--standalone');
+      }
+    endforeach; ?>
+  </div>
+  <?php endif; ?>
 
   <a href="<?= htmlspecialchars($config['profile_href']) ?>"
      class="adm-profile <?= $is_profile_page ? 'is-active' : '' ?>"
