@@ -107,6 +107,13 @@ body.superadmin-body .adm-nav {
   gap: 1px;
 }
 
+/* Keep standalone footer (My Profile / Settings) on the same horizontal grid */
+body.admin-body .adm-nav-footer,
+body.superadmin-body .adm-nav-footer {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 body.admin-body .adm-nav-section,
 body.superadmin-body .adm-nav-section {
   font-size: var(--mc-fs-xs);
