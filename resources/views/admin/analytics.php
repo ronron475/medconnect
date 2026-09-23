@@ -13,39 +13,10 @@ require_once __DIR__ . '/_portal_access.php';
 
 $page_title = 'Operational Reports & Analytics';
 
-$stats = [
-    'total_appointments' => (int) $pdo->query("SELECT COUNT(*) FROM consultations")->fetchColumn(),
-    'completed_consults' => (int) $pdo->query("SELECT COUNT(*) FROM consultations WHERE status='completed'")->fetchColumn(),
-    'pending_triage'     => $pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()
-        ? (int) $pdo->query("SELECT COUNT(*) FROM triage_results WHERE level IN ('1','2','high','emergency') OR urgency_label LIKE '%Urgent%'")->fetchColumn() : 0,
-    'active_providers'   => (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role='provider' AND is_active=1")->fetchColumn(),
-];
-
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <?php require VIEWS_PATH . '/partials/admin_dashboard_charts.php'; ?>
-
-<div class="header-row admin-page-intro">
-    <div>
-        <p class="admin-page-intro__desc text-muted">Generate and export system performance data, appointment summaries, and user statistics.</p>
-    </div>
-    <div style="display: flex; gap: 8px;">
-        <button onclick="exportReport('appointments')" class="mc-btn mc-btn--primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Export CSV Report
-        </a>
-    </div>
-</div>
-
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr);">
-    <?php foreach($stats as $key => $val): ?>
-    <div class="mc-card" style="text-align: center; padding: 12px 10px;">
-        <div class="text-xs text-muted mb-xs" style="text-transform: uppercase; font-weight: 800;"><?= str_replace('_', ' ', $key) ?></div>
-        <div class="text-h1" style="color: var(--mc-navy-dark);"><?= number_format($val) ?></div>
-    </div>
-    <?php endforeach; ?>
-</div>
 
 <div class="mc-card" style="padding: 14px 16px;">
     <h3 class="text-h3 mb-md" style="margin-bottom: 10px;">Available Report Modules</h3>
