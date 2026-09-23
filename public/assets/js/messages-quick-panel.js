@@ -264,7 +264,11 @@
           const action = String(btn.getAttribute('data-msgqp-menu-action') || '');
           closeCardMenu();
           if (action === 'open') openThread(cid);
-          else threadAction(cid, action);
+          else if (action === 'delete') {
+            if (window.confirm('Hide this conversation from your list? Message history stays saved and will reappear when either of you sends a new message.')) {
+              threadAction(cid, action);
+            }
+          } else threadAction(cid, action);
         });
       });
     }
@@ -349,7 +353,7 @@
       if (firstPaint && loadingEl) loadingEl.hidden = false;
       if (firstPaint && emptyEl) emptyEl.hidden = true;
       try {
-        const res = await fetch(assetBase + API_CONV + '?limit=15&box=' + encodeURIComponent(activeBox) + '&_=' + Date.now(), {
+        const res = await fetch(assetBase + API_CONV + '?limit=50&box=' + encodeURIComponent(activeBox) + '&_=' + Date.now(), {
           credentials: 'same-origin',
           cache: 'no-store',
           headers: { Accept: 'application/json' },

@@ -28,81 +28,67 @@ $patient_id = (int)$_SESSION['user_id'];
 $page_title = 'Messages';
 require_once BASE_PATH . '/app/includes/message_deletion.php';
 
+if (!function_exists('format_message_list_time')) {
+    function format_message_list_time(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+        $ts = strtotime($raw);
+        return $ts ? date('M j, g:i A', $ts) : $raw;
+    }
+}
+
 $box = strtolower(trim((string) ($_GET['box'] ?? 'inbox'))); // inbox|archived|all
 if (!in_array($box, ['inbox', 'archived', 'all'], true)) $box = 'inbox';
 
 consultation_messages_ensure_schema($pdo);
 consultation_thread_state_ensure_schema($pdo);
 
-$stmt = $pdo->prepare("
-    SELECT c.id AS consultation_id, c.provider_id, c.provider_name, c.consult_date, c.consult_time, c.consult_type, c.status,
-           u.first_name AS provider_first, u.last_name AS provider_last,
-           COALESCE(ts.is_archived, 0) AS is_archived,
-           COALESCE(ts.is_deleted, 0) AS is_deleted,
-           COALESCE(unread.cnt, 0) AS unread
-    FROM consultations c
-    LEFT JOIN users u ON u.id = c.provider_id
-    LEFT JOIN consultation_thread_state ts ON ts.consultation_id = c.id AND ts.user_id = ?
-    LEFT JOIN (
-        SELECT consultation_id, COUNT(*) AS cnt
-        FROM consultation_messages
-        WHERE receiver_id = ? AND is_read = 0 AND is_deleted_for_everyone = 0
-        GROUP BY consultation_id
-    ) unread ON unread.consultation_id = c.id
-    WHERE c.patient_id = ?
-      AND (ts.is_deleted IS NULL OR ts.is_deleted = 0)
-    ORDER BY c.consult_date DESC, c.consult_time DESC
-");
-$stmt->execute([$patient_id, $patient_id, $patient_id]);
-$consultations = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$messages_by_consultation = [];
-if ($consultations) {
-    $ids = array_map(fn($c) => (int)$c['consultation_id'], $consultations);
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $pdo->prepare("
-        SELECT cm.*, u.first_name, u.last_name, u.role
-        FROM consultation_messages cm
-        JOIN users u ON u.id = cm.sender_id
-        WHERE cm.consultation_id IN ($placeholders)
-        ORDER BY cm.created_at ASC, cm.id ASC
-    ");
-    $stmt->execute($ids);
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $formatted = message_format_for_viewer($row, $patient_id);
-        if ($formatted === null) {
-            continue;
-        }
-        $messages_by_consultation[(int)$row['consultation_id']][] = $formatted;
-    }
-}
+$pairRows = message_list_pair_conversations($pdo, $patient_id, 'patient', $box, 100);
 
 $conversations = [];
-foreach ($consultations as $c) {
-    $archived = !empty($c['is_archived']);
-    if ($box === 'inbox' && $archived) continue;
-    if ($box === 'archived' && !$archived) continue;
-
-    $doctor_name = trim(($c['provider_first'] ?? '') . ' ' . ($c['provider_last'] ?? ''));
-    if ($doctor_name === '') {
-        $doctor_name = $c['provider_name'] ?: 'Healthcare Provider';
+foreach ($pairRows as $row) {
+    $cid = (int) ($row['consultation_id'] ?? 0);
+    if ($cid <= 0) {
+        continue;
     }
-    $parts = preg_split('/\s+/', trim($doctor_name));
-    $initials = strtoupper(substr($parts[0] ?? 'D', 0, 1) . substr($parts[count($parts) - 1] ?? '', 0, 1));
-    $msgs = $messages_by_consultation[(int)$c['consultation_id']] ?? [];
+
+    $msgs = message_fetch_pair_messages($pdo, $cid, $patient_id);
     $last_msg = $msgs !== [] ? $msgs[array_key_last($msgs)] : null;
-    $consult_label = $c['consult_type'] ?: 'General consultation';
-    $fallback_time = date('M j, g:i A', strtotime($c['consult_date'] . ' ' . $c['consult_time']));
+
+    $stmtMeta = $pdo->prepare("
+        SELECT consult_type, status, consult_date, consult_time
+        FROM consultations
+        WHERE id = ?
+        LIMIT 1
+    ");
+    $stmtMeta->execute([$cid]);
+    $meta = $stmtMeta->fetch(PDO::FETCH_ASSOC) ?: [];
+
+    $consult_label = $meta['consult_type'] ?: 'General consultation';
+    $fallback_time = !empty($meta['consult_date'])
+        ? date('M j, g:i A', strtotime(($meta['consult_date'] ?? '') . ' ' . ($meta['consult_time'] ?? '00:00:00')))
+        : '';
     $preview = $last_msg
         ? mb_strimwidth((string) ($last_msg['message'] ?? ''), 0, 72, '…')
         : $consult_label;
     $list_time = $last_msg && !empty($last_msg['time'])
         ? (string) $last_msg['time']
-        : $fallback_time;
-    $status = $c['status'] ?: 'pending';
+        : ($fallback_time !== '' ? $fallback_time : format_message_list_time((string) ($row['last_at'] ?? '')));
+    $status = $meta['status'] ?: 'pending';
+
+    $doctor_name = (string) ($row['name'] ?? 'Healthcare Provider');
+    $parts = preg_split('/\s+/', trim(preg_replace('/^Dr\.\s*/i', '', $doctor_name)));
+    $initials = (string) ($row['initials'] ?? '');
+    if ($initials === '') {
+        $initials = strtoupper(substr($parts[0] ?? 'D', 0, 1) . substr($parts[count($parts) - 1] ?? '', 0, 1));
+    }
+
     $conversations[] = [
-        'consultation_id' => (int)$c['consultation_id'],
-        'name' => 'Dr. ' . preg_replace('/^Dr\.\s*/i', '', $doctor_name),
+        'consultation_id' => $cid,
+        'name' => $doctor_name,
         'initials' => $initials,
         'preview' => $preview,
         'time' => $list_time,
@@ -111,8 +97,8 @@ foreach ($consultations as $c) {
         'status' => $status,
         'status_label' => ucwords(str_replace('_', ' ', $status)),
         'consult_type' => $consult_label,
-        'is_archived' => (int) ($c['is_archived'] ?? 0),
-        'unread' => (int) ($c['unread'] ?? 0),
+        'is_archived' => (int) ($row['is_archived'] ?? 0),
+        'unread' => (int) ($row['unread'] ?? 0),
         'messages' => $msgs,
     ];
 }
