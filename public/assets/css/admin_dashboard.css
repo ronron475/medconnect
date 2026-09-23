@@ -152,21 +152,29 @@ body.admin-body {
   padding: 12px 12px 4px;
 }
 
+/* Standalone items (Settings) sit outside section lists, above profile/logout */
+.adm-sidebar:not(.adm-sidebar--bhw) .adm-nav-footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 10px 12px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.adm-sidebar:not(.adm-sidebar--bhw):has(.adm-nav-footer) .adm-profile {
+  margin-top: 8px;
+}
+
 .adm-sidebar:not(.adm-sidebar--bhw) .adm-profile {
   margin-top: auto;
   margin-bottom: 8px;
   flex-shrink: 0;
 }
 
-/* Visually separate standalone items (e.g. Settings) from the last section */
-.adm-nav-standalone-gap {
-  height: 0;
-  margin: 10px 4px 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-}
-
 .adm-nav-item--standalone {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .adm-nav-item {
@@ -360,6 +368,11 @@ body.admin-body {
   }
 
   body.mc-sidebar-mini .adm-nav {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  body.mc-sidebar-mini .adm-nav-footer {
     padding-left: 8px;
     padding-right: 8px;
   }
