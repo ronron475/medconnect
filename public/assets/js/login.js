@@ -7,6 +7,7 @@ const pwdInput = document.getElementById('password');
 const emailError = document.getElementById('email-error');
 const passwordError = document.getElementById('password-error');
 const rememberMe = document.getElementById('remember-me');
+const toggleBtn = document.getElementById('toggle-pwd');
 const alert = document.getElementById('alert');
 const submitBtn = document.getElementById('submit-btn');
 const btnText = document.getElementById('btn-text');
