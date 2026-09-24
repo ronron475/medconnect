@@ -882,24 +882,12 @@ if (!isLandingPage) {
 // Removed â€” sign-in card is patient-only
 
 /* ===== PASSWORD TOGGLE ===== */
-const toggleBtn = document.getElementById('toggle-pwd');
-const pwdInput  = document.getElementById('password');
-const eyeIcon   = document.getElementById('eye-icon');
-const EYE_OPEN   = `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`;
-const EYE_CLOSED = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><line x1="2" y1="2" x2="22" y2="22"/>`;
-if (toggleBtn && pwdInput && eyeIcon) {
-  toggleBtn.addEventListener('click', () => {
-    const show = pwdInput.type === 'password';
-    pwdInput.type    = show ? 'text' : 'password';
-    // Hidden → eye-off; visible → open eye
-    eyeIcon.innerHTML = pwdInput.type === 'password' ? EYE_CLOSED : EYE_OPEN;
-    toggleBtn.setAttribute('aria-label', pwdInput.type === 'password' ? 'Show password' : 'Hide password');
-  });
-}
+// Handled by password-visibility.js (eye-off when hidden, open eye when shown).
 
 /* ===== FORM VALIDATION ===== */
 const form          = document.getElementById('login-form');
 const emailInput    = document.getElementById('email');
+const pwdInput      = document.getElementById('password');
 const emailError    = document.getElementById('email-error');
 const passwordError = document.getElementById('password-error');
 const rememberMe    = document.getElementById('remember-me');

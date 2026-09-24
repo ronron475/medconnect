@@ -42,6 +42,8 @@ $patient_page_stylesheets = [];
 <?php require_once VIEWS_PATH . '/patient/partials/layout_shell_close.php'; ?>
 
 <script>window.APP_BASE = <?= json_encode(ASSET_BASE) ?>;</script>
+<?php $pwVisJsVer = (int) @filemtime(ASSETS_PATH . '/js/password-visibility.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=<?= $pwVisJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/patient-settings.js?v=<?= $settings_js_ver ?>"></script>
 </body>
 </html>

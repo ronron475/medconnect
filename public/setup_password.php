@@ -108,7 +108,7 @@ $csrf = $_SESSION['csrf_token'] ?? '';
 </div>
 
 <script>window.APP_BASE = <?= json_encode($asset) ?>;</script>
-<script src="<?= $asset ?>/assets/js/password-visibility.js?v=1"></script>
+<script src="<?= $asset ?>/assets/js/password-visibility.js?v=2"></script>
 <script src="<?= $asset ?>/assets/js/register.js"></script>
 <?php if ($valid): ?>
 <script>

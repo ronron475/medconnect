@@ -103,7 +103,7 @@ $api = ASSET_BASE . '/app/api/bhw/onboarding.php';
 </div>
 
 <script>window.APP_BASE = <?= json_encode($asset) ?>;</script>
-<script src="<?= htmlspecialchars($asset) ?>/assets/js/password-visibility.js?v=1"></script>
+<script src="<?= htmlspecialchars($asset) ?>/assets/js/password-visibility.js?v=2"></script>
 <script src="<?= htmlspecialchars($asset) ?>/assets/js/register.js"></script>
 <?php if ($needsPassword): ?>
 <script>
