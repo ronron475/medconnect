@@ -41,6 +41,12 @@ foreach ($upcoming_list as $c) {
         break;
     }
 }
+
+$has_active_consultation = !empty($active_consultation)
+    && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true);
+$active_consult_id = $has_active_consultation ? (int) ($active_consultation['id'] ?? 0) : 0;
+// Active consultation card already has the join CTA — avoid a second Join button in the live strip.
+$show_dash_live_strip = $dash_live_session && $dash_live_join && !$has_active_consultation;
 ?>
 <div id="view-dashboard" class="patient-page pdash-page">
 
@@ -106,7 +112,7 @@ foreach ($upcoming_list as $c) {
   })();
   </script>
 
-  <?php if ($dash_live_session && $dash_live_join): ?>
+  <?php if ($show_dash_live_strip): ?>
   <div class="pdash-live" role="status" aria-live="polite">
     <span class="pdash-live__pulse" aria-hidden="true"></span>
     <div class="pdash-live__text">
@@ -131,8 +137,6 @@ foreach ($upcoming_list as $c) {
   <?php
   $symptoms_review_has_pending = !empty($symptoms_review_pending['has_pending']);
   $care_tips_ready = !empty($care_tips_ready_to_schedule['ready']);
-  $has_active_consultation = !empty($active_consultation)
-      && in_array(strtolower((string) ($active_consultation['status'] ?? '')), ['pending', 'scheduled', 'waiting', 'in_consultation'], true);
   $has_slot_wait = !empty($slot_wait_state['active']);
 
   // Active scheduled/in-progress visit always wins over care-tips review / new complaint.
@@ -236,11 +240,17 @@ foreach ($upcoming_list as $c) {
               </div>
             </div>
             <div class="pdash-session__action" data-consult-action="<?= (int) ($c['id'] ?? 0) ?>">
-              <?php if ($join_access['allowed']): ?>
+              <?php
+                $session_id = (int) ($c['id'] ?? 0);
+                $is_active_row = $active_consult_id > 0 && $session_id === $active_consult_id;
+              ?>
+              <?php if ($join_access['allowed'] && !$is_active_row): ?>
               <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
                 data-token="<?= htmlspecialchars($c['room_token'], ENT_QUOTES, 'UTF-8') ?>"
-                data-consultation-id="<?= (int) ($c['id'] ?? 0) ?>"
+                data-consultation-id="<?= $session_id ?>"
                 data-label="Consultation with Dr. <?= htmlspecialchars($provider_name, ENT_QUOTES, 'UTF-8') ?>">Join Consultation</button>
+              <?php elseif ($is_active_row): ?>
+              <a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--outline pdash-btn--sm">View Appointment</a>
               <?php elseif ($join_access['mode'] === 'scheduled_wait'): ?>
               <span class="pdash-btn pdash-btn--waiting pdash-btn--sm" title="<?= htmlspecialchars($join_access['reason'], ENT_QUOTES, 'UTF-8') ?>">
                 Opens at <?= htmlspecialchars(queue_session_context($c)['opens_at_label'] ?: 'scheduled time') ?>
