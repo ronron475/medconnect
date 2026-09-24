@@ -51,9 +51,10 @@
         if (!input || !svg) return;
         const reveal = input.type === 'password';
         input.type = reveal ? 'text' : 'password';
-        svg.innerHTML = reveal ? FP_EYE_CLOSED : FP_EYE_OPEN;
-        btn.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
-        btn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+        // Hidden → eye-off; visible → open eye
+        svg.innerHTML = input.type === 'password' ? FP_EYE_CLOSED : FP_EYE_OPEN;
+        btn.setAttribute('aria-label', input.type === 'password' ? 'Show password' : 'Hide password');
+        btn.setAttribute('aria-pressed', input.type === 'text' ? 'true' : 'false');
       });
     });
   }

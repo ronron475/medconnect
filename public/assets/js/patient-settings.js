@@ -121,15 +121,17 @@
       if (!input) return;
       const reveal = input.type === 'password';
       input.type = reveal ? 'text' : 'password';
-      btn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
-      btn.classList.toggle('is-revealed', reveal);
+      const hidden = input.type === 'password';
+      btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+      btn.classList.toggle('is-revealed', !hidden);
       const eyeOpen = btn.querySelector('.pts-eye-open');
       const eyeClosed = btn.querySelector('.pts-eye-closed');
-      if (eyeOpen) eyeOpen.hidden = reveal;
-      if (eyeClosed) eyeClosed.hidden = !reveal;
+      // Hidden → eye-off; visible → open eye
+      if (eyeOpen) eyeOpen.hidden = hidden;
+      if (eyeClosed) eyeClosed.hidden = !hidden;
       const fieldLabel = input.id === 'ptsCurrentPassword' ? 'current password'
         : input.id === 'ptsNewPassword' ? 'new password' : 'confirm password';
-      btn.setAttribute('aria-label', (reveal ? 'Hide ' : 'Show ') + fieldLabel);
+      btn.setAttribute('aria-label', (hidden ? 'Show ' : 'Hide ') + fieldLabel);
       input.focus();
     });
   });
@@ -238,8 +240,9 @@
         btn.setAttribute('aria-pressed', 'false');
         const eyeOpen = btn.querySelector('.pts-eye-open');
         const eyeClosed = btn.querySelector('.pts-eye-closed');
-        if (eyeOpen) eyeOpen.hidden = false;
-        if (eyeClosed) eyeClosed.hidden = true;
+        // Reset to hidden password → eye-off
+        if (eyeOpen) eyeOpen.hidden = true;
+        if (eyeClosed) eyeClosed.hidden = false;
         const input = document.getElementById(btn.dataset.target);
         if (input) input.type = 'password';
         const fieldLabel = btn.dataset.target === 'ptsCurrentPassword' ? 'current password'

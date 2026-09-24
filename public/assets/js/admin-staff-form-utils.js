@@ -58,14 +58,15 @@
       toggle.type = 'button';
       toggle.className = 'mc-password-toggle';
       toggle.setAttribute('aria-label', 'Show password');
-      toggle.innerHTML = EYE_OPEN;
+      toggle.innerHTML = EYE_OFF;
       wrap.appendChild(toggle);
 
       toggle.addEventListener('click', function () {
         var show = input.type === 'password';
         input.type = show ? 'text' : 'password';
-        toggle.innerHTML = show ? EYE_OFF : EYE_OPEN;
-        toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+        // Hidden → eye-off; visible → open eye
+        toggle.innerHTML = input.type === 'password' ? EYE_OFF : EYE_OPEN;
+        toggle.setAttribute('aria-label', input.type === 'password' ? 'Show password' : 'Hide password');
       });
     }
 

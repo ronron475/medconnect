@@ -9,8 +9,9 @@ const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a
 toggleBtn.addEventListener('click', () => {
   const isPassword = pwdInput.type === 'password';
   pwdInput.type = isPassword ? 'text' : 'password';
-  eyeIcon.innerHTML = isPassword ? eyeClosed : eyeOpen;
-  toggleBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+  // Hidden → eye-off; visible → open eye
+  eyeIcon.innerHTML = pwdInput.type === 'password' ? eyeClosed : eyeOpen;
+  toggleBtn.setAttribute('aria-label', pwdInput.type === 'password' ? 'Show password' : 'Hide password');
 });
 
 // Form validation & submission
