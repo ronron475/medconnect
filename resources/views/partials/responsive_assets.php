@@ -46,8 +46,6 @@ $chromeAlignVer = ($chromeAlignCss && file_exists($chromeAlignCss)) ? (int) file
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/header-offset.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/draggable-fab.js" defer></script>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/profile-menu.js" defer></script>
-<?php $fullscreenToggleJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/fullscreen-toggle.js' : ''); ?>
-<script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/fullscreen-toggle.js?v=<?= $fullscreenToggleJsVer ?: time() ?>" defer></script>
 <?php $osFloatJsVer = (int) @filemtime(defined('ASSETS_PATH') ? ASSETS_PATH . '/js/os-float-shell.js' : ''); ?>
 <script src="<?= htmlspecialchars($assetBase, ENT_QUOTES) ?>/assets/js/os-float-shell.js?v=<?= $osFloatJsVer ?: time() ?>" defer></script>
 <?php endif; ?>
