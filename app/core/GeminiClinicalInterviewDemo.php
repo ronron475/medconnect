@@ -92,21 +92,29 @@ final class GeminiClinicalInterviewDemo
         }
 
         $gate = self::normalizeHealthGate($gemini);
-        // NLP-first override: validated health domain/mappings win over a mistaken Gemini NON_HEALTH.
-        $gate = self::applyNlpHealthGateOverride($gate, $nlpPrecheck);
+        // Non-human / animal subjects are out of scope — never let NLP symptom hits override that.
+        $gate = self::applyNlpHealthGateOverride($gate, $nlpPrecheck, $gemini);
         $context['health_gate'] = $gate;
         $context['gemini_called'] = true;
 
         if (($gate['classification'] ?? '') !== self::CLASS_HEALTH) {
             $class = (string) ($gate['classification'] ?? self::CLASS_UNCLEAR);
-            $msg = $class === self::CLASS_NON_HEALTH
-                ? 'That does not look like a health concern. Please describe a health problem or symptom you are experiencing.'
-                : 'Please describe your health concern more clearly so we can continue.';
+            $subject = strtoupper((string) ($gate['patient_subject'] ?? ''));
+            if ($subject === 'NON_HUMAN' || !empty($gate['out_of_scope_non_human'])) {
+                $msg = 'medConnect is for human patient health concerns only. Animal or other non-human complaints are out of scope.';
+            } elseif ($class === self::CLASS_NON_HEALTH) {
+                $msg = 'That does not look like a health concern. Please describe a health problem or symptom you are experiencing.';
+            } else {
+                $msg = 'Please describe your health concern more clearly so we can continue.';
+            }
 
             return self::rejectNonHealth($context, $class, $msg, [
                 'health_gate' => $gate,
                 'nlp_precheck' => $nlpPrecheck,
                 'gemini_raw_structured' => $gemini,
+                'routing' => (!empty($gate['out_of_scope_non_human']) || $subject === 'NON_HUMAN')
+                    ? 'OUT_OF_SCOPE'
+                    : null,
             ]);
         }
 
@@ -201,7 +209,7 @@ final class GeminiClinicalInterviewDemo
      */
     private static function applyGeminiTurn(array $context, array $gemini, bool $isStart): array
     {
-        // NLP-first grounding: drop invented symptom/location/severity/etc. before merge.
+        // NLP-first grounding: drop invented / non-clinical labels before merge.
         $gemini = self::groundGeminiAgainstEvidence($gemini, $context, $isStart);
         $context['nlp_grounding'] = is_array($gemini['_nlp_grounding'] ?? null) ? $gemini['_nlp_grounding'] : null;
         unset($gemini['_nlp_grounding']);
@@ -211,12 +219,25 @@ final class GeminiClinicalInterviewDemo
             $status = 'VALID';
         }
 
-        // Merge clinical facts (never replace original wording).
+        // Short contextual replies (yes/no/negation/particles) are valid answers — do not retry.
+        $latestPatient = '';
+        $turns = is_array($context['patient_turns'] ?? null) ? $context['patient_turns'] : [];
+        if ($turns !== []) {
+            $latestPatient = trim((string) end($turns));
+        }
+        if (!$isStart && in_array($status, ['UNCLEAR', 'UNRELATED'], true)
+            && self::isContextualShortReply($latestPatient)
+        ) {
+            $status = 'VALID';
+            $gemini['answer_status'] = 'VALID';
+        }
+
+        // Merge clinical facts (never replace original wording); scrub discourse particles.
         $incoming = is_array($gemini['clinical_facts'] ?? null) ? $gemini['clinical_facts'] : [];
-        $context['clinical_facts'] = self::mergeFacts(
+        $context['clinical_facts'] = self::sanitizeClinicalFacts(self::mergeFacts(
             is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts(),
             $incoming
-        );
+        ));
         $context['missing_information'] = self::stringList($gemini['missing_information'] ?? []);
         $context['last_gemini'] = $gemini;
         $context['last_answer_status'] = $status;
@@ -249,11 +270,24 @@ final class GeminiClinicalInterviewDemo
         $nextQ = self::stripAcuityLanguage(trim((string) ($gemini['next_question'] ?? '')));
         $gemini['next_question'] = $nextQ;
 
-        // Pain rule: if pain indicated and no valid score yet, force severity question locally
-        // when Gemini forgot (still one question; does not invent score).
+        // Do not re-ask what the conversation / facts already answered.
+        if (!$sufficient && $nextQ !== '' && self::questionTargetsAlreadyKnownFact($nextQ, $context['clinical_facts'], $context)) {
+            if (self::hasClinicallyUsefulFacts($context['clinical_facts'])) {
+                $sufficient = true;
+                $nextQ = '';
+                $gemini['question_needed'] = false;
+                $gemini['interview_sufficient'] = true;
+                $gemini['next_question'] = '';
+            } else {
+                $nextQ = self::neutralMissingFactQuestion($context, $context['clinical_facts']);
+                $gemini['next_question'] = $nextQ;
+            }
+        }
+
+        // Pain score only when pain is patient-stated and still missing — not a blind checklist.
         if (!$sufficient && self::needsPainScore($context['clinical_facts'], $context)) {
             $hasPainQ = $nextQ !== '' && (bool) preg_match('/\b(1\s*(to|tubtob|-|–)\s*10|1\-10|pain\s*score|gaano\s*kasakit|pila\s*ka\s*grabe)\b/ui', $nextQ);
-            if (!$hasPainQ) {
+            if (!$hasPainQ && ($nextQ === '' || self::questionTargetsAlreadyKnownFact($nextQ, $context['clinical_facts'], $context))) {
                 $lang = self::detectLanguageHint($context);
                 $nextQ = match ($lang) {
                     'hiligaynon' => 'Pila ka grabe ang imo kasakit, halin 1 tubtob 10?',
@@ -295,16 +329,20 @@ final class GeminiClinicalInterviewDemo
      */
     private static function finalizeWithClinicalEngine(array $context, ?array $gemini): array
     {
-        $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
+        // Only genuine patient-supported clinical facts — never filler/particle translations.
+        $facts = self::sanitizeClinicalFacts(
+            is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts()
+        );
+        $context['clinical_facts'] = $facts;
         $mapped = self::mapFactsForEngine($facts);
         $patientEvidence = self::patientEvidenceText($context);
+        // Engine haystack: patient wording first; structured facts only if clinically genuine.
         $factsText = class_exists('ClinicalInterviewEngine')
             ? ClinicalInterviewEngine::factsHaystack($mapped)
             : self::simpleFactsHaystack($mapped);
 
         $caseParts = array_filter([
-            trim((string) ($context['chief_complaint'] ?? '')),
-            $patientEvidence,
+            $patientEvidence !== '' ? $patientEvidence : trim((string) ($context['chief_complaint'] ?? '')),
             $factsText,
         ], static fn (string $p): bool => $p !== '');
         $caseText = trim(implode('. ', $caseParts));
@@ -467,6 +505,9 @@ final class GeminiClinicalInterviewDemo
             ];
         $gate['passed'] = false;
         $context['health_gate'] = $gate;
+        // Never carry NLP-seeded facts into an out-of-scope / non-health rejection.
+        $context['clinical_facts'] = self::blankFacts();
+        $context['missing_information'] = [];
         $context['conversation'][] = [
             'role' => 'system',
             'text' => $message,
@@ -478,9 +519,18 @@ final class GeminiClinicalInterviewDemo
         $pack['rejected'] = true;
         $pack['needs_health_concern'] = true;
         $pack['health_classification'] = $classification;
+        if (!empty($gate['out_of_scope_non_human']) || strtoupper((string) ($gate['patient_subject'] ?? '')) === 'NON_HUMAN') {
+            $pack['out_of_scope'] = true;
+            $pack['routing'] = 'OUT_OF_SCOPE';
+            $pack['patient_subject'] = 'NON_HUMAN';
+        }
+        if (is_string($extra['routing'] ?? null) && ($extra['routing'] ?? '') !== '') {
+            $pack['routing'] = (string) $extra['routing'];
+        }
         // Do not leave a half-started interview context for the client.
         $pack['interview_context'] = [];
         $pack['awaiting_question'] = '';
+        $pack['clinical_facts'] = self::blankFacts();
         if (is_array($extra)) {
             $pack['debug'] = array_merge(is_array($pack['debug'] ?? null) ? $pack['debug'] : [], $extra);
         }
@@ -503,9 +553,17 @@ final class GeminiClinicalInterviewDemo
     /**
      * Normalize and whitelist Gemini health-gate classification.
      * Only HEALTH_RELATED | NON_HEALTH_RELATED | UNCLEAR are accepted; anything else fails closed.
+     * Also enforces human-patient scope: NON_HUMAN subjects → NON_HEALTH_RELATED / OUT_OF_SCOPE.
      *
      * @param array<string, mixed> $gemini
-     * @return array{classification:string,confidence:float|null,normalized_health_concern:string,passed:bool}
+     * @return array{
+     *   classification:string,
+     *   confidence:float|null,
+     *   normalized_health_concern:string,
+     *   passed:bool,
+     *   patient_subject:string,
+     *   out_of_scope_non_human:bool
+     * }
      */
     private static function normalizeHealthGate(array $gemini): array
     {
@@ -515,13 +573,20 @@ final class GeminiClinicalInterviewDemo
         // Strict allow-list only (plus trivial spelling aliases of the three labels).
         if ($class === 'HEALTH' || $class === 'HEALTH_RELATED') {
             $class = self::CLASS_HEALTH;
-        } elseif ($class === 'NON_HEALTH' || $class === 'NON_HEALTH_RELATED') {
+        } elseif ($class === 'NON_HEALTH' || $class === 'NON_HEALTH_RELATED' || $class === 'OUT_OF_SCOPE') {
             $class = self::CLASS_NON_HEALTH;
         } elseif ($class === 'UNCLEAR') {
             $class = self::CLASS_UNCLEAR;
         } else {
             // Unexpected label → fail closed (do not start interview).
             $class = self::CLASS_UNCLEAR;
+        }
+
+        $subject = self::normalizePatientSubject($gemini);
+        $outOfScopeNonHuman = ($subject === 'NON_HUMAN');
+        // Animal / non-human health talk is never a medConnect human clinical interview.
+        if ($outOfScopeNonHuman) {
+            $class = self::CLASS_NON_HEALTH;
         }
 
         $confidence = null;
@@ -533,12 +598,64 @@ final class GeminiClinicalInterviewDemo
             $confidence = max(0.0, min(1.0, $confidence));
         }
 
+        $normalized = trim((string) ($gemini['normalized_health_concern'] ?? ''));
+        if ($outOfScopeNonHuman) {
+            $normalized = '';
+        }
+
         return [
             'classification' => $class,
             'confidence' => $confidence,
-            'normalized_health_concern' => trim((string) ($gemini['normalized_health_concern'] ?? '')),
-            'passed' => $class === self::CLASS_HEALTH,
+            'normalized_health_concern' => $normalized,
+            'passed' => $class === self::CLASS_HEALTH && !$outOfScopeNonHuman,
+            'patient_subject' => $subject,
+            'out_of_scope_non_human' => $outOfScopeNonHuman,
         ];
+    }
+
+    /**
+     * Semantic subject of the complaint: HUMAN patient vs animal/non-human.
+     *
+     * @param array<string, mixed> $gemini
+     */
+    private static function normalizePatientSubject(array $gemini): string
+    {
+        $raw = strtoupper(trim((string) (
+            $gemini['patient_subject']
+            ?? $gemini['subject_scope']
+            ?? $gemini['complaint_subject']
+            ?? ''
+        )));
+        $raw = str_replace([' ', '-'], '_', $raw);
+
+        if (in_array($raw, ['HUMAN', 'PERSON', 'PATIENT', 'HUMAN_PATIENT', 'SELF'], true)) {
+            return 'HUMAN';
+        }
+        if (in_array($raw, [
+            'NON_HUMAN', 'ANIMAL', 'PET', 'VETERINARY', 'VET', 'LIVESTOCK',
+            'NONHUMAN', 'OTHER_SPECIES', 'ANIMAL_PATIENT',
+        ], true)) {
+            return 'NON_HUMAN';
+        }
+        if ($raw === 'UNCLEAR' || $raw === 'UNKNOWN' || $raw === 'AMBIGUOUS') {
+            return 'UNCLEAR';
+        }
+
+        // Explicit boolean flags from the model (if provided).
+        if (array_key_exists('is_human_patient_complaint', $gemini)) {
+            if ($gemini['is_human_patient_complaint'] === false || $gemini['is_human_patient_complaint'] === 0
+                || $gemini['is_human_patient_complaint'] === 'false'
+            ) {
+                return 'NON_HUMAN';
+            }
+            if ($gemini['is_human_patient_complaint'] === true || $gemini['is_human_patient_complaint'] === 1
+                || $gemini['is_human_patient_complaint'] === 'true'
+            ) {
+                return 'HUMAN';
+            }
+        }
+
+        return 'UNCLEAR';
     }
 
     /**
@@ -667,24 +784,27 @@ final class GeminiClinicalInterviewDemo
 
         $symptoms = [];
         $symptom = trim((string) ($facts['symptom'] ?? ''));
-        if ($symptom !== '') {
+        if ($symptom !== '' && !self::isNonClinicalDiscourseLabel($symptom)) {
             $symptoms[] = $symptom;
         }
         foreach (self::stringList($facts['associated_symptoms'] ?? []) as $s) {
-            if ($s !== '' && !in_array($s, $symptoms, true)) {
+            if ($s !== '' && !self::isNonClinicalDiscourseLabel($s) && !in_array($s, $symptoms, true)) {
                 $symptoms[] = $s;
             }
         }
         $mapped['symptoms'] = $symptoms;
-        $mapped['associated_symptoms'] = self::stringList($facts['associated_symptoms'] ?? []);
+        $mapped['associated_symptoms'] = array_values(array_filter(
+            self::stringList($facts['associated_symptoms'] ?? []),
+            static fn (string $s): bool => !self::isNonClinicalDiscourseLabel($s)
+        ));
 
         $locs = [];
         $loc = trim((string) ($facts['location'] ?? ''));
-        if ($loc !== '') {
+        if ($loc !== '' && !self::isNonClinicalDiscourseLabel($loc)) {
             $locs[] = $loc;
         }
         $side = trim((string) ($facts['laterality'] ?? ''));
-        if ($side !== '') {
+        if ($side !== '' && !self::isNonClinicalDiscourseLabel($side)) {
             $locs[] = $side;
         }
         $mapped['body_locations'] = $locs;
@@ -713,7 +833,7 @@ final class GeminiClinicalInterviewDemo
             if ($bare === '') {
                 $bare = $n;
             }
-            if ($bare !== '' && !in_array($bare, $negatives, true)) {
+            if ($bare !== '' && !self::isNonClinicalDiscourseLabel($bare) && !in_array($bare, $negatives, true)) {
                 $negatives[] = $bare;
             }
             if (preg_match('/\b(breath|ginhawa|dyspnea|shortness)\b/u', $n)) {
@@ -736,6 +856,9 @@ final class GeminiClinicalInterviewDemo
         $mapped['negative_symptoms'] = $negatives;
 
         foreach (self::stringList($facts['warning_signs'] ?? []) as $w) {
+            if (self::isNonClinicalDiscourseLabel($w)) {
+                continue;
+            }
             $wLow = mb_strtolower($w);
             if (preg_match('/\b(breath|ginhawa|dyspnea)\b/u', $wLow)) {
                 $mapped['breathing_difficulty'] = true;
@@ -905,7 +1028,9 @@ final class GeminiClinicalInterviewDemo
 
         if (class_exists('MedicalDictionary')) {
             try {
-                $englishGloss = trim((string) MedicalDictionary::translateText($patientText));
+                $englishGloss = self::stripDiscourseParticlesFromGloss(
+                    trim((string) MedicalDictionary::translateText($patientText))
+                );
             } catch (Throwable) {
                 $englishGloss = '';
             }
@@ -919,7 +1044,9 @@ final class GeminiClinicalInterviewDemo
                     }
                     $name = trim((string) ($row['symptom_name'] ?? ''));
                     $matched = trim((string) ($row['matched_term'] ?? ''));
-                    if ($name === '') {
+                    if ($name === '' || self::isNonClinicalDiscourseLabel($name)
+                        || ($matched !== '' && self::isNonClinicalDiscourseLabel($matched))
+                    ) {
                         continue;
                     }
                     if (!in_array($name, $symptoms, true)) {
@@ -1016,10 +1143,189 @@ final class GeminiClinicalInterviewDemo
         $lines[] = 'Pipeline role: validated NLP mappings are authoritative when present.';
         $lines[] = 'Gemini Flash is the semantic interpretation/fallback layer for wording not covered above.';
         $lines[] = 'If a local expression is listed above, extract ONLY that supported clinical meaning.';
+        $lines[] = 'Never treat discourse particles/fillers/intensifiers (or their English glosses) as symptoms.';
         $lines[] = 'If meaning is uncertain and not listed, leave fields null, set answer_status=UNCLEAR or UNCERTAIN, and ask a neutral clarification — never guess.';
         $lines[] = 'Never output EMERGENCY, URGENT, or NON-URGENT. Final acuity is decided only by ClinicalTriageEngine later.';
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Closed-class discourse particles / fillers / short replies — never clinical findings.
+     * Linguistic category filter (not complaint-phrase hardcoding). Covers common EN glosses
+     * of local particles that noisy dictionary rows may emit (e.g. intensifier → "really").
+     */
+    private static function isNonClinicalDiscourseLabel(string $label): bool
+    {
+        $low = mb_strtolower(trim($label));
+        if ($low === '') {
+            return true;
+        }
+        // Normalize punctuation / reduplication noise.
+        $low = trim((string) preg_replace('/[^\p{L}\p{N}\s\-]+/u', '', $low));
+        $low = trim((string) preg_replace('/\s+/u', ' ', $low));
+        if ($low === '') {
+            return true;
+        }
+
+        static $closed = null;
+        if ($closed === null) {
+            $closed = array_fill_keys([
+                // Local particles / fillers / intensifiers / clitics
+                'gid', 'guid', 'gyud', 'jud', 'lang', 'man', 'bala', 'gani', 'gali', 'naman',
+                'syempre', 'siyempre', 'daw', 'yata', 'kay', 'nga', 'sang', 'ang', 'sa',
+                'ko', 'ako', 'mo', 'imo', 'iya', 'niya', 'na', 'pa', 'po', 'ba', 'ano',
+                'ay', 'eh', 'ah', 'oh', 'ha', 'ho', 'uy',
+                // Short conversational replies (not symptoms by themselves)
+                'oo', 'opo', 'o', 'yes', 'yeah', 'yep', 'no', 'nope', 'indi', 'di', 'hindi',
+                'wala', 'walang', 'sige', 'okay', 'ok', 'aye', 'sure',
+                // English glosses of particles / intensifiers (dictionary noise)
+                'really', 'only', 'just', 'very', 'so', 'quite', 'rather', 'too', 'also',
+                'well', 'like', 'kinda', 'sorta', 'actually', 'basically', 'literally',
+                'please', 'thanks', 'thank you', 'salamat',
+            ], true);
+        }
+
+        if (isset($closed[$low])) {
+            return true;
+        }
+
+        $tokens = preg_split('/\s+/u', $low) ?: [];
+        if ($tokens === []) {
+            return true;
+        }
+        foreach ($tokens as $tok) {
+            if ($tok === '' || !isset($closed[$tok])) {
+                return false;
+            }
+        }
+
+        // All tokens were closed-class discourse words.
+        return true;
+    }
+
+    private static function stripDiscourseParticlesFromGloss(string $gloss): string
+    {
+        if ($gloss === '') {
+            return '';
+        }
+        $parts = preg_split('/\s+/u', mb_strtolower($gloss)) ?: [];
+        $kept = [];
+        foreach ($parts as $p) {
+            $p = trim($p);
+            if ($p === '' || self::isNonClinicalDiscourseLabel($p)) {
+                continue;
+            }
+            $kept[] = $p;
+        }
+
+        return trim(implode(' ', $kept));
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function sanitizeClinicalFacts(array $facts): array
+    {
+        $out = self::blankFacts();
+        foreach (['symptom', 'location', 'laterality', 'onset', 'duration', 'frequency'] as $key) {
+            $val = trim((string) ($facts[$key] ?? ''));
+            if ($val === '' || self::isNonClinicalDiscourseLabel($val)) {
+                $out[$key] = null;
+                continue;
+            }
+            $out[$key] = $val;
+        }
+        if (($facts['pain_score'] ?? null) !== null && $facts['pain_score'] !== '' && is_numeric($facts['pain_score'])) {
+            $score = (int) $facts['pain_score'];
+            if ($score >= 1 && $score <= 10) {
+                $out['pain_score'] = $score;
+            }
+        }
+        foreach (['associated_symptoms', 'relevant_negatives', 'warning_signs', 'notes'] as $listKey) {
+            $kept = [];
+            foreach (self::stringList($facts[$listKey] ?? []) as $item) {
+                if (self::isNonClinicalDiscourseLabel($item)) {
+                    continue;
+                }
+                $kept[] = $item;
+            }
+            $out[$listKey] = $kept;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function hasClinicallyUsefulFacts(array $facts): bool
+    {
+        $sym = trim((string) ($facts['symptom'] ?? ''));
+
+        return $sym !== '' && !self::isNonClinicalDiscourseLabel($sym);
+    }
+
+    /**
+     * Short yes/no/negation/particle replies that answer the current question conversationally.
+     */
+    private static function isContextualShortReply(string $answer): bool
+    {
+        $a = mb_strtolower(trim($answer));
+        if ($a === '') {
+            return false;
+        }
+        $a = trim((string) preg_replace('/[.!?…]+$/u', '', $a));
+        if (self::isNonClinicalDiscourseLabel($a)) {
+            return true;
+        }
+
+        return (bool) preg_match(
+            '/^(oo|opo|o+|yes|yeah|yep|no|nope|indi|di|hindi|wala(\s+man)?|walang|syempre|sige|ok(ay)?|gid|lang|man)(\s+(gid|lang|man|po))?$/ui',
+            $a
+        );
+    }
+
+    /**
+     * True when the proposed follow-up asks for something already known from facts/conversation.
+     *
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $context
+     */
+    private static function questionTargetsAlreadyKnownFact(string $question, array $facts, array $context): bool
+    {
+        $q = mb_strtolower(trim($question));
+        if ($q === '') {
+            return false;
+        }
+
+        if (preg_match('/\b(when|san-o|kailan|nagsugod|nagsimula|start|onset|how\s+long|duration|gaano\s+katagal|pila\s+ka\s+(adlaw|oras))\b/u', $q)) {
+            if (trim((string) ($facts['onset'] ?? '')) !== '' || trim((string) ($facts['duration'] ?? '')) !== '') {
+                return true;
+            }
+        }
+        if (preg_match('/\b(where|diin|saan|which\s+part|ano\s+nga\s+parte|location|asa)\b/u', $q)) {
+            if (trim((string) ($facts['location'] ?? '')) !== '') {
+                return true;
+            }
+        }
+        if (preg_match('/\b(1\s*(to|tubtob|-|–)\s*10|pain\s*score|gaano\s*kasakit|pila\s*ka\s*grabe|severity)\b/u', $q)) {
+            if (($facts['pain_score'] ?? null) !== null) {
+                return true;
+            }
+        }
+        if (preg_match('/\b(what\s+(is|are)\s+(your|the)\s+(symptom|complaint)|ano\s+ang\s+(imong\s+)?(sakit|sintomas)|describe\s+(your\s+)?(symptom|pain))\b/u', $q)) {
+            if (self::hasClinicallyUsefulFacts($facts)) {
+                return true;
+            }
+        }
+        // Asking to clarify a particle/filler already in the transcript is never useful.
+        if (preg_match('/\b(really|only|gid|lang)\b/u', $q) && self::hasClinicallyUsefulFacts($facts)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1092,22 +1398,61 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
-     * @param array{classification:string,confidence:float|null,normalized_health_concern:string,passed:bool} $gate
+     * @param array{
+     *   classification:string,
+     *   confidence:float|null,
+     *   normalized_health_concern:string,
+     *   passed:bool,
+     *   patient_subject?:string,
+     *   out_of_scope_non_human?:bool
+     * } $gate
      * @param array<string, mixed> $nlpPrecheck
-     * @return array{classification:string,confidence:float|null,normalized_health_concern:string,passed:bool,nlp_override?:bool}
+     * @param array<string, mixed> $gemini
+     * @return array{
+     *   classification:string,
+     *   confidence:float|null,
+     *   normalized_health_concern:string,
+     *   passed:bool,
+     *   patient_subject:string,
+     *   out_of_scope_non_human:bool,
+     *   nlp_override?:bool
+     * }
      */
-    private static function applyNlpHealthGateOverride(array $gate, array $nlpPrecheck): array
+    private static function applyNlpHealthGateOverride(array $gate, array $nlpPrecheck, array $gemini = []): array
     {
+        $subject = strtoupper((string) ($gate['patient_subject'] ?? self::normalizePatientSubject($gemini)));
+        $gate['patient_subject'] = $subject !== '' ? $subject : 'UNCLEAR';
+        $gate['out_of_scope_non_human'] = !empty($gate['out_of_scope_non_human']) || $subject === 'NON_HUMAN';
+
+        // Never promote animal/non-human complaints to HEALTH via NLP symptom matches.
+        if (!empty($gate['out_of_scope_non_human']) || $subject === 'NON_HUMAN') {
+            $gate['classification'] = self::CLASS_NON_HEALTH;
+            $gate['passed'] = false;
+            $gate['out_of_scope_non_human'] = true;
+            $gate['patient_subject'] = 'NON_HUMAN';
+            $gate['normalized_health_concern'] = '';
+            unset($gate['nlp_override']);
+
+            return $gate;
+        }
+
         if (empty($nlpPrecheck['nlp_says_health'])) {
             return $gate;
         }
         if (($gate['classification'] ?? '') === self::CLASS_HEALTH) {
             return $gate;
         }
-        // Validated NLP/domain health evidence overrides mistaken Gemini NON_HEALTH/UNCLEAR.
+        // NLP may upgrade mistaken NON_HEALTH/UNCLEAR → HEALTH only when Gemini
+        // explicitly affirms a HUMAN patient subject (never for animals / unclear subject).
+        if ($subject !== 'HUMAN') {
+            return $gate;
+        }
+
         $gate['classification'] = self::CLASS_HEALTH;
         $gate['passed'] = true;
         $gate['nlp_override'] = true;
+        $gate['patient_subject'] = 'HUMAN';
+        $gate['out_of_scope_non_human'] = false;
         $evidence = is_array($nlpPrecheck['evidence'] ?? null) ? $nlpPrecheck['evidence'] : [];
         $symptoms = self::stringList($evidence['symptoms'] ?? []);
         if (($gate['normalized_health_concern'] ?? '') === '' && $symptoms !== []) {
@@ -1213,16 +1558,20 @@ final class GeminiClinicalInterviewDemo
                 $dropped[] = 'symptom:' . $geminiSymptom;
             }
         } elseif ($geminiSymptom !== '') {
-            $nlpOrHayOk = self::clinicalLabelSupported($geminiSymptom, $hay, $allowedSymptoms);
-            if ($nlpOrHayOk) {
-                $facts['symptom'] = $geminiSymptom;
-                $geminiAccepted[] = 'symptom:' . $geminiSymptom;
-            } elseif ($allowGeminiSemantic && !$geminiInventedLocation) {
-                // Semantic fallback: reliable meaning, no invented body site attached.
-                $facts['symptom'] = $geminiSymptom;
-                $geminiAccepted[] = 'symptom_semantic:' . $geminiSymptom;
+            if (self::isNonClinicalDiscourseLabel($geminiSymptom)) {
+                $dropped[] = 'symptom_discourse:' . $geminiSymptom;
             } else {
-                $dropped[] = 'symptom:' . $geminiSymptom;
+                $nlpOrHayOk = self::clinicalLabelSupported($geminiSymptom, $hay, $allowedSymptoms);
+                if ($nlpOrHayOk) {
+                    $facts['symptom'] = $geminiSymptom;
+                    $geminiAccepted[] = 'symptom:' . $geminiSymptom;
+                } elseif ($allowGeminiSemantic && !$geminiInventedLocation) {
+                    // Semantic fallback: reliable meaning, no invented body site attached.
+                    $facts['symptom'] = $geminiSymptom;
+                    $geminiAccepted[] = 'symptom_semantic:' . $geminiSymptom;
+                } else {
+                    $dropped[] = 'symptom:' . $geminiSymptom;
+                }
             }
         }
 
@@ -1281,6 +1630,10 @@ final class GeminiClinicalInterviewDemo
         foreach (['associated_symptoms', 'warning_signs'] as $listKey) {
             $kept = self::stringList($facts[$listKey] ?? []);
             foreach (self::stringList($incoming[$listKey] ?? []) as $item) {
+                if (self::isNonClinicalDiscourseLabel($item)) {
+                    $dropped[] = $listKey . '_discourse:' . $item;
+                    continue;
+                }
                 $ok = self::clinicalLabelSupported($item, $hay, $allowedSymptoms);
                 if (!$ok && $allowGeminiSemantic && !$geminiInventedLocation) {
                     $ok = true;
@@ -1329,16 +1682,18 @@ final class GeminiClinicalInterviewDemo
             $dropped[] = 'notes:' . $note;
         }
 
-        $gemini['clinical_facts'] = $facts;
+        $gemini['clinical_facts'] = self::sanitizeClinicalFacts($facts);
+        $facts = $gemini['clinical_facts'];
         if (isset($gemini['next_question'])) {
             $gemini['next_question'] = self::stripAcuityLanguage((string) $gemini['next_question']);
         }
 
-        $needsClarify = (($facts['symptom'] ?? null) === null || $facts['symptom'] === '')
+        $needsClarify = !self::hasClinicallyUsefulFacts($facts)
             && $allowedSymptoms === []
             && trim((string) ($context['chief_complaint'] ?? '')) !== '';
 
         // Ambiguous meaning → UNCLEAR + neutral clarification (do not guess).
+        // Skip when the complaint is already clinically obvious from validated facts.
         if ($needsClarify && (($gemini['classification'] ?? self::CLASS_HEALTH) === self::CLASS_HEALTH
             || !array_key_exists('classification', $gemini)
             || ($gemini['classification'] ?? '') === '')
@@ -1408,7 +1763,7 @@ final class GeminiClinicalInterviewDemo
     private static function clinicalLabelSupported(string $label, string $hay, array $allowedEnglish): bool
     {
         $label = trim($label);
-        if ($label === '') {
+        if ($label === '' || self::isNonClinicalDiscourseLabel($label)) {
             return false;
         }
         $low = mb_strtolower($label);
@@ -1677,25 +2032,33 @@ final class GeminiClinicalInterviewDemo
 
         if ($mode === 'start') {
             return "MODE: START_INTERVIEW\n"
+                . "Use COMMON-SENSE clinical conversation. Understand the COMPLETE patient meaning — do not blindly fill schema fields.\n"
                 . "Pipeline: NLP/domain mappings above are checked first; you are Gemini Flash semantic interpretation/fallback.\n"
-                . "Decide whether the patient's opening text is a genuine health/medical concern by MEANING, not by keywords or language labels.\n"
-                . "Understand English, Hiligaynon/Ilonggo, Tagalog, mixed language, slang, informal wording, misspellings, and local expressions.\n"
-                . "Do not assume language from alphabet/script alone. Do not use a fixed phrase list.\n\n"
+                . "Decide whether the opening text is a genuine health/medical concern by MEANING.\n"
+                . "Support English, Hiligaynon/Ilonggo, Tagalog, mixed language, slang, informal wording, misspellings, and local expressions.\n\n"
                 . "Original patient opening (preserve exactly; do not rewrite as the stored complaint):\n"
                 . (string) ($context['chief_complaint'] ?? '') . "\n\n"
                 . $nlpBlock . "\n"
-                . "Already seeded clinical_facts from NLP (JSON; do not contradict):\n" . $factsJson . "\n\n"
+                . "Already seeded clinical_facts from NLP (JSON; do not contradict; ignore any particle/filler noise):\n" . $factsJson . "\n\n"
                 . "Return JSON with gate fields ALWAYS.\n"
-                . "If classification is NON_HEALTH_RELATED or UNCLEAR: question_needed=false, interview_sufficient=false, next_question=\"\", empty clinical_facts.\n"
-                . "If classification is HEALTH_RELATED: extract ONLY facts supported by the patient text and/or validated NLP mappings; "
-                . "set facts_supported_by_patient_wording and extraction_confidence honestly; "
-                . "ask at most ONE next_question dynamically from confirmed facts and genuinely missing information, in the patient's language. "
-                . "If meaning is ambiguous, classification or answer_status=UNCLEAR, leave unsupported fields null, ask a neutral clarification — never guess. "
+                . "If NON_HEALTH_RELATED or UNCLEAR: question_needed=false, interview_sufficient=false, next_question=\"\", empty clinical_facts.\n"
+                . "HUMAN-PATIENT SCOPE (required): set patient_subject to HUMAN, NON_HUMAN, or UNCLEAR by MEANING. "
+                . "If the complaint is about an animal, pet, livestock, wildlife, or any non-human subject — even when symptoms sound medical — "
+                . "classification=NON_HEALTH_RELATED, patient_subject=NON_HUMAN, empty clinical_facts, do not start interview. "
+                . "Do not reinterpret an animal complaint as a human complaint. "
+                . "If HEALTH_RELATED: patient_subject must be HUMAN; extract ONLY genuine clinical facts for the human patient. "
+                . "Ask at most ONE natural, context-aware next_question for the single most clinically relevant missing detail — not a checklist. "
+                . "If the complaint is already clinically obvious, do not ask unnecessary clarification. "
                 . "Never output EMERGENCY, URGENT, or NON-URGENT.";
         }
 
         return "MODE: INTERPRET_ANSWER\n"
-            . "Pipeline: NLP mappings first; you are Gemini Flash semantic fallback. Final acuity is NOT your job.\n"
+            . "Use COMMON-SENSE clinical conversation over the FULL conversation + current answer.\n"
+            . "Do NOT ask a question whose answer is already clearly implied or known.\n"
+            . "Do NOT ask repetitive, unnatural, or irrelevant questions.\n"
+            . "Interpret short replies (yes/no/negation/particles) by conversational context — they are often VALID answers, not new symptoms.\n"
+            . "Never treat discourse particles/fillers/intensifiers (or English glosses like intensifier words) as medical symptoms.\n"
+            . "Final acuity is NOT your job.\n\n"
             . "Original patient complaint (preserve exactly):\n"
             . (string) ($context['chief_complaint'] ?? '') . "\n\n"
             . "Current question the patient was answering:\n"
@@ -1706,64 +2069,83 @@ final class GeminiClinicalInterviewDemo
             . $nlpBlock . "\n"
             . "Already collected clinical_facts (JSON):\n" . $factsJson . "\n\n"
             . "Previously listed missing_information (JSON):\n" . $missingJson . "\n\n"
-            . "Return the required JSON. Update clinical_facts ONLY with facts newly supported by the patient's words "
-            . "and/or validated NLP mappings (including clear negative or uncertain replies). "
-            . "Set facts_supported_by_patient_wording and extraction_confidence honestly. "
-            . "Do not fill missing fields by guessing. Ask at most ONE dynamic next_question from confirmed facts + genuine gaps. "
-            . "If ambiguous, answer_status=UNCLEAR and clarify. Never output EMERGENCY, URGENT, or NON-URGENT.";
+            . "Update clinical_facts ONLY with newly supported genuine clinical information. "
+            . "Apply short-answer meaning to the CURRENT question (e.g. negation → relevant_negatives or confirmed absence). "
+            . "Ask at most ONE natural next_question for the most important remaining clinical gap, or set interview_sufficient=true if enough is known. "
+            . "If ambiguous, answer_status=UNCLEAR and clarify — never guess. Never output EMERGENCY, URGENT, or NON-URGENT.";
     }
 
     private static function systemPrompt(): string
     {
         return <<<'PROMPT'
-You are Gemini Flash, a clinical interview semantic assistant for a MedConnect DEMO page.
+You are Gemini Flash conducting a natural clinical interview for a MedConnect DEMO page.
 
-Authoritative pipeline (you are only the semantic layer):
+Authoritative pipeline (you are only the semantic interview layer):
 Patient input → existing NLP/domain validation → Gemini Flash semantic interpretation when needed → confirmed clinical facts → ClinicalTriageEngine (WHO IITT + clinical rules) → final acuity.
 
 You MUST NEVER determine clinical acuity. You MUST NEVER output, assign, recommend, or infer EMERGENCY, URGENT, or NON-URGENT. You do not diagnose. You do not prescribe. ClinicalTriageEngine alone decides final triage later.
 
-Health gate (START_INTERVIEW only) — UNIVERSAL SEMANTIC VALIDATION:
-Decide whether the opening patient text means a genuine health/medical concern.
+COMMON-SENSE CONVERSATION (critical):
+- Read the COMPLETE conversation and the current answer before choosing the next question.
+- Do not blindly fill schema fields one by one like a checklist.
+- Do not ask a question when the answer is already clearly implied or already known.
+- Do not ask repetitive, unnatural, or irrelevant questions.
+- Ask only the single most clinically relevant missing question needed to understand the complaint.
+- Questions must be natural and context-aware.
+- If the complaint is already clinically obvious, do not ask unnecessary clarification — set interview_sufficient=true when appropriate.
+
+Short answers & discourse particles:
+- Interpret short replies such as affirmatives, negatives, and brief particles according to the CURRENT question's conversational context (they can be VALID).
+- Never treat normal language particles/fillers/intensifiers as medical symptoms, and never convert ordinary words into symptoms via filler glosses.
+- Extract only genuine clinical information.
+
+Health gate (START_INTERVIEW only):
+medConnect accepts HUMAN / PATIENT health complaints only.
 
 Return exactly one classification:
-- HEALTH_RELATED — the meaning is a health problem, symptom, injury, or medical concern (any language/style, including previously unseen expressions you understand reliably).
-- NON_HEALTH_RELATED — not a health concern (greetings, casual chat, jokes/pranks, spam, unrelated topics).
-- UNCLEAR — no clear health meaning, or too ambiguous to extract clinical facts without guessing.
+- HEALTH_RELATED — the meaning is a health problem/symptom/injury/medical concern about a HUMAN patient (the speaker or another person), any language/style.
+- NON_HEALTH_RELATED — not an in-scope human health concern (greetings, chat, jokes/pranks, spam, unrelated topics, OR any complaint whose subject is an animal/pet/livestock/wildlife/non-human).
+- UNCLEAR — no clear health meaning, or too ambiguous to extract without guessing.
 
-Rules for the gate:
-- Judge MEANING, not keywords, not a phrase dictionary, and not character-set/language assumptions.
-- Support English, Hiligaynon/Ilonggo, Tagalog, mixed language, slang, informal wording, misspellings, and local expressions.
-- Do not invent special-case word lists.
+Also set patient_subject by MEANING (not a fixed animal-word list):
+- HUMAN — complaint is about a person
+- NON_HUMAN — complaint is about an animal or other non-human subject (veterinary / pet / livestock / wildlife / etc.)
+- UNCLEAR — cannot tell who/what the subject is
 
-Clinical interview jobs (only when classification is HEALTH_RELATED):
-1) Interpret the patient's complaint/answers semantically in their language.
-2) Prefer VALIDATED LOCAL NLP MAPPINGS when provided; use Gemini semantic interpretation as fallback for uncovered wording only when meaning is reliable.
-3) Extract structured clinical facts ONLY when supported by the patient's statement (and/or validated NLP mappings). Preserve original patient wording in the conversation.
-4) Ask exactly ONE follow-up dynamically from confirmed facts and genuinely missing information.
+Rules:
+- Judge MEANING across English, Hiligaynon/Ilonggo, Tagalog, mixed language, slang, informal wording, and misspellings.
+- Do not rely only on exact keywords or a hardcoded animal phrase list.
+- If the subject is NON_HUMAN: classification MUST be NON_HEALTH_RELATED, clinical_facts empty, question_needed=false — do not start the interview or invent human symptoms.
+- Never reinterpret an animal/non-human complaint as a human complaint.
+- Support valid human health complaints normally.
+- Do not invent special-case word lists for languages.
+
+Clinical jobs (only when HEALTH_RELATED):
+1) Understand complaint/answers semantically using original wording + conversation context.
+2) Prefer validated NLP mappings when provided; use Gemini as semantic fallback only when meaning is reliable.
+3) Extract structured clinical facts ONLY when patient-supported (and/or validated NLP). Preserve original wording in conversation.
+4) Ask exactly ONE natural follow-up from confirmed facts + genuinely missing information — or stop when sufficient.
 5) Stop when clinically sufficient (interview_sufficient=true, question_needed=false).
 
-STRICT anti-hallucination rules for clinical_facts:
-- NEVER invent, guess, or assume a symptom, body location, severity, duration, frequency, laterality, associated symptom, warning sign, or diagnosis.
-- Do NOT convert an uncertain local/informal expression into a specific symptom or diagnosis.
-- Do NOT manufacture clinical facts merely to populate empty JSON fields — leave unsupported fields null.
-- If meaning is genuinely ambiguous: answer_status=UNCLEAR (or UNCERTAIN), leave fields null, ask a neutral clarification.
-- Set facts_supported_by_patient_wording=true only when every non-null clinical_fact is actually supported.
-- Set extraction_confidence honestly (0–1). Use lower values when unsure.
+STRICT anti-hallucination:
+- NEVER invent symptom, location, severity, duration, frequency, laterality, associated symptom, warning sign, or diagnosis.
+- Do NOT manufacture facts to complete JSON — leave unsupported fields null.
+- If genuinely ambiguous: answer_status=UNCLEAR, leave fields null, ask neutral clarification.
+- Set facts_supported_by_patient_wording and extraction_confidence honestly.
 
-Pain severity: only when the patient has clearly indicated pain (not assumed), collect a 1–10 score before finishing; do not re-ask after a valid score.
+Pain severity: only when the patient clearly indicated pain (not assumed); collect 1–10 once; never ask pain score when pain was never stated.
 
-Short affirmative, negative, or uncertain replies in any language can be valid answers.
+answer_status:
+- VALID — useful answer including clear yes/no/negative/short contextual replies
+- UNCERTAIN — patient unsure
+- UNCLEAR — unreadable/nonsense/truly ambiguous (not merely a short yes/no)
+- UNRELATED — does not address the clinical question
 
-answer_status values (interview turns):
-- VALID: answers usefully; extracted facts (if any) are reliably supported
-- UNCERTAIN: patient unsure
-- UNCLEAR: unreadable, nonsense, or ambiguous expression that must not be guessed into a symptom
-- UNRELATED: clearly does not address the clinical question
-
-Respond with JSON ONLY matching this schema:
+Respond with JSON ONLY:
 {
   "classification": "HEALTH_RELATED|NON_HEALTH_RELATED|UNCLEAR",
+  "patient_subject": "HUMAN|NON_HUMAN|UNCLEAR",
+  "is_human_patient_complaint": true,
   "confidence": 0.0,
   "extraction_confidence": 0.0,
   "facts_supported_by_patient_wording": true,
@@ -1788,12 +2170,9 @@ Respond with JSON ONLY matching this schema:
   "interview_sufficient": boolean
 }
 
-For START_INTERVIEW:
-- Always include classification, confidence, extraction_confidence, facts_supported_by_patient_wording, and normalized_health_concern (supported gloss only, else empty).
-- Only when HEALTH_RELATED: interview fields + at most one next_question in the patient's language.
-- When NON_HEALTH_RELATED or UNCLEAR: question_needed=false, interview_sufficient=false, next_question="", empty clinical_facts.
-
-For INTERPRET_ANSWER: focus on answer_status, clinical_facts, extraction_confidence, facts_supported_by_patient_wording; classification may be omitted or HEALTH_RELATED.
+For START_INTERVIEW: always include classification, patient_subject, is_human_patient_complaint, and confidence; interview fields only when HEALTH_RELATED with patient_subject=HUMAN.
+When patient_subject=NON_HUMAN: classification=NON_HEALTH_RELATED, empty clinical_facts, question_needed=false, interview_sufficient=false, next_question="".
+For INTERPRET_ANSWER: focus on answer_status, clinical_facts, extraction_confidence, facts_supported_by_patient_wording.
 PROMPT;
     }
 
@@ -2040,18 +2419,24 @@ PROMPT;
             $decoded['classification'] = $gate['classification'];
             $decoded['confidence'] = $gate['confidence'];
             $decoded['normalized_health_concern'] = $gate['normalized_health_concern'];
+            $decoded['patient_subject'] = $gate['patient_subject'];
+            $decoded['is_human_patient_complaint'] = ($gate['patient_subject'] === 'HUMAN');
+            $decoded['out_of_scope_non_human'] = !empty($gate['out_of_scope_non_human']);
             unset($decoded['reason']);
 
-            if ($gate['classification'] !== self::CLASS_HEALTH) {
-                // Non-health / unclear: interview fields optional; force no question.
-                if (!isset($decoded['clinical_facts']) || !is_array($decoded['clinical_facts'])) {
-                    $decoded['clinical_facts'] = self::blankFacts();
-                }
+            if ($gate['classification'] !== self::CLASS_HEALTH || !empty($gate['out_of_scope_non_human'])) {
+                // Non-health / unclear / non-human: interview fields optional; force no question.
+                $decoded['clinical_facts'] = self::blankFacts();
                 $decoded['question_needed'] = false;
                 $decoded['interview_sufficient'] = false;
                 $decoded['next_question'] = '';
                 $decoded['missing_information'] = [];
                 $decoded['answer_status'] = 'UNCLEAR';
+                if (!empty($gate['out_of_scope_non_human'])) {
+                    $decoded['classification'] = self::CLASS_NON_HEALTH;
+                    $decoded['patient_subject'] = 'NON_HUMAN';
+                    $decoded['is_human_patient_complaint'] = false;
+                }
 
                 return $decoded;
             }
