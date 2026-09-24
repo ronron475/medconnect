@@ -127,7 +127,9 @@ $asset = ASSET_BASE;
       color: #94a3b8; border-radius: 8px; cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center;
     }
-    .reset-input-wrap .toggle-pwd:hover { color: #1a6db5; background: rgba(26,109,181,.08); }
+    .reset-input-wrap .toggle-pwd:hover,
+    .reset-input-wrap .toggle-pwd:active,
+    .reset-input-wrap .toggle-pwd[aria-pressed="true"] { color: #64748b; background: transparent; }
 
     /* Button matches btn-submit */
     .reset-btn {

@@ -908,9 +908,11 @@ textarea:focus {
   min-width: 36px;
   padding: 0;
   border-radius: 8px;
-  transition: color 0.18s, background 0.18s;
+  transition: color 0.18s;
 }
-.toggle-pwd:hover { color: var(--teal); background: rgba(13, 148, 136, 0.08); }
+.toggle-pwd:hover,
+.toggle-pwd:active,
+.toggle-pwd[aria-pressed="true"] { color: #64748b; background: transparent; }
 
 /* Shared password field wrap (setup / activate / reset) */
 .setup-pw-wrap,

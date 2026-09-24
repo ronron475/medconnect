@@ -453,8 +453,8 @@
   margin-right: 2px;
   padding: 0;
   border: none;
-  background: #f1f5f9;
-  color: #028090;
+  background: transparent;
+  color: #64748b;
   cursor: pointer;
   border-radius: 9px;
   display: inline-flex;
@@ -463,17 +463,19 @@
   gap: 0;
   font-size: 0;
   font-family: inherit;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.15s;
+}
+
+.pts-input-action:hover,
+.pts-input-action:active,
+.pts-input-action[aria-pressed="true"],
+.pts-input-action.is-revealed {
+  background: transparent;
+  color: #64748b;
 }
 
 .pts-input-action:hover {
-  background: #ccfbf1;
-  color: #0f766e;
-}
-
-.pts-input-action.is-revealed {
-  background: #99f6e4;
-  color: #0f766e;
+  color: #475569;
 }
 
 .pts-eye-open,

@@ -57,7 +57,9 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
       color: #94a3b8; border-radius: 8px; cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center;
     }
-    .setup-pw-wrap .toggle-pwd:hover { color: #0d9488; background: rgba(13,148,136,.08); }
+    .setup-pw-wrap .toggle-pwd:hover,
+    .setup-pw-wrap .toggle-pwd:active,
+    .setup-pw-wrap .toggle-pwd[aria-pressed="true"] { color: #64748b; background: transparent; }
     .setup-strength-track { height: 8px; border-radius: 999px; background: #e2e8f0; overflow: hidden; margin-top: 10px; }
     .setup-strength-bar { height: 100%; width: 0%; background: #dc2626; transition: width .2s ease, background .2s ease; }
     .setup-strength-text { font-size: 12px; margin-top: 8px; color: #475569; }

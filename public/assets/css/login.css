@@ -284,7 +284,9 @@ body.login-page .hero {
   padding: 0;
   transition: color 0.15s;
 }
-.toggle-pwd:hover { color: var(--teal); }
+.toggle-pwd:hover,
+.toggle-pwd:active,
+.toggle-pwd[aria-pressed="true"] { color: #64748b; background: transparent; }
 
 .field-error {
   display: block;

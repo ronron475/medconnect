@@ -439,9 +439,11 @@ body.mc-staff-modal-open {
   transition: color 0.15s ease, background 0.15s ease;
 }
 
-.mc-password-toggle:hover {
-  color: var(--mc-aqua-medium, #018a93);
-  background: rgba(1, 138, 147, 0.08);
+.mc-password-toggle:hover,
+.mc-password-toggle:active,
+.mc-password-toggle[aria-pressed="true"] {
+  color: #475569;
+  background: transparent;
 }
 
 .mc-password-toggle:focus-visible {

@@ -801,8 +801,8 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
 
 .landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd {
   z-index: 2;
-  color: #334155 !important;
-  background: rgba(255, 255, 255, 0.55);
+  color: #64748b !important;
+  background: transparent;
 }
 
 .landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd svg {
@@ -812,9 +812,11 @@ html[data-theme-resolved='dark'] .landing-page .hero-signin-panel .signin-modal-
   stroke: currentColor;
 }
 
-.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd:hover {
-  color: #069396 !important;
-  background: rgba(6, 147, 150, 0.12);
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd:hover,
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd:active,
+.landing-page .hero-signin-panel .signin-modal-inner .signin-card .toggle-pwd[aria-pressed="true"] {
+  color: #475569 !important;
+  background: transparent;
 }
 
 .landing-page .hero-signin-panel .signin-modal-inner .signin-card .form-footer-row {
