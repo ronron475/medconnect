@@ -776,8 +776,11 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   align-items: center;
   padding: 4px;
 }
-.toggle-pwd:hover {
-  color: var(--teal);
+.toggle-pwd:hover,
+.toggle-pwd:active,
+.toggle-pwd[aria-pressed="true"] {
+  color: #64748b;
+  background: transparent;
 }
 
 .forgot-link {
@@ -996,7 +999,12 @@ body.landing-page:has(.landing-maintenance-banner) .hero--cinematic {
   line-height: 0;
   transition: color 0.2s;
 }
-.toggle-pwd:hover { color: var(--teal); }
+.toggle-pwd:hover,
+.toggle-pwd:active,
+.toggle-pwd[aria-pressed="true"] {
+  color: #64748b;
+  background: transparent;
+}
 
 /* ── Field error ── */
 .field-error {

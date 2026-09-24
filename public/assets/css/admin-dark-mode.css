@@ -2081,9 +2081,13 @@ html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle {
 }
 
 html[data-theme-resolved='dark'] body.admin-body .mc-password-toggle:hover,
-html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle:hover {
-  color: #5eead4 !important;
-  background: rgba(94, 234, 212, 0.1) !important;
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle:hover,
+html[data-theme-resolved='dark'] body.admin-body .mc-password-toggle:active,
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle:active,
+html[data-theme-resolved='dark'] body.admin-body .mc-password-toggle[aria-pressed="true"],
+html[data-theme-resolved='dark'] body.superadmin-body .mc-password-toggle[aria-pressed="true"] {
+  color: #cbd5e1 !important;
+  background: transparent !important;
 }
 
 html[data-theme-resolved='dark'] body.admin-body .mc-staff-modal .admin-modal-actions,

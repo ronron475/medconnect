@@ -34,7 +34,9 @@ $csrf = $_SESSION['csrf_token'] ?? '';
       color: #94a3b8; border-radius: 8px; cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center;
     }
-    .setup-pw-wrap .toggle-pwd:hover { color: #0d9488; background: rgba(13,148,136,.08); }
+    .setup-pw-wrap .toggle-pwd:hover,
+    .setup-pw-wrap .toggle-pwd:active,
+    .setup-pw-wrap .toggle-pwd[aria-pressed="true"] { color: #64748b; background: transparent; }
     .setup-check { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 12px; font-size: 13px; line-height: 1.5; }
     .setup-check input { margin-top: 3px; }
     .setup-btn { width: 100%; height: 54px; border: none; border-radius: 12px; background: linear-gradient(135deg, #0d9488, #14b8a6); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; }

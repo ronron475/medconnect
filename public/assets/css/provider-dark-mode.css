@@ -1558,8 +1558,12 @@ html[data-theme-resolved='dark'] body.provider-body .ps-page-title {
   color: #ffffff !important;
 }
 
-html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw:hover {
-  color: #99F6E4 !important;
+html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw:hover,
+html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw:active,
+html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw[aria-pressed="true"],
+html[data-theme-resolved='dark'] body.provider-body .ps-toggle-pw.is-revealed {
+  color: #cbd5e1 !important;
+  background: transparent !important;
 }
 
 html[data-theme-resolved='dark'] body.provider-body .ps-actions {

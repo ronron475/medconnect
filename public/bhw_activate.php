@@ -36,7 +36,9 @@ $api = ASSET_BASE . '/app/api/bhw/onboarding.php';
       color: #94a3b8; border-radius: 8px; cursor: pointer;
       display: inline-flex; align-items: center; justify-content: center;
     }
-    .setup-pw-wrap .toggle-pwd:hover { color: #0d9488; background: rgba(13,148,136,.08); }
+    .setup-pw-wrap .toggle-pwd:hover,
+    .setup-pw-wrap .toggle-pwd:active,
+    .setup-pw-wrap .toggle-pwd[aria-pressed="true"] { color: #64748b; background: transparent; }
     .setup-btn { width: 100%; height: 54px; border: none; border-radius: 12px; background: linear-gradient(135deg, #0d9488, #14b8a6); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
     .setup-btn:disabled { opacity: .55; cursor: not-allowed; }
     .setup-alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; display: none; }

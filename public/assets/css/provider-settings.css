@@ -530,13 +530,16 @@ body.provider-body .provider-page-body:has(.ps-page) {
   border-radius: 8px;
 }
 
-.ps-toggle-pw:hover {
-  color: #069396;
-  background: rgba(6, 147, 150, 0.08);
+.ps-toggle-pw:hover,
+.ps-toggle-pw:active,
+.ps-toggle-pw[aria-pressed="true"],
+.ps-toggle-pw.is-revealed {
+  color: #64748b;
+  background: transparent;
 }
 
-.ps-toggle-pw.is-revealed {
-  color: #069396;
+.ps-toggle-pw:hover {
+  color: #475569;
 }
 
 .ps-eye-open,

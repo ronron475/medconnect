@@ -221,9 +221,11 @@
   stroke-width: 2.25;
 }
 
-.signin-modal-inner .signin-card .toggle-pwd:hover {
-  color: var(--teal);
-  background: rgba(6, 147, 150, 0.08);
+.signin-modal-inner .signin-card .toggle-pwd:hover,
+.signin-modal-inner .signin-card .toggle-pwd:active,
+.signin-modal-inner .signin-card .toggle-pwd[aria-pressed="true"] {
+  color: #475569;
+  background: transparent;
 }
 
 .signin-modal-inner .signin-card .field-error {
