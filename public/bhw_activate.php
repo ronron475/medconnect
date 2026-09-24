@@ -28,7 +28,15 @@ $api = ASSET_BASE . '/app/api/bhw/onboarding.php';
     .setup-sub { font-size: 14px; color: var(--text-mid); line-height: 1.55; margin-bottom: 24px; }
     .setup-group { margin-bottom: 18px; }
     .setup-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
-    .setup-group input { width: 100%; height: 52px; padding: 0 14px; border: 1.5px solid #d0e4f7; border-radius: 12px; font-size: 14px; box-sizing: border-box; }
+    .setup-group input { width: 100%; height: 52px; padding: 0 44px 0 14px; border: 1.5px solid #d0e4f7; border-radius: 12px; font-size: 14px; box-sizing: border-box; }
+    .setup-pw-wrap { position: relative; }
+    .setup-pw-wrap .toggle-pwd {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px; min-width: 36px; padding: 0; border: none; background: transparent;
+      color: #94a3b8; border-radius: 8px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .setup-pw-wrap .toggle-pwd:hover { color: #0d9488; background: rgba(13,148,136,.08); }
     .setup-btn { width: 100%; height: 54px; border: none; border-radius: 12px; background: linear-gradient(135deg, #0d9488, #14b8a6); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 8px; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
     .setup-btn:disabled { opacity: .55; cursor: not-allowed; }
     .setup-alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; margin-bottom: 18px; display: none; }
@@ -68,12 +76,22 @@ $api = ASSET_BASE . '/app/api/bhw/onboarding.php';
           <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>"/>
           <div class="setup-group">
             <label for="password">Password</label>
-            <input type="password" id="password" name="password" required minlength="12" autocomplete="new-password" placeholder="At least 12 characters"/>
+            <div class="setup-pw-wrap">
+              <input type="password" id="password" name="password" required minlength="12" autocomplete="new-password" placeholder="At least 12 characters"/>
+              <button type="button" class="toggle-pwd" data-mc-pw-toggle="password" aria-label="Show password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
             <p class="setup-hint">Include uppercase, lowercase, a number, and a special character.</p>
           </div>
           <div class="setup-group">
             <label for="confirm_password">Confirm Password</label>
-            <input type="password" id="confirm_password" name="confirm_password" required minlength="12" autocomplete="new-password" placeholder="Re-enter password"/>
+            <div class="setup-pw-wrap">
+              <input type="password" id="confirm_password" name="confirm_password" required minlength="12" autocomplete="new-password" placeholder="Re-enter password"/>
+              <button type="button" class="toggle-pwd" data-mc-pw-toggle="confirm_password" aria-label="Show password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
           </div>
           <button type="submit" class="setup-btn" id="activateSubmit">Set Password &amp; Continue</button>
         </form>
@@ -83,6 +101,7 @@ $api = ASSET_BASE . '/app/api/bhw/onboarding.php';
 </div>
 
 <script>window.APP_BASE = <?= json_encode($asset) ?>;</script>
+<script src="<?= htmlspecialchars($asset) ?>/assets/js/password-visibility.js?v=1"></script>
 <script src="<?= htmlspecialchars($asset) ?>/assets/js/register.js"></script>
 <?php if ($needsPassword): ?>
 <script>

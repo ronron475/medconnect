@@ -62,7 +62,12 @@ require_once __DIR__ . '/partials/layout_open.php';
       <input type="text" name="first_name" id="adminFirst" placeholder="First name" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
       <input type="text" name="last_name" id="adminLast" placeholder="Last name" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
       <input type="email" name="email" id="adminEmail" placeholder="Email" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
-      <input type="password" name="password" id="adminPassword" placeholder="Password (create / reset)" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;">
+      <div class="mc-pw-field" style="position:relative;">
+        <input type="password" name="password" id="adminPassword" placeholder="Password (create / reset)" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;width:100%;padding-right:44px;">
+        <button type="button" class="toggle-pwd" data-mc-pw-toggle="adminPassword" aria-label="Show password" aria-pressed="false" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;color:#64748b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="adminModalClose">Cancel</button>
         <button type="submit" class="mc-btn mc-btn--primary">Save</button>
@@ -71,6 +76,7 @@ require_once __DIR__ . '/partials/layout_open.php';
   </div>
 </div>
 
+<script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=1"></script>
 <script>
 (function () {
   var api = <?= json_encode($api) ?>;
@@ -90,6 +96,18 @@ require_once __DIR__ . '/partials/layout_open.php';
     document.getElementById('adminModalTitle').textContent = 'Add Administrator';
     form.reset();
     document.getElementById('adminUserId').value = '';
+    var pw = document.getElementById('adminPassword');
+    if (pw) pw.type = 'password';
+    var toggle = form.querySelector('[data-mc-pw-toggle="adminPassword"]');
+    if (toggle) {
+      toggle.setAttribute('aria-pressed', 'false');
+      toggle.setAttribute('aria-label', 'Show password');
+      toggle.classList.remove('is-revealed');
+      var svg = toggle.querySelector('svg');
+      if (svg) {
+        svg.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    }
     modal.style.display = 'flex';
   };
   document.getElementById('adminModalClose').onclick = function () { modal.style.display = 'none'; };

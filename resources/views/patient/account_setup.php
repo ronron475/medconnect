@@ -48,7 +48,16 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
     .setup-sub { font-size: 14px; color: #64748b; line-height: 1.6; margin-bottom: 24px; }
     .setup-group { margin-bottom: 18px; }
     .setup-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #334155; }
-    .setup-group input[type="password"] { width: 100%; height: 52px; padding: 0 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 14px; box-sizing: border-box; }
+    .setup-group input[type="password"],
+    .setup-group input[type="text"].setup-pw-input { width: 100%; height: 52px; padding: 0 44px 0 14px; border: 1.5px solid #cbd5e1; border-radius: 12px; font-size: 14px; box-sizing: border-box; }
+    .setup-pw-wrap { position: relative; }
+    .setup-pw-wrap .toggle-pwd {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px; min-width: 36px; padding: 0; border: none; background: transparent;
+      color: #94a3b8; border-radius: 8px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .setup-pw-wrap .toggle-pwd:hover { color: #0d9488; background: rgba(13,148,136,.08); }
     .setup-strength-track { height: 8px; border-radius: 999px; background: #e2e8f0; overflow: hidden; margin-top: 10px; }
     .setup-strength-bar { height: 100%; width: 0%; background: #dc2626; transition: width .2s ease, background .2s ease; }
     .setup-strength-text { font-size: 12px; margin-top: 8px; color: #475569; }
@@ -82,7 +91,12 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrf) ?>"/>
         <div class="setup-group">
           <label for="password">New Password</label>
-          <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password"/>
+          <div class="setup-pw-wrap">
+            <input type="password" id="password" name="password" class="setup-pw-input" required minlength="8" autocomplete="new-password"/>
+            <button type="button" class="toggle-pwd" data-mc-pw-toggle="password" aria-label="Show password" aria-pressed="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
           <div class="setup-strength-track" aria-hidden="true"><div id="setupStrengthBar" class="setup-strength-bar"></div></div>
           <div id="setupStrengthText" class="setup-strength-text"></div>
           <ul class="setup-rules" id="setupRules">
@@ -95,7 +109,12 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
         </div>
         <div class="setup-group">
           <label for="confirm_password">Confirm Password</label>
-          <input type="password" id="confirm_password" name="confirm_password" required minlength="8" autocomplete="new-password"/>
+          <div class="setup-pw-wrap">
+            <input type="password" id="confirm_password" name="confirm_password" class="setup-pw-input" required minlength="8" autocomplete="new-password"/>
+            <button type="button" class="toggle-pwd" data-mc-pw-toggle="confirm_password" aria-label="Show password" aria-pressed="false">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
         <label class="setup-check">
           <input type="checkbox" id="accept_privacy" name="accept_privacy" required/>
@@ -112,6 +131,7 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
   </div>
 </div>
 <script>window.APP_BASE = <?= json_encode($asset) ?>;</script>
+<script src="<?= $asset ?>/assets/js/password-visibility.js?v=1"></script>
 <script>
 (function () {
   var form = document.getElementById('accountSetupForm');

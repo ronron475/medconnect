@@ -182,8 +182,13 @@
       if (!input) return;
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      btn.textContent = show ? 'Hide' : 'Show';
       btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+      btn.classList.toggle('is-revealed', show);
+      const eyeOpen = btn.querySelector('.ps-eye-open');
+      const eyeClosed = btn.querySelector('.ps-eye-closed');
+      if (eyeOpen) eyeOpen.hidden = show;
+      if (eyeClosed) eyeClosed.hidden = !show;
     });
   });
 
@@ -229,7 +234,16 @@
           confirmError.className = 'ps-field-error';
         }
         document.querySelectorAll('.ps-toggle-pw').forEach((btn) => {
-          btn.textContent = 'Show';
+          btn.classList.remove('is-revealed');
+          btn.setAttribute('aria-pressed', 'false');
+          btn.setAttribute('aria-label', 'Show password');
+          const eyeOpen = btn.querySelector('.ps-eye-open');
+          const eyeClosed = btn.querySelector('.ps-eye-closed');
+          if (eyeOpen) eyeOpen.hidden = false;
+          if (eyeClosed) eyeClosed.hidden = true;
+          const targetId = btn.getAttribute('data-toggle-password');
+          const input = targetId ? document.getElementById(targetId) : null;
+          if (input) input.type = 'password';
         });
         showToast(data.message || 'Password updated successfully.', 'success');
         clearAlert();
