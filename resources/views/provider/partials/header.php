@@ -9,10 +9,6 @@
   <div class="pd-header-right">
     <?php require_once VIEWS_PATH . '/partials/theme_toggle.php'; ?>
     <?php
-    $fullscreen_btn_class = 'pd-notif-btn';
-    require_once VIEWS_PATH . '/partials/fullscreen_toggle.php';
-    ?>
-    <?php
     $bell_class = 'pd-notif-btn mc-notif-btn';
     require_once VIEWS_PATH . '/partials/notification_bell.php';
     ?>
