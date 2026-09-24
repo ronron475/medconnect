@@ -661,7 +661,8 @@
     right: 0;
     width: 100%;
     max-width: 100%;
-    max-height: min(82vh, calc(100dvh - env(safe-area-inset-top, 0px) - 56px));
+    /* Sit slightly higher under the topbar for all portal roles on mobile. */
+    max-height: min(90vh, calc(100dvh - env(safe-area-inset-top, 0px) - 44px));
     border-radius: 18px 18px 0 0;
     z-index: 200010;
     box-shadow: 0 -10px 40px rgba(15, 23, 42, 0.16);
