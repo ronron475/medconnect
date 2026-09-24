@@ -31,7 +31,7 @@ $joinAccess = function_exists('consultation_patient_join_access')
     : ['allowed' => false, 'mode' => '', 'reason' => ''];
 
 $isLive = $status === 'in_consultation' || (!empty($joinAccess['allowed']));
-$joinLabel = ($status === 'in_consultation') ? 'Rejoin Consultation' : 'Join Consultation';
+$joinLabel = 'Join Consultation';
 $statusLabel = $isLive ? 'Ready to join' : ($status === 'in_consultation' ? 'In progress' : 'Scheduled');
 $title = $isLive ? 'Your consultation is ready' : 'Consultation Scheduled';
 $chipClass = $isLive ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--scheduled';
