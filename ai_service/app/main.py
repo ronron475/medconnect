@@ -13,6 +13,7 @@ from app.core.logging_config import setup_logging
 from app.core.startup import run_startup_tasks
 from app.middleware.security import SecurityHeadersMiddleware
 from app.routers import (
+    care_tips,
     consultation,
     faq_chatbot,
     fuzzy,
@@ -83,6 +84,7 @@ def create_app() -> FastAPI:
     app.include_router(ocr.router)
     app.include_router(faq_chatbot.router)
     app.include_router(nlp_demo.router)
+    app.include_router(care_tips.router)
 
     return app
 

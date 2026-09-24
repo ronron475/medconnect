@@ -111,25 +111,27 @@ final class MedicalRecommendationEngine
             require_once __DIR__ . '/SelfCareRemediesLoader.php';
             $match = SelfCareRemediesLoader::match($chiefComplaint, $englishText, $detectedSymptoms);
 
-            if (!empty($match['display_name']) && ($match['symptom_key'] ?? '') !== 'default_non_urgent') {
-                $items[] = 'Self-care focus: ' . $match['display_name'] . '.';
-            }
+            $hasSpecificTips = !empty($match['matched'])
+                && ($match['symptom_key'] ?? '') !== ''
+                && ($match['symptom_key'] ?? '') !== 'default_non_urgent'
+                && !empty($match['tips']);
 
-            foreach ($match['tips'] as $tip) {
-                $items[] = $tip;
+            if ($hasSpecificTips) {
+                if (!empty($match['display_name'])) {
+                    $items[] = 'Self-care focus: ' . $match['display_name'] . '.';
+                }
+                foreach ($match['tips'] as $tip) {
+                    $items[] = $tip;
+                }
+                if (($match['when_to_seek_care'] ?? '') !== '') {
+                    $items[] = (string) $match['when_to_seek_care'];
+                }
+                $items[] = 'You may follow these tips on your own. If you would like to consult a licensed doctor, you may book an appointment anytime.';
+            } else {
+                // No reliable CSV/Cohere match — do not invent generic/unrelated tips.
+                $items[] = 'No specific self-care tip matched this complaint with enough confidence.';
+                $items[] = 'A licensed healthcare provider should review before any home-care guidance is shared with the patient.';
             }
-
-            if ($match['when_to_seek_care'] !== '') {
-                $items[] = $match['when_to_seek_care'];
-            }
-
-            if ($items === []) {
-                $items[] = (string) ($classification['recommended_action'] ?? '');
-                $items[] = 'Rest, stay hydrated, and track symptom changes over the next 24–48 hours.';
-                $items[] = 'Use over-the-counter comfort measures only as directed on the label, unless your clinician advised otherwise.';
-            }
-
-            $items[] = 'You may follow these tips on your own. If you would like to consult a licensed doctor, you may book an appointment anytime.';
         } elseif ($class === 'URGENT') {
             $items[] = (string) ($classification['recommended_action'] ?? 'Consult a healthcare provider within 24 hours.');
             $items[] = 'Avoid self-medicating with prescription drugs without professional guidance.';
