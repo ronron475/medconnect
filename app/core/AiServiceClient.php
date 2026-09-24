@@ -152,6 +152,68 @@ final class AiServiceClient
     }
 
     /**
+     * Proxy Cohere Rerank through Railway (Care Tips CSV candidate ranking only).
+     *
+     * @param list<string> $documents
+     * @return list<array{index:int,score:float}>|null
+     */
+    public static function careTipsRerank(
+        string $query,
+        array $documents,
+        int $topN = 3,
+        ?string $model = null,
+        ?int $timeoutSeconds = null
+    ): ?array {
+        $timeout = max(5, min(30, (int) ($timeoutSeconds ?? 12)));
+        $docs = [];
+        foreach ($documents as $doc) {
+            $text = trim((string) $doc);
+            if ($text !== '') {
+                $docs[] = $text;
+            }
+        }
+        if (trim($query) === '' || $docs === []) {
+            return null;
+        }
+
+        $body = [
+            'query' => mb_substr(trim($query), 0, 1000),
+            'documents' => array_slice($docs, 0, 80),
+            'top_n' => max(1, min(10, $topN)),
+            'timeout' => $timeout,
+        ];
+        if (is_string($model) && trim($model) !== '') {
+            $body['model'] = trim($model);
+        }
+
+        $response = self::postJson(
+            AI_SERVICE_BASE_URL . '/care-tips/rerank',
+            $body,
+            $timeout
+        );
+        $data = self::extractData($response);
+        if (!is_array($data) || !isset($data['results']) || !is_array($data['results'])) {
+            return null;
+        }
+
+        $out = [];
+        foreach ($data['results'] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (!isset($row['index'], $row['score'])) {
+                continue;
+            }
+            $out[] = [
+                'index' => (int) $row['index'],
+                'score' => (float) $row['score'],
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param list<string> $symptoms
      * @param list<string> $urgentFlags
      */

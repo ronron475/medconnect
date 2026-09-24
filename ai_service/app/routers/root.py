@@ -38,6 +38,7 @@ def root() -> dict:
                 "/faq-chatbot/assist",
                 "/gemini/generate",
                 "/nlp-step3-demo/gemini-generate",
+                "/care-tips/rerank",
             ],
         },
     }

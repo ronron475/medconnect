@@ -1,10 +1,22 @@
 <?php
 /**
  * Loads curated non-urgent self-care tips from data/nlp/self_care_remedies.csv.
+ *
+ * Matching order:
+ * 1) Local NLP/CSV alias scoring (authoritative when strong)
+ * 2) Cohere Rerank over existing CSV entries only when local match is weak/ambiguous
+ *
+ * Cohere never generates or rewrites tip text. Unreliable matches return no tip
+ * (no generic/default unrelated tips).
  */
 
 final class SelfCareRemediesLoader
 {
+    /** Local scores at/above this are trusted without Cohere. */
+    private const LOCAL_STRONG_SCORE = 70;
+    /** Local scores below this (or default_non_urgent) are treated as weak. */
+    private const LOCAL_WEAK_BELOW = 50;
+
     /** @var list<array<string, mixed>>|null */
     private static ?array $rows = null;
 
@@ -84,17 +96,23 @@ final class SelfCareRemediesLoader
     }
 
     /**
-     * @param list<string> $detectedSymptoms
-     * @return array{matched: bool, symptom_key: string, display_name: string, tips: list<string>, when_to_seek_care: string}
+     * @param list<string|array<string, mixed>> $detectedSymptoms
+     * @return array{
+     *   matched: bool,
+     *   symptom_key: string,
+     *   display_name: string,
+     *   tips: list<string>,
+     *   when_to_seek_care: string,
+     *   match_source: string,
+     *   match_score: float,
+     *   cohere_attempted: bool,
+     *   cohere_error: string
+     * }
      */
     public static function match(string $chiefComplaint, string $englishText = '', array $detectedSymptoms = []): array
     {
+        $empty = self::emptyMatch();
         $complaintOnly = self::normalize($chiefComplaint);
-        $primary = self::bestMatch($complaintOnly, true);
-        if ($primary !== null && ($primary['_score'] ?? 0) >= 70) {
-            return self::formatMatch($primary);
-        }
-
         $haystackParts = [$chiefComplaint, $englishText];
         foreach ($detectedSymptoms as $symptom) {
             if (is_string($symptom)) {
@@ -104,25 +122,184 @@ final class SelfCareRemediesLoader
             }
         }
         $haystack = self::normalize(implode(' ', $haystackParts));
-        $best = self::bestMatch($haystack, false);
+        $queryText = trim(implode(' ', array_filter([
+            trim($chiefComplaint),
+            trim($englishText),
+            ...array_map(static function ($symptom): string {
+                if (is_string($symptom)) {
+                    return trim($symptom);
+                }
+                if (is_array($symptom)) {
+                    return trim((string) ($symptom['term'] ?? $symptom['symptom'] ?? $symptom['english'] ?? $symptom['name'] ?? ''));
+                }
 
-        if ($best === null) {
-            return [
-                'matched' => false,
-                'symptom_key' => '',
-                'display_name' => '',
-                'tips' => [],
-                'when_to_seek_care' => '',
-            ];
+                return '';
+            }, $detectedSymptoms),
+        ], static fn (string $p): bool => $p !== '')));
+
+        // 1) Strong local complaint-only hit → trust CSV NLP immediately.
+        $primary = self::bestMatch($complaintOnly, true, false);
+        if ($primary !== null && (int) ($primary['_score'] ?? 0) >= self::LOCAL_STRONG_SCORE) {
+            return self::formatMatch($primary, 'local_csv', (float) ($primary['_score'] ?? 0));
         }
 
-        return self::formatMatch($best);
+        // 2) Broader local haystack match (never auto-accept default_non_urgent as specific tip).
+        $local = self::bestMatch($haystack !== '' ? $haystack : $complaintOnly, false, false);
+        $localScore = (int) ($local['_score'] ?? 0);
+        $localKey = (string) ($local['symptom_key'] ?? '');
+        $localStrong = $local !== null
+            && $localKey !== ''
+            && $localKey !== 'default_non_urgent'
+            && $localScore >= self::LOCAL_WEAK_BELOW;
+
+        if ($localStrong && $localScore >= self::LOCAL_STRONG_SCORE) {
+            return self::formatMatch($local, 'local_csv', (float) $localScore);
+        }
+
+        // 3) Weak / ambiguous / missing → Cohere Rerank over existing CSV entries only.
+        $cohereAttempted = false;
+        $cohereError = '';
+        if (self::shouldTryCohere($queryText, $localStrong, $localScore)) {
+            $cohereAttempted = true;
+            $ranked = self::matchViaCohere($queryText);
+            if ($ranked !== null) {
+                return self::formatMatch(
+                    $ranked,
+                    'cohere_rerank',
+                    (float) ($ranked['_score'] ?? 0),
+                    true,
+                    ''
+                );
+            }
+            $cohereError = class_exists('CohereRerankClient') ? CohereRerankClient::lastError() : 'cohere_unavailable';
+        }
+
+        // 4) Keep a usable local CSV-specific match if Cohere did not beat it / was unavailable.
+        if ($local !== null
+            && $localKey !== ''
+            && $localKey !== 'default_non_urgent'
+            && $localScore >= 40
+        ) {
+            return self::formatMatch($local, 'local_csv', (float) $localScore, $cohereAttempted, $cohereError);
+        }
+
+        // No reliable specific tip — do not return generic/default unrelated tips.
+        $empty['cohere_attempted'] = $cohereAttempted;
+        $empty['cohere_error'] = $cohereError;
+
+        return $empty;
+    }
+
+    /**
+     * @return array{
+     *   matched: bool,
+     *   symptom_key: string,
+     *   display_name: string,
+     *   tips: list<string>,
+     *   when_to_seek_care: string,
+     *   match_source: string,
+     *   match_score: float,
+     *   cohere_attempted: bool,
+     *   cohere_error: string
+     * }
+     */
+    private static function emptyMatch(): array
+    {
+        return [
+            'matched' => false,
+            'symptom_key' => '',
+            'display_name' => '',
+            'tips' => [],
+            'when_to_seek_care' => '',
+            'match_source' => 'none',
+            'match_score' => 0.0,
+            'cohere_attempted' => false,
+            'cohere_error' => '',
+        ];
+    }
+
+    private static function shouldTryCohere(string $queryText, bool $localStrong, int $localScore): bool
+    {
+        if (trim($queryText) === '') {
+            return false;
+        }
+        if (!class_exists('CohereRerankClient') || !CohereRerankClient::enabled()) {
+            return false;
+        }
+        // Strong local already handled before this call; still allow Cohere when weak/ambiguous.
+        if ($localStrong && $localScore >= self::LOCAL_STRONG_SCORE) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Rerank existing CSV rows; return the winning row with original tip text unchanged.
+     *
+     * @return array<string, mixed>|null
+     */
+    private static function matchViaCohere(string $queryText): ?array
+    {
+        if (!class_exists('CohereRerankClient')) {
+            return null;
+        }
+
+        $candidates = [];
+        $documents = [];
+        foreach (self::all() as $row) {
+            $key = (string) ($row['symptom_key'] ?? '');
+            if ($key === '' || $key === 'default_non_urgent') {
+                continue;
+            }
+            if (($row['tips'] ?? []) === []) {
+                continue;
+            }
+            // Ranking text only — never used as tip content output.
+            $aliasText = implode(', ', array_slice(self::stringList($row['aliases'] ?? []), 0, 12));
+            $doc = trim((string) ($row['display_name'] ?? $key) . '. ' . $aliasText);
+            if ($doc === '') {
+                continue;
+            }
+            $candidates[] = $row;
+            $documents[] = $doc;
+        }
+        if ($documents === []) {
+            return null;
+        }
+
+        // Cap candidates for latency/cost; prefer broader coverage by keeping all if small.
+        $maxDocs = 64;
+        if (count($documents) > $maxDocs) {
+            $documents = array_slice($documents, 0, $maxDocs);
+            $candidates = array_slice($candidates, 0, $maxDocs);
+        }
+
+        $ranked = CohereRerankClient::rerank($queryText, $documents, 3);
+        if ($ranked === []) {
+            return null;
+        }
+
+        $minScore = CohereRerankClient::minScore();
+        $best = $ranked[0];
+        if (($best['score'] ?? 0.0) < $minScore) {
+            return null;
+        }
+        $idx = (int) ($best['index'] ?? -1);
+        if ($idx < 0 || !isset($candidates[$idx])) {
+            return null;
+        }
+
+        $row = $candidates[$idx];
+        $row['_score'] = (float) $best['score'];
+
+        return $row;
     }
 
     /**
      * @return array<string, mixed>|null
      */
-    private static function bestMatch(string $haystack, bool $preferExact): ?array
+    private static function bestMatch(string $haystack, bool $preferExact, bool $allowDefaultFallback): ?array
     {
         if ($haystack === '') {
             return null;
@@ -155,15 +332,18 @@ final class SelfCareRemediesLoader
             }
         }
 
-        if ($preferExact && $bestScore >= 70) {
+        if ($preferExact && $bestScore >= self::LOCAL_STRONG_SCORE) {
             return $best;
         }
 
         if ($best === null || $bestScore < 40) {
-            if ($fallback !== null) {
+            if ($allowDefaultFallback && $fallback !== null) {
                 $fallback['_score'] = 10;
+
+                return $fallback;
             }
-            return $fallback;
+
+            return null;
         }
 
         return $best;
@@ -171,18 +351,66 @@ final class SelfCareRemediesLoader
 
     /**
      * @param array<string, mixed> $best
-     * @return array{matched: bool, symptom_key: string, display_name: string, tips: list<string>, when_to_seek_care: string}
+     * @return array{
+     *   matched: bool,
+     *   symptom_key: string,
+     *   display_name: string,
+     *   tips: list<string>,
+     *   when_to_seek_care: string,
+     *   match_source: string,
+     *   match_score: float,
+     *   cohere_attempted: bool,
+     *   cohere_error: string
+     * }
      */
-    private static function formatMatch(array $best): array
-    {
-        $score = (int) ($best['_score'] ?? 0);
+    private static function formatMatch(
+        array $best,
+        string $source,
+        float $score,
+        bool $cohereAttempted = false,
+        string $cohereError = ''
+    ): array {
+        $key = (string) ($best['symptom_key'] ?? '');
+        $tips = array_values(array_filter(
+            is_array($best['tips'] ?? null) ? $best['tips'] : [],
+            static fn ($t): bool => is_string($t) && trim($t) !== ''
+        ));
+        $specific = $key !== '' && $key !== 'default_non_urgent' && $tips !== [];
+
         return [
-            'matched' => $score >= 40 || ($best['symptom_key'] ?? '') === 'default_non_urgent',
-            'symptom_key' => (string) ($best['symptom_key'] ?? ''),
-            'display_name' => (string) ($best['display_name'] ?? ''),
-            'tips' => array_values($best['tips'] ?? []),
-            'when_to_seek_care' => (string) ($best['when_to_seek_care'] ?? ''),
+            'matched' => $specific,
+            'symptom_key' => $specific ? $key : '',
+            'display_name' => $specific ? (string) ($best['display_name'] ?? '') : '',
+            'tips' => $specific ? $tips : [],
+            'when_to_seek_care' => $specific ? (string) ($best['when_to_seek_care'] ?? '') : '',
+            'match_source' => $specific ? $source : 'none',
+            'match_score' => $score,
+            'cohere_attempted' => $cohereAttempted,
+            'cohere_error' => $cohereError,
         ];
+    }
+
+    /**
+     * @param mixed $value
+     * @return list<string>
+     */
+    private static function stringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $item) {
+            if (!is_scalar($item)) {
+                continue;
+            }
+            $s = trim((string) $item);
+            if ($s !== '') {
+                $out[] = $s;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 
     public static function normalize(string $text): string
