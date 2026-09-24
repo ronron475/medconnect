@@ -891,8 +891,9 @@ if (toggleBtn && pwdInput && eyeIcon) {
   toggleBtn.addEventListener('click', () => {
     const show = pwdInput.type === 'password';
     pwdInput.type    = show ? 'text' : 'password';
-    eyeIcon.innerHTML = show ? EYE_CLOSED : EYE_OPEN;
-    toggleBtn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    // Hidden → eye-off; visible → open eye
+    eyeIcon.innerHTML = pwdInput.type === 'password' ? EYE_CLOSED : EYE_OPEN;
+    toggleBtn.setAttribute('aria-label', pwdInput.type === 'password' ? 'Show password' : 'Hide password');
   });
 }
 

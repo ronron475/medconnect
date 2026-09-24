@@ -94,7 +94,7 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
           <div class="setup-pw-wrap">
             <input type="password" id="password" name="password" class="setup-pw-input" required minlength="8" autocomplete="new-password"/>
             <button type="button" class="toggle-pwd" data-mc-pw-toggle="password" aria-label="Show password" aria-pressed="false">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
             </button>
           </div>
           <div class="setup-strength-track" aria-hidden="true"><div id="setupStrengthBar" class="setup-strength-bar"></div></div>
@@ -112,7 +112,7 @@ $userName = htmlspecialchars(trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SES
           <div class="setup-pw-wrap">
             <input type="password" id="confirm_password" name="confirm_password" class="setup-pw-input" required minlength="8" autocomplete="new-password"/>
             <button type="button" class="toggle-pwd" data-mc-pw-toggle="confirm_password" aria-label="Show password" aria-pressed="false">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
             </button>
           </div>
         </div>

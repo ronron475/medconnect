@@ -182,13 +182,15 @@
       if (!input) return;
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
-      btn.setAttribute('aria-pressed', show ? 'true' : 'false');
-      btn.classList.toggle('is-revealed', show);
+      const hidden = input.type === 'password';
+      btn.setAttribute('aria-label', hidden ? 'Show password' : 'Hide password');
+      btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+      btn.classList.toggle('is-revealed', !hidden);
       const eyeOpen = btn.querySelector('.ps-eye-open');
       const eyeClosed = btn.querySelector('.ps-eye-closed');
-      if (eyeOpen) eyeOpen.hidden = show;
-      if (eyeClosed) eyeClosed.hidden = !show;
+      // Hidden → eye-off; visible → open eye
+      if (eyeOpen) eyeOpen.hidden = hidden;
+      if (eyeClosed) eyeClosed.hidden = !hidden;
     });
   });
 
@@ -239,8 +241,9 @@
           btn.setAttribute('aria-label', 'Show password');
           const eyeOpen = btn.querySelector('.ps-eye-open');
           const eyeClosed = btn.querySelector('.ps-eye-closed');
-          if (eyeOpen) eyeOpen.hidden = false;
-          if (eyeClosed) eyeClosed.hidden = true;
+          // Reset to hidden password → eye-off
+          if (eyeOpen) eyeOpen.hidden = true;
+          if (eyeClosed) eyeClosed.hidden = false;
           const targetId = btn.getAttribute('data-toggle-password');
           const input = targetId ? document.getElementById(targetId) : null;
           if (input) input.type = 'password';

@@ -1,5 +1,6 @@
 /**
  * Shared password visibility toggles (eye / eye-off).
+ * Hidden password → eye-off (slash). Visible password → open eye.
  * Bind buttons with data-mc-pw-toggle="<inputId>".
  */
 (function () {
@@ -22,6 +23,22 @@
     return wrap ? wrap.querySelector('input') : null;
   }
 
+  function applyIcon(btn, hidden) {
+    btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
+    btn.setAttribute('aria-label', hidden ? 'Show password' : 'Hide password');
+    btn.classList.toggle('is-revealed', !hidden);
+
+    var eyeOpen = btn.querySelector('.mc-eye-open, .pts-eye-open, .ps-eye-open');
+    var eyeClosed = btn.querySelector('.mc-eye-closed, .pts-eye-closed, .ps-eye-closed');
+    if (eyeOpen && eyeClosed) {
+      eyeOpen.hidden = hidden;
+      eyeClosed.hidden = !hidden;
+      return;
+    }
+    var svg = btn.querySelector('svg');
+    if (svg) svg.innerHTML = hidden ? EYE_OFF : EYE_OPEN;
+  }
+
   function bind(btn) {
     if (!btn || btn.dataset.mcPwBound === '1') return;
     btn.dataset.mcPwBound = '1';
@@ -32,19 +49,7 @@
       if (!input) return;
       var reveal = input.type === 'password';
       input.type = reveal ? 'text' : 'password';
-      btn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
-      btn.setAttribute('aria-label', reveal ? 'Hide password' : 'Show password');
-      btn.classList.toggle('is-revealed', reveal);
-
-      var eyeOpen = btn.querySelector('.mc-eye-open, .pts-eye-open, .ps-eye-open');
-      var eyeClosed = btn.querySelector('.mc-eye-closed, .pts-eye-closed, .ps-eye-closed');
-      if (eyeOpen && eyeClosed) {
-        eyeOpen.hidden = reveal;
-        eyeClosed.hidden = !reveal;
-      } else {
-        var svg = btn.querySelector('svg');
-        if (svg) svg.innerHTML = reveal ? EYE_OFF : EYE_OPEN;
-      }
+      applyIcon(btn, input.type === 'password');
     });
   }
 
@@ -59,5 +64,5 @@
     init(document);
   }
 
-  window.MedConnectPasswordVisibility = { init: init, bind: bind };
+  window.MedConnectPasswordVisibility = { init: init, bind: bind, applyIcon: applyIcon };
 })();
