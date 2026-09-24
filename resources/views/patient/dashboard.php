@@ -295,13 +295,6 @@ $show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
     $symptoms_review_pending,
     $care_tips_ready_to_schedule
 ) || !empty($slot_wait_state['active']);
-$dash_chief_complaint_url = !empty($slot_wait_state['active'])
-    ? '#pdashSlotWait'
-    : (!empty($symptoms_review_pending['has_pending'])
-    ? '#pdashSymptomsReview'
-    : (!empty($care_tips_ready_to_schedule['ready'])
-        ? '#pdashCareTipsReady'
-        : '#pdashChiefComplaint'));
 
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
@@ -437,13 +430,10 @@ $patient_page_stylesheets = [
           if (!item) return;
           if (item.join_allowed && item.room_token) {
             const safeToken = String(item.room_token).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-            const joinLabel = String(item.status || '').toLowerCase() === 'in_consultation'
-              ? 'Rejoin Consultation'
-              : 'Join Call';
             cell.innerHTML =
               '<button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join data-token="' +
               safeToken + '" data-consultation-id="' + String(item.id || '') +
-              '">' + joinLabel + '</button>';
+              '">Join Consultation</button>';
           } else if (item.join_mode === 'scheduled_wait') {
             const opens = item.opens_at_label ? ('Opens at ' + item.opens_at_label) : 'Opens at scheduled time';
             cell.innerHTML =

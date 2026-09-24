@@ -122,7 +122,7 @@ foreach ($upcoming_list as $c) {
     <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
       data-token="<?= htmlspecialchars($dash_live_session['room_token'], ENT_QUOTES, 'UTF-8') ?>"
       data-consultation-id="<?= (int) ($dash_live_session['id'] ?? 0) ?>"
-      data-label="Consultation with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider', ENT_QUOTES, 'UTF-8') ?>"><?= !empty($dash_live_session['status']) && strtolower((string) $dash_live_session['status']) === 'in_consultation' ? 'Rejoin Consultation' : 'Join Call' ?></button>
+      data-label="Consultation with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider', ENT_QUOTES, 'UTF-8') ?>">Join Consultation</button>
     <?php endif; ?>
   </div>
   <?php endif; ?>
@@ -168,41 +168,6 @@ foreach ($upcoming_list as $c) {
       <span class="pdash-metric__label">Completed This Month</span>
     </div>
   </div>
-
-  <nav class="pdash-quick" aria-label="Quick links">
-    <a href="<?= ASSET_BASE ?>/views/patient/health_summary.php" class="pdash-quick__link">
-      <span class="pdash-quick__icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      </span>
-      Health Summary
-    </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php" class="pdash-quick__link">
-      <span class="pdash-quick__icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </span>
-      My Health
-    </a>
-    <a href="<?= htmlspecialchars($dash_chief_complaint_url ?? '#pdashChiefComplaint') ?>" class="pdash-quick__link">
-      <span class="pdash-quick__icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
-      </span>
-      Patient Complaint
-    </a>
-    <a href="<?= ASSET_BASE ?>/views/patient/messages.php" class="pdash-quick__link">
-      <span class="pdash-quick__icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      </span>
-      Messages
-    </a>
-    <?php if (!empty($show_dashboard_care_tips_section)): ?>
-    <a href="<?= ASSET_BASE ?>/views/patient/my_health.php?tab=care-tips" class="pdash-quick__link">
-      <span class="pdash-quick__icon" aria-hidden="true">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      </span>
-      Care Tips
-    </a>
-    <?php endif; ?>
-  </nav>
 
   <div class="pdash-grid">
     <div class="pdash-main">
@@ -275,7 +240,7 @@ foreach ($upcoming_list as $c) {
               <button type="button" class="pdash-btn pdash-btn--join pdash-btn--sm" data-mc-video-join
                 data-token="<?= htmlspecialchars($c['room_token'], ENT_QUOTES, 'UTF-8') ?>"
                 data-consultation-id="<?= (int) ($c['id'] ?? 0) ?>"
-                data-label="Consultation with Dr. <?= htmlspecialchars($provider_name, ENT_QUOTES, 'UTF-8') ?>"><?= strtolower((string) ($c['status'] ?? '')) === 'in_consultation' ? 'Rejoin Consultation' : 'Join Call' ?></button>
+                data-label="Consultation with Dr. <?= htmlspecialchars($provider_name, ENT_QUOTES, 'UTF-8') ?>">Join Consultation</button>
               <?php elseif ($join_access['mode'] === 'scheduled_wait'): ?>
               <span class="pdash-btn pdash-btn--waiting pdash-btn--sm" title="<?= htmlspecialchars($join_access['reason'], ENT_QUOTES, 'UTF-8') ?>">
                 Opens at <?= htmlspecialchars(queue_session_context($c)['opens_at_label'] ?: 'scheduled time') ?>

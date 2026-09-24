@@ -2502,6 +2502,13 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.final-assessment-banner__actions .session-btn {
+    margin-left: auto;
+    margin-right: auto;
 }
 .final-assessment-required-modal {
     position: fixed;
@@ -2601,15 +2608,19 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    justify-content: stretch;
+    justify-content: center;
+    align-items: center;
     padding: 16px 24px 22px;
     border-top: 1px solid #e2e8f0;
     background: #f8fafc;
 }
 .final-assessment-required-modal__footer .session-btn.primary {
     width: 100%;
+    max-width: 360px;
     min-height: 48px;
     justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
     font-weight: 800;
 }
 body.final-assessment-modal-open {
@@ -2621,11 +2632,14 @@ body.final-assessment-modal-open {
     }
     .final-assessment-required-modal__footer {
         padding: 16px 28px 24px;
+        justify-content: center;
     }
     .final-assessment-required-modal__footer .session-btn.primary {
         width: auto;
         min-width: 260px;
+        max-width: 360px;
         margin-left: auto;
+        margin-right: auto;
     }
 }
 @media (max-width: 480px) {
@@ -2865,17 +2879,18 @@ body.final-assessment-modal-open {
                     <div class="soap-sign" id="soapSignature">
                         <h3 class="soap-sign__title">Electronic Signature</h3>
                         <div class="soap-sign__field">
-                            <label class="pd-label" for="soapProviderName">Provider Full Name</label>
                             <input
                                 type="text"
                                 id="soapProviderName"
-                                class="pd-input soap-sign__name"
+                                class="pd-input soap-sign__name<?= $soap_esign_name !== '' ? ' soap-sign__name--populated' : '' ?>"
                                 value="<?= htmlspecialchars($soap_esign_name) ?>"
                                 readonly
                                 aria-readonly="true"
+                                aria-label="Electronic signature"
                                 tabindex="-1"
+                                <?= $soap_esign_name === '' ? 'placeholder="Provider Full Name unavailable"' : '' ?>
                             >
-                            <p class="soap-sign__hint">Automatically generated from your authenticated provider account. This name is your electronic signature.</p>
+                            <p class="soap-sign__hint">Uses your Full Name from your provider account. No separate signature entry is required.</p>
                         </div>
 
                         <input type="hidden" name="signature_method" value="typed">
@@ -5325,8 +5340,16 @@ function syncSoapSignatureFields() {
     const display = document.getElementById('soapProviderName');
     const hiddenData = document.getElementById('soapSignatureData');
     const hiddenName = document.getElementById('soapSignatureName');
-    if (display && display.value !== name) {
+    if (display) {
         display.value = name;
+        display.setAttribute('value', name);
+        if (name) {
+            display.classList.add('soap-sign__name--populated');
+            display.removeAttribute('placeholder');
+        } else {
+            display.classList.remove('soap-sign__name--populated');
+            display.setAttribute('placeholder', 'Provider Full Name unavailable');
+        }
     }
     if (hiddenData) hiddenData.value = name;
     if (hiddenName) hiddenName.value = name;
