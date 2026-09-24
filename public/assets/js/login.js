@@ -1,22 +1,9 @@
-// Password visibility toggle
-const toggleBtn = document.getElementById('toggle-pwd');
-const pwdInput = document.getElementById('password');
-const eyeIcon = document.getElementById('eye-icon');
-
-const eyeOpen = `<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>`;
-const eyeClosed = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><line x1="2" y1="2" x2="22" y2="22"/>`;
-
-toggleBtn.addEventListener('click', () => {
-  const isPassword = pwdInput.type === 'password';
-  pwdInput.type = isPassword ? 'text' : 'password';
-  // Hidden → eye-off; visible → open eye
-  eyeIcon.innerHTML = pwdInput.type === 'password' ? eyeClosed : eyeOpen;
-  toggleBtn.setAttribute('aria-label', pwdInput.type === 'password' ? 'Show password' : 'Hide password');
-});
+// Password visibility is handled by password-visibility.js (eye / eye-off).
 
 // Form validation & submission
 const form = document.getElementById('login-form');
 const emailInput = document.getElementById('email');
+const pwdInput = document.getElementById('password');
 const emailError = document.getElementById('email-error');
 const passwordError = document.getElementById('password-error');
 const rememberMe = document.getElementById('remember-me');

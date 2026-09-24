@@ -175,24 +175,7 @@
     return true;
   }
 
-  document.querySelectorAll('[data-toggle-password]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const targetId = btn.getAttribute('data-toggle-password');
-      const input = document.getElementById(targetId);
-      if (!input) return;
-      const show = input.type === 'password';
-      input.type = show ? 'text' : 'password';
-      const hidden = input.type === 'password';
-      btn.setAttribute('aria-label', hidden ? 'Show password' : 'Hide password');
-      btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
-      btn.classList.toggle('is-revealed', !hidden);
-      const eyeOpen = btn.querySelector('.ps-eye-open');
-      const eyeClosed = btn.querySelector('.ps-eye-closed');
-      // Hidden → eye-off; visible → open eye
-      if (eyeOpen) eyeOpen.hidden = hidden;
-      if (eyeClosed) eyeClosed.hidden = !hidden;
-    });
-  });
+  // Password visibility is handled by password-visibility.js (eye / eye-off).
 
   if (newPw) {
     newPw.addEventListener('input', () => {
@@ -236,17 +219,16 @@
           confirmError.className = 'ps-field-error';
         }
         document.querySelectorAll('.ps-toggle-pw').forEach((btn) => {
-          btn.classList.remove('is-revealed');
-          btn.setAttribute('aria-pressed', 'false');
-          btn.setAttribute('aria-label', 'Show password');
-          const eyeOpen = btn.querySelector('.ps-eye-open');
-          const eyeClosed = btn.querySelector('.ps-eye-closed');
-          // Reset to hidden password → eye-off
-          if (eyeOpen) eyeOpen.hidden = true;
-          if (eyeClosed) eyeClosed.hidden = false;
           const targetId = btn.getAttribute('data-toggle-password');
           const input = targetId ? document.getElementById(targetId) : null;
           if (input) input.type = 'password';
+          if (window.MedConnectPasswordVisibility && window.MedConnectPasswordVisibility.syncButton) {
+            window.MedConnectPasswordVisibility.syncButton(btn);
+          } else {
+            btn.classList.remove('is-revealed');
+            btn.setAttribute('aria-pressed', 'false');
+            btn.setAttribute('aria-label', 'Show password');
+          }
         });
         showToast(data.message || 'Password updated successfully.', 'success');
         clearAlert();

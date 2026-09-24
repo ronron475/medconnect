@@ -76,7 +76,7 @@ require_once __DIR__ . '/partials/layout_open.php';
   </div>
 </div>
 
-<script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=1"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=2"></script>
 <script>
 (function () {
   var api = <?= json_encode($api) ?>;

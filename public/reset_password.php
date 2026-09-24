@@ -267,7 +267,7 @@ $asset = ASSET_BASE;
   </div>
 </div>
 
-<script src="<?= $asset ?>/assets/js/password-visibility.js?v=1"></script>
+<script src="<?= $asset ?>/assets/js/password-visibility.js?v=2"></script>
 <script src="<?= $asset ?>/assets/js/register.js"></script>
 </body>
 </html>

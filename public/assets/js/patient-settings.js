@@ -112,29 +112,7 @@
     activateTab(initialTab);
   }
 
-  // Password visibility — eye / eye-off icons only
-  document.querySelectorAll('.pts-toggle-pw').forEach(function (btn) {
-    btn.addEventListener('click', function (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      const input = document.getElementById(btn.dataset.target);
-      if (!input) return;
-      const reveal = input.type === 'password';
-      input.type = reveal ? 'text' : 'password';
-      const hidden = input.type === 'password';
-      btn.setAttribute('aria-pressed', hidden ? 'false' : 'true');
-      btn.classList.toggle('is-revealed', !hidden);
-      const eyeOpen = btn.querySelector('.pts-eye-open');
-      const eyeClosed = btn.querySelector('.pts-eye-closed');
-      // Hidden → eye-off; visible → open eye
-      if (eyeOpen) eyeOpen.hidden = hidden;
-      if (eyeClosed) eyeClosed.hidden = !hidden;
-      const fieldLabel = input.id === 'ptsCurrentPassword' ? 'current password'
-        : input.id === 'ptsNewPassword' ? 'new password' : 'confirm password';
-      btn.setAttribute('aria-label', (hidden ? 'Show ' : 'Hide ') + fieldLabel);
-      input.focus();
-    });
-  });
+  // Password visibility is handled by password-visibility.js (eye / eye-off).
 
   const newPw = document.getElementById('ptsNewPassword');
   const confirmPw = document.getElementById('ptsConfirmPassword');
@@ -236,18 +214,15 @@
       showPanelAlert('ptsPasswordAlert', data.message, 'success');
       e.target.reset();
       document.querySelectorAll('.pts-toggle-pw').forEach(function (btn) {
-        btn.classList.remove('is-revealed');
-        btn.setAttribute('aria-pressed', 'false');
-        const eyeOpen = btn.querySelector('.pts-eye-open');
-        const eyeClosed = btn.querySelector('.pts-eye-closed');
-        // Reset to hidden password → eye-off
-        if (eyeOpen) eyeOpen.hidden = true;
-        if (eyeClosed) eyeClosed.hidden = false;
         const input = document.getElementById(btn.dataset.target);
         if (input) input.type = 'password';
-        const fieldLabel = btn.dataset.target === 'ptsCurrentPassword' ? 'current password'
-          : btn.dataset.target === 'ptsNewPassword' ? 'new password' : 'confirm password';
-        btn.setAttribute('aria-label', 'Show ' + fieldLabel);
+        if (window.MedConnectPasswordVisibility && window.MedConnectPasswordVisibility.syncButton) {
+          window.MedConnectPasswordVisibility.syncButton(btn);
+        } else {
+          btn.classList.remove('is-revealed');
+          btn.setAttribute('aria-pressed', 'false');
+          btn.setAttribute('aria-label', 'Show password');
+        }
       });
       updatePasswordUI();
     } catch (err) {

@@ -829,7 +829,9 @@
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260816ocr4"></script>
 <script src="<?= $b ?>/assets/js/register-nlp-analysis.js?v=20260806cds1"></script>
-<script src="<?= $b ?>/assets/js/register.js?v=20260917gps1"></script>
+<?php $pwVisJsVer = (int) @filemtime(ASSETS_PATH . '/js/password-visibility.js'); ?>
+<script src="<?= $b ?>/assets/js/password-visibility.js?v=<?= $pwVisJsVer ?>"></script>
+<script src="<?= $b ?>/assets/js/register.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/register.js') ?>"></script>
 
 <!-- Silent NLP loading overlay (patient-facing; no technical AI output) -->
 <?php

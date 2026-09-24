@@ -168,7 +168,7 @@ $tabs = [
                 <div class="ps-password-wrap">
                   <input class="ps-input" type="password" id="currentPassword" name="current_password" required autocomplete="current-password" maxlength="128">
                   <button type="button" class="ps-toggle-pw" data-toggle-password="currentPassword" aria-label="Show password" aria-pressed="false">
-                    <svg class="ps-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ps-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                   </button>
                 </div>
               </div>
@@ -177,7 +177,7 @@ $tabs = [
                 <div class="ps-password-wrap">
                   <input class="ps-input" type="password" id="newPassword" name="new_password" required autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="psPwStrengthLabel newPasswordError">
                   <button type="button" class="ps-toggle-pw" data-toggle-password="newPassword" aria-label="Show password" aria-pressed="false">
-                    <svg class="ps-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ps-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                   </button>
                 </div>
                 <div class="ps-validation" aria-label="Password strength and requirements">
@@ -204,7 +204,7 @@ $tabs = [
                 <div class="ps-password-wrap">
                   <input class="ps-input" type="password" id="confirmPassword" name="confirm_password" required autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="confirmPasswordError">
                   <button type="button" class="ps-toggle-pw" data-toggle-password="confirmPassword" aria-label="Show password" aria-pressed="false">
-                    <svg class="ps-eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" hidden><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><svg class="ps-eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                   </button>
                 </div>
                 <p id="confirmPasswordError" class="ps-field-error" role="alert"></p>
@@ -368,7 +368,9 @@ $tabs = [
 <?php
 $psJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-settings.js');
 $pwJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-password.js');
+$pwVisJsVer = (int) @filemtime(ASSETS_PATH . '/js/password-visibility.js');
 ?>
+<script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=<?= $pwVisJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-settings.js?v=<?= $psJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-password.js?v=<?= $pwJsVer ?>"></script>
 

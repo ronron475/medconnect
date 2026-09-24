@@ -824,7 +824,9 @@ require __DIR__ . '/partials/landing_navbar.php';
 <script src="<?= $asset ?>/assets/js/login-lockout.js?v=2"></script>
 <?php $sessionSyncJsVer = (int) @filemtime(ASSETS_PATH . '/js/session-sync.js'); ?>
 <script src="<?= $asset ?>/assets/js/session-sync.js?v=<?= $sessionSyncJsVer ?>"></script>
-<script src="<?= $asset ?>/assets/js/script.js?v=20260916e"></script>
+<?php $pwVisJsVer = (int) @filemtime(ASSETS_PATH . '/js/password-visibility.js'); ?>
+<script src="<?= $asset ?>/assets/js/password-visibility.js?v=<?= $pwVisJsVer ?>"></script>
+<script src="<?= $asset ?>/assets/js/script.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/script.js') ?>"></script>
 <?php require_once VIEWS_PATH . '/partials/theme_scripts.php'; ?>
 
 <script>

@@ -5,8 +5,11 @@
  */
 $mcStaffFormsCssPath = ASSETS_PATH . '/css/admin-staff-forms.css';
 $mcStaffFormUtilsPath = ASSETS_PATH . '/js/admin-staff-form-utils.js';
+$mcPwVisPath = ASSETS_PATH . '/js/password-visibility.js';
 $mcStaffFormsCssVer = file_exists($mcStaffFormsCssPath) ? (int) filemtime($mcStaffFormsCssPath) : time();
 $mcStaffFormUtilsVer = file_exists($mcStaffFormUtilsPath) ? (int) filemtime($mcStaffFormUtilsPath) : time();
+$mcPwVisVer = file_exists($mcPwVisPath) ? (int) filemtime($mcPwVisPath) : time();
 ?>
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-forms.css?v=<?= $mcStaffFormsCssVer ?>"/>
+<script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=<?= $mcPwVisVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-staff-form-utils.js?v=<?= $mcStaffFormUtilsVer ?>"></script>
