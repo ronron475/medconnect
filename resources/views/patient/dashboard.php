@@ -399,6 +399,7 @@ $patient_page_stylesheets = [
     if (!cells.length) return;
     const base = window.APP_BASE || '';
     const videoBase = <?= json_encode($video_base) ?>;
+    const activeConsultId = <?= json_encode((string) ($active_consult_id ?? 0)) ?>;
     const unlockTimers = new Map();
 
     function schedulePatientUnlock(item) {
@@ -428,6 +429,12 @@ $patient_page_stylesheets = [
           const id = cell.getAttribute('data-consult-action');
           const item = byId[id];
           if (!item) return;
+          // Primary active card already owns the Join CTA for this visit.
+          if (activeConsultId && String(id) === String(activeConsultId)) {
+            cell.innerHTML =
+              '<a href="#pdashActiveConsultation" class="pdash-btn pdash-btn--outline pdash-btn--sm">View Appointment</a>';
+            return;
+          }
           if (item.join_allowed && item.room_token) {
             const safeToken = String(item.room_token).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
             cell.innerHTML =
