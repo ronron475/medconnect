@@ -902,10 +902,35 @@ textarea:focus {
   color: #94a3b8;
   display: flex;
   align-items: center;
-  padding: 4px;
-  transition: color 0.18s;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-radius: 8px;
+  transition: color 0.18s, background 0.18s;
 }
-.toggle-pwd:hover { color: var(--teal); }
+.toggle-pwd:hover { color: var(--teal); background: rgba(13, 148, 136, 0.08); }
+
+/* Shared password field wrap (setup / activate / reset) */
+.setup-pw-wrap,
+.mc-pw-field {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+.setup-pw-wrap input[type="password"],
+.setup-pw-wrap input[type="text"],
+.mc-pw-field input[type="password"],
+.mc-pw-field input[type="text"] {
+  width: 100%;
+  padding-right: 44px;
+  box-sizing: border-box;
+}
+.setup-pw-wrap .toggle-pwd,
+.mc-pw-field .toggle-pwd {
+  right: 8px;
+}
 
 /* ── Step 3 (Patient Form) ───────────────────────────── */
 #step2 .patient-intake-form {

@@ -112,7 +112,7 @@
     activateTab(initialTab);
   }
 
-  // Password visibility — swap type + icon + label
+  // Password visibility — eye / eye-off icons only
   document.querySelectorAll('.pts-toggle-pw').forEach(function (btn) {
     btn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -123,8 +123,6 @@
       input.type = reveal ? 'text' : 'password';
       btn.setAttribute('aria-pressed', reveal ? 'true' : 'false');
       btn.classList.toggle('is-revealed', reveal);
-      const label = btn.querySelector('.pts-toggle-label');
-      if (label) label.textContent = reveal ? 'Hide' : 'Show';
       const eyeOpen = btn.querySelector('.pts-eye-open');
       const eyeClosed = btn.querySelector('.pts-eye-closed');
       if (eyeOpen) eyeOpen.hidden = reveal;
@@ -238,12 +236,15 @@
       document.querySelectorAll('.pts-toggle-pw').forEach(function (btn) {
         btn.classList.remove('is-revealed');
         btn.setAttribute('aria-pressed', 'false');
-        const label = btn.querySelector('.pts-toggle-label');
-        if (label) label.textContent = 'Show';
         const eyeOpen = btn.querySelector('.pts-eye-open');
         const eyeClosed = btn.querySelector('.pts-eye-closed');
         if (eyeOpen) eyeOpen.hidden = false;
         if (eyeClosed) eyeClosed.hidden = true;
+        const input = document.getElementById(btn.dataset.target);
+        if (input) input.type = 'password';
+        const fieldLabel = btn.dataset.target === 'ptsCurrentPassword' ? 'current password'
+          : btn.dataset.target === 'ptsNewPassword' ? 'new password' : 'confirm password';
+        btn.setAttribute('aria-label', 'Show ' + fieldLabel);
       });
       updatePasswordUI();
     } catch (err) {

@@ -508,25 +508,46 @@ body.provider-body .provider-page-body:has(.ps-page) {
 }
 
 .ps-password-wrap .ps-input {
-  padding-right: 52px;
+  padding-right: 48px;
 }
 
 .ps-toggle-pw {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
   border: 0;
   background: transparent;
   color: #64748b;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 6px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
 }
 
 .ps-toggle-pw:hover {
   color: #069396;
+  background: rgba(6, 147, 150, 0.08);
+}
+
+.ps-toggle-pw.is-revealed {
+  color: #069396;
+}
+
+.ps-eye-open,
+.ps-eye-closed {
+  display: block;
+  flex-shrink: 0;
+}
+
+.ps-eye-open[hidden],
+.ps-eye-closed[hidden] {
+  display: none !important;
 }
 
 .ps-strength {

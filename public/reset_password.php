@@ -100,7 +100,7 @@ $asset = ASSET_BASE;
     .reset-input-wrap input {
       width: 100%;
       height: 58px;
-      padding: 0 16px 0 46px;
+      padding: 0 48px 0 46px;
       border: 1.5px solid #d0e4f7;
       border-radius: 12px;
       font-size: 14.5px;
@@ -121,6 +121,13 @@ $asset = ASSET_BASE;
       transform: translateY(-50%);
       color: #93c5fd; display: flex; pointer-events: none;
     }
+    .reset-input-wrap .toggle-pwd {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      width: 36px; height: 36px; min-width: 36px; padding: 0; border: none; background: transparent;
+      color: #94a3b8; border-radius: 8px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .reset-input-wrap .toggle-pwd:hover { color: #1a6db5; background: rgba(26,109,181,.08); }
 
     /* Button matches btn-submit */
     .reset-btn {
@@ -228,7 +235,10 @@ $asset = ASSET_BASE;
               <span class="reset-input-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </span>
-              <input type="password" name="password" placeholder="At least 6 characters" required/>
+              <input type="password" id="reset-password" name="password" placeholder="At least 6 characters" required/>
+              <button type="button" class="toggle-pwd" data-mc-pw-toggle="reset-password" aria-label="Show password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
             </div>
           </div>
           <div class="reset-form-group">
@@ -237,7 +247,10 @@ $asset = ASSET_BASE;
               <span class="reset-input-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               </span>
-              <input type="password" name="confirm_password" placeholder="Repeat your password" required/>
+              <input type="password" id="reset-confirm-password" name="confirm_password" placeholder="Repeat your password" required/>
+              <button type="button" class="toggle-pwd" data-mc-pw-toggle="reset-confirm-password" aria-label="Show password" aria-pressed="false">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
             </div>
           </div>
           <button type="submit" class="reset-btn">Reset Password</button>
@@ -252,6 +265,7 @@ $asset = ASSET_BASE;
   </div>
 </div>
 
+<script src="<?= $asset ?>/assets/js/password-visibility.js?v=1"></script>
 <script src="<?= $asset ?>/assets/js/register.js"></script>
 </body>
 </html>

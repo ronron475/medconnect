@@ -447,10 +447,11 @@
 .pts-input-action {
   position: static;
   flex-shrink: 0;
-  min-width: 68px;
-  height: 34px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
   margin-right: 2px;
-  padding: 0 10px;
+  padding: 0;
   border: none;
   background: #f1f5f9;
   color: #028090;
@@ -459,9 +460,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  gap: 0;
+  font-size: 0;
   font-family: inherit;
   transition: background 0.15s, color 0.15s;
 }
@@ -474,11 +474,6 @@
 .pts-input-action.is-revealed {
   background: #99f6e4;
   color: #0f766e;
-}
-
-.pts-toggle-label {
-  line-height: 1;
-  user-select: none;
 }
 
 .pts-eye-open,
