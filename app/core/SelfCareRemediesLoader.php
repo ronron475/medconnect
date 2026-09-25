@@ -81,6 +81,13 @@ final class SelfCareRemediesLoader
                 }
             }
 
+            $resourceLabel = trim((string) ($data['resource_label'] ?? ''));
+            $resourceUrl = trim((string) ($data['resource_url'] ?? ''));
+            if ($resourceUrl !== '' && !self::isTrustedResourceUrl($resourceUrl)) {
+                $resourceLabel = '';
+                $resourceUrl = '';
+            }
+
             self::$rows[] = [
                 'symptom_key' => $key,
                 'display_name' => (string) ($data['display_name'] ?? $key),
@@ -88,6 +95,8 @@ final class SelfCareRemediesLoader
                 'aliases' => $aliasList,
                 'tips' => $tips,
                 'when_to_seek_care' => trim((string) ($data['when_to_seek_care'] ?? '')),
+                'resource_label' => $resourceLabel,
+                'resource_url' => $resourceUrl,
             ];
         }
         fclose($handle);
@@ -103,6 +112,8 @@ final class SelfCareRemediesLoader
      *   display_name: string,
      *   tips: list<string>,
      *   when_to_seek_care: string,
+     *   resource_label: string,
+     *   resource_url: string,
      *   match_source: string,
      *   match_score: float,
      *   cohere_attempted: bool,
@@ -197,6 +208,8 @@ final class SelfCareRemediesLoader
      *   display_name: string,
      *   tips: list<string>,
      *   when_to_seek_care: string,
+     *   resource_label: string,
+     *   resource_url: string,
      *   match_source: string,
      *   match_score: float,
      *   cohere_attempted: bool,
@@ -211,11 +224,69 @@ final class SelfCareRemediesLoader
             'display_name' => '',
             'tips' => [],
             'when_to_seek_care' => '',
+            'resource_label' => '',
+            'resource_url' => '',
             'match_source' => 'none',
             'match_score' => 0.0,
             'cohere_attempted' => false,
             'cohere_error' => '',
         ];
+    }
+
+    /**
+     * Allow only fixed public-health / professional-society domains (HTTPS).
+     * No YouTube, blogs, or arbitrary hosts.
+     *
+     * PH: DOH, FDA Philippines, NNC, PPS, PHA, POGS.
+     * International: WHO, CDC, NHS, MedlinePlus, NIH, Mayo Clinic,
+     * Cleveland Clinic, FDA US, AHA, AAFP, National Cancer Institute.
+     */
+    private static function isTrustedResourceUrl(string $url): bool
+    {
+        $parts = parse_url($url);
+        if (!is_array($parts)) {
+            return false;
+        }
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        if ($scheme !== 'https') {
+            return false;
+        }
+        $host = strtolower((string) ($parts['host'] ?? ''));
+        if ($host === '') {
+            return false;
+        }
+
+        // Apex + subdomains (e.g. www., my., nhlbi.nih.gov).
+        $allowedDomains = [
+            // Existing
+            'nhs.uk',
+            'cdc.gov',
+            'doh.gov.ph',
+            'medlineplus.gov',
+            // PH
+            'fda.gov.ph',
+            'nnc.gov.ph',
+            'pps.org.ph',
+            'philheart.org',
+            'pogsinc.org',
+            // International
+            'who.int',
+            'nih.gov',
+            'mayoclinic.org',
+            'clevelandclinic.org',
+            'fda.gov',
+            'heart.org',
+            'aafp.org',
+            'cancer.gov',
+        ];
+
+        foreach ($allowedDomains as $domain) {
+            if ($host === $domain || str_ends_with($host, '.' . $domain)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function shouldTryCohere(string $queryText, bool $localStrong, int $localScore): bool
@@ -357,6 +428,8 @@ final class SelfCareRemediesLoader
      *   display_name: string,
      *   tips: list<string>,
      *   when_to_seek_care: string,
+     *   resource_label: string,
+     *   resource_url: string,
      *   match_source: string,
      *   match_score: float,
      *   cohere_attempted: bool,
@@ -376,6 +449,12 @@ final class SelfCareRemediesLoader
             static fn ($t): bool => is_string($t) && trim($t) !== ''
         ));
         $specific = $key !== '' && $key !== 'default_non_urgent' && $tips !== [];
+        $resourceLabel = $specific ? trim((string) ($best['resource_label'] ?? '')) : '';
+        $resourceUrl = $specific ? trim((string) ($best['resource_url'] ?? '')) : '';
+        if ($resourceUrl !== '' && !self::isTrustedResourceUrl($resourceUrl)) {
+            $resourceLabel = '';
+            $resourceUrl = '';
+        }
 
         return [
             'matched' => $specific,
@@ -383,6 +462,8 @@ final class SelfCareRemediesLoader
             'display_name' => $specific ? (string) ($best['display_name'] ?? '') : '',
             'tips' => $specific ? $tips : [],
             'when_to_seek_care' => $specific ? (string) ($best['when_to_seek_care'] ?? '') : '',
+            'resource_label' => $resourceLabel,
+            'resource_url' => $resourceUrl,
             'match_source' => $specific ? $source : 'none',
             'match_score' => $score,
             'cohere_attempted' => $cohereAttempted,

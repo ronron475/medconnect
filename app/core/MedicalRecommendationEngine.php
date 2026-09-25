@@ -126,6 +126,13 @@ final class MedicalRecommendationEngine
                 if (($match['when_to_seek_care'] ?? '') !== '') {
                     $items[] = (string) $match['when_to_seek_care'];
                 }
+                $resourceLabel = trim((string) ($match['resource_label'] ?? ''));
+                $resourceUrl = trim((string) ($match['resource_url'] ?? ''));
+                if ($resourceUrl !== '') {
+                    $label = $resourceLabel !== '' ? $resourceLabel : 'Trusted health information';
+                    $items[] = 'Optional reading (trusted site, not a substitute for your doctor): '
+                        . $label . ' — ' . $resourceUrl;
+                }
                 $items[] = 'You may follow these tips on your own. If you would like to consult a licensed doctor, you may book an appointment anytime.';
             } else {
                 // No reliable CSV/Cohere match — do not invent generic/unrelated tips.
