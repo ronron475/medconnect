@@ -234,10 +234,24 @@ final class GeminiClinicalInterviewDemo
 
         // Merge clinical facts (never replace original wording); scrub discourse particles.
         $incoming = is_array($gemini['clinical_facts'] ?? null) ? $gemini['clinical_facts'] : [];
-        $context['clinical_facts'] = self::sanitizeClinicalFacts(self::mergeFacts(
+        $merged = self::sanitizeClinicalFacts(self::mergeFacts(
             is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts(),
             $incoming
         ));
+
+        // Map this answer onto findings targeted by the immediately preceding Gemini question.
+        if (!$isStart && $latestPatient !== '') {
+            $merged = self::applyAnswerToTargetedFindings(
+                $merged,
+                self::normalizeFindingKeyList($context['awaiting_target_findings'] ?? []),
+                $latestPatient,
+                $gemini
+            );
+            // Consumed once applied — do not bleed onto later unrelated questions.
+            $context['awaiting_target_findings'] = [];
+        }
+
+        $context['clinical_facts'] = $merged;
         $context['missing_information'] = self::stringList($gemini['missing_information'] ?? []);
         $context['last_gemini'] = $gemini;
         $context['last_answer_status'] = $status;
@@ -255,6 +269,8 @@ final class GeminiClinicalInterviewDemo
                 $q = 'Please answer the previous clinical question in your own words.';
             }
             $context['awaiting_question'] = $q;
+            // Keep / refresh targets for the same clinical probe.
+            $context['awaiting_target_findings'] = self::resolveTargetedFindings($gemini, $q, $context);
             $context['status'] = self::STATUS_INTERVIEWING;
             $context['conversation'][] = [
                 'role' => 'gemini',
@@ -306,12 +322,14 @@ final class GeminiClinicalInterviewDemo
 
         if ($sufficient || $nextQ === '') {
             $context['awaiting_question'] = '';
+            $context['awaiting_target_findings'] = [];
             $context['status'] = self::STATUS_SUFFICIENT;
 
             return self::finalizeWithClinicalEngine($context, $gemini);
         }
 
         $context['awaiting_question'] = $nextQ;
+        $context['awaiting_target_findings'] = self::resolveTargetedFindings($gemini, $nextQ, $context);
         $context['status'] = self::STATUS_INTERVIEWING;
         $context['conversation'][] = [
             'role' => 'gemini',
@@ -435,6 +453,7 @@ final class GeminiClinicalInterviewDemo
             'status_label' => self::statusLabel((string) ($context['status'] ?? '')),
             'chief_complaint' => (string) ($context['chief_complaint'] ?? ''),
             'awaiting_question' => (string) ($context['awaiting_question'] ?? ''),
+            'awaiting_target_findings' => self::normalizeFindingKeyList($context['awaiting_target_findings'] ?? []),
             'conversation' => is_array($context['conversation'] ?? null) ? $context['conversation'] : [],
             'clinical_facts' => is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts(),
             'missing_information' => is_array($context['missing_information'] ?? null) ? $context['missing_information'] : [],
@@ -668,6 +687,8 @@ final class GeminiClinicalInterviewDemo
             'patient_turns' => [],
             'conversation' => [],
             'awaiting_question' => '',
+            /** @var list<string> Canonical finding keys targeted by the pending Gemini question */
+            'awaiting_target_findings' => [],
             'clinical_facts' => self::blankFacts(),
             'missing_information' => [],
             'status' => self::STATUS_INTERVIEWING,
@@ -693,6 +714,13 @@ final class GeminiClinicalInterviewDemo
             'relevant_negatives' => [],
             'warning_signs' => [],
             'notes' => [],
+            // Existing ClinicalInterviewEngine polarity / provenance architecture
+            'finding_status' => [],
+            'symptoms_patient' => [],
+            'symptoms_kb' => [],
+            'symptoms_ai' => [],
+            'negative_symptoms' => [],
+            'patient_uncertain' => false,
         ];
     }
 
@@ -725,6 +753,11 @@ final class GeminiClinicalInterviewDemo
         if (!is_array($base['missing_information'] ?? null)) {
             $base['missing_information'] = [];
         }
+        if (!is_array($base['awaiting_target_findings'] ?? null)) {
+            $base['awaiting_target_findings'] = [];
+        } else {
+            $base['awaiting_target_findings'] = self::normalizeFindingKeyList($base['awaiting_target_findings']);
+        }
 
         return $base;
     }
@@ -756,7 +789,7 @@ final class GeminiClinicalInterviewDemo
             }
         }
 
-        foreach (['associated_symptoms', 'relevant_negatives', 'warning_signs', 'notes'] as $listKey) {
+        foreach (['associated_symptoms', 'relevant_negatives', 'warning_signs', 'notes', 'symptoms_patient', 'symptoms_kb', 'symptoms_ai', 'negative_symptoms'] as $listKey) {
             $cur = self::stringList($base[$listKey] ?? []);
             $add = self::stringList($incoming[$listKey] ?? []);
             foreach ($add as $item) {
@@ -765,6 +798,27 @@ final class GeminiClinicalInterviewDemo
                 }
             }
             $base[$listKey] = $cur;
+        }
+
+        if (array_key_exists('patient_uncertain', $incoming) && $incoming['patient_uncertain']) {
+            $base['patient_uncertain'] = true;
+        }
+
+        // finding_status: later writes win per key; normalize to positive|negative|uncertain|not_assessed
+        if (isset($incoming['finding_status']) && is_array($incoming['finding_status'])) {
+            $cur = is_array($base['finding_status'] ?? null) ? $base['finding_status'] : [];
+            foreach ($incoming['finding_status'] as $rawKey => $rawVal) {
+                $key = self::normalizeFindingKey((string) $rawKey);
+                if ($key === '') {
+                    continue;
+                }
+                $norm = self::normalizeFindingStatusValue($rawVal);
+                if ($norm === null) {
+                    continue;
+                }
+                $cur[$key] = $norm;
+            }
+            $base['finding_status'] = $cur;
         }
 
         return $base;
@@ -874,6 +928,32 @@ final class GeminiClinicalInterviewDemo
             }
         }
         $mapped['symptoms'] = $symptoms;
+
+        // Pass structured finding_status / provenance through to ClinicalTriageEngine facts.
+        $findingStatus = [];
+        if (isset($facts['finding_status']) && is_array($facts['finding_status'])) {
+            foreach ($facts['finding_status'] as $rawKey => $rawVal) {
+                $key = self::normalizeFindingKey((string) $rawKey);
+                $norm = self::normalizeFindingStatusValue($rawVal);
+                if ($key === '' || $norm === null) {
+                    continue;
+                }
+                $findingStatus[$key] = $norm;
+            }
+        }
+        $mapped['finding_status'] = $findingStatus;
+        foreach (['symptoms_patient', 'symptoms_kb', 'symptoms_ai'] as $provKey) {
+            $mapped[$provKey] = array_values(array_filter(
+                self::stringList($facts[$provKey] ?? []),
+                static fn (string $s): bool => !self::isNonClinicalDiscourseLabel($s)
+            ));
+        }
+        if (!empty($facts['patient_uncertain'])) {
+            $mapped['patient_uncertain'] = true;
+        }
+
+        // Apply finding_status polarity onto engine boolean keys (no triage assignment).
+        $mapped = self::applyFindingStatusToEngineBooleans($mapped, $findingStatus);
 
         return $mapped;
     }
@@ -1243,7 +1323,7 @@ final class GeminiClinicalInterviewDemo
                 $out['pain_score'] = $score;
             }
         }
-        foreach (['associated_symptoms', 'relevant_negatives', 'warning_signs', 'notes'] as $listKey) {
+        foreach (['associated_symptoms', 'relevant_negatives', 'warning_signs', 'notes', 'symptoms_patient', 'symptoms_kb', 'symptoms_ai', 'negative_symptoms'] as $listKey) {
             $kept = [];
             foreach (self::stringList($facts[$listKey] ?? []) as $item) {
                 if (self::isNonClinicalDiscourseLabel($item)) {
@@ -1254,7 +1334,441 @@ final class GeminiClinicalInterviewDemo
             $out[$listKey] = $kept;
         }
 
+        $status = [];
+        if (isset($facts['finding_status']) && is_array($facts['finding_status'])) {
+            foreach ($facts['finding_status'] as $rawKey => $rawVal) {
+                $key = self::normalizeFindingKey((string) $rawKey);
+                $norm = self::normalizeFindingStatusValue($rawVal);
+                if ($key === '' || $norm === null) {
+                    continue;
+                }
+                $status[$key] = $norm;
+            }
+        }
+        $out['finding_status'] = $status;
+        $out['patient_uncertain'] = !empty($facts['patient_uncertain']);
+
         return $out;
+    }
+
+    /**
+     * Public test hook — maps a patient answer onto only the targeted findings.
+     *
+     * @param array<string, mixed> $facts
+     * @param list<string>|array<int, string> $targets
+     * @param array<string, mixed> $gemini
+     * @return array<string, mixed>
+     */
+    public static function mapAnswerFindingStatusForTest(array $facts, array $targets, string $answer, array $gemini = []): array
+    {
+        $facts = self::mergeFacts(self::blankFacts(), $facts);
+
+        return self::applyAnswerToTargetedFindings($facts, self::normalizeFindingKeyList($targets), $answer, $gemini);
+    }
+
+    /**
+     * Resolve which clinical findings the pending Gemini question is asking about.
+     *
+     * @param array<string, mixed> $gemini
+     * @param array<string, mixed> $context
+     * @return list<string>
+     */
+    private static function resolveTargetedFindings(array $gemini, string $question, array $context): array
+    {
+        $fromGemini = self::normalizeFindingKeyList($gemini['targeted_findings'] ?? []);
+        if ($fromGemini !== []) {
+            return $fromGemini;
+        }
+        // Also accept finding keys Gemini stuffed into missing_information for this turn.
+        $fromMissing = [];
+        foreach (self::stringList($gemini['missing_information'] ?? []) as $m) {
+            $key = self::normalizeFindingKey($m);
+            if ($key !== '' && isset(self::findingLexicon()[$key])) {
+                $fromMissing[] = $key;
+            }
+        }
+        if ($fromMissing !== []) {
+            return array_values(array_unique($fromMissing));
+        }
+
+        return self::inferTargetedFindingsFromQuestion($question);
+    }
+
+    /**
+     * Map the patient's answer onto findings from the immediately preceding question only.
+     *
+     * @param array<string, mixed> $facts
+     * @param list<string> $targets
+     * @param array<string, mixed> $gemini
+     * @return array<string, mixed>
+     */
+    private static function applyAnswerToTargetedFindings(array $facts, array $targets, string $answer, array $gemini): array
+    {
+        $targets = self::normalizeFindingKeyList($targets);
+        if ($targets === []) {
+            // No targeted findings — do not invent status keys from a bare yes/no.
+            return $facts;
+        }
+
+        $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        foreach ($targets as $t) {
+            if (!isset($status[$t])) {
+                $status[$t] = 'not_assessed';
+            }
+        }
+
+        // Prefer Gemini-provided finding_status only for keys in this question's targets.
+        $geminiFs = [];
+        if (isset($gemini['clinical_facts']) && is_array($gemini['clinical_facts'])
+            && isset($gemini['clinical_facts']['finding_status'])
+            && is_array($gemini['clinical_facts']['finding_status'])
+        ) {
+            foreach ($gemini['clinical_facts']['finding_status'] as $rawKey => $rawVal) {
+                $key = self::normalizeFindingKey((string) $rawKey);
+                $norm = self::normalizeFindingStatusValue($rawVal);
+                if ($key === '' || $norm === null || !in_array($key, $targets, true)) {
+                    continue;
+                }
+                $geminiFs[$key] = $norm;
+            }
+        }
+
+        $answerStatus = strtoupper((string) ($gemini['answer_status'] ?? ''));
+        $uncertain = $answerStatus === 'UNCERTAIN'
+            || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($answer));
+        $yn = null;
+        if (class_exists('ClinicalFeatureExtractors')) {
+            $yn = ClinicalFeatureExtractors::extractYesNo($answer);
+        }
+        if ($answerStatus === 'UNCERTAIN') {
+            $yn = null;
+        }
+
+        // Semantic per-finding mentions in the answer (EN / Tagalog / Hiligaynon / mixed).
+        $mentioned = self::detectFindingMentionsInAnswer($answer, $targets);
+
+        if ($mentioned !== []) {
+            foreach ($targets as $t) {
+                if (isset($mentioned[$t])) {
+                    $status[$t] = $mentioned[$t];
+                } elseif (isset($geminiFs[$t]) && in_array($geminiFs[$t], ['positive', 'negative', 'uncertain'], true)) {
+                    $status[$t] = $geminiFs[$t];
+                } else {
+                    // Asked but not safely determined from this answer.
+                    $status[$t] = 'not_assessed';
+                }
+            }
+        } elseif (count($targets) === 1) {
+            $t = $targets[0];
+            if ($uncertain) {
+                $status[$t] = 'uncertain';
+            } elseif ($yn === true) {
+                $status[$t] = 'positive';
+            } elseif ($yn === false) {
+                $status[$t] = 'negative';
+            } elseif (isset($geminiFs[$t])) {
+                $status[$t] = $geminiFs[$t];
+            }
+            // else keep not_assessed
+        } else {
+            // Multiple findings in one question.
+            if ($uncertain) {
+                foreach ($targets as $t) {
+                    $status[$t] = 'uncertain';
+                }
+            } elseif ($yn === false) {
+                // Safe: global negation denies all probed findings.
+                foreach ($targets as $t) {
+                    $status[$t] = 'negative';
+                }
+            } elseif ($yn === true) {
+                // Bare affirmation is ambiguous for multi-finding OR questions.
+                foreach ($targets as $t) {
+                    $status[$t] = isset($geminiFs[$t]) && in_array($geminiFs[$t], ['positive', 'negative', 'uncertain'], true)
+                        ? $geminiFs[$t]
+                        : 'uncertain';
+                }
+            } else {
+                foreach ($targets as $t) {
+                    if (isset($geminiFs[$t])) {
+                        $status[$t] = $geminiFs[$t];
+                    } else {
+                        $status[$t] = 'not_assessed';
+                    }
+                }
+            }
+        }
+
+        $facts['finding_status'] = $status;
+        if (in_array('uncertain', $status, true)) {
+            $facts['patient_uncertain'] = true;
+        }
+
+        return self::syncFindingStatusSideEffects($facts, $status);
+    }
+
+    /**
+     * Detect which targeted findings are named in the answer, with local polarity when possible.
+     *
+     * @param list<string> $targets
+     * @return array<string, 'positive'|'negative'|'uncertain'>
+     */
+    private static function detectFindingMentionsInAnswer(string $answer, array $targets): array
+    {
+        $low = mb_strtolower(trim($answer));
+        if ($low === '' || $targets === []) {
+            return [];
+        }
+
+        $lex = self::findingLexicon();
+        $out = [];
+
+        // Split soft clauses on connectors (pero/but/while/and) for mixed polarity.
+        $clauses = preg_split('/\b(pero|but|while|however|and|,|;|at|kag)\b/ui', $low) ?: [$low];
+        $clauses = array_values(array_filter(array_map('trim', $clauses), static fn (string $c): bool => $c !== ''));
+        if ($clauses === []) {
+            $clauses = [$low];
+        }
+
+        foreach ($targets as $finding) {
+            $syns = $lex[$finding] ?? [str_replace('_', ' ', $finding)];
+            foreach ($clauses as $clause) {
+                $hit = false;
+                foreach ($syns as $syn) {
+                    $syn = mb_strtolower(trim((string) $syn));
+                    if ($syn === '') {
+                        continue;
+                    }
+                    if (str_contains($clause, $syn) || (bool) preg_match('/\b' . preg_quote($syn, '/') . '\b/u', $clause)) {
+                        $hit = true;
+                        break;
+                    }
+                }
+                if (!$hit) {
+                    continue;
+                }
+                $clauseUncertain = class_exists('ClinicalFeatureExtractors')
+                    && ClinicalFeatureExtractors::looksPatientUncertain($clause);
+                $clauseYn = class_exists('ClinicalFeatureExtractors')
+                    ? ClinicalFeatureExtractors::extractYesNo($clause)
+                    : null;
+                if ($clauseUncertain) {
+                    $out[$finding] = 'uncertain';
+                } elseif ($clauseYn === false) {
+                    $out[$finding] = 'negative';
+                } else {
+                    // Named without negation → positive presence.
+                    $out[$finding] = 'positive';
+                }
+                break;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Infer finding keys probed by a free-text clinical question (semantic synonyms).
+     *
+     * @return list<string>
+     */
+    private static function inferTargetedFindingsFromQuestion(string $question): array
+    {
+        $q = mb_strtolower(trim($question));
+        if ($q === '') {
+            return [];
+        }
+        $found = [];
+        foreach (self::findingLexicon() as $key => $syns) {
+            foreach ($syns as $syn) {
+                $syn = mb_strtolower(trim((string) $syn));
+                if ($syn === '') {
+                    continue;
+                }
+                if (str_contains($q, $syn) || (bool) preg_match('/\b' . preg_quote($syn, '/') . '\b/u', $q)) {
+                    $found[] = $key;
+                    break;
+                }
+            }
+        }
+
+        return array_values(array_unique($found));
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    private static function findingLexicon(): array
+    {
+        return [
+            'fever_confirmed' => ['fever', 'lagnat', 'hilanat', 'mainit ang lawas', 'mainit lawas', 'temperature', 'gilagnat'],
+            'vomiting' => ['vomit', 'vomiting', 'suka', 'nagsuka', 'throw up', 'nausea', 'kasukaon', 'ginsuka'],
+            'dizziness' => ['dizzy', 'dizziness', 'hilo', 'nahilo', 'lipong', 'punaw', 'faint', 'nahihilo', 'ginahilo'],
+            'breathing_difficulty' => ['breath', 'breathing', 'ginhawa', 'dyspnea', 'shortness of breath', 'huoy', 'ginahapo', 'hapo'],
+            'weakness' => ['weak', 'weakness', 'kaluya', 'numb', 'pamujod', 'lumpo', 'panghinay'],
+            'sweating' => ['sweat', 'sweating', 'pawis', 'nagapawis', 'diaphoresis'],
+            'chest_radiation' => ['radiat', 'radiation', 'spread to arm', 'jaw pain', 'kakagat'],
+            'bleeding_continuing' => ['bleed', 'bleeding', 'dugo', 'nagadugo', 'hemorrhage'],
+            'diarrhea' => ['diarrhea', 'diarrhoea', 'kalibang', 'tatae', 'loose stool', 'libang'],
+            'cough' => ['cough', 'ubo', 'nag-ubo', 'nagaubo'],
+            'headache' => ['headache', 'sakit ulo', 'ulo ko', 'head pain', 'masakit ang ulo'],
+            'rash' => ['rash', 'katol', 'gakatol', 'itch', 'kati', 'exanthem', 'pantal'],
+            'abdominal_pain' => ['stomach', 'tiyan', 'abdomen', 'abdominal', 'sakit tiyan'],
+            'chest_pain' => ['chest pain', 'sakit dughan', 'dibdib', 'dughan'],
+            'has_other_symptoms' => ['other symptom', 'iban nga sintomas', 'anything else', 'iba pa'],
+            'urinary_burning' => ['burning urine', 'arisgado pag-ihi', 'mahapdi pag-ihi', 'dysuria'],
+            'vision_change' => ['vision', 'blurry', 'malabo', 'sight', 'mata'],
+            'speech_difficulty' => ['speech', 'slurred', 'magpanghambal', 'nagsasalita'],
+        ];
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function normalizeFindingStatusValue(mixed $value): ?string
+    {
+        if ($value === true || $value === 1) {
+            return 'positive';
+        }
+        if ($value === false || $value === 0) {
+            return 'negative';
+        }
+        $s = strtolower(trim((string) $value));
+        return match ($s) {
+            'positive', 'pos', 'yes', 'true', 'present', '+' => 'positive',
+            'negative', 'neg', 'no', 'false', 'absent', '-' => 'negative',
+            'uncertain', 'unknown', 'unsure', 'maybe' => 'uncertain',
+            'not_assessed', 'not-assessed', 'na', 'pending', 'unassessed' => 'not_assessed',
+            default => null,
+        };
+    }
+
+    private static function normalizeFindingKey(string $raw): string
+    {
+        $k = strtolower(trim($raw));
+        if ($k === '') {
+            return '';
+        }
+        $k = str_replace([' ', '-', '/'], '_', $k);
+        $k = (string) preg_replace('/[^a-z0-9_]/', '', $k);
+        $aliases = [
+            'fever' => 'fever_confirmed',
+            'lagnat' => 'fever_confirmed',
+            'hilanat' => 'fever_confirmed',
+            'suka' => 'vomiting',
+            'vomit' => 'vomiting',
+            'hilo' => 'dizziness',
+            'dizzy' => 'dizziness',
+            'lipong' => 'dizziness',
+            'ginhawa' => 'breathing_difficulty',
+            'breathing' => 'breathing_difficulty',
+            'pawis' => 'sweating',
+            'sweat' => 'sweating',
+            'katol' => 'rash',
+            'itch' => 'rash',
+            'itching' => 'rash',
+            'ubo' => 'cough',
+            'kalibang' => 'diarrhea',
+        ];
+
+        return $aliases[$k] ?? $k;
+    }
+
+    /**
+     * @param mixed $list
+     * @return list<string>
+     */
+    private static function normalizeFindingKeyList(mixed $list): array
+    {
+        $out = [];
+        foreach (self::stringList(is_array($list) ? $list : []) as $item) {
+            $key = self::normalizeFindingKey($item);
+            if ($key !== '' && !in_array($key, $out, true)) {
+                $out[] = $key;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Mirror finding_status into legacy lists / provenance without inventing new findings.
+     *
+     * @param array<string, mixed> $facts
+     * @param array<string, string> $status
+     * @return array<string, mixed>
+     */
+    private static function syncFindingStatusSideEffects(array $facts, array $status): array
+    {
+        $assoc = self::stringList($facts['associated_symptoms'] ?? []);
+        $neg = self::stringList($facts['relevant_negatives'] ?? []);
+        $negSym = self::stringList($facts['negative_symptoms'] ?? []);
+        $patient = self::stringList($facts['symptoms_patient'] ?? []);
+
+        foreach ($status as $finding => $polarity) {
+            $label = str_replace('_', ' ', (string) $finding);
+            if ($polarity === 'positive') {
+                if (!in_array($label, $assoc, true) && $finding !== 'has_other_symptoms') {
+                    $assoc[] = $label;
+                }
+                if (!in_array($label, $patient, true) && $finding !== 'has_other_symptoms') {
+                    $patient[] = $label;
+                }
+                $neg = array_values(array_filter($neg, static fn (string $n): bool => mb_strtolower($n) !== mb_strtolower($label)));
+                $negSym = array_values(array_filter($negSym, static fn (string $n): bool => mb_strtolower($n) !== mb_strtolower($label)));
+            } elseif ($polarity === 'negative') {
+                if (!in_array($label, $neg, true)) {
+                    $neg[] = $label;
+                }
+                if (!in_array($label, $negSym, true)) {
+                    $negSym[] = $label;
+                }
+                $assoc = array_values(array_filter($assoc, static fn (string $n): bool => mb_strtolower($n) !== mb_strtolower($label)));
+                $patient = array_values(array_filter($patient, static fn (string $n): bool => mb_strtolower($n) !== mb_strtolower($label)));
+            }
+        }
+
+        $facts['associated_symptoms'] = $assoc;
+        $facts['relevant_negatives'] = $neg;
+        $facts['negative_symptoms'] = $negSym;
+        $facts['symptoms_patient'] = $patient;
+
+        return $facts;
+    }
+
+    /**
+     * @param array<string, mixed> $mapped
+     * @param array<string, string> $findingStatus
+     * @return array<string, mixed>
+     */
+    private static function applyFindingStatusToEngineBooleans(array $mapped, array $findingStatus): array
+    {
+        $direct = [
+            'fever_confirmed' => 'fever_confirmed',
+            'breathing_difficulty' => 'breathing_difficulty',
+            'weakness' => 'weakness',
+            'sweating' => 'sweating',
+            'sweating_with_chest' => 'sweating',
+            'chest_radiation' => 'chest_radiation',
+            'dizziness' => 'dizziness',
+            'vision_change' => 'vision_change',
+            'speech_difficulty' => 'speech_difficulty',
+            'bleeding_continuing' => 'bleeding_continuing',
+            'has_other_symptoms' => 'has_other_symptoms',
+        ];
+        foreach ($findingStatus as $finding => $polarity) {
+            if (!isset($direct[$finding])) {
+                continue;
+            }
+            if ($polarity === 'positive') {
+                $mapped[$direct[$finding]] = true;
+            } elseif ($polarity === 'negative') {
+                $mapped[$direct[$finding]] = false;
+            }
+            // uncertain / not_assessed → leave boolean unset
+        }
+
+        return $mapped;
     }
 
     /**
@@ -2135,6 +2649,14 @@ STRICT anti-hallucination:
 
 Pain severity: only when the patient clearly indicated pain (not assumed); collect 1–10 once; never ask pain score when pain was never stated.
 
+Multi-finding questions (critical):
+- When next_question asks about more than one clinical finding, set targeted_findings to the canonical keys for ONLY those findings (e.g. ["fever_confirmed","vomiting","dizziness"]).
+- On INTERPRET_ANSWER, update clinical_facts.finding_status ONLY for findings in the previous question's targeted_findings.
+- finding_status values: positive | negative | uncertain | not_assessed
+- Do not apply one yes/no blindly to unrelated findings that were not asked.
+- If the answer is ambiguous across multiple findings, mark only what is safely determined; leave the rest not_assessed or uncertain.
+- Preserve the patient's original wording in conversation; never invent findings.
+
 answer_status:
 - VALID — useful answer including clear yes/no/negative/short contextual replies
 - UNCERTAIN — patient unsure
@@ -2151,6 +2673,7 @@ Respond with JSON ONLY:
   "facts_supported_by_patient_wording": true,
   "normalized_health_concern": "",
   "answer_status": "VALID|UNCERTAIN|UNCLEAR|UNRELATED",
+  "targeted_findings": string[],
   "clinical_facts": {
     "symptom": string|null,
     "location": string|null,
@@ -2162,7 +2685,8 @@ Respond with JSON ONLY:
     "associated_symptoms": string[],
     "relevant_negatives": string[],
     "warning_signs": string[],
-    "notes": string[]
+    "notes": string[],
+    "finding_status": { "<finding_key>": "positive|negative|uncertain|not_assessed" }
   },
   "missing_information": string[],
   "question_needed": boolean,
@@ -2172,7 +2696,8 @@ Respond with JSON ONLY:
 
 For START_INTERVIEW: always include classification, patient_subject, is_human_patient_complaint, and confidence; interview fields only when HEALTH_RELATED with patient_subject=HUMAN.
 When patient_subject=NON_HUMAN: classification=NON_HEALTH_RELATED, empty clinical_facts, question_needed=false, interview_sufficient=false, next_question="".
-For INTERPRET_ANSWER: focus on answer_status, clinical_facts, extraction_confidence, facts_supported_by_patient_wording.
+For INTERPRET_ANSWER: focus on answer_status, clinical_facts (including finding_status for prior targeted_findings), extraction_confidence, facts_supported_by_patient_wording.
+When asking next_question, always populate targeted_findings for the findings that question probes.
 PROMPT;
     }
 
