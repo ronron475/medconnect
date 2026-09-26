@@ -10,7 +10,7 @@ final class CohereRerankClient
 {
     private const ENDPOINT = 'https://api.cohere.com/v2/rerank';
     private const DEFAULT_MODEL = 'rerank-v3.5';
-    private const TIMEOUT = 12;
+    private const TIMEOUT = 45;
 
     private static string $lastError = '';
 

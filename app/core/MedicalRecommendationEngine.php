@@ -136,8 +136,9 @@ final class MedicalRecommendationEngine
                 $items[] = 'You may follow these tips on your own. If you would like to consult a licensed doctor, you may book an appointment anytime.';
             } else {
                 // No reliable CSV/Cohere match — do not invent generic/unrelated tips.
-                $items[] = 'No specific self-care tip matched this complaint with enough confidence.';
-                $items[] = 'A licensed healthcare provider should review before any home-care guidance is shared with the patient.';
+                // These lines must never be provider-approved as patient Care Tips.
+                $items[] = SelfCareRemediesLoader::NO_MATCH_PRIMARY;
+                $items[] = SelfCareRemediesLoader::NO_MATCH_SECONDARY;
             }
         } elseif ($class === 'URGENT') {
             $items[] = (string) ($classification['recommended_action'] ?? 'Consult a healthcare provider within 24 hours.');
