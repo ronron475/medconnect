@@ -33,13 +33,14 @@ if ($method === 'GET' && $action === 'download') {
     ");
     $stmt->execute([$id, 'success']);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row || ($row['backup_type'] ?? '') === 'restore' || !is_readable($row['file_path'])) {
+    $safePath = $row ? superadmin_backup_resolve_safe_path((string) ($row['file_path'] ?? '')) : null;
+    if (!$row || ($row['backup_type'] ?? '') === 'restore' || $safePath === null) {
         http_response_code(404);
         die('Backup not found.');
     }
     header('Content-Type: application/sql');
     header('Content-Disposition: attachment; filename="' . basename($row['filename']) . '"');
-    readfile($row['file_path']);
+    readfile($safePath);
     exit;
 }
 

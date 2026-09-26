@@ -5,6 +5,7 @@
  * POST — transcribe short audio (webm/wav/mp3) when browser STT is unavailable.
  */
 require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
+require_once BASE_PATH . '/app/includes/upload_security.php';
 
 Api::startJson();
 
@@ -33,21 +34,25 @@ if ($method !== 'POST') {
 }
 
 $audio = $_FILES['audio'] ?? null;
-if (!$audio || empty($audio['tmp_name']) || !is_uploaded_file($audio['tmp_name'])) {
+if (!$audio) {
     Api::error('Audio file is required.');
 }
 
 $maxBytes = 2 * 1024 * 1024;
-if ((int) ($audio['size'] ?? 0) > $maxBytes) {
-    Api::error('Audio is too large. Please keep recordings under 25 seconds.');
-}
-
-$allowed = ['audio/webm', 'audio/wav', 'audio/x-wav', 'audio/mpeg', 'audio/mp3', 'audio/ogg', 'video/webm'];
-$mime = (string) ($audio['type'] ?? 'audio/webm');
-$name = (string) ($audio['name'] ?? 'faq_voice.webm');
-$ext  = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-if (!in_array($mime, $allowed, true) && !in_array($ext, ['webm', 'wav', 'mp3', 'ogg', 'm4a'], true)) {
-    Api::error('Unsupported audio format.');
+$validated = upload_security_validate($audio, [
+    'audio/webm' => 'webm',
+    'video/webm' => 'webm',
+    'audio/wav' => 'wav',
+    'audio/x-wav' => 'wav',
+    'audio/mpeg' => 'mp3',
+    'audio/mp3' => 'mp3',
+    'audio/ogg' => 'ogg',
+    'application/ogg' => 'ogg',
+    'audio/mp4' => 'm4a',
+    'audio/x-m4a' => 'm4a',
+], $maxBytes);
+if (!$validated['ok']) {
+    Api::error($validated['message']);
 }
 
 require_once BASE_PATH . '/app/includes/rate_limiter.php';
@@ -69,9 +74,9 @@ try {
 }
 
 $data = AiServiceClient::transcribeFile(
-    $audio['tmp_name'],
-    $mime ?: 'audio/webm',
-    $name ?: 'faq_voice.webm',
+    $validated['tmp'],
+    $validated['mime'],
+    'faq_voice.' . $validated['ext'],
     'audio'
 );
 

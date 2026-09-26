@@ -13,6 +13,67 @@ function superadmin_backup_dir(): string
     return $dir;
 }
 
+/**
+ * Resolve a backup filesystem path and ensure it is a real file under storage/backups.
+ * Rejects path traversal, symlinks that escape the backup dir, and non-files.
+ *
+ * @return string|null Canonical absolute path, or null if unsafe/missing
+ */
+function superadmin_backup_resolve_safe_path(string $path): ?string
+{
+    $path = trim($path);
+    if ($path === '') {
+        return null;
+    }
+
+    // Reject obvious traversal / NUL before filesystem calls.
+    if (str_contains($path, "\0") || preg_match('#(^|[\\\\/])\.\.([\\\\/]|$)#', $path)) {
+        return null;
+    }
+
+    $backupDir = superadmin_backup_dir();
+    $backupReal = realpath($backupDir);
+    if ($backupReal === false || !is_dir($backupReal)) {
+        return null;
+    }
+
+    // Resolve relative paths against the backup directory only.
+    if (!preg_match('#^(?:[a-zA-Z]:[\\\\/]|/)#', $path)) {
+        $path = $backupReal . DIRECTORY_SEPARATOR . ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+    }
+
+    // Reject symlink leaf before realpath follows it (defense in depth).
+    if (is_link($path)) {
+        return null;
+    }
+
+    $resolved = realpath($path);
+    if ($resolved === false || !is_file($resolved) || !is_readable($resolved)) {
+        return null;
+    }
+
+    if (is_link($resolved)) {
+        return null;
+    }
+
+    $backupNorm = rtrim(str_replace('\\', '/', $backupReal), '/');
+    $resolvedNorm = str_replace('\\', '/', $resolved);
+    if ($resolvedNorm !== $backupNorm && !str_starts_with($resolvedNorm, $backupNorm . '/')) {
+        return null;
+    }
+
+    // Filename must look like a SQL backup (created by this app).
+    $base = basename($resolved);
+    if ($base === '' || $base === '.' || $base === '..') {
+        return null;
+    }
+    if (!preg_match('/\.sql$/i', $base)) {
+        return null;
+    }
+
+    return $resolved;
+}
+
 /** @return array{enabled:bool,frequency:string,hour:int,weekday:int,retention_count:int,last_auto_at:?string,last_auto_status:?string,last_auto_message:?string} */
 function superadmin_backup_settings(PDO $pdo): array
 {
@@ -419,7 +480,7 @@ function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
     $stmt = $pdo->prepare('SELECT * FROM backup_logs WHERE id = ? LIMIT 1');
     $stmt->execute([$backupId]);
     $backup = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$backup || empty($backup['file_path']) || !is_readable($backup['file_path'])) {
+    if (!$backup || empty($backup['file_path'])) {
         return ['success' => false, 'message' => 'Backup file not found.'];
     }
     if (($backup['backup_type'] ?? '') === 'restore') {
@@ -429,7 +490,21 @@ function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
         return ['success' => false, 'message' => 'Only successful backups can be restored.'];
     }
 
-    $sql = file_get_contents($backup['file_path']);
+    $safePath = superadmin_backup_resolve_safe_path((string) $backup['file_path']);
+    if ($safePath === null) {
+        superadmin_security_log(
+            $pdo,
+            'database_restore',
+            'backup',
+            'failure',
+            "Restore rejected unsafe path for backup #{$backupId}",
+            $userId,
+            'superadmin'
+        );
+        return ['success' => false, 'message' => 'Backup file not found or not allowed.'];
+    }
+
+    $sql = file_get_contents($safePath);
     if ($sql === false || $sql === '') {
         return ['success' => false, 'message' => 'Backup file is empty.'];
     }
@@ -449,7 +524,7 @@ function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
             VALUES (?, ?, ?, ?, ?, ?, NOW())
         ')->execute([
             $backup['filename'],
-            $backup['file_path'],
+            $safePath,
             'restore',
             'success',
             $userId,

@@ -959,6 +959,10 @@ final class FaqChatbotOrchestrator
         if ($responseHtml !== '' && class_exists('FaqChatbotAiFallback')) {
             $responseHtml = FaqChatbotAiFallback::sanitizePatientFacingHtml($responseHtml, $lang);
         }
+        $empathyHtml = (string) ($emotionResult['empathy_html'] ?? '');
+        if ($empathyHtml !== '' && class_exists('FaqChatbotHtmlSanitizer')) {
+            $empathyHtml = FaqChatbotHtmlSanitizer::sanitize($empathyHtml);
+        }
         return [
             'session_id'                   => $sessionId,
             'conversation_id'              => $conversationId,
@@ -973,7 +977,7 @@ final class FaqChatbotOrchestrator
             'emergency'                    => (bool) $emergency['is_emergency'],
             'emergency_flow'               => $emergency['flow'] ?? null,
             'response_html'                => $responseHtml,
-            'empathy_html'                 => $emotionResult['empathy_html'] ?? '',
+            'empathy_html'                 => $empathyHtml,
             'suggestions'                  => $suggestions,
             'typing_ms'                    => $typingMs,
             'use_server_response'          => $useServer && ($mode === 'full' || $mode === 'assist'),

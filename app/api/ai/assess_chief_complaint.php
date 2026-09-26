@@ -4,9 +4,11 @@
  * Shared by CDS demo, patient registration Step 3, BHW, and patient portal.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
+require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 
 Api::startJson();
 Api::requirePost();
+ai_endpoint_rate_limit('ai_assess_chief_complaint', 30, 60);
 
 set_time_limit(210);
 
@@ -20,7 +22,8 @@ if (!is_array($symptoms)) {
     $symptoms = [];
 }
 
-$debugMode = filter_var($_POST['debug'] ?? $_GET['debug'] ?? getenv('MEDCONNECT_NLP_DEBUG'), FILTER_VALIDATE_BOOLEAN);
+$debugRequested = filter_var($_POST['debug'] ?? $_GET['debug'] ?? false, FILTER_VALIDATE_BOOLEAN);
+$debugMode = $debugRequested && ai_endpoint_can_expose_debug();
 if ($debugMode) {
     NlpPipelineDebug::enable(true);
     NlpPipelineDebug::reset();
@@ -49,7 +52,7 @@ Api::success([
     'summary'          => $summary,
     'clinical_urgency' => $clinicalUrgency,
     'registration'     => $registration,
-    'pipeline_debug'   => NlpPipelineDebug::isEnabled() ? NlpPipelineDebug::trace() : null,
-    'service'          => AiServiceClient::connectionStatus(),
+    'pipeline_debug'   => $debugMode ? NlpPipelineDebug::trace() : null,
+    'service'          => ai_endpoint_public_connection_status(AiServiceClient::connectionStatus()),
     'engine_chain'     => ChiefComplaintNlpService::ENGINE_CHAIN,
 ], 'Chief complaint analysis complete.');

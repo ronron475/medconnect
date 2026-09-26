@@ -5,8 +5,10 @@
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once BASE_PATH . '/app/includes/ai_providers.php';
+require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 
 Api::startJson();
+ai_endpoint_rate_limit('ai_gemini_health', 30, 60);
 
 $body = null;
 if (defined('AI_SERVICE_BASE_URL') && AI_SERVICE_BASE_URL !== '' && function_exists('curl_init')) {
@@ -31,25 +33,29 @@ if (defined('AI_SERVICE_BASE_URL') && AI_SERVICE_BASE_URL !== '' && function_exi
 
 if (is_array($body)) {
     $online = !empty($body['gemini']) || (($body['status'] ?? '') === 'online');
-    Api::success([
+    $payload = [
         'gemini'     => $online,
         'provider'   => $online ? 'gemini' : null,
-        'model'      => (string) ($body['model'] ?? ai_providers_gemini_model()),
         'status'     => $online ? 'online' : (string) ($body['status'] ?? 'offline'),
         'configured' => ai_providers_gemini_key_configured(),
-        'error'      => $body['error'] ?? null,
-        'python'     => $body,
-    ]);
+    ];
+    if (ai_endpoint_can_expose_debug()) {
+        $payload['model'] = (string) ($body['model'] ?? ai_providers_gemini_model());
+        $payload['error'] = $body['error'] ?? null;
+    }
+    Api::success($payload);
     exit;
 }
 
 $test = ai_providers_test_gemini(true);
-Api::success([
+$payload = [
     'gemini'     => (bool) ($test['ok'] ?? false),
     'provider'   => ($test['ok'] ?? false) ? 'gemini' : null,
-    'model'      => (string) ($test['model'] ?? ai_providers_gemini_model()),
     'status'     => (string) ($test['status'] ?? 'offline'),
     'configured' => ai_providers_gemini_key_configured(),
-    'error'      => ($test['ok'] ?? false) ? null : (string) ($test['message'] ?? 'Gemini unavailable'),
-    'python'     => null,
-]);
+];
+if (ai_endpoint_can_expose_debug()) {
+    $payload['model'] = (string) ($test['model'] ?? ai_providers_gemini_model());
+    $payload['error'] = ($test['ok'] ?? false) ? null : 'Gemini unavailable';
+}
+Api::success($payload);

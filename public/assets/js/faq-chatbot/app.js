@@ -149,6 +149,11 @@
       const html = sessionStorage.getItem(HISTORY_KEY);
       if (!html || !html.trim()) return false;
       messagesEl.innerHTML = html;
+      if (UI && typeof UI.sanitizeFaqHtml === 'function') {
+        messagesEl.querySelectorAll('.fcb-msg--bot .fcb-msg__bubble').forEach((el) => {
+          el.innerHTML = UI.sanitizeFaqHtml(el.innerHTML);
+        });
+      }
       inConversation = true;
       UI.scrollToBottom(messagesEl);
       return true;
@@ -450,17 +455,22 @@
   function sanitizePatientHtml(html, lang) {
     const raw = String(html || '');
     const plain = raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    if (!plain) return raw;
+    const sanitize = (UI && typeof UI.sanitizeFaqHtml === 'function')
+      ? UI.sanitizeFaqHtml
+      : (h) => String(h || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (!plain) return sanitize(raw);
     const looksInternal = /is_healthcare_related|isHealthcareRelated|"intent"\s*:|normalized_meaning|"confidence"\s*:/i.test(plain)
       && /[\{["]/.test(plain);
-    if (!looksInternal) return raw;
+    if (!looksInternal) return sanitize(raw);
 
     if (/is_healthcare_related"\s*:\s*false|isHealthcareRelated"\s*:\s*false|"classification"\s*:\s*"NON_HEALTH/i.test(plain)) {
       if (/"classification"\s*:\s*"UNCLEAR"/i.test(plain)) {
-        return Engine.getFlow('message_unclear', lang || 'en').html;
+        return sanitize(Engine.getFlow('message_unclear', lang || 'en').html);
       }
-      return Engine.getFlow('domain_non_health', lang || 'en').html
-        || Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+      return sanitize(
+        Engine.getFlow('domain_non_health', lang || 'en').html
+        || Engine.getFlow('domain_out_of_scope', lang || 'en').html
+      );
     }
 
     const match = plain.match(/\{[\s\S]*\}/);
@@ -470,25 +480,28 @@
         if (decoded && typeof decoded === 'object') {
           const reply = String(decoded.reply || decoded.response || decoded.text || '').trim();
           if (reply && !/is_healthcare_related|normalized_meaning|"intent"\s*:/i.test(reply)) {
-            return reply.includes('<') ? reply : `<p>${reply.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+            const asHtml = reply.includes('<') ? reply : `<p>${reply.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+            return sanitize(asHtml);
           }
           if (decoded.is_healthcare_related === false || decoded.isHealthcareRelated === false
             || decoded.classification === 'NON_HEALTH_RELATED' || decoded.classification === 'NON_HEALTHCARE') {
-            return Engine.getFlow('domain_non_health', lang || 'en').html
-              || Engine.getFlow('domain_out_of_scope', lang || 'en').html;
+            return sanitize(
+              Engine.getFlow('domain_non_health', lang || 'en').html
+              || Engine.getFlow('domain_out_of_scope', lang || 'en').html
+            );
           }
           if (decoded.classification === 'UNCLEAR') {
-            return Engine.getFlow('message_unclear', lang || 'en').html;
+            return sanitize(Engine.getFlow('message_unclear', lang || 'en').html);
           }
           if (decoded.classification === 'HEALTH_RELATED' || decoded.classification === 'HEALTHCARE'
             || decoded.is_healthcare_related === true || decoded.isHealthcareRelated === true) {
-            return Engine.getFlow('healthcare_unmatched', lang || 'en').html;
+            return sanitize(Engine.getFlow('healthcare_unmatched', lang || 'en').html);
           }
         }
       } catch (_) { /* ignore malformed JSON */ }
     }
 
-    return Engine.getFlow('message_unclear', lang || 'en').html;
+    return sanitize(Engine.getFlow('message_unclear', lang || 'en').html);
   }
 
   function deliverFromPhp(meta, lang) {

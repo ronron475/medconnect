@@ -17,6 +17,131 @@
     return el.innerHTML;
   }
 
+  const ALLOWED_TAGS = {
+    P: 1, BR: 1, DIV: 1, SPAN: 1, STRONG: 1, EM: 1, B: 1, I: 1, U: 1,
+    SMALL: 1, UL: 1, OL: 1, LI: 1,
+  };
+  const FORBIDDEN_TAGS = {
+    SCRIPT: 1, STYLE: 1, IFRAME: 1, OBJECT: 1, EMBED: 1, LINK: 1, META: 1,
+    BASE: 1, FORM: 1, INPUT: 1, BUTTON: 1, TEXTAREA: 1, SELECT: 1, OPTION: 1,
+    SVG: 1, MATH: 1, VIDEO: 1, AUDIO: 1, SOURCE: 1, IMG: 1, PICTURE: 1,
+    CANVAS: 1, TEMPLATE: 1, NOSCRIPT: 1, APPLET: 1, FRAME: 1, FRAMESET: 1,
+  };
+  const ALLOWED_ROLES = { note: 1, alert: 1, status: 1, presentation: 1 };
+
+  function filterFaqClasses(value) {
+    return String(value || '')
+      .split(/\s+/)
+      .filter((t) => /^fcb-[\w-]+$/.test(t))
+      .filter((t, i, a) => a.indexOf(t) === i)
+      .join(' ');
+  }
+
+  function sanitizeFaqAttrs(el) {
+    const names = Array.from(el.attributes || []).map((a) => a.name);
+    names.forEach((name) => {
+      const lname = name.toLowerCase();
+      const value = el.getAttribute(name) || '';
+      if (
+        lname.startsWith('on')
+        || lname === 'style'
+        || lname === 'href'
+        || lname === 'src'
+        || lname === 'srcset'
+        || lname === 'xlink:href'
+        || lname === 'formaction'
+        || lname === 'action'
+        || lname === 'poster'
+      ) {
+        el.removeAttribute(name);
+        return;
+      }
+      if (lname === 'class') {
+        const safe = filterFaqClasses(value);
+        if (safe) el.setAttribute('class', safe);
+        else el.removeAttribute(name);
+        return;
+      }
+      if (lname === 'data-kb-key') {
+        if (/^[\w.-]{1,80}$/.test(value)) el.setAttribute('data-kb-key', value);
+        else el.removeAttribute(name);
+        return;
+      }
+      if (lname === 'aria-hidden') {
+        const v = value.toLowerCase().trim();
+        if (v === 'true' || v === 'false') el.setAttribute('aria-hidden', v);
+        else el.removeAttribute(name);
+        return;
+      }
+      if (lname === 'lang') {
+        const v = value.trim();
+        if (/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/i.test(v)) el.setAttribute('lang', v.toLowerCase());
+        else el.removeAttribute(name);
+        return;
+      }
+      if (lname === 'role') {
+        const v = value.toLowerCase().trim();
+        if (ALLOWED_ROLES[v]) el.setAttribute('role', v);
+        else el.removeAttribute(name);
+        return;
+      }
+      el.removeAttribute(name);
+    });
+  }
+
+  function sanitizeFaqElement(el) {
+    const children = Array.from(el.childNodes);
+    children.forEach((child) => {
+      if (child.nodeType === Node.TEXT_NODE || child.nodeType === Node.CDATA_SECTION_NODE) {
+        return;
+      }
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        el.removeChild(child);
+        return;
+      }
+      const tag = child.tagName;
+      if (FORBIDDEN_TAGS[tag]) {
+        el.removeChild(child);
+        return;
+      }
+      sanitizeFaqElement(child);
+      if (!ALLOWED_TAGS[tag]) {
+        while (child.firstChild) {
+          el.insertBefore(child.firstChild, child);
+        }
+        el.removeChild(child);
+        return;
+      }
+      sanitizeFaqAttrs(child);
+    });
+  }
+
+  /**
+   * Allowlist sanitizer for bot FAQ HTML before innerHTML insertion.
+   * Strips scripts/handlers; keeps safe formatting and fcb-* layout classes.
+   */
+  function sanitizeFaqHtml(html) {
+    const raw = String(html == null ? '' : html);
+    if (!raw.trim()) return '';
+    if (typeof DOMParser === 'undefined') {
+      return esc(raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+    }
+    try {
+      const doc = new DOMParser().parseFromString(
+        `<div id="fcb-sanitize-root">${raw}</div>`,
+        'text/html'
+      );
+      const root = doc.getElementById('fcb-sanitize-root');
+      if (!root) {
+        return esc(raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+      }
+      sanitizeFaqElement(root);
+      return root.innerHTML;
+    } catch (_) {
+      return esc(raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+    }
+  }
+
   function formatTime(date) {
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   }
@@ -291,7 +416,7 @@
         </div>
         ${emergency ? `<div class="fcb-emergency-badge" role="alert"><span aria-hidden="true">⚠</span> ${esc(emergencyLabel(lang))}</div>` : ''}
         ${crisis ? `<div class="fcb-crisis-badge" role="alert"><span aria-hidden="true">🆘</span> ${esc(crisisLabel(lang))}</div>` : ''}
-        <div class="fcb-msg__bubble">${html}</div>
+        <div class="fcb-msg__bubble">${sanitizeFaqHtml(html)}</div>
       </div>
     `;
     row.appendChild(body);
@@ -386,5 +511,7 @@
     botName,
     emergencyLabel,
     crisisLabel,
+    sanitizeFaqHtml,
+    esc,
   };
 })(window);

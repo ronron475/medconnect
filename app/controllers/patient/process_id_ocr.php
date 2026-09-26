@@ -1878,7 +1878,8 @@ ob_clean(); echo json_encode([
     'id_state'             => $id_state,
     'middle_name_status'   => $middle_name_status,
     'errors'               => $errors,
-    'parsed_text'          => $parsed_text,
+    // Never return raw OCR text or debug payloads unless OCR_DEBUG is enabled locally.
+    'parsed_text'          => OCR_DEBUG ? $parsed_text : null,
     'extracted_id'         => $extracted_id_candidate,
     'ocr_debug'            => OCR_DEBUG ? $ocr_debug : null,
 ]);
