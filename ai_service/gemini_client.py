@@ -210,7 +210,8 @@ def generate_content(
     use_model = (model or "").strip() or gemini_model_name()
     if not use_model.startswith("gemini"):
         use_model = gemini_model_name()
-    wait = max(5, min(30, int(timeout if timeout is not None else (_env("AI_TIMEOUT") or "15"))))
+    # Demo interview prompts need headroom; Google 503 "high demand" also needs retries.
+    wait = max(5, min(60, int(timeout if timeout is not None else (_env("AI_TIMEOUT") or "30"))))
 
     body = dict(payload or {})
     try:
@@ -235,12 +236,54 @@ def generate_content(
                     raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from retry_exc
             else:
                 raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from exc
+        elif exc.code in {429, 500, 502, 503}:
+            # Match _ping_gemini: transient high-demand / overload (common on Flash).
+            import time
+
+            data = None
+            last_error: Exception = exc
+            for delay in (1.0, 2.0, 3.5):
+                time.sleep(delay)
+                try:
+                    data = _post_generate(body, use_model, key, wait)
+                    break
+                except Exception as retry_exc:
+                    last_error = retry_exc
+            if data is None:
+                detail = err_body or getattr(last_error, "reason", None) or str(last_error) or exc.reason
+                raise RuntimeError(f"Gemini HTTP {exc.code}: {detail}") from last_error
         else:
             raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from exc
     except urllib.error.URLError as exc:
-        raise RuntimeError(f"Gemini connection error: {exc.reason}") from exc
+        # One reconnect retry on read timeout / transient network.
+        import time
+
+        time.sleep(1.2)
+        try:
+            data = _post_generate(body, use_model, key, wait)
+        except Exception as retry_exc:
+            raise RuntimeError(f"Gemini connection error: {exc.reason}") from retry_exc
 
     text = _extract_gemini_text(data)
+    if not text:
+        # Flash can return empty candidates with finishReason=MAX_TOKENS when thinking
+        # config/token budget interferes — retry once without thinking + more room.
+        gen = body.get("generationConfig")
+        if isinstance(gen, dict):
+            gen2 = dict(gen)
+            gen2.pop("thinkingConfig", None)
+            try:
+                gen2["maxOutputTokens"] = max(int(gen2.get("maxOutputTokens") or 0), 1024)
+            except (TypeError, ValueError):
+                gen2["maxOutputTokens"] = 1024
+            body2 = dict(body)
+            body2["generationConfig"] = gen2
+            try:
+                data = _post_generate(body2, use_model, key, wait)
+                text = _extract_gemini_text(data)
+            except Exception:
+                pass
+
     return {
         "model": use_model,
         "text": text,
