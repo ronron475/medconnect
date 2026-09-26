@@ -14,7 +14,9 @@ from typing import Any
 
 logger = logging.getLogger("medconnect.faq_chatbot")
 
-DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+# Canonical key/model resolution lives in gemini_client (same as /api/gemini_health).
+from gemini_client import gemini_api_key as gemini_key, gemini_model_name as gemini_model
+
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 SYSTEM_PROMPT = """You are a SECONDARY comprehension classifier for the medConnect Assistant (City Health Office).
@@ -85,17 +87,6 @@ def _env(*names: str) -> str:
     return ""
 
 
-def gemini_key() -> str:
-    return _env("AI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY")
-
-
-def gemini_model() -> str:
-    model = _env("AI_MODEL")
-    if model.startswith("gemini"):
-        return model
-    return DEFAULT_GEMINI_MODEL
-
-
 def is_internal_classification_payload(text: str) -> bool:
     plain = re.sub(r"<[^>]+>", "", (text or "")).strip()
     if not plain:
@@ -113,7 +104,7 @@ def is_internal_classification_payload(text: str) -> bool:
 def sanitize_patient_html(text: str, lang: str = "en") -> str:
     plain = re.sub(r"<[^>]+>", "", (text or "")).strip()
     if not plain or not is_internal_classification_payload(plain):
-        return text or ""
+        return to_safe_html(text or "") if (text or "").strip() else ""
     match = re.search(r"\{[\s\S]*\}", plain)
     if match:
         try:

@@ -19,6 +19,7 @@ if (defined('MEDCONNECT_AI_PROVIDERS_LOADED')) {
 define('MEDCONNECT_AI_PROVIDERS_LOADED', true);
 
 require_once __DIR__ . '/system_settings.php';
+require_once __DIR__ . '/gemini_config.php';
 
 /** @return list<string> */
 function ai_providers_runtime_allowlist(): array
@@ -104,24 +105,19 @@ function ai_providers_catalog(): array
     ];
 }
 
+function ai_providers_gemini_api_key(): string
+{
+    return medconnect_gemini_api_key();
+}
+
 function ai_providers_gemini_key_configured(): bool
 {
-    foreach (['AI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'] as $key) {
-        $val = trim((string) (getenv($key) ?: ($_ENV[$key] ?? '')));
-        if ($val !== '') {
-            return true;
-        }
-    }
-    return false;
+    return medconnect_gemini_key_configured();
 }
 
 function ai_providers_gemini_model(): string
 {
-    $model = trim((string) (getenv('AI_MODEL') ?: ($_ENV['AI_MODEL'] ?? '')));
-    if ($model !== '' && str_starts_with(strtolower($model), 'gemini')) {
-        return $model;
-    }
-    return 'gemini-3.5-flash';
+    return medconnect_gemini_model();
 }
 
 function ai_providers_groq_model(): string
@@ -574,14 +570,7 @@ function ai_providers_test_gemini(bool $force = true): array
     }
 
     // Direct Gemini generateContent ping (same env keys + endpoint as gemini_client.py).
-    $key = '';
-    foreach (['AI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'] as $envKey) {
-        $val = trim((string) (getenv($envKey) ?: ($_ENV[$envKey] ?? '')));
-        if ($val !== '') {
-            $key = $val;
-            break;
-        }
-    }
+    $key = ai_providers_gemini_api_key();
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/'
         . rawurlencode($model)
         . ':generateContent';

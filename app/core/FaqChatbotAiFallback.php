@@ -300,6 +300,12 @@ final class FaqChatbotAiFallback
     {
         $configured = trim(self::envString('AI_MODEL'));
         $provider = self::provider();
+        if ($provider === 'gemini') {
+            self::ensureGeminiConfig();
+            if (function_exists('medconnect_gemini_model')) {
+                return medconnect_gemini_model();
+            }
+        }
         if ($configured !== '') {
             $looksGemini = str_starts_with($configured, 'gemini');
             $looksGroq = str_starts_with($configured, 'llama')
@@ -742,9 +748,21 @@ final class FaqChatbotAiFallback
     }
 
     /**
-     * Replace leaked model JSON / routing metadata with a safe patient-facing HTML reply.
+     * Replace leaked model JSON / routing metadata with a safe patient-facing HTML reply,
+     * then allowlist-sanitize so stored/reflected FAQ content cannot execute JavaScript.
      */
     public static function sanitizePatientFacingHtml(string $html, string $lang = 'en'): string
+    {
+        $resolved = self::resolvePatientFacingHtml($html, $lang);
+        return class_exists('FaqChatbotHtmlSanitizer')
+            ? FaqChatbotHtmlSanitizer::sanitize($resolved)
+            : self::toSafeHtml(strip_tags($resolved));
+    }
+
+    /**
+     * @internal Resolve internal classification payloads before HTML allowlist sanitization.
+     */
+    private static function resolvePatientFacingHtml(string $html, string $lang = 'en'): string
     {
         $plain = trim(strip_tags($html));
         if ($plain === '' || !self::isInternalClassificationPayload($plain)) {
@@ -803,6 +821,9 @@ final class FaqChatbotAiFallback
         if (self::isInternalClassificationPayload($text)) {
             return '';
         }
+        if (class_exists('FaqChatbotHtmlSanitizer')) {
+            return FaqChatbotHtmlSanitizer::sanitize($text);
+        }
         $text = preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;
         $parts = preg_split('/\n\s*\n/', $text) ?: [$text];
         $html = '';
@@ -819,7 +840,20 @@ final class FaqChatbotAiFallback
 
     private static function geminiKey(): string
     {
-        return trim(self::envString('GEMINI_API_KEY', self::envString('GOOGLE_API_KEY', self::envString('AI_API_KEY'))));
+        self::ensureGeminiConfig();
+
+        return medconnect_gemini_api_key();
+    }
+
+    private static function ensureGeminiConfig(): void
+    {
+        if (function_exists('medconnect_gemini_api_key')) {
+            return;
+        }
+        $path = dirname(__DIR__) . '/includes/gemini_config.php';
+        if (is_file($path)) {
+            require_once $path;
+        }
     }
 
     private static function groqKey(): string
@@ -878,7 +912,10 @@ final class FaqChatbotAiFallback
             throw new RuntimeException('empty railway faq reply');
         }
         $classification = self::normalizeClassification((string) ($data['classification'] ?? ''));
-        $html = strip_tags(trim((string) ($data['html'] ?? '')), '<p><br>');
+        $htmlRaw = trim((string) ($data['html'] ?? ''));
+        $html = class_exists('FaqChatbotHtmlSanitizer')
+            ? FaqChatbotHtmlSanitizer::sanitize($htmlRaw)
+            : self::toSafeHtml($htmlRaw);
         $raw = trim((string) ($data['raw'] ?? strip_tags($html)));
         $confidence = isset($data['confidence']) ? (float) $data['confidence'] : null;
         if ($raw !== '') {

@@ -14,10 +14,135 @@ final class GisDashboardService
     /** @var list<string>|null */
     private ?array $patientRegistrationColumns = null;
 
+    /** Tables the GIS layer may probe or reference by name. */
+    private const ALLOWED_TABLES = [
+        'patient_locations',
+        'patient_registrations',
+        'users',
+        'barangays',
+        'triage_results',
+        'consultations',
+        'consultation_clinical_support',
+        'appointment_slots',
+        'digital_referrals',
+        'patient_medical_update_requests',
+    ];
+
+    /** patient_registrations columns that may appear as SQL identifiers. */
+    private const ALLOWED_REGISTRATION_COLUMNS = [
+        'purok',
+        'sitio',
+        'house_number',
+        'street',
+        'age',
+        'gender',
+        'registered_by_bhw_id',
+    ];
+
+    /** patient_locations columns that may appear as SQL identifiers. */
+    private const ALLOWED_PATIENT_LOCATION_COLUMNS = [
+        'location_accuracy',
+        'address_confidence',
+        'canonical_barangay',
+    ];
+
+    /** Columns allowed in aggregateByField / topValue (pr.<col>). */
+    private const ALLOWED_AGGREGATION_COLUMNS = [
+        'province',
+        'city_municipality',
+        'barangay',
+    ];
+
+    /** Safe patient-id expressions for subquery interpolation (not user input). */
+    private const ALLOWED_PATIENT_ID_EXPRS = [
+        'u.id',
+    ];
+
+    /** Table aliases allowed inside generated GIS SQL fragments. */
+    private const ALLOWED_TABLE_ALIASES = [
+        'tr',
+        'ccs',
+        'u',
+        'pr',
+        'pl',
+        'c',
+        'b',
+        'd',
+        'vc',
+        'prw',
+    ];
+
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
         $this->ensureTriageSchema();
+    }
+
+    /**
+     * Resolve an allowlisted aggregation column, or null when rejected.
+     * Used by aggregateByField / topValue and by security tests.
+     */
+    public static function resolveAggregationColumn(string $field): ?string
+    {
+        $field = trim($field);
+
+        return in_array($field, self::ALLOWED_AGGREGATION_COLUMNS, true) ? $field : null;
+    }
+
+    /**
+     * Resolve an allowlisted registration column identifier, or null when rejected.
+     */
+    public static function resolveRegistrationColumn(string $column): ?string
+    {
+        $column = trim($column);
+
+        return in_array($column, self::ALLOWED_REGISTRATION_COLUMNS, true) ? $column : null;
+    }
+
+    /**
+     * Resolve an allowlisted patient_locations column identifier, or null when rejected.
+     */
+    public static function resolvePatientLocationColumn(string $column): ?string
+    {
+        $column = trim($column);
+
+        return in_array($column, self::ALLOWED_PATIENT_LOCATION_COLUMNS, true) ? $column : null;
+    }
+
+    /**
+     * Resolve an allowlisted GIS table name, or null when rejected.
+     */
+    public static function resolveTableName(string $table): ?string
+    {
+        $table = trim($table);
+
+        return in_array($table, self::ALLOWED_TABLES, true) ? $table : null;
+    }
+
+    /**
+     * Resolve a safe patient-id SQL expression (literal u.id or unsigned digits).
+     */
+    public static function resolvePatientIdExpr(string $patientIdExpr): ?string
+    {
+        $patientIdExpr = trim($patientIdExpr);
+        if (in_array($patientIdExpr, self::ALLOWED_PATIENT_ID_EXPRS, true)) {
+            return $patientIdExpr;
+        }
+        if (preg_match('/^\d+$/', $patientIdExpr) === 1) {
+            return $patientIdExpr;
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve an allowlisted SQL table alias, or null when rejected.
+     */
+    public static function resolveTableAlias(string $alias): ?string
+    {
+        $alias = trim($alias);
+
+        return in_array($alias, self::ALLOWED_TABLE_ALIASES, true) ? $alias : null;
     }
 
     private function appBasePath(): string
@@ -37,20 +162,19 @@ final class GisDashboardService
 
     public function tableExists(string $table): bool
     {
-        $table = preg_replace('/[^a-z0-9_]/i', '', $table);
-        if ($table === '') {
+        $allowed = self::resolveTableName($table);
+        if ($allowed === null) {
             return false;
         }
 
-        // MariaDB/MySQL do not allow bound parameters in SHOW TABLES LIKE.
-        $stmt = $this->pdo->query(
+        // Bound as a value in information_schema (not as a SQL identifier).
+        $stmt = $this->pdo->prepare(
             'SELECT 1 FROM information_schema.tables
-             WHERE table_schema = DATABASE() AND table_name = '
-            . $this->pdo->quote($table)
-            . ' LIMIT 1'
+             WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1'
         );
+        $stmt->execute([$allowed]);
 
-        return (bool) $stmt?->fetchColumn();
+        return (bool) $stmt->fetchColumn();
     }
 
     public function ensureSchema(): void
@@ -124,9 +248,14 @@ final class GisDashboardService
         ];
 
         foreach ($columns as $name => $definition) {
-            if (!$this->columnExists('patient_locations', $name)) {
+            $safeName = self::resolvePatientLocationColumn($name);
+            if ($safeName === null) {
+                continue;
+            }
+            if (!$this->columnExists('patient_locations', $safeName)) {
                 try {
-                    $this->pdo->exec("ALTER TABLE patient_locations ADD COLUMN {$name} {$definition}");
+                    // Identifiers come only from the allowlisted map above.
+                    $this->pdo->exec("ALTER TABLE patient_locations ADD COLUMN {$safeName} {$definition}");
                 } catch (Throwable $e) {
                     // Non-fatal for partial migrations.
                 }
@@ -169,15 +298,25 @@ final class GisDashboardService
 
     private function registrationColumnExpr(string $column, string $fallback = "''"): string
     {
-        return in_array($column, $this->patientRegistrationColumns(), true)
-            ? 'pr.' . $column
+        $safe = self::resolveRegistrationColumn($column);
+        if ($safe === null) {
+            return $fallback;
+        }
+
+        return in_array($safe, $this->patientRegistrationColumns(), true)
+            ? 'pr.' . $safe
             : $fallback;
     }
 
     private function patientLocationColumnExpr(string $column, string $fallback = 'NULL'): string
     {
-        return $this->columnExists('patient_locations', $column)
-            ? 'pl.' . $column
+        $safe = self::resolvePatientLocationColumn($column);
+        if ($safe === null) {
+            return $fallback;
+        }
+
+        return $this->columnExists('patient_locations', $safe)
+            ? 'pl.' . $safe
             : $fallback;
     }
 
@@ -918,13 +1057,16 @@ final class GisDashboardService
      */
     private function aggregateByField(string $field): array
     {
+        $column = self::resolveAggregationColumn($field);
+        if ($column === null) {
+            return [];
+        }
         if (!$this->tableExists('patient_registrations')) {
             return [];
         }
 
-        $column = $field === 'city_municipality' ? 'city_municipality' : $field;
         $sql = "
-            SELECT COALESCE(NULLIF(TRIM(pr.$column), ''), 'Unknown') AS label, COUNT(*) AS count
+            SELECT COALESCE(NULLIF(TRIM(pr.{$column}), ''), 'Unknown') AS label, COUNT(*) AS count
             FROM users u
             INNER JOIN patient_registrations pr ON pr.email = u.email
             WHERE u.role = 'patient'
@@ -1093,6 +1235,10 @@ final class GisDashboardService
 
     private function latestDoctorOverrideSelectSql(string $patientIdExpr): string
     {
+        $patientIdExpr = self::resolvePatientIdExpr($patientIdExpr);
+        if ($patientIdExpr === null) {
+            return 'NULL';
+        }
         if (!$this->tableExists('consultation_clinical_support')) {
             return 'NULL';
         }
@@ -1114,6 +1260,10 @@ final class GisDashboardService
 
     private function latestDoctorOverrideAtSelectSql(string $patientIdExpr): string
     {
+        $patientIdExpr = self::resolvePatientIdExpr($patientIdExpr);
+        if ($patientIdExpr === null) {
+            return 'NULL';
+        }
         if (!$this->tableExists('consultation_clinical_support')) {
             return 'NULL';
         }
@@ -1128,6 +1278,10 @@ final class GisDashboardService
 
     private function latestAiTriageLevelSelectSql(string $patientIdExpr): string
     {
+        $patientIdExpr = self::resolvePatientIdExpr($patientIdExpr);
+        if ($patientIdExpr === null) {
+            return "'non_urgent'";
+        }
         if (!$this->tableExists('triage_results') || !$this->columnExists('triage_results', 'triage_level')) {
             return "'non_urgent'";
         }
@@ -1147,6 +1301,7 @@ final class GisDashboardService
 
     private function triageLevelSelectSql(string $patientIdExpr): string
     {
+        $patientIdExpr = self::resolvePatientIdExpr($patientIdExpr) ?? '0';
         $override = $this->latestDoctorOverrideSelectSql($patientIdExpr);
         $ai = $this->latestAiTriageLevelSelectSql($patientIdExpr);
         if ($override === 'NULL') {
@@ -1171,6 +1326,7 @@ final class GisDashboardService
 
     private function triageUpdatedSelectSql(string $patientIdExpr): string
     {
+        $patientIdExpr = self::resolvePatientIdExpr($patientIdExpr) ?? '0';
         $aiAt = 'NULL';
         if ($this->tableExists('triage_results')) {
             $aiAt = "(SELECT tr.assessed_at FROM triage_results tr
@@ -1355,6 +1511,7 @@ final class GisDashboardService
 
     private function emergencyWhereSql(string $alias = 'tr'): string
     {
+        $alias = self::resolveTableAlias($alias) ?? 'tr';
         if ($this->columnExists('triage_results', 'triage_level')) {
             return "COALESCE(NULLIF(TRIM({$alias}.triage_level), ''), 'non_urgent') = 'emergency'";
         }
@@ -1511,9 +1668,13 @@ final class GisDashboardService
 
     private function columnExists(string $table, string $column): bool
     {
-        $table = preg_replace('/[^a-z0-9_]/i', '', $table);
-        $column = preg_replace('/[^a-z0-9_]/i', '', $column);
-        if ($table === '' || $column === '') {
+        $allowedTable = self::resolveTableName($table);
+        if ($allowedTable === null) {
+            return false;
+        }
+        // Column names are bound as values to information_schema (not interpolated).
+        $column = preg_replace('/[^a-z0-9_]/i', '', $column) ?? '';
+        if ($column === '') {
             return false;
         }
 
@@ -1521,20 +1682,23 @@ final class GisDashboardService
             'SELECT 1 FROM information_schema.columns
              WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ? LIMIT 1'
         );
-        $stmt->execute([$table, $column]);
+        $stmt->execute([$allowedTable, $column]);
 
         return (bool) $stmt->fetchColumn();
     }
 
     private function topValue(string $field): string
     {
+        $column = self::resolveAggregationColumn($field);
+        if ($column === null) {
+            return '—';
+        }
         if (!$this->tableExists('patient_registrations')) {
             return '—';
         }
 
-        $column = $field === 'city_municipality' ? 'city_municipality' : $field;
         $sql = "
-            SELECT COALESCE(NULLIF(TRIM(pr.$column), ''), '') AS label, COUNT(*) AS total
+            SELECT COALESCE(NULLIF(TRIM(pr.{$column}), ''), '') AS label, COUNT(*) AS total
             FROM users u
             INNER JOIN patient_registrations pr ON pr.email = u.email
             WHERE u.role = 'patient'
