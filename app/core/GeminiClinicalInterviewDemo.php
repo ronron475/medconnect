@@ -2704,13 +2704,43 @@ PROMPT;
     private static function complete(string $userPrompt): string
     {
         self::ensureAiProviders();
-        $payload = self::requestPayload($userPrompt, true);
-        $res = self::generate($payload);
-        if ($res !== '') {
-            return $res;
+        $last = null;
+        // Prefer no thinkingConfig first (matches working FAQ Gemini path; avoids empty MAX_TOKENS).
+        // Then one more attempt after backoff for Gemini 503 / high-demand.
+        foreach ([false, false, false] as $i => $_unused) {
+            try {
+                $res = self::generate(self::requestPayload($userPrompt, false));
+                if ($res !== '') {
+                    return $res;
+                }
+            } catch (RuntimeException $e) {
+                $last = $e;
+                $msg = strtolower($e->getMessage());
+                $retryable = str_contains($msg, '503')
+                    || str_contains($msg, '429')
+                    || str_contains($msg, 'high demand')
+                    || str_contains($msg, 'unavailable')
+                    || str_contains($msg, 'empty railway')
+                    || str_contains($msg, 'railway gemini failed')
+                    || str_contains($msg, 'timeout')
+                    || str_contains($msg, 'timed out')
+                    || str_contains($msg, 'quota');
+                if ($i < 2 && $retryable) {
+                    usleep(1500000 * ($i + 1));
+                    continue;
+                }
+                if ($i < 2) {
+                    usleep(500000);
+                    continue;
+                }
+                throw $e;
+            }
         }
-        // Retry without thinkingConfig (some models reject it).
-        return self::generate(self::requestPayload($userPrompt, false));
+        if ($last instanceof RuntimeException) {
+            throw $last;
+        }
+
+        throw new RuntimeException('empty Gemini response');
     }
 
     /**
@@ -2762,11 +2792,12 @@ PROMPT;
             try {
                 return self::generateViaRailway($payload, $model);
             } catch (RuntimeException $e) {
+                $msg = strtolower($e->getMessage());
+                $thinkingReject = !empty($payload['generationConfig']['thinkingConfig'])
+                    && (str_contains($msg, 'gemini http 400') || str_contains($msg, 'thinking'));
                 if (self::apiKey() === '') {
-                    // Soft-fail thinkingConfig 400 so complete() can retry without it.
-                    if (str_contains($e->getMessage(), 'Gemini HTTP 400')
-                        && !empty($payload['generationConfig']['thinkingConfig'])
-                    ) {
+                    // Soft-fail so complete() can retry without thinkingConfig / after backoff.
+                    if ($thinkingReject || str_contains($msg, 'empty railway') || str_contains($msg, '503')) {
                         return '';
                     }
                     throw $e;
@@ -2824,9 +2855,17 @@ PROMPT;
         if (!class_exists('AiServiceClient')) {
             throw new RuntimeException('ai client missing');
         }
-        $data = AiServiceClient::geminiGenerateContent($payload, $model, 25);
+        $data = AiServiceClient::geminiGenerateContent($payload, $model, 45);
         if (!is_array($data)) {
-            throw new RuntimeException('empty railway gemini reply');
+            $hint = '';
+            if (method_exists('AiServiceClient', 'lastHttpError')) {
+                $hint = trim((string) AiServiceClient::lastHttpError());
+            }
+            throw new RuntimeException(
+                $hint !== ''
+                    ? ('railway gemini failed: ' . mb_substr($hint, 0, 220))
+                    : 'empty railway gemini reply'
+            );
         }
         $text = trim((string) ($data['text'] ?? ''));
         if ($text === '' && isset($data['response']) && is_array($data['response'])) {

@@ -18,7 +18,7 @@ class GeminiGenerateRequest(BaseModel):
 
     payload: dict[str, Any] = Field(default_factory=dict)
     model: str = ""
-    timeout: int = Field(default=15, ge=5, le=30)
+    timeout: int = Field(default=30, ge=5, le=60)
 
 
 async def _gemini_generate(body: GeminiGenerateRequest) -> dict:

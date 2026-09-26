@@ -5,6 +5,14 @@
 
 final class AiServiceClient
 {
+    /** Last non-2xx / transport error from postJson/httpPost (never includes secrets). */
+    private static string $lastHttpError = '';
+
+    public static function lastHttpError(): string
+    {
+        return self::$lastHttpError;
+    }
+
     public static function analyzeTranscript(string $transcript, int $consultationId = 0): ?array
     {
         $payload = ['transcript' => $transcript];
@@ -115,7 +123,7 @@ final class AiServiceClient
      */
     public static function geminiGenerateContent(array $payload, ?string $model = null, ?int $timeoutSeconds = null): ?array
     {
-        $timeout = max(5, min(30, (int) ($timeoutSeconds ?? 15)));
+        $timeout = max(5, min(60, (int) ($timeoutSeconds ?? 30)));
         $body = [
             'payload' => $payload,
             'timeout' => $timeout,
@@ -124,18 +132,40 @@ final class AiServiceClient
             $body['model'] = trim($model);
         }
 
-        $response = self::postJson(
-            AI_SERVICE_BASE_URL . '/gemini/generate',
-            $body,
-            $timeout
-        );
-        if ($response === null) {
-            // Backward-compatible path while Railway redeploys.
+        // Client-side retries for Gemini 503 high-demand (Railway may still be redeploying the proxy retry).
+        $response = null;
+        $attempts = 3;
+        for ($i = 0; $i < $attempts; $i++) {
+            if ($i > 0) {
+                usleep(1200000 * $i);
+            }
             $response = self::postJson(
-                AI_SERVICE_BASE_URL . '/nlp-step3-demo/gemini-generate',
+                AI_SERVICE_BASE_URL . '/gemini/generate',
                 $body,
                 $timeout
             );
+            if ($response === null) {
+                // Backward-compatible path while Railway redeploys.
+                $response = self::postJson(
+                    AI_SERVICE_BASE_URL . '/nlp-step3-demo/gemini-generate',
+                    $body,
+                    $timeout
+                );
+            }
+            $data = self::extractData($response);
+            if (is_array($data)) {
+                return $data;
+            }
+            $msg = strtolower(self::$lastHttpError);
+            $transient = $msg === ''
+                || str_contains($msg, '503')
+                || str_contains($msg, 'high demand')
+                || str_contains($msg, 'unavailable')
+                || str_contains($msg, 'timeout')
+                || str_contains($msg, 'timed out');
+            if (!$transient) {
+                break;
+            }
         }
 
         return self::extractData($response);
@@ -346,8 +376,11 @@ final class AiServiceClient
 
     private static function postJson(string $url, array $payload, int $timeout): ?array
     {
+        self::$lastHttpError = '';
         $json = json_encode($payload, JSON_UNESCAPED_UNICODE);
         if ($json === false) {
+            self::$lastHttpError = 'json_encode_failed';
+
             return null;
         }
 
@@ -414,11 +447,20 @@ final class AiServiceClient
                 curl_setopt_array($curl, $opts);
                 $body = curl_exec($curl);
                 $code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+                $cerr = curl_error($curl);
                 curl_close($curl);
                 if ($body !== false && $code >= 200 && $code < 300) {
                     return (string) $body;
                 }
+                $preview = is_string($body) ? trim(mb_substr($body, 0, 240)) : '';
+                self::$lastHttpError = $preview !== ''
+                    ? ('HTTP ' . $code . ': ' . $preview)
+                    : ('HTTP ' . $code . ($cerr !== '' ? (': ' . $cerr) : ''));
             }
+        }
+
+        if (self::$lastHttpError === '') {
+            self::$lastHttpError = 'ai_service_unreachable';
         }
 
         return null;
