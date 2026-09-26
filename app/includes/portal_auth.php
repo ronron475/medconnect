@@ -25,6 +25,22 @@ function portal_is_admin_portal(): bool
     return in_array(portal_role(), ['admin', 'superadmin'], true);
 }
 
+/**
+ * Enforce CSRF on state-changing Admin/Superadmin API requests.
+ * GET/HEAD/OPTIONS are not checked (must not mutate).
+ */
+function portal_api_require_mutation_csrf(): void
+{
+    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+    if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
+        return;
+    }
+    if (!function_exists('auth_csrf_require')) {
+        require_once __DIR__ . '/auth_guard.php';
+    }
+    auth_csrf_require();
+}
+
 function portal_api_require_admin_portal(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -56,6 +72,7 @@ function portal_api_require_admin_portal(): void
         require_once dirname(__DIR__, 2) . '/config/db.php';
     }
     auth_ensure_session_user_valid($pdo);
+    portal_api_require_mutation_csrf();
 }
 
 function portal_api_require_superadmin(): void
@@ -89,6 +106,7 @@ function portal_api_require_superadmin(): void
         require_once dirname(__DIR__, 2) . '/config/db.php';
     }
     auth_ensure_session_user_valid($pdo);
+    portal_api_require_mutation_csrf();
 }
 
 /** Super Administrators may perform all account status actions. */

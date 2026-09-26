@@ -58,6 +58,7 @@
 >
 
 <?php require_once VIEWS_PATH . '/partials/auth_transition_boot.php'; ?>
+<script src="<?= ASSET_BASE ?>/assets/js/portal-csrf-fetch.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/portal-csrf-fetch.js') ?>"></script>
 
   <div class="portal-shell portal-shell--superadmin">
     <?php require_once __DIR__ . '/sidebar.php'; ?>

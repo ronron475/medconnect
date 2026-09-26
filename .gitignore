@@ -33,10 +33,26 @@ build/
 .mypy_cache/
 .ruff_cache/
 
-# Runtime storage (keep structure, not user data)
+# Runtime storage (keep structure + deny rules; never commit user/PHI uploads)
 storage/uploads/ids/*
 !storage/uploads/ids/.htaccess
 !storage/uploads/ids/.gitkeep
+storage/uploads/announcements/*
+!storage/uploads/announcements/.gitkeep
+!storage/uploads/announcements/.htaccess
+storage/uploads/bhw_applications/**
+!storage/uploads/bhw_applications/.gitkeep
+storage/uploads/doctor_applications/**
+!storage/uploads/doctor_applications/.gitkeep
+storage/uploads/profile_pictures/*
+!storage/uploads/profile_pictures/.htaccess
+!storage/uploads/profile_pictures/.gitkeep
+storage/uploads/media_library/**
+!storage/uploads/media_library/.gitkeep
+!storage/uploads/media_library/.htaccess
+storage/residency/**
+!storage/residency/.gitkeep
+!storage/residency/.htaccess
 storage/cache/*
 !storage/cache/.gitkeep
 storage/ai_provider_runtime.env
@@ -57,8 +73,6 @@ storage/ratelimit/*
 !storage/ratelimit/.gitkeep
 storage/reports/*
 !storage/reports/.gitkeep
-storage/uploads/announcements/*
-!storage/uploads/announcements/.gitkeep
 
 # XAMPP/OS
 .DS_Store

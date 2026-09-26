@@ -14,22 +14,8 @@ OCR_SPACE_ENDPOINT = os.environ.get(
 
 
 def _api_key() -> str:
-    key = os.environ.get("OCR_SPACE_API_KEY", "").strip()
-    if key:
-        return key
-    # Optional: read from PHP config when running locally on XAMPP
-    config_path = os.path.join(
-        os.path.dirname(__file__), os.pardir, os.pardir, "config", "ocr_config.php"
-    )
-    try:
-        text = open(config_path, encoding="utf-8", errors="ignore").read()
-        import re
-        m = re.search(r"OCR_SPACE_API_KEY['\"]\s*,\s*['\"]([^'\"]+)", text)
-        if m:
-            return m.group(1).strip()
-    except OSError:
-        pass
-    return ""
+    """Load OCR.Space key from process environment only (never from PHP source)."""
+    return os.environ.get("OCR_SPACE_API_KEY", "").strip()
 
 
 def ocr_response_failed(ocr: dict[str, Any]) -> bool:

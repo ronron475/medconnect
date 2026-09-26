@@ -5,14 +5,22 @@
  * matched dataset records, and validation status.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
+require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 
 Api::startJson();
 Api::requirePost();
+ai_endpoint_require_roles(['patient', 'provider', 'bhw', 'admin', 'superadmin']);
+ai_endpoint_rate_limit('ai_analyze_medical_text', 40, 60);
+Api::requireCsrf();
 
 $text = trim((string) ($_POST['text'] ?? $_POST['input'] ?? $_POST['medical_text'] ?? ''));
 
 if ($text === '') {
     Api::error('Enter medical text in Hiligaynon, Ilonggo, or English.');
+}
+
+if (mb_strlen($text) > 5000) {
+    Api::error('Text is too long (max 5000 characters).');
 }
 
 $serviceData = AiServiceClient::analyzeMedicalText($text);
@@ -53,7 +61,7 @@ $responseData = [
     'engine'                  => (string) ($pipeline['engine'] ?? 'php-medical-text-analysis'),
     'service_used'            => (bool) ($pipeline['service_used'] ?? false),
     'service_online'          => AiServiceClient::isHealthy(),
-    'ai_service'              => AiServiceClient::connectionStatus(),
+    'ai_service'              => ai_endpoint_public_connection_status(AiServiceClient::connectionStatus()),
     'dictionary'              => MedicalDictionary::stats(),
 ];
 

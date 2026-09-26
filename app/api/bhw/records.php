@@ -3,6 +3,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_workflows.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_nav_inbox.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/upload_security.php';
 
 function bhw_residency_doc_columns(PDO $pdo): array
 {
@@ -128,38 +129,28 @@ try {
             Api::error('No file uploaded.');
         }
         $file = $_FILES['document'];
-        if (!empty($file['error']) && (int) $file['error'] !== UPLOAD_ERR_OK) {
-            Api::error('File upload failed. Please try again.');
+        $validated = upload_security_validate($file, [
+            'application/pdf' => 'pdf',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+        ], BHW_UPLOAD_MAX_BYTES);
+        if (!$validated['ok']) {
+            Api::error($validated['message']);
         }
-        $size = (int) ($file['size'] ?? 0);
-        if ($size <= 0) {
-            Api::error('Uploaded file is empty.');
-        }
-        if ($size > BHW_UPLOAD_MAX_BYTES) {
-            Api::error('File exceeds the 10 MB limit.');
-        }
-        $orig = basename((string) ($file['name'] ?? 'document'));
-        $ext = strtolower(pathinfo($orig, PATHINFO_EXTENSION));
-        $allowedExt = ['pdf', 'jpg', 'jpeg', 'png'];
-        if (!in_array($ext, $allowedExt, true)) {
-            Api::error('Invalid file type. Accepted formats: PDF, JPG, PNG.');
-        }
-        $mimeMap = [
-            'pdf'  => 'application/pdf',
-            'jpg'  => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'png'  => 'image/png',
-        ];
-        $detectedMime = $mimeMap[$ext];
         $dir = BASE_PATH . '/storage/residency';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        if (!upload_security_ensure_dir($dir, 0750)) {
+            Api::error('Upload directory unavailable.');
         }
-        $stored = 'bhw_' . $patientId . '_' . time() . '_' . preg_replace('/[^a-zA-Z0-9._-]/', '', $orig);
-        $dest = $dir . '/' . $stored;
-        if (!move_uploaded_file($file['tmp_name'], $dest)) {
+        upload_security_write_deny_htaccess($dir);
+        $stored = upload_security_safe_filename('bhw_' . $patientId, $validated['ext']);
+        $dest = $dir . DIRECTORY_SEPARATOR . $stored;
+        if (!move_uploaded_file($validated['tmp'], $dest)) {
             Api::error('Upload failed.');
         }
+        @chmod($dest, 0640);
+        $detectedMime = $validated['mime'];
+        $size = $validated['size'];
+        $orig = $validated['original_basename'];
         $metaCols = bhw_residency_doc_columns($pdo);
         $hasMeta = in_array('document_type', $metaCols, true);
         if ($hasMeta) {
@@ -188,15 +179,16 @@ try {
             Api::error('Document not found.', 404);
         }
         bhw_api_require_patient_in_sector($pdo, $ctx, (int) $doc['patient_id']);
-        $path = BASE_PATH . '/storage/residency/' . $doc['file_name'];
-        if (!is_file($path)) {
+        $dir = BASE_PATH . '/storage/residency';
+        $path = upload_security_confine_path($dir, (string) $doc['file_name']);
+        if ($path === null) {
             Api::error('File missing on server.', 404);
         }
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
         $mime = $doc['mime_type'] ?: 'application/octet-stream';
-        $name = $doc['original_name'] ?: basename((string) $doc['file_name']);
+        $name = upload_security_original_basename((string) ($doc['original_name'] ?: $doc['file_name']));
         header('Content-Type: ' . $mime);
         header('Content-Disposition: inline; filename="' . str_replace('"', '', $name) . '"');
         header('Content-Length: ' . (string) filesize($path));
@@ -206,5 +198,5 @@ try {
         Api::error('Unknown action.', 400);
     }
 } catch (Throwable $e) {
-    Api::error($e->getMessage(), 500);
+    Api::error('Request failed. Please try again.', 500);
 }

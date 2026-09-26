@@ -6,6 +6,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_recording_segments.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/upload_security.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider') {
     ob_end_clean();
@@ -44,26 +45,19 @@ if (!$token || !$video_file) {
     exit;
 }
 
-if ((int) ($video_file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-    ob_end_clean();
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Recording upload failed.']);
-    exit;
-}
-
 $maxBytes = 512 * 1024 * 1024;
-if ((int) ($video_file['size'] ?? 0) <= 0 || (int) $video_file['size'] > $maxBytes) {
+$validated = upload_security_validate($video_file, [
+    'video/webm' => 'webm',
+    'audio/webm' => 'webm',
+    'video/x-matroska' => 'webm',
+    'video/mp4' => 'mp4',
+    'video/ogg' => 'ogv',
+    'application/ogg' => 'ogv',
+], $maxBytes);
+if (!$validated['ok']) {
     ob_end_clean();
     header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Recording file is empty or too large.']);
-    exit;
-}
-
-$clientType = strtolower((string) ($video_file['type'] ?? ''));
-if ($clientType !== '' && !preg_match('#^video/(webm|mp4|ogg)#', $clientType) && $clientType !== 'application/octet-stream') {
-    ob_end_clean();
-    header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => 'Unsupported recording type.']);
+    echo json_encode(['success' => false, 'message' => $validated['message']]);
     exit;
 }
 
@@ -107,17 +101,19 @@ try {
         $upload_key = substr($token . '-s' . time() . '-' . bin2hex(random_bytes(4)), 0, 80);
     }
 
-    $filename = 'recording_' . $token . '_' . time() . '_' . bin2hex(random_bytes(3)) . '.webm';
-    $upload_dir = STORAGE_PATH . '/recordings/';
-    $upload_path = $upload_dir . $filename;
+    $filename = upload_security_safe_filename('recording_' . preg_replace('/[^a-zA-Z0-9_-]/', '', $token), $validated['ext']);
+    $upload_dir = STORAGE_PATH . '/recordings';
+    $upload_path = $upload_dir . DIRECTORY_SEPARATOR . $filename;
 
-    if (!is_dir($upload_dir)) {
-        mkdir($upload_dir, 0777, true);
+    if (!upload_security_ensure_dir($upload_dir, 0750)) {
+        throw new Exception('Recording directory unavailable.');
     }
+    upload_security_write_deny_htaccess($upload_dir);
 
-    if (!move_uploaded_file($video_file['tmp_name'], $upload_path)) {
-        throw new Exception('Failed to move uploaded file.');
+    if (!move_uploaded_file($validated['tmp'], $upload_path)) {
+        throw new Exception('Failed to store recording.');
     }
+    @chmod($upload_path, 0640);
 
     $db_path = 'storage/recordings/' . $filename;
     if ($segment_index <= 0) {
@@ -166,7 +162,7 @@ try {
         try {
             $ai_result = AiServiceClient::transcribeFile(
                 $upload_path,
-                'video/webm',
+                $validated['mime'],
                 $filename,
                 'video',
                 240
@@ -226,5 +222,5 @@ try {
 } catch (Exception $e) {
     ob_end_clean();
     header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    echo json_encode(['success' => false, 'message' => 'Recording upload failed.']);
 }

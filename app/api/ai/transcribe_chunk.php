@@ -4,16 +4,34 @@
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 Api::startJson();
 
 Api::requireRole('provider');
 Api::requirePost();
+Api::requireCsrf();
+ai_endpoint_rate_limit('ai_transcribe_chunk', 120, 60);
 
 $token      = trim((string) ($_POST['token'] ?? ''));
 $audio_file = $_FILES['audio'] ?? null;
 
-if ($token === '' || !$audio_file || empty($audio_file['tmp_name'])) {
+if ($token === '' || !$audio_file) {
     Api::error('Token and audio chunk are required.');
+}
+
+require_once BASE_PATH . '/app/includes/upload_security.php';
+$validated = upload_security_validate($audio_file, [
+    'audio/webm' => 'webm',
+    'video/webm' => 'webm',
+    'audio/wav' => 'wav',
+    'audio/x-wav' => 'wav',
+    'audio/mpeg' => 'mp3',
+    'audio/ogg' => 'ogg',
+    'application/ogg' => 'ogg',
+    'audio/mp4' => 'm4a',
+], 5 * 1024 * 1024);
+if (!$validated['ok']) {
+    Api::error($validated['message']);
 }
 
 try {
@@ -32,9 +50,9 @@ try {
     }
 
     $data = AiServiceClient::transcribeFile(
-        $audio_file['tmp_name'],
-        $audio_file['type'] ?: 'audio/webm',
-        $audio_file['name'] ?: 'live_audio.webm',
+        $validated['tmp'],
+        $validated['mime'],
+        'live_audio.' . $validated['ext'],
         'audio'
     );
 
@@ -82,5 +100,5 @@ try {
 
     Api::success(['data' => $data]);
 } catch (Exception $e) {
-    Api::error('Live transcription failed: ' . $e->getMessage(), 500);
+    Api::error('Live transcription failed.', 500);
 }

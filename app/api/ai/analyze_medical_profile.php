@@ -4,9 +4,11 @@
  * Workflow: preprocess → translate to English → fuzzy match (English only) → validate.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
+require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 
 Api::startJson();
 Api::requirePost();
+ai_endpoint_rate_limit('ai_analyze_medical_profile', 30, 60);
 
 set_time_limit(210);
 
@@ -108,21 +110,17 @@ try {
             $pipeline['summary'] = nlp_pipeline_summary($pipeline, $invalidDetection);
         }
     } elseif (AI_SERVICE_ENABLED && AI_SERVICE_REQUIRE_PYTHON) {
-        $reason = (string) ($serviceStatus['reason'] ?? 'Python AI service unavailable or analyze timed out.');
         Api::error(
-            'Python AI service with Groq is required but was not used. '
-            . $reason
-            . ' Run ai_service\\restart_ai_service.bat and ensure GROQ_API_KEY is set in .env.',
+            'The medical NLP service is temporarily unavailable. Please try again shortly.',
             503,
             [
                 'data' => [
-                    'engine'                  => 'python-medical-profile-nlp',
-                    'service_used'            => false,
-                    'service_online'          => $serviceOnline,
-                    'service_required'        => true,
-                    'ai_service'              => $serviceStatus,
-                    'groq_configured'         => (bool) (MedicalAiInterpreter::providerStatus()['groq_configured'] ?? false),
-                    'analyze_timeout_seconds' => AI_SERVICE_TIMEOUT_ANALYZE,
+                    'engine'           => 'python-medical-profile-nlp',
+                    'service_used'     => false,
+                    'service_online'   => $serviceOnline,
+                    'service_required' => true,
+                    'ai_service'       => ai_endpoint_public_connection_status($serviceStatus),
+                    'groq_configured'  => (bool) (MedicalAiInterpreter::providerStatus()['groq_configured'] ?? false),
                 ],
             ]
         );
@@ -169,13 +167,15 @@ try {
         'engine'                  => (string) ($pipeline['engine'] ?? 'php-validation-workflow'),
         'service_used'            => (bool) ($pipeline['service_used'] ?? false),
         'service_online'          => $serviceOnline,
-        'ai_service'              => $serviceStatus,
+        'ai_service'              => ai_endpoint_public_connection_status(is_array($serviceStatus) ? $serviceStatus : []),
         'dictionary'              => MedicalDictionary::stats(),
-        'pipeline_diagnostics'    => NlpPipelineDiagnostics::collect(
-            $pipeline['preprocessing'] ?? [],
-            $pipeline['translation'] ?? [],
-            (bool) ($pipeline['service_used'] ?? false)
-        ),
+        'pipeline_diagnostics'    => ai_endpoint_can_expose_debug()
+            ? NlpPipelineDiagnostics::collect(
+                $pipeline['preprocessing'] ?? [],
+                $pipeline['translation'] ?? [],
+                (bool) ($pipeline['service_used'] ?? false)
+            )
+            : null,
     ];
 
     $responseData['submission_rejected'] = (bool) ($pipeline['submission_rejected'] ?? false);
@@ -199,9 +199,5 @@ try {
     Api::success(['data' => $responseData], $message);
 } catch (Throwable $e) {
     AiServiceLauncher::log('analyze_medical_profile fatal: ' . $e->getMessage());
-    Api::error(
-        'Medical NLP pipeline error. Please try again or contact support.',
-        500,
-        ['error_detail' => $e->getMessage()]
-    );
+    Api::error('Medical NLP pipeline error. Please try again or contact support.', 500);
 }

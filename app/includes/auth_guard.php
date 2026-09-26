@@ -358,9 +358,17 @@ function auth_csrf_validate(?string $token): bool
     return hash_equals($_SESSION['csrf_token'], $token);
 }
 
-function auth_csrf_require(): void
+/**
+ * Require a valid CSRF token for the current request.
+ *
+ * @param string|null $token Optional explicit token (e.g. from JSON body). When null,
+ *                           uses POST csrf_token or X-CSRF-TOKEN header.
+ */
+function auth_csrf_require(?string $token = null): void
 {
-    $token = (string) ($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    if ($token === null) {
+        $token = (string) ($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+    }
     if (!auth_csrf_validate($token)) {
         require_once __DIR__ . '/request_helpers.php';
         if (request_wants_json()) {

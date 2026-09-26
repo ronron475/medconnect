@@ -4,10 +4,13 @@
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 Api::startJson();
 
 Api::requireRole('provider');
 Api::requirePost();
+Api::requireCsrf();
+ai_endpoint_rate_limit('ai_analyze_transcript', 40, 60);
 
 $consultation_id = (int) ($_POST['consultation_id'] ?? 0);
 $transcript      = trim((string) ($_POST['transcript'] ?? ''));
