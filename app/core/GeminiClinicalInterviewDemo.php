@@ -2745,7 +2745,10 @@ PROMPT;
     private static function generate(array $payload): string
     {
         $model = 'gemini-3.5-flash';
-        if (function_exists('ai_providers_gemini_model')) {
+        self::ensureGeminiConfig();
+        if (function_exists('medconnect_gemini_model')) {
+            $model = medconnect_gemini_model();
+        } elseif (function_exists('ai_providers_gemini_model')) {
             self::ensureAiProviders();
             $model = ai_providers_gemini_model();
         } else {
@@ -3021,14 +3024,20 @@ PROMPT;
 
     private static function apiKey(): string
     {
-        foreach (['AI_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'] as $envKey) {
-            $val = trim((string) (getenv($envKey) ?: ($_ENV[$envKey] ?? '')));
-            if ($val !== '') {
-                return $val;
-            }
-        }
+        self::ensureGeminiConfig();
 
-        return '';
+        return medconnect_gemini_api_key();
+    }
+
+    private static function ensureGeminiConfig(): void
+    {
+        if (function_exists('medconnect_gemini_api_key')) {
+            return;
+        }
+        $path = dirname(__DIR__) . '/includes/gemini_config.php';
+        if (is_file($path)) {
+            require_once $path;
+        }
     }
 
     private static function ensureAiProviders(): void

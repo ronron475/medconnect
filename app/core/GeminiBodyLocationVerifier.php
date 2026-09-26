@@ -389,14 +389,27 @@ PROMPT;
 
     private static function apiKey(): string
     {
-        return trim(self::envString('GEMINI_API_KEY', self::envString('GOOGLE_API_KEY', self::envString('AI_API_KEY'))));
+        self::ensureGeminiConfig();
+
+        return medconnect_gemini_api_key();
     }
 
     private static function model(): string
     {
-        $model = trim(self::envString('AI_MODEL', self::DEFAULT_MODEL));
+        self::ensureGeminiConfig();
 
-        return $model !== '' ? $model : self::DEFAULT_MODEL;
+        return medconnect_gemini_model();
+    }
+
+    private static function ensureGeminiConfig(): void
+    {
+        if (function_exists('medconnect_gemini_api_key')) {
+            return;
+        }
+        $path = dirname(__DIR__) . '/includes/gemini_config.php';
+        if (is_file($path)) {
+            require_once $path;
+        }
     }
 
     private static function timeout(): int
