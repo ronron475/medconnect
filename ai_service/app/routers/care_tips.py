@@ -14,10 +14,10 @@ logger = logging.getLogger("medconnect.api")
 
 class CareTipsRerankRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
-    documents: list[str] = Field(..., min_length=1, max_length=80)
+    documents: list[str] = Field(..., min_length=1, max_length=1000)
     top_n: int = Field(default=3, ge=1, le=10)
     model: str = ""
-    timeout: int = Field(default=12, ge=5, le=30)
+    timeout: int = Field(default=12, ge=5, le=60)
 
     @field_validator("query", "model")
     @classmethod
@@ -30,7 +30,7 @@ class CareTipsRerankRequest(BaseModel):
         cleaned = [str(d).strip() for d in docs if str(d).strip()]
         if not cleaned:
             raise ValueError("documents must contain at least one non-empty string")
-        return cleaned[:80]
+        return cleaned[:1000]
 
 
 @router.post("/care-tips/rerank", summary="Rerank existing Care Tip CSV candidates (Cohere)")

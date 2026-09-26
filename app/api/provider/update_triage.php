@@ -182,35 +182,47 @@ try {
             exit;
         }
 
-        $edited = trim((string) ($_POST['recommendations'] ?? ''));
-        if ($edited === '') {
-            $edited = trim((string) ($metaRow['recommendations'] ?? ''));
+        // Always rebuild from CSV match for approval — never approve freeform / fallback text.
+        require_once BASE_PATH . '/app/core/SelfCareRemediesLoader.php';
+        $symStmt = $pdo->prepare('SELECT english_complaint, detected_symptoms_json, possible_conditions_json FROM triage_results WHERE id = ? LIMIT 1');
+        $symStmt->execute([$id]);
+        $symRow = $symStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $detected = [];
+        $decodedSym = json_decode((string) ($symRow['detected_symptoms_json'] ?? ''), true);
+        if (is_array($decodedSym)) {
+            $detected = $decodedSym;
         }
-        // Prefer symptom-specific library tips when the posted text is still a legacy one-liner.
-        if (triage_recommendations_need_self_care_refresh($edited)) {
-            $symStmt = $pdo->prepare('SELECT english_complaint, detected_symptoms_json, possible_conditions_json FROM triage_results WHERE id = ? LIMIT 1');
-            $symStmt->execute([$id]);
-            $symRow = $symStmt->fetch(PDO::FETCH_ASSOC) ?: [];
-            $detected = [];
-            $decodedSym = json_decode((string) ($symRow['detected_symptoms_json'] ?? ''), true);
-            if (is_array($decodedSym)) {
-                $detected = $decodedSym;
-            }
-            $conditions = [];
-            $decodedCond = json_decode((string) ($symRow['possible_conditions_json'] ?? ''), true);
-            if (is_array($decodedCond)) {
-                $conditions = $decodedCond;
-            }
-            $edited = triage_build_self_care_recommendations_text(
-                $complaint,
-                trim((string) ($symRow['english_complaint'] ?? '')),
-                $detected,
-                $conditions
-            );
+        $conditions = [];
+        $decodedCond = json_decode((string) ($symRow['possible_conditions_json'] ?? ''), true);
+        if (is_array($decodedCond)) {
+            $conditions = $decodedCond;
         }
-        $list = triage_recommendations_to_list($edited);
-        if ($list === []) {
-            echo json_encode(['success' => false, 'message' => 'Add at least one self-care recommendation before approving.']);
+
+        $built = SelfCareRemediesLoader::buildApprovableRecommendations(
+            $complaint,
+            trim((string) ($symRow['english_complaint'] ?? '')),
+            $detected,
+            $conditions
+        );
+        if (!$built['ok']) {
+            echo json_encode([
+                'success' => false,
+                'message' => $built['message'] !== ''
+                    ? $built['message']
+                    : 'No reliable Care Tip from self_care_remedies.csv can be approved for this complaint.',
+            ]);
+            exit;
+        }
+
+        $list = $built['list'];
+        $csvCheck = SelfCareRemediesLoader::validateCsvBackedRecommendations($built['text']);
+        if (!$csvCheck['ok'] || $list === []) {
+            echo json_encode([
+                'success' => false,
+                'message' => $csvCheck['message'] !== ''
+                    ? $csvCheck['message']
+                    : 'Approved Care Tips must come from an existing self_care_remedies.csv entry.',
+            ]);
             exit;
         }
         $savedText = triage_recommendations_from_list($list);

@@ -252,18 +252,18 @@ final class ClinicalInterviewAdaptivePolicy
     ): array {
         $bundles = [
             'ABDOMINAL_ASSOCIATED' => [
-                ['finding' => 'vomiting', 'purpose' => 'Ask only whether the patient is vomiting', 'skip' => 'vomit|suka|nagsusuka'],
-                ['finding' => 'fever_with_abdomen', 'purpose' => 'Ask only whether the patient has fever with the abdominal pain', 'skip' => 'fever|lagnat|hilanat'],
+                ['finding' => 'vomiting', 'purpose' => 'Ask only whether the patient is vomiting', 'skip' => 'vomit|suka|nagsusuka|retch|emesis|throwing up|throw up'],
+                ['finding' => 'fever_with_abdomen', 'purpose' => 'Ask only whether the patient has fever with the abdominal pain', 'skip' => 'fever|lagnat|hilanat|febrile|pyrexia'],
                 ['finding' => 'bleeding_with_abdomen', 'purpose' => 'Ask only whether there is any bleeding with the abdominal pain', 'skip' => 'bleed|blood|dugo|nagadugo|dumudugo'],
             ],
             'CHEST_SWEATING' => [
-                ['finding' => 'sweating_with_chest', 'purpose' => 'Ask only whether the patient is sweating a lot with chest pain', 'skip' => 'sweat|singot|pinagpapawisan'],
-                ['finding' => 'dizziness_with_chest', 'purpose' => 'Ask only whether the patient feels dizzy or like fainting with chest pain', 'skip' => 'dizz|faint|lipong|hilo|punaw'],
+                ['finding' => 'sweating_with_chest', 'purpose' => 'Ask only whether the patient is sweating a lot with chest pain', 'skip' => 'sweat|singot|pinagpapawisan|diaphore'],
+                ['finding' => 'dizziness_with_chest', 'purpose' => 'Ask only whether the patient feels dizzy or like fainting with chest pain', 'skip' => 'dizz|faint|lipong|hilo|punaw|lightheaded|light-headed|woozy|vertigo'],
             ],
             'URINARY_DETAIL' => [
                 ['finding' => 'urinary_burning', 'purpose' => 'Ask only whether urination burns or hurts', 'skip' => 'burn|hapdi|masakit.*(ihi|urine)'],
                 ['finding' => 'urinary_blood', 'purpose' => 'Ask only whether there is blood in the urine', 'skip' => 'blood|dugo'],
-                ['finding' => 'urinary_fever', 'purpose' => 'Ask only whether there is fever with urinary symptoms', 'skip' => 'fever|lagnat|hilanat'],
+                ['finding' => 'urinary_fever', 'purpose' => 'Ask only whether there is fever with urinary symptoms', 'skip' => 'fever|lagnat|hilanat|febrile|pyrexia'],
             ],
         ];
         if (!isset($bundles[$qid])) {
@@ -304,21 +304,158 @@ final class ClinicalInterviewAdaptivePolicy
             return true;
         }
         if ($finding === 'vomiting'
-            && (self::symptomListHas($facts, 'vomit') || self::symptomListHas($facts, 'suka'))
+            && (
+                self::symptomListHas($facts, 'vomit')
+                || self::symptomListHas($facts, 'suka')
+                || self::symptomListHas($facts, 'retch')
+                || self::symptomListHas($facts, 'emesis')
+                || self::symptomListHas($facts, 'throwing up')
+                || self::symptomListHas($facts, 'throw up')
+            )
         ) {
             return true;
         }
-        if ($finding === 'sweating_with_chest' && ($facts['sweating'] ?? null) !== null) {
+        if ($finding === 'sweating_with_chest' && (
+            ($facts['sweating'] ?? null) !== null
+            || self::symptomListHas($facts, 'sweat')
+            || self::symptomListHas($facts, 'diaphore')
+            || self::symptomListHas($facts, 'singot')
+        )) {
             return true;
         }
-        // dizziness_with_chest is scoped via finding_status only — shared dizziness
-        // (e.g. from BLEEDING_DIZZY or free text) must not suppress the chest atom.
-        if ($skipPattern !== '' && (bool) preg_match('/\b(?:' . $skipPattern . ')\b/iu', $hay)) {
-            // Affirmed or denied in free text — do not re-ask the same finding.
+        // dizziness_with_chest is scoped via finding_status + haystack evidence only —
+        // shared dizziness (e.g. from BLEEDING_DIZZY) must not suppress the chest atom.
+        if (self::haystackIndicatesFinding($finding, $hay, $skipPattern)) {
+            // Affirmed or denied in free text / meaning bridge — do not re-ask.
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * True when case haystack already states this atomic finding (inflected forms + synonyms).
+     */
+    private static function haystackIndicatesFinding(string $finding, string $hay, string $skipPattern): bool
+    {
+        $hay = mb_strtolower(trim($hay));
+        if ($hay === '') {
+            return false;
+        }
+        if ($skipPattern !== '' && self::skipPatternMatchesHay($hay, $skipPattern)) {
+            return true;
+        }
+        foreach (self::findingSynonymPatterns($finding) as $re) {
+            if ($re !== '' && (bool) preg_match('/' . $re . '/iu', $hay)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Clinical paraphrases for atomic findings (complements bank skip stems; not a second fact store).
+     *
+     * @return list<string> PCRE fragments (no delimiters)
+     */
+    private static function findingSynonymPatterns(string $finding): array
+    {
+        return match (strtolower(trim($finding))) {
+            'vomiting' => [
+                'throw(?:ing)?\s+up',
+                '\bretch(?:ing|es|ed)?\b',
+                '\bemesis\b',
+            ],
+            'sweating_with_chest' => [
+                '\bdiaphore(?:sis|tic)?\b',
+                '\bperspir(?:e|es|ed|ing|ation)\b',
+            ],
+            'dizziness_with_chest' => [
+                '\blight[- ]?head(?:ed)?\b',
+                '\bwooz(?:y|iness)?\b',
+                '\bvertigo\b',
+                'about\s+to\s+faint',
+            ],
+            'fever_with_abdomen', 'urinary_fever' => [
+                '\bfebril(?:e|ity)?\b',
+                '\bpyrexia\b',
+            ],
+            default => [],
+        };
+    }
+
+    /**
+     * Match skip alternatives with inflectional suffixes (vomit→vomiting, sweat→sweating, dizz→dizzy).
+     * Preserves regex fragments and parenthesized groups already present in bank skip patterns.
+     */
+    private static function skipPatternMatchesHay(string $hay, string $skipPattern): bool
+    {
+        foreach (self::splitSkipAlternatives($skipPattern) as $part) {
+            $part = trim($part);
+            if ($part === '') {
+                continue;
+            }
+            // Existing regex fragment (e.g. masakit.*(ihi|urine), light[- ]?head).
+            if ((bool) preg_match('/[\[\]().*+?\\\\]/', $part)) {
+                if ((bool) preg_match('/(?:' . $part . ')/iu', $hay)) {
+                    return true;
+                }
+                continue;
+            }
+            // Multi-word phrase (e.g. "throwing up" if added to skip lists).
+            if ((bool) preg_match('/\s/u', $part)) {
+                $escaped = preg_replace('/\s+/u', '\\s+', preg_quote($part, '/')) ?? preg_quote($part, '/');
+                if ((bool) preg_match('/\b' . $escaped . '\b/iu', $hay)) {
+                    return true;
+                }
+                continue;
+            }
+            // Simple stem: allow word-internal inflectional continuation.
+            $stem = preg_quote($part, '/');
+            if ((bool) preg_match('/\b' . $stem . '\w*\b/iu', $hay)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Split a|-alternation on top-level pipes only (respects parentheses).
+     *
+     * @return list<string>
+     */
+    private static function splitSkipAlternatives(string $pattern): array
+    {
+        $parts = [];
+        $buf = '';
+        $depth = 0;
+        $len = strlen($pattern);
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $pattern[$i];
+            if ($ch === '(') {
+                $depth++;
+                $buf .= $ch;
+                continue;
+            }
+            if ($ch === ')') {
+                $depth = max(0, $depth - 1);
+                $buf .= $ch;
+                continue;
+            }
+            if ($ch === '|' && $depth === 0) {
+                $parts[] = $buf;
+                $buf = '';
+                continue;
+            }
+            $buf .= $ch;
+        }
+        if ($buf !== '') {
+            $parts[] = $buf;
+        }
+
+        return $parts;
     }
 
     /**
@@ -1061,18 +1198,18 @@ final class ClinicalInterviewAdaptivePolicy
     {
         $atoms = match (strtoupper($qid)) {
             'ABDOMINAL_ASSOCIATED' => [
-                ['finding' => 'vomiting', 'skip' => 'vomit|suka|nagsusuka'],
-                ['finding' => 'fever_with_abdomen', 'skip' => 'fever|lagnat|hilanat'],
+                ['finding' => 'vomiting', 'skip' => 'vomit|suka|nagsusuka|retch|emesis|throwing up|throw up'],
+                ['finding' => 'fever_with_abdomen', 'skip' => 'fever|lagnat|hilanat|febrile|pyrexia'],
                 ['finding' => 'bleeding_with_abdomen', 'skip' => 'bleed|blood|dugo|nagadugo|dumudugo'],
             ],
             'CHEST_SWEATING' => [
-                ['finding' => 'sweating_with_chest', 'skip' => 'sweat|singot|pinagpapawisan'],
-                ['finding' => 'dizziness_with_chest', 'skip' => 'dizz|faint|lipong|hilo|punaw'],
+                ['finding' => 'sweating_with_chest', 'skip' => 'sweat|singot|pinagpapawisan|diaphore'],
+                ['finding' => 'dizziness_with_chest', 'skip' => 'dizz|faint|lipong|hilo|punaw|lightheaded|light-headed|woozy|vertigo'],
             ],
             'URINARY_DETAIL' => [
                 ['finding' => 'urinary_burning', 'skip' => 'burn|hapdi'],
                 ['finding' => 'urinary_blood', 'skip' => 'blood|dugo'],
-                ['finding' => 'urinary_fever', 'skip' => 'fever|lagnat|hilanat'],
+                ['finding' => 'urinary_fever', 'skip' => 'fever|lagnat|hilanat|febrile|pyrexia'],
             ],
             default => [],
         };

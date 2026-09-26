@@ -313,22 +313,8 @@ function mc_patient_care_tip_meta(array $row): array
 {
     $status = (string) ($row['recommendation_status'] ?? '');
     $bookingState = (string) ($row['_booking_state'] ?? '');
-    $historical = $status === 'hidden' || $bookingState === 'completed';
-    if ($historical) {
-        return [
-            'label' => 'Visit completed',
-            'class' => 'pmh-care-card__status--acked',
-            'show_tips' => true,
-            'active' => false,
-            'kind' => 'historical',
-        ];
-    }
 
-    $acked = !empty($row['recommendation_patient_ack_at']);
-    $approvedAt = (string) ($row['recommendation_approved_at'] ?? '');
-    $approvedTs = $approvedAt !== '' ? strtotime($approvedAt) : false;
-    $isExpired = $approvedTs !== false && time() >= ($approvedTs + (24 * 3600));
-
+    // Pending / rejected tips are NEVER shown to patients — including completed/history views.
     if ($status === 'pending_approval') {
         return [
             'label' => 'In review',
@@ -343,10 +329,37 @@ function mc_patient_care_tip_meta(array $row): array
             'label' => 'Not approved',
             'class' => 'pmh-care-card__status--rejected',
             'show_tips' => false,
+            'active' => $bookingState !== 'completed',
             'kind' => 'rejected',
         ];
     }
-    if ($status === 'approved' && $isExpired) {
+
+    // Only provider-approved recommendations may surface tip text.
+    if ($status !== 'approved') {
+        return [
+            'label' => $bookingState === 'completed' ? 'Visit completed' : 'Recorded',
+            'class' => $bookingState === 'completed' ? 'pmh-care-card__status--acked' : 'pmh-care-card__status--default',
+            'show_tips' => false,
+            'active' => false,
+            'kind' => $bookingState === 'completed' ? 'historical' : 'default',
+        ];
+    }
+
+    $acked = !empty($row['recommendation_patient_ack_at']);
+    $approvedAt = (string) ($row['recommendation_approved_at'] ?? '');
+    $approvedTs = $approvedAt !== '' ? strtotime($approvedAt) : false;
+    $isExpired = $approvedTs !== false && time() >= ($approvedTs + (24 * 3600));
+
+    if ($bookingState === 'completed') {
+        return [
+            'label' => 'Visit completed',
+            'class' => 'pmh-care-card__status--acked',
+            'show_tips' => true,
+            'active' => false,
+            'kind' => 'historical',
+        ];
+    }
+    if ($isExpired) {
         return [
             'label' => 'Expired',
             'class' => 'pmh-care-card__status--acked',
@@ -354,7 +367,7 @@ function mc_patient_care_tip_meta(array $row): array
             'kind' => 'expired',
         ];
     }
-    if ($status === 'approved' && $acked) {
+    if ($acked) {
         return [
             'label' => 'Completed',
             'class' => 'pmh-care-card__status--acked',
@@ -363,20 +376,12 @@ function mc_patient_care_tip_meta(array $row): array
             'kind' => 'acked',
         ];
     }
-    if ($status === 'approved') {
-        return [
-            'label' => 'Tips ready',
-            'class' => 'pmh-care-card__status--ready',
-            'show_tips' => true,
-            'active' => true,
-            'kind' => 'ready',
-        ];
-    }
 
     return [
-        'label' => 'Recorded',
-        'class' => 'pmh-care-card__status--default',
-        'show_tips' => false,
-        'kind' => 'default',
+        'label' => 'Tips ready',
+        'class' => 'pmh-care-card__status--ready',
+        'show_tips' => true,
+        'active' => true,
+        'kind' => 'ready',
     ];
 }

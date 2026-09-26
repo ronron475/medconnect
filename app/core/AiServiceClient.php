@@ -164,7 +164,7 @@ final class AiServiceClient
         ?string $model = null,
         ?int $timeoutSeconds = null
     ): ?array {
-        $timeout = max(5, min(30, (int) ($timeoutSeconds ?? 12)));
+        $timeout = max(5, min(60, (int) ($timeoutSeconds ?? 45)));
         $docs = [];
         foreach ($documents as $doc) {
             $text = trim((string) $doc);
@@ -178,7 +178,8 @@ final class AiServiceClient
 
         $body = [
             'query' => mb_substr(trim($query), 0, 1000),
-            'documents' => array_slice($docs, 0, 80),
+            // Full relevant CSV batches — PHP SelfCareRemediesLoader chunks; do not silently truncate.
+            'documents' => array_slice($docs, 0, 1000),
             'top_n' => max(1, min(10, $topN)),
             'timeout' => $timeout,
         ];

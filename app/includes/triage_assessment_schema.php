@@ -324,6 +324,12 @@ function triage_recommendations_need_self_care_refresh(?string $text): bool
     if ($raw === '') {
         return true;
     }
+    if (class_exists('SelfCareRemediesLoader') || is_readable(dirname(__DIR__) . '/core/SelfCareRemediesLoader.php')) {
+        require_once dirname(__DIR__) . '/core/SelfCareRemediesLoader.php';
+        if (SelfCareRemediesLoader::containsBlockedFallbackCopy($raw)) {
+            return true;
+        }
+    }
     if (stripos($raw, 'You may follow these tips on your own') !== false) {
         return false;
     }
