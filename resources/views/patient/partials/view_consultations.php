@@ -49,6 +49,8 @@
         </button>
       </nav>
 
+      <div id="ptQueueTimingHost" data-queue-timing-host hidden></div>
+
       <div id="sessions-list" class="psess-list" aria-live="polite"></div>
 
       <p id="consult-join-hint" class="psess-join-hint" hidden></p>

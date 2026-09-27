@@ -648,6 +648,11 @@
       if (data.success) {
         applyUnreadFromResponse(data);
         if (data.last_id) lastId = Math.max(lastId, data.last_id);
+        if (data.notifications && data.notifications.length) {
+          document.dispatchEvent(new CustomEvent('medconnect:notifications-arrived', {
+            detail: { notifications: data.notifications },
+          }));
+        }
         if (panelOpen && data.notifications && data.notifications.length) {
           loadDropdown();
         }

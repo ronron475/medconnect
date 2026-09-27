@@ -18,6 +18,7 @@ require_once __DIR__ . '/partials/icons.php';
 require_once __DIR__ . '/partials/data.php';
 require_once __DIR__ . '/partials/queue_helpers.php';
 require_once dirname(__DIR__, 3) . '/app/includes/urgent_followup_workflow.php';
+require_once dirname(__DIR__, 3) . '/app/includes/consultation_queue_timing.php';
 
 $provider_id = (int)($_SESSION['user_id'] ?? 0);
 
@@ -53,7 +54,10 @@ try {
             vs.room_token,
             s.slot_date,
             s.start_time AS slot_start,
-            s.end_time AS slot_end
+            s.end_time AS slot_end,
+            c.provider_id,
+            c.early_start_response,
+            " . consultation_timing_latest_patient_joined_sql('c') . " AS patient_joined_at
         FROM consultations c
         JOIN users u ON u.id = c.patient_id
         LEFT JOIN patient_registrations pr ON pr.email = u.email
@@ -278,6 +282,8 @@ require_once __DIR__ . '/partials/layout_open.php';
         </div>
     </section>
 
+    <div id="queueTimingBanner" class="queue-panel" hidden style="margin-bottom:16px;"></div>
+
     <section class="queue-layout">
         <?php if ($urgent_followup_queue): ?>
         <div class="queue-panel queue-panel--urgent-followup" id="urgent-followup-queue">
@@ -378,6 +384,11 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <tr><td colspan="6"><div class="queue-empty">No assigned consultations yet.</div></td></tr>
                         <?php else: ?>
                             <?php foreach ($queue_items as $item):
+                                if (!function_exists('consultation_timing_decorate_row')) {
+                                    require_once BASE_PATH . '/app/includes/consultation_queue_timing.php';
+                                }
+                                $item['provider_id'] = (int) ($item['provider_id'] ?? $provider_id);
+                                $item = consultation_timing_decorate_row($pdo, $item);
                                 $name = trim(($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? '')) ?: 'Patient';
                                 $status = (string)($item['status'] ?? 'pending');
                                 $status_class = queue_status_class($status);

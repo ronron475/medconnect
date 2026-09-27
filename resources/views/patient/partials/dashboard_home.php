@@ -112,6 +112,8 @@ $show_dash_live_strip = $dash_live_session && $dash_live_join && !$has_active_co
   })();
   </script>
 
+  <div id="ptQueueTimingHost" data-queue-timing-host hidden></div>
+
   <?php if ($show_dash_live_strip): ?>
   <div class="pdash-live" role="status" aria-live="polite">
     <span class="pdash-live__pulse" aria-hidden="true"></span>

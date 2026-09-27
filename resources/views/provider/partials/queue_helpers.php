@@ -154,6 +154,14 @@ function queue_session_access(array $item): array
 {
     $ctx = queue_session_context($item);
 
+    if (!empty($item['timing_missed'])) {
+        return [
+            'allowed'         => false,
+            'reason'          => 'This patient did not join during their scheduled time and cannot be started ahead of later patients.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
+
     if ($ctx['status'] === 'in_consultation') {
         return [
             'allowed'         => true,
@@ -206,6 +214,14 @@ function queue_session_access(array $item): array
         }
 
         if (queue_is_before_scheduled_start($ctx)) {
+            if (strtolower(trim((string) ($item['early_start_response'] ?? ''))) === 'join_early') {
+                return [
+                    'allowed'         => true,
+                    'reason'          => '',
+                    'scheduled_label' => $ctx['scheduled_label'],
+                ];
+            }
+
             return [
                 'allowed'         => false,
                 'reason'          => queue_before_start_reason($ctx),
@@ -237,6 +253,15 @@ function consultation_patient_join_access(array $item): array
     $ctx        = queue_session_context($item);
     $room_token = trim((string) ($item['room_token'] ?? ''));
 
+    if (!empty($item['timing_missed'])) {
+        return [
+            'allowed'         => false,
+            'mode'            => 'missed',
+            'reason'          => 'Your scheduled time has passed and you did not join. You cannot enter ahead of patients already scheduled.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
+
     if ($ctx['status'] === 'completed') {
         return [
             'allowed'         => false,
@@ -246,7 +271,9 @@ function consultation_patient_join_access(array $item): array
         ];
     }
 
-    // Best practice: patient may join ONLY after provider started the live room.
+    // Patient joins only after the provider starts the room. Joining during the
+    // slot, even in the last minute, is allowed. After a real join, the visit
+    // may continue past the slot end.
     if ($ctx['status'] === 'in_consultation' && $room_token !== '') {
         return [
             'allowed'         => true,
@@ -257,6 +284,16 @@ function consultation_patient_join_access(array $item): array
     }
 
     if (queue_is_before_scheduled_start($ctx)) {
+        $early = strtolower(trim((string) ($item['early_start_response'] ?? '')));
+        if ($early === 'join_early') {
+            return [
+                'allowed'         => false,
+                'mode'            => 'waiting',
+                'reason'          => 'You chose to join early. Waiting for your doctor to start the call.',
+                'scheduled_label' => $ctx['scheduled_label'],
+            ];
+        }
+
         return [
             'allowed'         => false,
             'mode'            => 'scheduled_wait',
@@ -269,10 +306,15 @@ function consultation_patient_join_access(array $item): array
 
     // Provider started consultation but room token not ready yet.
     if ($ctx['status'] === 'in_consultation' && $room_token === '') {
+        $alreadyJoined = !empty($item['patient_ever_joined'])
+            || trim((string) ($item['patient_joined_at'] ?? '')) !== '';
+
         return [
             'allowed'         => false,
             'mode'            => 'waiting',
-            'reason'          => 'Your provider is preparing the video room.',
+            'reason'          => $alreadyJoined
+                ? 'The video call has ended. Your provider is completing this consultation.'
+                : 'Your provider is preparing the video room.',
             'scheduled_label' => $ctx['scheduled_label'],
         ];
     }
@@ -303,6 +345,14 @@ function consultation_patient_join_access(array $item): array
 function consultation_video_room_access(array $item): array
 {
     $ctx = queue_session_context($item);
+
+    if (!empty($item['timing_missed'])) {
+        return [
+            'allowed'         => false,
+            'reason'          => 'Your scheduled time has passed and you did not join. You cannot enter ahead of patients already scheduled.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
 
     if ($ctx['status'] === 'completed') {
         return [

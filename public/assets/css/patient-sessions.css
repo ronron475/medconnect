@@ -234,6 +234,13 @@
   color: #475569;
 }
 
+.psess-live-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 /* Flow guide */
 .psess-flow {
   border: 1px solid var(--pt-border, #cce8ec);

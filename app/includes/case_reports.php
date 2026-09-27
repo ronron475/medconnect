@@ -295,7 +295,7 @@ function consultation_violation_report_submit(
     return [
         'success'   => true,
         'message'   => $endConsultation
-            ? 'Possible violation reported. The current consultation has been ended.'
+            ? 'Possible violation reported. The video session was ended. The consultation stays open until the SOAP note and final assessment are completed.'
             : 'Possible violation reported. An administrator will review it.',
         'report_id' => $reportId,
         'ended'     => $ended,
@@ -333,12 +333,6 @@ function consultation_end_from_violation(
             WHERE consultation_id = ? AND status = 'active'
         ")->execute([$consultationId]);
 
-        if (in_array($previousStatus, ['pending', 'scheduled', 'in_consultation', 'waiting'], true)) {
-            $pdo->prepare("
-                UPDATE consultations SET status = 'completed' WHERE id = ? AND status NOT IN ('completed', 'cancelled')
-            ")->execute([$consultationId]);
-        }
-
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
@@ -357,7 +351,7 @@ function consultation_end_from_violation(
             'terminated_by'    => $providerId,
             'reason'           => trim($reason),
             'previous_status'  => $previousStatus,
-            'new_status'       => 'completed',
+            'new_status'       => $previousStatus,
         ],
     ]);
 
@@ -365,7 +359,7 @@ function consultation_end_from_violation(
 
     return [
         'success' => true,
-        'message' => 'Consultation ended. Medical records and the patient account were not affected.',
+        'message' => 'Video session ended. This consultation stays open until the SOAP note, signature, and final assessment are completed.',
     ];
 }
 

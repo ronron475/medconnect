@@ -3228,9 +3228,10 @@ body.final-assessment-modal-open {
         <div class="session-card">
             <div class="session-card-header"><div class="session-card-title"><?= icon('clock') ?> Session Management</div></div>
             <div class="session-card-body">
-                <p class="text-xs text-muted mb-sm">Scheduled end time: <strong id="scheduledEndLabel"><?= htmlspecialchars($slot_end_label) ?></strong></p>
-                <button class="session-btn primary" style="width: 100%;" id="extendSessionBtn" onclick="requestExtension()">
-                    Extend Session (+15 min)
+                <p class="text-xs text-muted mb-sm">Scheduled slot: <strong id="scheduledEndLabel"><?= htmlspecialchars($slot_end_label) ?></strong>. The visit can continue past this time. The next patient keeps their own slot.</p>
+                <div id="readyNextPanel" class="text-xs" style="margin-bottom:10px;"></div>
+                <button class="session-btn primary" style="width: 100%; display:none;" type="button" id="readyForNextBtn">
+                    Ready for Next Patient
                 </button>
                 <p id="extensionMsg" class="text-xs" style="margin-top: 8px; display: none;"></p>
             </div>
@@ -5249,6 +5250,73 @@ window.addEventListener('load', () => {
 window.addEventListener('medconnect:video-shell-scroll-away', () => {
     scrollToClinicalSupport();
 });
+
+// Queue timing: early next patient, without ending the booked slot.
+(function pollReadyForNext() {
+    const panel = document.getElementById('readyNextPanel');
+    const btn = document.getElementById('readyForNextBtn');
+    if (!panel || !btn) return;
+
+    async function paint() {
+        try {
+            const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/queue_status.php?_=' + Date.now(), {
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
+                cache: 'no-store'
+            });
+            const data = await res.json();
+            if (!data || !data.success) return;
+            const next = data.next_patient;
+            if (!next) {
+                panel.textContent = '';
+                btn.style.display = 'none';
+                return;
+            }
+            if (next.early_start_response === 'join_early') {
+                panel.textContent = (next.patient_name || 'The next patient') + ' chose Join Early.';
+                btn.style.display = 'none';
+            } else if (next.early_start_response === 'keep_time') {
+                panel.textContent = (next.patient_name || 'The next patient') + ' chose Keep Scheduled Time. This is not a missed visit.';
+                btn.style.display = 'none';
+            } else if (next.can_offer_early) {
+                panel.textContent = (next.patient_name || 'The next patient') + ' is scheduled' + (next.scheduled_label ? ' at ' + next.scheduled_label : '') + '.';
+                btn.style.display = 'block';
+            } else if (next.early_start_response_label) {
+                panel.textContent = (next.patient_name || 'Next patient') + ': ' + next.early_start_response_label + '.';
+                btn.style.display = 'none';
+            } else {
+                panel.textContent = '';
+                btn.style.display = 'none';
+            }
+        } catch (_) {}
+    }
+
+    btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        const body = new URLSearchParams({
+            csrf_token: document.body.dataset.csrf || ''
+        });
+        try {
+            const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/ready_for_next.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body
+            });
+            const data = await res.json();
+            const msg = document.getElementById('extensionMsg');
+            if (msg) {
+                msg.style.display = 'block';
+                msg.textContent = (data && data.message) || '';
+            }
+        } catch (_) {}
+        btn.disabled = false;
+        paint();
+    });
+
+    paint();
+    setInterval(paint, 5000);
+    document.addEventListener('medconnect:notifications-arrived', paint);
+})();
 
 // EXTEND SESSION
 async function requestExtension() {

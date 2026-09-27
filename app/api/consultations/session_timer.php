@@ -1,16 +1,16 @@
 <?php
 /**
  * API: Remaining consultation time for active video session
- * Deadline = video started_at + configured scheduled duration (slot config).
+ * Scheduled slot remaining is informational. It does not end a joined consultation.
  * URL: /app/api/consultations/session_timer.php?token=...
  */
 header('Content-Type: application/json');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
-require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_video_lifecycle.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_duration.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_queue_timing.php';
 
 $token = trim((string) ($_GET['token'] ?? ''));
 $userId = (int) ($_SESSION['user_id'] ?? 0);
@@ -76,24 +76,35 @@ try {
 
     $now = time();
     $seconds_remaining = consultation_seconds_remaining_until($deadlineTs, $now);
-    $elapsed_seconds = consultation_elapsed_capped_seconds(
-        $startedAt !== '' ? $startedAt : null,
-        $scheduledSeconds,
-        $endedAt !== '' ? $endedAt : null,
-        $now
-    );
+    $elapsed_seconds = 0;
+    if ($startedAt !== '') {
+        $elapsed_seconds = consultation_actual_duration_seconds(
+            $startedAt,
+            $endedAt !== '' ? $endedAt : date('Y-m-d H:i:s', $now)
+        ) ?? 0;
+    }
     $actual_seconds = consultation_actual_duration_seconds(
         $startedAt !== '' ? $startedAt : null,
         $endedAt !== '' ? $endedAt : null
     );
-    $slot_expired = $seconds_remaining <= 0;
+    $slot_window_elapsed = $seconds_remaining <= 0;
     $liveStatus = (string) ($row['consult_status'] ?? '');
-
-    if ($slot_expired) {
-        consultations_auto_expire($pdo, (int) $row['patient_id'], (int) $row['provider_id']);
-        $statusStmt = $pdo->prepare('SELECT status FROM consultations WHERE id = ? LIMIT 1');
-        $statusStmt->execute([$consultationId]);
-        $liveStatus = (string) ($statusStmt->fetchColumn() ?: $liveStatus);
+    $videoStatus = strtolower(trim((string) ($row['video_status'] ?? '')));
+    // A joined visit keeps going after the slot window. Do not complete it here.
+    if ($videoStatus === 'active') {
+        try {
+            $providerForTiming = (int) ($row['provider_id'] ?? 0);
+            consultation_timing_close_missed($pdo, null, $providerForTiming);
+            consultation_timing_sync_delay_notices($pdo, $providerForTiming);
+            $statusStmt = $pdo->prepare('SELECT status FROM consultations WHERE id = ? LIMIT 1');
+            $statusStmt->execute([$consultationId]);
+            $liveStatus = (string) ($statusStmt->fetchColumn() ?: $liveStatus);
+            $videoStmt = $pdo->prepare("SELECT status FROM video_sessions WHERE consultation_id = ? ORDER BY id DESC LIMIT 1");
+            $videoStmt->execute([$consultationId]);
+            $videoStatus = (string) ($videoStmt->fetchColumn() ?: $videoStatus);
+        } catch (Throwable $e) {
+            error_log('session_timer delay notice: ' . $e->getMessage());
+        }
     }
 
     echo json_encode([
@@ -106,9 +117,11 @@ try {
         'ended_at' => $endedAt,
         'end_label' => date('g:i:s A', $deadlineTs),
         'scheduled_end_label' => consultation_format_clock_time(date('Y-m-d H:i:s', $deadlineTs)),
-        'slot_expired' => $slot_expired,
+        'slot_expired' => false,
+        'slot_window_elapsed' => $slot_window_elapsed,
+        'hard_stop' => false,
         'consultation_status' => $liveStatus,
-        'video_status' => (string) ($row['video_status'] ?? ''),
+        'video_status' => $videoStatus,
         'consultation_id' => $consultationId,
         'patient_temporarily_left' => !empty($row['patient_left_at'])
             && strtolower(trim((string) ($row['video_status'] ?? ''))) === 'active',

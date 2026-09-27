@@ -1,128 +1,24 @@
 <?php
 /**
- * Auto-end consultations after their scheduled slot time has passed.
+ * No-show handling when a slot ends.
+ *
+ * A slot end does not complete a visit the patient already joined, and it does
+ * not cancel a patient who is waiting because the doctor is still with someone
+ * earlier in the queue. Those patients stay scheduled.
+ *
+ * A patient who never joined, and was not held behind an earlier visit, is
+ * cancelled when the slot ends. That cancellation is the existing no-show rule.
+ * It does not mark the consultation completed and does not write a SOAP note.
  */
-require_once __DIR__ . '/bhw_patient_workflow.php';
 require_once __DIR__ . '/patient_booking_status.php';
+require_once __DIR__ . '/consultation_queue_timing.php';
 
 /**
- * Mark overdue consultations ended and close any stale video sessions.
- *
  * @return int Number of consultations updated
  */
 function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $provider_id = null): int
 {
-    $scope  = '';
-    $params = [];
-
-    if ($patient_id !== null) {
-        $scope   .= ' AND c.patient_id = ?';
-        $params[] = $patient_id;
-    }
-    if ($provider_id !== null) {
-        $scope   .= ' AND c.provider_id = ?';
-        $params[] = $provider_id;
-    }
-
-    $stmt = $pdo->prepare("
-        SELECT
-            c.id,
-            c.status,
-            TIMESTAMP(
-                COALESCE(s.slot_date, c.consult_date),
-                COALESCE(
-                    s.end_time,
-                    ADDTIME(COALESCE(s.start_time, c.consult_time, '00:00:00'), '00:30:00')
-                )
-            ) AS session_end_at
-        FROM consultations c
-        LEFT JOIN appointment_slots s
-            ON s.consultation_id = c.id
-           AND s.status IN ('booked', 'blocked')
-        WHERE c.status IN ('pending', 'scheduled', 'in_consultation')
-          {$scope}
-        HAVING session_end_at <= NOW()
-    ");
-    $stmt->execute($params);
-    $expired = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    if (!$expired) {
-        return 0;
-    }
-
-    $updated = 0;
-
-    $hasCompletedAt = false;
-    try {
-        $col = $pdo->query("SHOW COLUMNS FROM consultations LIKE 'completed_at'");
-        $hasCompletedAt = (bool) ($col && $col->fetch(PDO::FETCH_ASSOC));
-    } catch (Throwable $e) {
-        $hasCompletedAt = false;
-    }
-    if ($hasCompletedAt) {
-        $complete = $pdo->prepare("
-            UPDATE consultations
-            SET status = 'completed',
-                completed_at = COALESCE(completed_at, NOW())
-            WHERE id = ?
-              AND status = 'in_consultation'
-        ");
-    } else {
-        $complete = $pdo->prepare("
-            UPDATE consultations
-            SET status = 'completed'
-            WHERE id = ?
-              AND status = 'in_consultation'
-        ");
-    }
-    $cancel = $pdo->prepare("
-        UPDATE consultations
-        SET status = 'cancelled'
-        WHERE id = ?
-          AND status IN ('pending', 'scheduled')
-    ");
-    $end_video = $pdo->prepare("
-        UPDATE video_sessions
-        SET status = 'ended', ended_at = NOW()
-        WHERE consultation_id = ?
-          AND status = 'active'
-    ");
-
-    foreach ($expired as $row) {
-        $id = (int) $row['id'];
-        $status = (string) $row['status'];
-
-        if ($status === 'in_consultation') {
-            $complete->execute([$id]);
-            $completedRows = $complete->rowCount();
-            $updated += $completedRows;
-            if ($completedRows > 0) {
-                require_once __DIR__ . '/appointment_slots.php';
-                appointment_slot_set_consultation_status($pdo, $id, 'completed');
-
-                $pidStmt = $pdo->prepare('SELECT patient_id FROM consultations WHERE id = ? LIMIT 1');
-                $pidStmt->execute([$id]);
-                $pid = (int) ($pidStmt->fetchColumn() ?: 0);
-                if ($pid > 0) {
-                    BhwPatientWorkflow::onConsultationCompleted($pdo, $pid, 'session_expired');
-                    patient_triage_close_cases_for_consultation($pdo, $id);
-                }
-            }
-        } else {
-            $cancel->execute([$id]);
-            $updated += $cancel->rowCount();
-            if ($cancel->rowCount() > 0) {
-                require_once __DIR__ . '/patient_consultation_cancel.php';
-                consultation_release_booked_slots($pdo, $id);
-                // Close linked care-tips / chief-complaint cases so a cancelled
-                // visit never keeps the dashboard stuck on "Doctor reviewing"
-                // or a locked previous complaint.
-                patient_triage_close_cases_for_consultation($pdo, $id);
-            }
-        }
-
-        $end_video->execute([$id]);
-    }
+    $updated = consultation_timing_close_missed($pdo, $patient_id, $provider_id);
 
     if ($updated > 0) {
         try {

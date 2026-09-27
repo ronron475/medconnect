@@ -11,6 +11,7 @@ ob_start();
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_queue_timing.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
 
 clinical_tables_ensure($pdo);
@@ -51,9 +52,15 @@ if ($consultation_id <= 0) {
 }
 
 try {
+    consultation_timing_ensure_schema($pdo);
+    consultation_timing_close_missed($pdo, null, $uid);
+
+    $joinedSql = consultation_timing_latest_patient_joined_sql('c');
     $stmt = $pdo->prepare("
         SELECT c.id, c.patient_id, c.provider_id, c.consult_date, c.consult_time, c.status,
-               s.slot_date, s.start_time AS slot_start
+               c.early_start_response,
+               s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end,
+               {$joinedSql} AS patient_joined_at
         FROM consultations c
         LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         WHERE c.id = ? AND c.provider_id = ?
@@ -80,10 +87,49 @@ try {
         exit;
     }
 
+    $consultation = consultation_timing_decorate_row($pdo, $consultation);
+    $otherVideo = consultation_timing_other_active_video_id($pdo, $uid, $consultation_id);
+    $otherOpen = consultation_timing_other_open_consultation_id($pdo, $uid, $consultation_id);
+    $startDecision = consultation_timing_provider_start_decision(
+        time(),
+        $consultation['timing_slot_start'] ?? null,
+        $consultation['timing_slot_end'] ?? null,
+        $consultStatus,
+        $otherVideo > 0,
+        !empty($consultation['patient_ever_joined']),
+        !empty($consultation['timing_blocked_by_earlier']),
+        (string) ($consultation['early_start_response'] ?? ''),
+        false,
+        $otherOpen > 0
+    );
+    if (!$startDecision['allowed']) {
+        ob_end_clean();
+        echo json_encode([
+            'success' => false,
+            'message' => $startDecision['reason'],
+            'code' => $startDecision['code'],
+        ]);
+        exit;
+    }
+
     $session_access = queue_session_access($consultation);
     if (!$session_access['allowed']) {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => $session_access['reason']]);
+        exit;
+    }
+
+    $pdo->beginTransaction();
+    $pdo->prepare('SELECT id FROM users WHERE id = ? FOR UPDATE')->execute([$uid]);
+    $lockedOpen = consultation_timing_other_open_consultation_id($pdo, $uid, $consultation_id);
+    if ($lockedOpen > 0) {
+        $pdo->rollBack();
+        ob_end_clean();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Finish the open consultation, including the SOAP note and final assessment, before starting the next patient.',
+            'code' => 'clinical_active',
+        ]);
         exit;
     }
 
@@ -96,6 +142,7 @@ try {
     $stmt->execute([$consultation_id]);
     $session = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    $startedNewRoom = false;
     if ($session) {
         $token = (string) $session['room_token'];
         // Ensure status is live if room already exists
@@ -122,7 +169,12 @@ try {
             SET status = 'in_consultation'
             WHERE id = ? AND status IN ('scheduled', 'pending')
         ")->execute([$consultation_id]);
+        $startedNewRoom = true;
+    }
 
+    $pdo->commit();
+
+    if ($startedNewRoom) {
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
         NotificationEvents::consultationStarting(
             $pdo,
@@ -140,6 +192,9 @@ try {
         'message' => 'Video room started. Patient can now join.',
     ]);
 } catch (PDOException $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     ob_end_clean();
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Could not start video session.']);

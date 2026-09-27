@@ -662,6 +662,13 @@ body.patient-portal .psess-live-banner {
   margin-bottom: 0;
 }
 
+body.patient-portal .psess-live-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 /* Stacked page sections: rely on parent flex/grid gap only */
 body.patient-portal .pdash-page > *,
 body.patient-portal .psess-page > *,

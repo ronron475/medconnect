@@ -76,55 +76,16 @@ try {
         echo json_encode(['success' => false, 'message' => 'Could not resolve the consultation end time.']);
         exit;
     }
-    // Server-side gate: expired slots cannot be revived by client-side timer manipulation.
-    if ($current_end_ts <= time()) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'This consultation slot has already expired and cannot be extended.',
-        ]);
-        exit;
-    }
-    $new_end_ts = $current_end_ts + ($extension_mins * 60);
-    $new_end_time = date('H:i:s', $new_end_ts);
-
-    $conflict_stmt = $pdo->prepare("
-        SELECT COUNT(*)
-        FROM appointment_slots
-        WHERE provider_id = ?
-          AND slot_date = ?
-          AND status = 'booked'
-          AND (consultation_id IS NULL OR consultation_id != ?)
-          AND start_time < ?
-          AND end_time > ?
-    ");
-    $conflict_stmt->execute([
-        $provider_id,
-        $slot_date,
-        $consultation_id,
-        $new_end_time,
-        $current_end_time,
-    ]);
-
-    if ((int) $conflict_stmt->fetchColumn() > 0) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Extension blocked: another patient is booked in the next slot.',
-        ]);
-        exit;
-    }
-
-    if ($slot_id > 0) {
-        $update = $pdo->prepare("UPDATE appointment_slots SET end_time = ? WHERE id = ?");
-        $update->execute([$new_end_time, $slot_id]);
-    }
-
+    // The booked slot stays unchanged. Running long does not take the next patient's time.
+    $scheduledRemaining = max(0, $current_end_ts - time());
     echo json_encode([
         'success' => true,
-        'message' => 'Session extended by ' . $extension_mins . ' minutes.',
-        'extension_mins' => $extension_mins,
-        'new_end_time' => $new_end_time,
-        'new_end_label' => date('g:i A', $new_end_ts),
-        'seconds_remaining' => max(0, $new_end_ts - time()),
+        'continues_past_slot' => true,
+        'message' => 'This visit can continue past the scheduled slot. The next patient keeps their own time and will be asked to wait.',
+        'extension_mins' => 0,
+        'new_end_time' => $current_end_time,
+        'new_end_label' => date('g:i A', $current_end_ts),
+        'seconds_remaining' => $scheduledRemaining,
     ]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
