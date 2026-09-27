@@ -146,18 +146,16 @@ foreach ($checks as $file => $needles) {
     }
 }
 
-// Demos must remain ungated by login (still CSRF/demo-token + their own throttle)
-foreach (['gemini_clinical_interview_demo.php', 'nlp_step3_demo_interview.php'] as $demo) {
-    $src = file_get_contents($root . '/app/api/ai/' . $demo) ?: '';
-    if (str_contains($src, 'security_throttle')
-        && str_contains($src, 'auth_csrf_validate')
-        && !str_contains($src, 'ai_endpoint_require_roles')
-        && !str_contains($src, 'Api::requireAuth')
-    ) {
-        pass("{$demo} stays public demo (CSRF+throttle, no login gate)");
-    } else {
-        fail("{$demo} stays public demo (CSRF+throttle, no login gate)");
-    }
+// Gemini interview demo stays ungated by login (CSRF + throttle).
+$geminiDemo = file_get_contents($root . '/app/api/ai/gemini_clinical_interview_demo.php') ?: '';
+if (str_contains($geminiDemo, 'security_throttle')
+    && str_contains($geminiDemo, 'auth_csrf_validate')
+    && !str_contains($geminiDemo, 'ai_endpoint_require_roles')
+    && !str_contains($geminiDemo, 'Api::requireAuth')
+) {
+    pass('gemini_clinical_interview_demo.php stays public demo (CSRF+throttle, no login gate)');
+} else {
+    fail('gemini_clinical_interview_demo.php stays public demo (CSRF+throttle, no login gate)');
 }
 
 // assess stays public for trainer/registration (rate-limited, not requireAuth)

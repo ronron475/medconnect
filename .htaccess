@@ -98,14 +98,6 @@ RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
 
 
 
-# ── Standalone public pages ────────────────────────────────────
-
-RewriteRule ^ocr-demo$ public/nlp_step3_demo.php [L]
-
-RewriteRule ^nlp-production-demo$ public/nlp_production_demo.php [L]
-
-
-
 # ── Block internal application directories ─────────────────────
 
 RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules)/ - [F,L]
