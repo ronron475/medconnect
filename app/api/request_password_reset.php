@@ -11,6 +11,7 @@ require_once dirname(dirname(__DIR__)) . '/config/db.php';
 require_once BASE_PATH . '/app/includes/mailer.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/security_throttle.php';
+require_once dirname(dirname(__DIR__)) . '/app/includes/password_reset_otp.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -68,15 +69,17 @@ if ($user) {
     $otp    = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     $expiry = time() + 600;
 
-    $_SESSION['reset_email']     = $email;
-    $_SESSION['reset_role']      = (string) $user['role'];
-    $_SESSION['reset_user_id']   = (int) $user['id'];
     // Fast hash for short-lived OTP (bcrypt cost 12 adds hundreds of ms per request).
-    $_SESSION['reset_otp']       = hash_hmac('sha256', $otp, session_id() . '|pwreset');
-    $_SESSION['reset_expiry']    = $expiry;
-    $_SESSION['reset_verified']  = false;
-    $_SESSION['reset_attempts']  = ($_SESSION['reset_attempts'] ?? 0) + 1;
-    $_SESSION['reset_last_sent'] = time();
+    password_reset_otp_store(
+        $_SESSION,
+        $email,
+        (string) $user['role'],
+        (int) $user['id'],
+        $otp,
+        $expiry,
+        session_id(),
+        time()
+    );
 
     $mail = initMailer();
     if (!$mail) {

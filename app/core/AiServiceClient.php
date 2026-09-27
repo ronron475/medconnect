@@ -5,6 +5,17 @@
 
 final class AiServiceClient
 {
+    private static function authHeaders(): array
+    {
+        static $loaded = false;
+        if (!$loaded) {
+            require_once dirname(__DIR__) . '/includes/ai_service_auth.php';
+            $loaded = true;
+        }
+
+        return medconnect_ai_service_auth_headers();
+    }
+
     /** Last non-2xx / transport error from postJson/httpPost (never includes secrets). */
     private static string $lastHttpError = '';
 
@@ -284,6 +295,7 @@ final class AiServiceClient
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_TIMEOUT        => $timeout,
+            CURLOPT_HTTPHEADER     => self::authHeaders(),
             CURLOPT_POSTFIELDS     => [
                 $fieldName => new CURLFile($filePath, $mimeType, $originalName),
             ],
@@ -404,6 +416,7 @@ final class AiServiceClient
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_CONNECTTIMEOUT => min(2, $timeout),
                     CURLOPT_TIMEOUT        => $timeout,
+                    CURLOPT_HTTPHEADER     => self::authHeaders(),
                 ];
                 foreach (self::sslCurlOptions() as $k => $v) {
                     $opts[$k] = $v;
@@ -435,10 +448,13 @@ final class AiServiceClient
                     CURLOPT_RETURNTRANSFER => true,
                     CURLOPT_CONNECTTIMEOUT => min(5, $timeout),
                     CURLOPT_TIMEOUT        => $timeout,
-                    CURLOPT_HTTPHEADER     => [
-                        'Content-Type: application/json',
-                        'Accept: application/json',
-                    ],
+                    CURLOPT_HTTPHEADER     => array_merge(
+                        [
+                            'Content-Type: application/json',
+                            'Accept: application/json',
+                        ],
+                        self::authHeaders()
+                    ),
                     CURLOPT_POSTFIELDS     => $jsonBody,
                 ];
                 foreach (self::sslCurlOptions() as $k => $v) {

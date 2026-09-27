@@ -4,6 +4,7 @@
  * URL: /app/api/verify_reset_otp.php
  */
 require_once dirname(dirname(__DIR__)) . '/bootstrap.php';
+require_once dirname(dirname(__DIR__)) . '/app/includes/password_reset_otp.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -21,31 +22,5 @@ if ($email === '' || $otp === '') {
     exit;
 }
 
-if (empty($_SESSION['reset_email']) || empty($_SESSION['reset_otp']) || empty($_SESSION['reset_expiry'])) {
-    echo json_encode(['success' => false, 'message' => 'No OTP found. Please request a new one.']);
-    exit;
-}
-
-if ($_SESSION['reset_email'] !== $email) {
-    echo json_encode(['success' => false, 'message' => 'Email mismatch. Please request a new OTP.']);
-    exit;
-}
-
-if (time() > (int) $_SESSION['reset_expiry']) {
-    unset($_SESSION['reset_otp'], $_SESSION['reset_expiry']);
-    echo json_encode(['success' => false, 'message' => 'OTP has expired. Please request a new one.']);
-    exit;
-}
-
-$storedOtp = (string) $_SESSION['reset_otp'];
-$otpOk = str_starts_with($storedOtp, '$2')
-    ? password_verify($otp, $storedOtp) // legacy bcrypt OTPs
-    : hash_equals($storedOtp, hash_hmac('sha256', $otp, session_id() . '|pwreset'));
-
-if (!$otpOk) {
-    echo json_encode(['success' => false, 'message' => 'Incorrect OTP. Please try again.']);
-    exit;
-}
-
-$_SESSION['reset_verified'] = true;
-echo json_encode(['success' => true, 'message' => 'OTP verified. You may now set a new password.']);
+$result = password_reset_otp_verify($_SESSION, $email, $otp, session_id(), time());
+echo json_encode(['success' => $result['success'], 'message' => $result['message']]);

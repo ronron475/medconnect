@@ -7,10 +7,44 @@ from functools import lru_cache
 from pathlib import Path
 
 from dotenv import load_dotenv
+from urllib.parse import urlparse
 
 _ROOT = Path(__file__).resolve().parents[2]
 _PROJECT = _ROOT.parent
 load_dotenv(_PROJECT / ".env")
+
+# Browser origins that may call this service. Never "*".
+_DEFAULT_CORS_ORIGINS = (
+    "https://medconnect.bccbsis.com",
+    "http://localhost",
+    "http://127.0.0.1",
+)
+
+
+def resolve_cors_origins() -> list[str]:
+    """Allowlisted MedConnect origins. A configured '*' is ignored."""
+    origins: list[str] = []
+
+    def add(origin: str) -> None:
+        value = origin.strip().rstrip("/")
+        if value == "" or value == "*" or value in origins:
+            return
+        origins.append(value)
+
+    for origin in _DEFAULT_CORS_ORIGINS:
+        add(origin)
+
+    app_url = os.environ.get("MEDCONNECT_APP_URL", "").strip()
+    if app_url:
+        parsed = urlparse(app_url)
+        if parsed.scheme and parsed.netloc:
+            add(f"{parsed.scheme}://{parsed.netloc}")
+
+    raw = os.environ.get("MEDCONNECT_CORS_ORIGINS", "")
+    for part in raw.split(","):
+        add(part)
+
+    return origins
 
 
 class Settings:
@@ -26,11 +60,8 @@ class Settings:
     )
     debug: bool = os.environ.get("MEDCONNECT_AI_DEBUG", "0").lower() in ("1", "true", "yes")
 
-    cors_origins: list[str] = [
-        o.strip()
-        for o in os.environ.get("MEDCONNECT_CORS_ORIGINS", "*").split(",")
-        if o.strip()
-    ]
+    # Shared secret for protected routes. Railway/PHP env only — never hardcoded.
+    service_token: str = os.environ.get("MEDCONNECT_AI_SERVICE_TOKEN", "").strip()
 
     ocr_space_api_key: str = os.environ.get("OCR_SPACE_API_KEY", "")
     ocr_space_endpoint: str = os.environ.get(
@@ -47,4 +78,7 @@ class Settings:
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    settings.cors_origins = resolve_cors_origins()
+    settings.service_token = os.environ.get("MEDCONNECT_AI_SERVICE_TOKEN", "").strip()
+    return settings

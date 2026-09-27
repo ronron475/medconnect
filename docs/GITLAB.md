@@ -122,10 +122,11 @@ The landing FAQ widget still talks to Hostinger PHP; PHP then asks Railway for G
 | `AI_API_KEY` | Gemini key from Google AI Studio (FAQ chatbot) |
 | `AI_MODEL` | `gemini-3.5-flash` |
 | `AI_TIMEOUT` | `15` |
+| `MEDCONNECT_AI_SERVICE_TOKEN` | Shared secret. Same value on Hostinger PHP. Not the Gemini key. |
 
 After deploy, `/health` should report both `"groq": "connected"` and `"gemini": "connected"` (or `"configured"` until the startup ping finishes). Dedicated checks: `/groq_health` and `/gemini_health`.
 
-Hostinger does **not** need `AI_API_KEY` if Railway has the Gemini key. Keep emergency/FAQ/KB matching on PHP.
+Hostinger does **not** need `AI_API_KEY` if Railway has the Gemini key. Hostinger PHP does need the same `MEDCONNECT_AI_SERVICE_TOKEN` so it can call protected AI routes. Keep emergency/FAQ/KB matching on PHP.
 
 Do **not** set `MEDCONNECT_AI_SERVICE_URL` on Railway — that belongs on Hostinger `.env` only.
 

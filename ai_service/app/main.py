@@ -12,6 +12,7 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging_config import setup_logging
 from app.core.startup import run_startup_tasks
 from app.middleware.security import SecurityHeadersMiddleware
+from app.middleware.service_auth import ServiceAuthMiddleware
 from app.routers import (
     care_tips,
     consultation,
@@ -60,13 +61,19 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    origins = settings.cors_origins if settings.cors_origins != ["*"] else ["*"]
+    # Auth is inside CORS so 401/403 responses still carry the allowlist headers.
+    app.add_middleware(ServiceAuthMiddleware)
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "X-MedConnect-Service-Token",
+        ],
     )
     app.add_middleware(SecurityHeadersMiddleware)
 

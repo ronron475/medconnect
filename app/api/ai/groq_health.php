@@ -12,10 +12,12 @@ $body = null;
 if (function_exists('curl_init')) {
     $curl = curl_init(AI_SERVICE_BASE_URL . '/api/groq_health');
     if ($curl !== false) {
+        require_once BASE_PATH . '/app/includes/ai_service_auth.php';
         curl_setopt_array($curl, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CONNECTTIMEOUT => 3,
             CURLOPT_TIMEOUT        => 15,
+            CURLOPT_HTTPHEADER     => medconnect_ai_service_auth_headers(),
         ]);
         $raw = curl_exec($curl);
         $code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);

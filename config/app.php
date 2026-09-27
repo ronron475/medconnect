@@ -29,6 +29,13 @@ if (!function_exists('medconnect_is_production_host')) {
     }
 }
 
+if (!defined('MEDCONNECT_AI_SERVICE_TOKEN')) {
+    define(
+        'MEDCONNECT_AI_SERVICE_TOKEN',
+        trim((string) (getenv('MEDCONNECT_AI_SERVICE_TOKEN') ?: ''))
+    );
+}
+
 if (!defined('AI_SERVICE_BASE_URL')) {
     $envUrl = trim((string) (getenv('MEDCONNECT_AI_SERVICE_URL') ?: ''));
     $envHost = strtolower((string) (parse_url($envUrl, PHP_URL_HOST) ?: ''));

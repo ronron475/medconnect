@@ -95,7 +95,10 @@ try {
         $_SESSION['reset_expiry'],
         $_SESSION['reset_verified'],
         $_SESSION['reset_attempts'],
-        $_SESSION['reset_last_sent']
+        $_SESSION['reset_last_sent'],
+        $_SESSION['reset_otp_failures'],
+        $_SESSION['reset_verify_hits'],
+        $_SESSION['reset_verify_window_start']
     );
 
     echo json_encode(['success' => true, 'message' => 'Password reset successfully. You can now sign in.']);

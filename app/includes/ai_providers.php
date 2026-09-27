@@ -152,10 +152,16 @@ function ai_providers_http_get_json(string $url, int $timeout = 8): array
     if ($curl === false) {
         return ['ok' => false, 'body' => null, 'error' => 'cURL init failed', 'http_code' => 0];
     }
+    require_once __DIR__ . '/ai_service_auth.php';
+    $headers = [];
+    if (defined('AI_SERVICE_BASE_URL') && str_starts_with($url, rtrim((string) AI_SERVICE_BASE_URL, '/'))) {
+        $headers = medconnect_ai_service_auth_headers();
+    }
     curl_setopt_array($curl, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => min(3, $timeout),
         CURLOPT_TIMEOUT        => $timeout,
+        CURLOPT_HTTPHEADER     => $headers,
     ]);
     $raw = curl_exec($curl);
     $code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);

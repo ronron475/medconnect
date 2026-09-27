@@ -46,19 +46,132 @@ function login_security_ensure_schema(PDO $pdo): void
     $done = true;
 }
 
-function login_security_ip(): string
+function login_security_valid_ip(string $raw): string
 {
-    $candidates = [
-        $_SERVER['HTTP_CF_CONNECTING_IP'] ?? '',
-        $_SERVER['HTTP_X_REAL_IP'] ?? '',
-        $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '',
-        $_SERVER['REMOTE_ADDR'] ?? '',
-    ];
-    foreach ($candidates as $raw) {
-        $ip = trim(explode(',', (string) $raw)[0]);
-        if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+    $ip = trim($raw);
+    if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) {
+        return $ip;
     }
     return '';
+}
+
+function login_security_env_flag(string $key, bool $default): bool
+{
+    if (function_exists('medconnect_env_bool')) {
+        return medconnect_env_bool($key, $default);
+    }
+    $raw = getenv($key);
+    if ($raw === false || $raw === '') {
+        $raw = $_ENV[$key] ?? '';
+    }
+    if ($raw === false || $raw === '') {
+        return $default;
+    }
+    return !in_array(strtolower(trim((string) $raw)), ['0', 'false', 'no', 'off'], true);
+}
+
+/** @return list<string> */
+function login_security_trusted_proxies(): array
+{
+    $raw = getenv('MEDCONNECT_TRUSTED_PROXIES');
+    if ($raw === false || $raw === '') {
+        $raw = (string) ($_ENV['MEDCONNECT_TRUSTED_PROXIES'] ?? '');
+    }
+    $out = [];
+    foreach (explode(',', (string) $raw) as $part) {
+        $part = trim($part);
+        if ($part !== '') {
+            $out[] = $part;
+        }
+    }
+    return $out;
+}
+
+function login_security_ip_matches_rule(string $ip, string $rule): bool
+{
+    $rule = trim($rule);
+    if ($rule === '' || $ip === '') {
+        return false;
+    }
+    if (!str_contains($rule, '/')) {
+        $left = @inet_pton($ip);
+        $right = @inet_pton($rule);
+        return $left !== false && $right !== false && $left === $right;
+    }
+
+    [$subnet, $bitsRaw] = explode('/', $rule, 2);
+    if ($bitsRaw === '' || !ctype_digit($bitsRaw)) {
+        return false;
+    }
+    $bits = (int) $bitsRaw;
+    $ipBin = @inet_pton($ip);
+    $subnetBin = @inet_pton($subnet);
+    if ($ipBin === false || $subnetBin === false || strlen($ipBin) !== strlen($subnetBin)) {
+        return false;
+    }
+    $maxBits = strlen($ipBin) * 8;
+    if ($bits < 0 || $bits > $maxBits) {
+        return false;
+    }
+    $bytes = intdiv($bits, 8);
+    $remainder = $bits % 8;
+    if ($bytes > 0 && substr($ipBin, 0, $bytes) !== substr($subnetBin, 0, $bytes)) {
+        return false;
+    }
+    if ($remainder === 0) {
+        return true;
+    }
+    $mask = (0xFF << (8 - $remainder)) & 0xFF;
+    return (ord($ipBin[$bytes]) & $mask) === (ord($subnetBin[$bytes]) & $mask);
+}
+
+function login_security_address_is_trusted_proxy(string $ip): bool
+{
+    foreach (login_security_trusted_proxies() as $rule) {
+        if (login_security_ip_matches_rule($ip, $rule)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Client IP for login throttles.
+ * REMOTE_ADDR is the connection peer and cannot be chosen by the caller.
+ * X-Forwarded-For, X-Real-IP, and CF-Connecting-IP are used only when
+ * MEDCONNECT_TRUST_PROXY is on and that peer is listed in MEDCONNECT_TRUSTED_PROXIES.
+ */
+function login_security_ip(): string
+{
+    $remote = login_security_valid_ip((string) ($_SERVER['REMOTE_ADDR'] ?? ''));
+    $trustForwarded = $remote !== ''
+        && login_security_env_flag('MEDCONNECT_TRUST_PROXY', true)
+        && login_security_address_is_trusted_proxy($remote);
+    if (!$trustForwarded) {
+        return $remote;
+    }
+
+    $chain = [];
+    foreach (explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')) as $part) {
+        $ip = login_security_valid_ip($part);
+        if ($ip !== '') {
+            $chain[] = $ip;
+        }
+    }
+    for ($i = count($chain) - 1; $i >= 0; $i--) {
+        if (!login_security_address_is_trusted_proxy($chain[$i])) {
+            return $chain[$i];
+        }
+    }
+
+    foreach (['HTTP_X_REAL_IP', 'HTTP_CF_CONNECTING_IP'] as $header) {
+        $ip = login_security_valid_ip((string) ($_SERVER[$header] ?? ''));
+        if ($ip !== '' && !login_security_address_is_trusted_proxy($ip)) {
+            return $ip;
+        }
+    }
+
+    return $remote;
 }
 
 function login_security_user_agent(): string

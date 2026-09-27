@@ -47,6 +47,7 @@ final class OcrFastApiClient
             'national_id_image' => new CURLFile($filePath, $mime, $filename),
         ];
 
+        require_once dirname(__DIR__) . '/includes/ai_service_auth.php';
         curl_setopt_array($curl, [
             CURLOPT_URL            => $url,
             CURLOPT_POST           => true,
@@ -55,6 +56,7 @@ final class OcrFastApiClient
             CURLOPT_TIMEOUT        => defined('OCR_FASTAPI_TIMEOUT') ? (int) OCR_FASTAPI_TIMEOUT : 90,
             CURLOPT_CONNECTTIMEOUT => 5,
             CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_HTTPHEADER     => medconnect_ai_service_auth_headers(),
         ]);
 
         $response = curl_exec($curl);
