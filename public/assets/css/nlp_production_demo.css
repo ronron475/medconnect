@@ -1,0 +1,149 @@
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+.nlp-prod-body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, system-ui, Segoe UI, Roboto, sans-serif;
+  color: #0f172a;
+  background: linear-gradient(165deg, #f0fdfa 0%, #f8fafc 55%, #ecfeff 100%);
+}
+
+.nlp-prod-main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 36px 20px 56px;
+}
+
+.nlp-prod-kicker {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.nlp-prod-header h1 {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  color: #012a4a;
+}
+
+.nlp-prod-sub {
+  margin: 0 0 22px;
+  color: #475569;
+  line-height: 1.5;
+}
+
+.nlp-prod-card,
+.nlp-prod-result {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 28px rgba(1, 42, 74, 0.06);
+}
+
+.nlp-prod-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.nlp-prod-input {
+  display: block;
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  resize: vertical;
+}
+
+.nlp-prod-input:focus {
+  outline: 2px solid #99f6e4;
+  border-color: #0f766e;
+}
+
+.nlp-prod-actions,
+.nlp-prod-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.nlp-prod-btn,
+.nlp-prod-chip {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nlp-prod-btn {
+  background: #0f766e;
+  color: #fff;
+}
+
+.nlp-prod-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.nlp-prod-btn--ghost,
+.nlp-prod-chip {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.nlp-prod-status {
+  margin: 14px 0 0;
+  color: #b91c1c;
+}
+
+.nlp-prod-result { margin-top: 16px; }
+
+.nlp-prod-badge {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.nlp-prod-badge--emergency { background: #fee2e2; color: #991b1b; }
+.nlp-prod-badge--urgent { background: #ffedd5; color: #9a3412; }
+.nlp-prod-badge--routine { background: #dcfce7; color: #166534; }
+.nlp-prod-badge--hold { background: #e2e8f0; color: #334155; }
+
+.nlp-prod-grid {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.nlp-prod-grid div {
+  display: grid;
+  gap: 2px;
+}
+
+.nlp-prod-grid dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #64748b;
+}
+
+.nlp-prod-grid dd {
+  margin: 0;
+}

@@ -102,6 +102,8 @@ RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
 
 RewriteRule ^ocr-demo$ public/nlp_step3_demo.php [L]
 
+RewriteRule ^nlp-production-demo$ public/nlp_production_demo.php [L]
+
 
 
 # ── Block internal application directories ─────────────────────
