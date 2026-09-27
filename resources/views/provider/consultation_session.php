@@ -1501,6 +1501,38 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     line-height: 1.5;
 }
 .csp-list li { margin-bottom: 4px; }
+.csp-interview {
+    max-height: 240px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.csp-interview__item {
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+}
+.csp-interview__q,
+.csp-interview__a {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #334155;
+}
+.csp-interview__q {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.csp-interview__a { color: #1e293b; }
+.csp-interview__label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    margin-right: 4px;
+}
 .csp-empty {
     margin: 0;
     color: #94a3b8;
@@ -3125,6 +3157,34 @@ body.final-assessment-modal-open {
                         <?php endif; ?>
                     </div>
 
+                    <div class="csp-section" id="cspInterviewSection">
+                        <h4 class="csp-section__title">Triage interview</h4>
+                        <div class="csp-interview" id="cspInterviewTranscript">
+                            <?php
+                            $interviewTranscript = is_array($clinical_support['interview_transcript'] ?? null)
+                                ? $clinical_support['interview_transcript']
+                                : [];
+                            ?>
+                            <?php if ($interviewTranscript === []): ?>
+                                <p class="csp-empty">No triage interview answers recorded for this consultation.</p>
+                            <?php else: ?>
+                                <?php foreach ($interviewTranscript as $turn): ?>
+                                    <?php
+                                    $interviewQuestion = trim((string) ($turn['question'] ?? ''));
+                                    $interviewAnswer = trim((string) ($turn['answer'] ?? ''));
+                                    if ($interviewQuestion === '' || $interviewAnswer === '') {
+                                        continue;
+                                    }
+                                    ?>
+                                    <div class="csp-interview__item">
+                                        <p class="csp-interview__q"><span class="csp-interview__label">Q</span><?= htmlspecialchars($interviewQuestion) ?></p>
+                                        <p class="csp-interview__a"><span class="csp-interview__label">A</span><?= htmlspecialchars($interviewAnswer) ?></p>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
                     <div class="csp-section">
                         <h4 class="csp-section__title">Possible conditions</h4>
                         <div class="csp-chips" id="cspConditions">
@@ -4571,6 +4631,8 @@ function applyClinicalSupport(support) {
     renderCspList(document.getElementById('cspQuestions'), support.suggested_questions || [], 'No clarifying prompts available.');
     renderCspList(document.getElementById('cspActions'), support.recommended_actions || [], 'No AI care actions listed for this assessment.');
 
+    renderCspInterview(support.interview_transcript || []);
+
     const complaintLine = document.getElementById('cspComplaintLine');
     const complaintText = document.getElementById('cspComplaintText');
     const englishWrap = document.getElementById('cspEnglishWrap');
@@ -4598,6 +4660,25 @@ function applyClinicalSupport(support) {
             ? ('Assessed ' + support.assessed_label)
             : 'Just re-assessed';
     }
+}
+
+function renderCspInterview(transcript) {
+    const box = document.getElementById('cspInterviewTranscript');
+    if (!box) return;
+    const rows = Array.isArray(transcript) ? transcript : [];
+    const visible = rows.filter(function (row) {
+        return row && String(row.question || '').trim() && String(row.answer || '').trim();
+    });
+    if (!visible.length) {
+        box.innerHTML = '<p class="csp-empty">No triage interview answers recorded for this consultation.</p>';
+        return;
+    }
+    box.innerHTML = visible.map(function (row) {
+        return '<div class="csp-interview__item">' +
+            '<p class="csp-interview__q"><span class="csp-interview__label">Q</span>' + escapeHtml(row.question) + '</p>' +
+            '<p class="csp-interview__a"><span class="csp-interview__label">A</span>' + escapeHtml(row.answer) + '</p>' +
+            '</div>';
+    }).join('');
 }
 
 function appendSoapField(name, block) {
