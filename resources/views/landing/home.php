@@ -16,7 +16,7 @@ $asset = ASSET_BASE;
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 
-  <title>medConnect Inline Video Call Consultation and AI-Powered Triage System </title>
+  <title>medConnect Online Video Call Consultation and AI-Powered Triage System </title>
 
   <link rel="icon" type="image/png" href="<?= $asset ?>/assets/img/medcon_logo.png" />
 
@@ -442,7 +442,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
       <p class="services-desc">
 
-        <span class="services-brand">medConnect</span> is an Inline Video Call Consultation and AI-Powered Triage System designed for the <strong>City Health Office</strong> of Bago City.<br/>
+        <span class="services-brand">medConnect</span> is an Online Video Call Consultation and AI-Powered Triage System designed for the <strong>City Health Office</strong> of Bago City.<br/>
 
         The system improves healthcare accessibility, supports patient prioritization, centralizes medical records, and strengthens follow-up care for non-emergency cases.
 
@@ -661,7 +661,7 @@ require __DIR__ . '/partials/landing_navbar.php';
 
         <p class="contact-brand-desc">
 
-          An Inline Video Call Consultation and AI-Powered Triage System serving the City Health Office of Bago City. Bridging patients and healthcare providers for non-emergency care.
+          An Online Video Call Consultation and AI-Powered Triage System serving the City Health Office of Bago City. Bridging patients and healthcare providers for non-emergency care.
 
         </p>
 
