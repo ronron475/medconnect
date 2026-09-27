@@ -19,6 +19,35 @@ final class AiServiceClient
     /** Last non-2xx / transport error from postJson/httpPost (never includes secrets). */
     private static string $lastHttpError = '';
 
+    /** Test-only quota probe. Production requests leave this false. */
+    private static bool $geminiQuotaProbe = false;
+
+    private static int $geminiQuotaProbePosts = 0;
+
+    public static function beginGeminiQuotaProbeForTest(): void
+    {
+        self::$geminiQuotaProbe = true;
+        self::$geminiQuotaProbePosts = 0;
+        self::$lastHttpError = '';
+    }
+
+    public static function endGeminiQuotaProbeForTest(): void
+    {
+        self::$geminiQuotaProbe = false;
+    }
+
+    public static function geminiQuotaProbePostsForTest(): int
+    {
+        return self::$geminiQuotaProbePosts;
+    }
+
+    private static function httpErrorIsGeminiQuota(): bool
+    {
+        $msg = strtolower(self::$lastHttpError);
+
+        return str_contains($msg, '429') || str_contains($msg, 'quota');
+    }
+
     public static function lastHttpError(): string
     {
         return self::$lastHttpError;
@@ -155,6 +184,10 @@ final class AiServiceClient
                 $body,
                 $timeout
             );
+            if ($response === null && self::httpErrorIsGeminiQuota()) {
+                // HTTP 429 already reached Google. Do not call another generate endpoint.
+                break;
+            }
             if ($response === null) {
                 // Backward-compatible path while Railway redeploys.
                 $response = self::postJson(
@@ -174,7 +207,7 @@ final class AiServiceClient
                 || str_contains($msg, 'unavailable')
                 || str_contains($msg, 'timeout')
                 || str_contains($msg, 'timed out');
-            if (!$transient) {
+            if (!$transient || self::httpErrorIsGeminiQuota()) {
                 break;
             }
         }
@@ -436,6 +469,13 @@ final class AiServiceClient
 
     private static function httpPost(string $url, string $jsonBody, int $timeout): ?string
     {
+        if (self::$geminiQuotaProbe && (str_contains($url, '/gemini/generate') || str_contains($url, 'gemini-generate'))) {
+            self::$geminiQuotaProbePosts++;
+            self::$lastHttpError = 'HTTP 429: {"error":{"code":429,"message":"You exceeded your current quota","status":"RESOURCE_EXHAUSTED"}}';
+
+            return null;
+        }
+
         if (!AI_SERVICE_ENABLED) {
             return null;
         }

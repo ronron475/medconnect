@@ -222,6 +222,9 @@ def generate_content(
             err_body = exc.read().decode("utf-8", errors="replace")[:400]
         except Exception:
             pass
+        # Quota is not transient. One generateContent call must not be repeated.
+        if exc.code == 429:
+            raise RuntimeError(f"Gemini HTTP 429: {err_body or exc.reason}") from exc
         # Retry without thinkingConfig when the model rejects it (same as PHP demo path).
         if exc.code == 400:
             gen = body.get("generationConfig")
@@ -236,8 +239,8 @@ def generate_content(
                     raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from retry_exc
             else:
                 raise RuntimeError(f"Gemini HTTP {exc.code}: {err_body or exc.reason}") from exc
-        elif exc.code in {429, 500, 502, 503}:
-            # Match _ping_gemini: transient high-demand / overload (common on Flash).
+        elif exc.code in {500, 502, 503}:
+            # Transient high-demand / overload. HTTP 429 is handled above and is not retried.
             import time
 
             data = None

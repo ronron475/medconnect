@@ -107,9 +107,12 @@ if ($action === 'answer') {
 }
 
 if (!empty($result['error'])) {
-    $code = !empty($result['needs_health_concern']) || !empty($result['rejected'])
-        ? 'health_gate_rejected'
-        : 'gemini_demo_error';
+    $code = (string) ($result['code'] ?? '');
+    if ($code !== 'gemini_quota_exceeded') {
+        $code = !empty($result['needs_health_concern']) || !empty($result['rejected'])
+            ? 'health_gate_rejected'
+            : 'gemini_demo_error';
+    }
     Api::error((string) ($result['message'] ?? 'Demo interview error'), 422, [
         'code' => $code,
         'demo' => $result,

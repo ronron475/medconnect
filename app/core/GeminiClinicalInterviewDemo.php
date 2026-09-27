@@ -53,6 +53,7 @@ final class GeminiClinicalInterviewDemo
         }
 
         $context = self::blankContext($complaint);
+        self::syncQuestionLanguage($context, $complaint, true);
         $context['conversation'][] = [
             'role' => 'patient',
             'text' => $complaint,
@@ -70,22 +71,27 @@ final class GeminiClinicalInterviewDemo
         // 2) Gemini Flash semantic interpretation (health gate + first follow-up).
         $gemini = self::callGemini('start', $context, '');
         if ($gemini === null) {
+            $quota = self::isGeminiQuotaError(self::$lastError);
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
+            $message = $quota
+                ? 'Gemini is unavailable because the Gemini quota was exceeded. Interview not started.'
+                : 'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail;
 
             // NLP already confirmed health: still cannot interview without Gemini questions — fail closed.
             return self::rejectNonHealth(
                 $context,
                 self::CLASS_UNCLEAR,
-                'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail,
+                $message,
                 [
                     'raw_error' => self::$lastError,
+                    'code' => $quota ? 'gemini_quota_exceeded' : 'gemini_unavailable_or_invalid_json',
                     'nlp_precheck' => $nlpPrecheck,
                     'health_gate' => [
                         'classification' => self::CLASS_UNCLEAR,
                         'confidence' => null,
                         'normalized_health_concern' => '',
                         'passed' => false,
-                        'error' => 'gemini_unavailable_or_invalid_json',
+                        'error' => $quota ? 'gemini_quota_exceeded' : 'gemini_unavailable_or_invalid_json',
                     ],
                 ]
             );
@@ -179,16 +185,27 @@ final class GeminiClinicalInterviewDemo
             'text' => $answer,
             'kind' => 'answer',
         ];
+        $previousQuestionLanguage = (string) ($context['question_language'] ?? '');
+        $previousDetectedLanguage = (string) ($context['detected_language'] ?? '');
+        self::syncQuestionLanguage($context, $answer, false);
 
         $gemini = self::callGemini('answer', $context, $answer);
         if ($gemini === null) {
             // Do not invent facts; keep prior facts and surface error.
             array_pop($context['patient_turns']);
             array_pop($context['conversation']);
+            $context['question_language'] = $previousQuestionLanguage;
+            $context['detected_language'] = $previousDetectedLanguage;
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
 
-            return self::errorResult($context, 'Gemini unavailable or returned invalid JSON for this answer. No facts were updated.' . $detail, [
+            $quota = self::isGeminiQuotaError(self::$lastError);
+            $message = $quota
+                ? 'Gemini is unavailable because the Gemini quota was exceeded. No facts were updated.'
+                : 'Gemini unavailable or returned invalid JSON for this answer. No facts were updated.' . $detail;
+
+            return self::errorResult($context, $message, [
                 'raw_error' => self::$lastError,
+                'code' => $quota ? 'gemini_quota_exceeded' : '',
             ]);
         }
 
@@ -196,6 +213,42 @@ final class GeminiClinicalInterviewDemo
     }
 
     private static string $lastError = '';
+
+    /** Test-only: count generateContent attempts and stop before a live Google/Railway call. */
+    private static bool $geminiQuotaProbe = false;
+
+    private static int $directGeminiAttempts = 0;
+
+    public static function beginGeminiQuotaProbeForTest(): void
+    {
+        self::$geminiQuotaProbe = true;
+        self::$directGeminiAttempts = 0;
+        if (class_exists('AiServiceClient')) {
+            AiServiceClient::beginGeminiQuotaProbeForTest();
+        }
+    }
+
+    public static function endGeminiQuotaProbeForTest(): void
+    {
+        self::$geminiQuotaProbe = false;
+        if (class_exists('AiServiceClient')) {
+            AiServiceClient::endGeminiQuotaProbeForTest();
+        }
+    }
+
+    public static function geminiGenerateAttemptsForTest(): int
+    {
+        $railway = class_exists('AiServiceClient') ? AiServiceClient::geminiQuotaProbePostsForTest() : 0;
+
+        return self::$directGeminiAttempts + $railway;
+    }
+
+    private static function isGeminiQuotaError(string $message): bool
+    {
+        $msg = strtolower($message);
+
+        return str_contains($msg, '429') || str_contains($msg, 'quota');
+    }
 
     public static function lastError(): string
     {
@@ -266,8 +319,9 @@ final class GeminiClinicalInterviewDemo
                 $q = $retry;
             }
             if ($q === '') {
-                $q = 'Please answer the previous clinical question in your own words.';
+                $q = self::neutralRetryQuestion($context);
             }
+            $q = self::alignFollowUpQuestionLanguage($q, $context);
             $context['awaiting_question'] = $q;
             // Keep / refresh targets for the same clinical probe.
             $context['awaiting_target_findings'] = self::resolveTargetedFindings($gemini, $q, $context);
@@ -318,6 +372,11 @@ final class GeminiClinicalInterviewDemo
                     $context['missing_information'][] = 'pain_score';
                 }
             }
+        }
+
+        if (!$sufficient && $nextQ !== '') {
+            $nextQ = self::alignFollowUpQuestionLanguage($nextQ, $context);
+            $gemini['next_question'] = $nextQ;
         }
 
         if ($sufficient || $nextQ === '') {
@@ -496,6 +555,9 @@ final class GeminiClinicalInterviewDemo
         $pack = self::pack($context, $message, null);
         $pack['error'] = true;
         if (is_array($extra)) {
+            if (($extra['code'] ?? '') === 'gemini_quota_exceeded') {
+                $pack['code'] = 'gemini_quota_exceeded';
+            }
             $pack['debug'] = array_merge(is_array($pack['debug'] ?? null) ? $pack['debug'] : [], $extra);
         }
 
@@ -537,6 +599,9 @@ final class GeminiClinicalInterviewDemo
         $pack['error'] = true;
         $pack['rejected'] = true;
         $pack['needs_health_concern'] = true;
+        if (is_array($extra) && ($extra['code'] ?? '') === 'gemini_quota_exceeded') {
+            $pack['code'] = 'gemini_quota_exceeded';
+        }
         $pack['health_classification'] = $classification;
         if (!empty($gate['out_of_scope_non_human']) || strtoupper((string) ($gate['patient_subject'] ?? '')) === 'NON_HUMAN') {
             $pack['out_of_scope'] = true;
@@ -691,6 +756,8 @@ final class GeminiClinicalInterviewDemo
             'awaiting_target_findings' => [],
             'clinical_facts' => self::blankFacts(),
             'missing_information' => [],
+            'question_language' => '',
+            'detected_language' => '',
             'status' => self::STATUS_INTERVIEWING,
             'turn_count' => 0,
             'gemini_called' => false,
@@ -1019,32 +1086,304 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
+     * Locked follow-up language. Later turns stay in this language unless the
+     * patient clearly switches. Uses HiligaynonLanguageDetector plus the existing
+     * ClinicalInterviewEngine dominant-language resolution (mixed → dominant).
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function syncQuestionLanguage(array &$context, string $utterance, bool $isOpening): void
+    {
+        $utterance = trim($utterance);
+        $current = strtolower(trim((string) ($context['question_language'] ?? '')));
+        if (!in_array($current, ['english', 'tagalog', 'hiligaynon'], true)) {
+            $seed = trim((string) ($context['chief_complaint'] ?? ''));
+            if ($seed === '') {
+                $seed = $utterance;
+            }
+            if ($seed === '') {
+                return;
+            }
+            $context['question_language'] = self::resolveQuestionLanguage($seed);
+            $context['detected_language'] = self::detectedLanguageLabel($seed);
+            $current = (string) $context['question_language'];
+            if ($isOpening || $utterance === '' || $utterance === $seed) {
+                return;
+            }
+        }
+        if ($isOpening || $utterance === '') {
+            return;
+        }
+        $resolved = self::resolveQuestionLanguage($utterance);
+        if (!self::utteranceClearlySwitchesLanguage($utterance, $current, $resolved)) {
+            return;
+        }
+        $context['question_language'] = $resolved;
+        $context['detected_language'] = self::detectedLanguageLabel($utterance);
+    }
+
+    /**
+     * Question language for one patient-authored string. Mixed input follows
+     * the detector's dominant language. Does not rewrite the string.
+     */
+    private static function resolveQuestionLanguage(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '' || !class_exists('HiligaynonLanguageDetector')) {
+            return 'english';
+        }
+        try {
+            $detected = HiligaynonLanguageDetector::detect($text);
+        } catch (Throwable) {
+            return 'english';
+        }
+        if (class_exists('ClinicalInterviewEngine')) {
+            $lang = strtolower(ClinicalInterviewEngine::questionLanguageFromDetection($detected, $text));
+            if (in_array($lang, ['english', 'tagalog', 'hiligaynon'], true)) {
+                return $lang;
+            }
+        }
+        $primary = strtolower((string) ($detected['primary'] ?? ''));
+        $dominant = strtolower((string) ($detected['dominant'] ?? $primary));
+        $pick = $primary === 'mixed' ? $dominant : ($primary !== '' ? $primary : $dominant);
+
+        return match ($pick) {
+            'tagalog', 'filipino' => 'tagalog',
+            'english', 'en' => 'english',
+            'hiligaynon', 'ilonggo' => 'hiligaynon',
+            default => 'english',
+        };
+    }
+
+    private static function detectedLanguageLabel(string $text): string
+    {
+        if ($text === '' || !class_exists('HiligaynonLanguageDetector')) {
+            return 'ENGLISH';
+        }
+        try {
+            $primary = (string) (HiligaynonLanguageDetector::detect($text)['primary'] ?? 'english');
+        } catch (Throwable) {
+            return 'ENGLISH';
+        }
+        if (class_exists('ClinicalInterviewEngine')) {
+            return ClinicalInterviewEngine::languageLabel($primary);
+        }
+
+        return strtoupper($primary !== '' ? $primary : 'english');
+    }
+
+    /**
+     * Short answers, scores, and brief fragments do not change question language.
+     */
+    private static function utteranceClearlySwitchesLanguage(string $utterance, string $current, string $resolved): bool
+    {
+        if ($resolved === '' || $resolved === $current) {
+            return false;
+        }
+        if (self::isContextualShortReply($utterance) || self::isLanguageNeutralUtterance($utterance)) {
+            return false;
+        }
+        $words = preg_split('/\s+/u', trim($utterance)) ?: [];
+        $words = array_values(array_filter($words, static fn (string $w): bool => $w !== ''));
+
+        return count($words) >= 4;
+    }
+
+    private static function isLanguageNeutralUtterance(string $text): bool
+    {
+        $low = mb_strtolower(trim($text));
+        $low = trim((string) preg_replace('/[.!?…]+$/u', '', $low));
+        if (preg_match('/^(\d{1,2})(\s*(\/|out of|tubtob|hanggang|to)\s*10)?$/ui', $low)) {
+            return true;
+        }
+        $letters = preg_replace('/[^\p{L}]+/u', '', $low) ?? '';
+
+        return mb_strlen($letters) < 3;
+    }
+
+    /**
      * @param array<string, mixed> $context
      */
     private static function detectLanguageHint(array $context): string
     {
-        $text = trim((string) ($context['chief_complaint'] ?? ''));
-        $last = '';
-        $turns = is_array($context['patient_turns'] ?? null) ? $context['patient_turns'] : [];
-        if ($turns !== []) {
-            $last = trim((string) end($turns));
+        $locked = strtolower(trim((string) ($context['question_language'] ?? '')));
+        if (in_array($locked, ['english', 'tagalog', 'hiligaynon'], true)) {
+            return $locked;
         }
-        $probe = trim($last . ' ' . $text);
-        if (class_exists('HiligaynonLanguageDetector')) {
-            try {
-                $primary = strtolower((string) (HiligaynonLanguageDetector::detect($probe)['primary'] ?? 'english'));
-                if (in_array($primary, ['hiligaynon', 'ilonggo'], true)) {
-                    return 'hiligaynon';
+        $seed = trim((string) ($context['chief_complaint'] ?? ''));
+
+        return $seed !== '' ? self::resolveQuestionLanguage($seed) : 'english';
+    }
+
+    private static function questionLanguageName(string $lang): string
+    {
+        return match (self::detectLanguageHint(['question_language' => $lang])) {
+            'hiligaynon' => 'Hiligaynon/Ilonggo',
+            'tagalog' => 'Tagalog',
+            default => 'English',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function questionLanguagePromptBlock(array $context): string
+    {
+        $lang = self::detectLanguageHint($context);
+        $name = self::questionLanguageName($lang);
+
+        return "QUESTION LANGUAGE: {$name}.\n"
+            . "Write next_question entirely in {$name}. Do not mix another language into the question.\n"
+            . "This language was detected from the patient's own words by the existing language detector. "
+            . "Keep using it on later questions unless QUESTION LANGUAGE itself changes because the patient clearly switched.\n"
+            . "Do not translate or rewrite the patient's complaint or answers. Only next_question is phrased in {$name}.\n"
+            . "Preserve the clinical meaning of the question. Do not add findings. Do not output EMERGENCY, URGENT, or NON-URGENT.\n\n";
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function neutralRetryQuestion(array $context): string
+    {
+        return match (self::detectLanguageHint($context)) {
+            'hiligaynon' => 'Palihog sabat sa klinikal nga pamangkot gamit ang imo kaugalingon nga tinaga.',
+            'tagalog' => 'Pakisagot ang klinikal na tanong gamit ang sarili mong salita.',
+            default => 'Please answer the previous clinical question in your own words.',
+        };
+    }
+
+    /**
+     * If Gemini phrased the follow-up in another language, rephrase that same
+     * clinical question into the locked patient language. Facts are not touched.
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function alignFollowUpQuestionLanguage(string $question, array $context): string
+    {
+        $question = trim($question);
+        if ($question === '') {
+            return '';
+        }
+        $lang = self::detectLanguageHint($context);
+        if (self::followUpMatchesLanguage($question, $lang)) {
+            return $question;
+        }
+        $rewritten = self::stripAcuityLanguage(self::rephraseFollowUpInLanguage($question, $lang));
+        if ($rewritten !== '' && self::followUpMatchesLanguage($rewritten, $lang)) {
+            return $rewritten;
+        }
+
+        return $question;
+    }
+
+    private static function rephraseFollowUpInLanguage(string $question, string $lang): string
+    {
+        $name = self::questionLanguageName($lang);
+        $user = "Rewrite this clinical follow-up question into {$name} only.\n"
+            . "Preserve the same clinical meaning and the same missing information being asked.\n"
+            . "Do not add symptoms, body locations, severity, or a second question.\n"
+            . "Do not assign triage or urgency.\n"
+            . "Return JSON only: {\"next_question\":\"...\"}\n\n"
+            . "Question:\n" . $question;
+        $payload = self::requestPayload($user, false);
+        $payload['systemInstruction'] = [
+            'parts' => [[
+                'text' => 'You rewrite one clinical follow-up question into the requested patient language. '
+                    . 'Preserve clinical meaning. Do not diagnose, prescribe, or assign EMERGENCY, URGENT, or NON-URGENT. '
+                    . 'Respond with JSON only: {"next_question":"..."}',
+            ]],
+        ];
+        try {
+            $raw = trim(self::generate($payload));
+        } catch (Throwable) {
+            return '';
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded) && preg_match('/\{[\s\S]*\}/', $raw, $m)) {
+            $decoded = json_decode($m[0], true);
+        }
+        if (!is_array($decoded)) {
+            return self::stripAcuityLanguage($raw);
+        }
+
+        return self::stripAcuityLanguage(trim((string) ($decoded['next_question'] ?? '')));
+    }
+
+    /**
+     * @param array<string, mixed> $detection
+     */
+    private static function questionSurfaceIsEnglish(string $question, array $detection): bool
+    {
+        if (class_exists('MedicalDictionary') && MedicalDictionary::isLikelyEnglish($question)) {
+            return true;
+        }
+        $primary = strtolower((string) ($detection['primary'] ?? ''));
+        $dominant = strtolower((string) ($detection['dominant'] ?? ''));
+
+        return $primary === 'english' || $dominant === 'english';
+    }
+
+    /**
+     * English medical lexicon with no local-term hit (for example a bare English
+     * symptom word). Reuses MedicalDictionary; not a second language detector.
+     */
+    private static function englishLexiconOnly(string $question): bool
+    {
+        if (!class_exists('MedicalDictionary')) {
+            return false;
+        }
+        $tokens = preg_split('/[^\p{L}]+/u', mb_strtolower($question)) ?: [];
+        $english = 0;
+        $local = 0;
+        foreach ($tokens as $token) {
+            if ($token === '' || mb_strlen($token) < 3) {
+                continue;
+            }
+            $byLocal = MedicalDictionary::lookup($token);
+            $byEnglish = MedicalDictionary::lookupByEnglish($token);
+            if (is_array($byLocal)) {
+                $localTerm = mb_strtolower((string) ($byLocal['local_term'] ?? ''));
+                $englishTerm = mb_strtolower((string) ($byLocal['english_term'] ?? ''));
+                if ($localTerm !== '' && $localTerm !== $englishTerm) {
+                    $local++;
+                    continue;
                 }
-                if (in_array($primary, ['tagalog', 'filipino'], true)) {
-                    return 'tagalog';
-                }
-            } catch (Throwable) {
-                // fall through
+            }
+            if (is_array($byEnglish)) {
+                $english++;
             }
         }
 
-        return 'english';
+        return $english > 0 && $local === 0;
+    }
+
+    private static function followUpMatchesLanguage(string $question, string $lang): bool
+    {
+        $question = trim($question);
+        $lang = strtolower(trim($lang));
+        if (!in_array($lang, ['english', 'tagalog', 'hiligaynon'], true) || $question === '') {
+            return false;
+        }
+        if (!class_exists('HiligaynonLanguageDetector')) {
+            return false;
+        }
+        try {
+            $detected = HiligaynonLanguageDetector::detect($question);
+        } catch (Throwable) {
+            return false;
+        }
+        $resolved = class_exists('ClinicalInterviewEngine')
+            ? strtolower(ClinicalInterviewEngine::questionLanguageFromDetection($detected, $question))
+            : $lang;
+        $englishSurface = self::questionSurfaceIsEnglish($question, $detected);
+        if ($lang === 'english') {
+            return $resolved === 'english' || $englishSurface;
+        }
+        if ($englishSurface || $resolved !== $lang) {
+            return false;
+        }
+
+        return !self::englishLexiconOnly($question);
     }
 
     /**
@@ -1364,6 +1703,38 @@ final class GeminiClinicalInterviewDemo
         $facts = self::mergeFacts(self::blankFacts(), $facts);
 
         return self::applyAnswerToTargetedFindings($facts, self::normalizeFindingKeyList($targets), $answer, $gemini);
+    }
+
+    /**
+     * Language lock used by the demo follow-up path. Later utterances update it
+     * only when the patient clearly switches language.
+     *
+     * @param list<string> $laterUtterances
+     * @return array{question_language:string, detected_language:string, after_turns:list<array{utterance:string, question_language:string}>}
+     */
+    public static function questionLanguageStateForTest(string $complaint, array $laterUtterances = []): array
+    {
+        $context = self::blankContext($complaint);
+        self::syncQuestionLanguage($context, $complaint, true);
+        $after = [];
+        foreach ($laterUtterances as $utterance) {
+            self::syncQuestionLanguage($context, (string) $utterance, false);
+            $after[] = [
+                'utterance' => (string) $utterance,
+                'question_language' => (string) ($context['question_language'] ?? ''),
+            ];
+        }
+
+        return [
+            'question_language' => (string) ($context['question_language'] ?? ''),
+            'detected_language' => (string) ($context['detected_language'] ?? ''),
+            'after_turns' => $after,
+        ];
+    }
+
+    public static function followUpQuestionLanguageMatchesForTest(string $question, string $expectedLanguage): bool
+    {
+        return self::followUpMatchesLanguage($question, $expectedLanguage);
     }
 
     /**
@@ -2544,8 +2915,11 @@ final class GeminiClinicalInterviewDemo
             : trim(self::patientEvidenceCorpus($context, $latestAnswer));
         $nlpBlock = self::formatNlpEvidenceForPrompt(self::collectLocalNlpEvidence($evidenceText));
 
+        $languageBlock = self::questionLanguagePromptBlock($context);
+
         if ($mode === 'start') {
-            return "MODE: START_INTERVIEW\n"
+            return $languageBlock
+                . "MODE: START_INTERVIEW\n"
                 . "Use COMMON-SENSE clinical conversation. Understand the COMPLETE patient meaning — do not blindly fill schema fields.\n"
                 . "Pipeline: NLP/domain mappings above are checked first; you are Gemini Flash semantic interpretation/fallback.\n"
                 . "Decide whether the opening text is a genuine health/medical concern by MEANING.\n"
@@ -2566,7 +2940,8 @@ final class GeminiClinicalInterviewDemo
                 . "Never output EMERGENCY, URGENT, or NON-URGENT.";
         }
 
-        return "MODE: INTERPRET_ANSWER\n"
+        return $languageBlock
+            . "MODE: INTERPRET_ANSWER\n"
             . "Use COMMON-SENSE clinical conversation over the FULL conversation + current answer.\n"
             . "Do NOT ask a question whose answer is already clearly implied or known.\n"
             . "Do NOT ask repetitive, unnatural, or irrelevant questions.\n"
@@ -2640,6 +3015,7 @@ Clinical jobs (only when HEALTH_RELATED):
 3) Extract structured clinical facts ONLY when patient-supported (and/or validated NLP). Preserve original wording in conversation.
 4) Ask exactly ONE natural follow-up from confirmed facts + genuinely missing information — or stop when sufficient.
 5) Stop when clinically sufficient (interview_sufficient=true, question_needed=false).
+6) Write next_question only in the QUESTION LANGUAGE from the user prompt (English, Hiligaynon/Ilonggo, or Tagalog). That language is already detected from the patient's words. Do not switch it yourself. Do not translate the patient's complaint or answers. Preserve the clinical meaning of the question.
 
 STRICT anti-hallucination:
 - NEVER invent symptom, location, severity, duration, frequency, laterality, associated symptom, warning sign, or diagnosis.
@@ -2715,16 +3091,17 @@ PROMPT;
                 }
             } catch (RuntimeException $e) {
                 $last = $e;
+                if (self::isGeminiQuotaError($e->getMessage())) {
+                    throw $e;
+                }
                 $msg = strtolower($e->getMessage());
                 $retryable = str_contains($msg, '503')
-                    || str_contains($msg, '429')
                     || str_contains($msg, 'high demand')
                     || str_contains($msg, 'unavailable')
                     || str_contains($msg, 'empty railway')
                     || str_contains($msg, 'railway gemini failed')
                     || str_contains($msg, 'timeout')
-                    || str_contains($msg, 'timed out')
-                    || str_contains($msg, 'quota');
+                    || str_contains($msg, 'timed out');
                 if ($i < 2 && $retryable) {
                     usleep(1500000 * ($i + 1));
                     continue;
@@ -2792,6 +3169,9 @@ PROMPT;
             try {
                 return self::generateViaRailway($payload, $model);
             } catch (RuntimeException $e) {
+                if (self::isGeminiQuotaError($e->getMessage())) {
+                    throw $e;
+                }
                 $msg = strtolower($e->getMessage());
                 $thinkingReject = !empty($payload['generationConfig']['thinkingConfig'])
                     && (str_contains($msg, 'gemini http 400') || str_contains($msg, 'thinking'));
@@ -2922,6 +3302,10 @@ PROMPT;
         $envTimeout = (int) (getenv('AI_TIMEOUT') ?: ($_ENV['AI_TIMEOUT'] ?? 0));
         if ($envTimeout > 0) {
             $timeout = max(5, min(60, $envTimeout));
+        }
+        if (self::$geminiQuotaProbe && str_contains($url, ':generateContent')) {
+            self::$directGeminiAttempts++;
+            throw new RuntimeException('Gemini HTTP 429: You exceeded your current quota');
         }
         $ch = curl_init($url);
         if ($ch === false) {
