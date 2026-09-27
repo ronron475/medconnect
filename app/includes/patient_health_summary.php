@@ -341,6 +341,40 @@ function patient_health_summary_provider_update(
     $conditions = trim((string) ($fields['existing_conditions'] ?? ''));
     $medications = trim((string) ($fields['current_medications'] ?? ''));
 
+    require_once __DIR__ . '/provider_patient_access.php';
+    $profileAuthorId = $providerId;
+    if (provider_preserve_unseen_bhw_clinical_profile($pdo, $providerId, $patientId)) {
+        $current = patient_clinical_profile_values($pdo, $patientId);
+        if ($blood === '') {
+            $blood = $current['blood_type'];
+        }
+        if ($allergies === '') {
+            $allergies = $current['allergies'];
+        }
+        if ($conditions === '') {
+            $conditions = $current['existing_conditions'];
+        }
+        if ($medications === '') {
+            $medications = $current['current_medications'];
+        }
+        if ($blood !== '' && !in_array($blood, $allowedBlood, true)) {
+            return false;
+        }
+        $authorStmt = $pdo->prepare("
+            SELECT pr.medical_profile_updated_by
+            FROM users patient
+            INNER JOIN patient_registrations pr
+                ON pr.user_id = patient.id OR pr.email = patient.email
+            WHERE patient.id = ? AND patient.role = 'patient'
+            LIMIT 1
+        ");
+        $authorStmt->execute([$patientId]);
+        $existingAuthor = (int) ($authorStmt->fetchColumn() ?: 0);
+        if ($existingAuthor > 0) {
+            $profileAuthorId = $existingAuthor;
+        }
+    }
+
     $emailStmt = $pdo->prepare('SELECT email FROM users WHERE id = ? LIMIT 1');
     $emailStmt->execute([$patientId]);
     $email = (string) ($emailStmt->fetchColumn() ?: '');
@@ -359,7 +393,7 @@ function patient_health_summary_provider_update(
         $allergies ?: null,
         $conditions ?: null,
         $medications ?: null,
-        $providerId,
+        $profileAuthorId,
         $patientId,
         $email,
     ]);

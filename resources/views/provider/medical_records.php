@@ -55,6 +55,7 @@ if ($requested_id > 0) {
     if ($access['allowed']) {
         $selected = mr_fetch_patient($pdo, $requested_id);
         if ($selected) {
+            $selected = provider_redact_bhw_clinical_profile($pdo, $provider_id, $requested_id, $selected);
             // Ensure GIS / triage-assigned patients appear in the left directory.
             $exists = false;
             foreach ($patients as $pRow) {
@@ -87,8 +88,12 @@ if (!$selected && !$mr_access_denied && !empty($patients) && $view === 'patients
         }
         $access = provider_patient_assert_access($pdo, $provider_id, $candidateId, 0);
         if ($access['allowed']) {
+            $fetched = mr_fetch_patient($pdo, $candidateId);
+            if (!$fetched) {
+                continue;
+            }
             $requested_id = $candidateId;
-            $selected = mr_fetch_patient($pdo, $requested_id);
+            $selected = provider_redact_bhw_clinical_profile($pdo, $provider_id, $requested_id, $fetched);
             break;
         }
     }
@@ -133,7 +138,12 @@ if ($selected) {
     try {
         $s = $pdo->prepare("SELECT id, original_name, file_name, status, uploaded_at FROM residency_documents WHERE patient_id=? ORDER BY uploaded_at DESC");
         $s->execute([$pid]);
-        $attachments = $s->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($s->fetchAll(PDO::FETCH_ASSOC) as $doc) {
+            if (!provider_may_view_patient_document($pdo, $provId, $pid, (string) ($doc['file_name'] ?? ''))) {
+                continue;
+            }
+            $attachments[] = $doc;
+        }
     } catch (PDOException $e) {}
 }
 
@@ -283,7 +293,7 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
         <div class="mr-detail-meta"><?= htmlspecialchars($selected['patient_number']) ?> · <?= htmlspecialchars($selected['age']) ?> yrs · <?= htmlspecialchars($selected['sex']) ?></div>
         <div class="mr-detail-chips">
           <span class="mr-chip <?= ($selected['status'] ?? '') === 'Active' ? 'mr-chip--active' : '' ?>"><?= htmlspecialchars($selected['status']) ?></span>
-          <?php if (!empty($selected['blood_type'])): ?>
+          <?php if (empty($selected['_bhw_clinical_hidden']) && !empty($selected['blood_type'])): ?>
           <span class="mr-chip mr-chip--teal"><?= htmlspecialchars($selected['blood_type']) ?></span>
           <?php endif; ?>
           <?php if (!empty($selected['last_consult'])): ?>
@@ -304,10 +314,17 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
         <?php if (!empty($pending_medical_request)): ?>
         <?php
         $proposed = $pending_medical_request['proposed'] ?? [];
-        $formBlood = trim((string) ($proposed['blood_type'] ?? '')) ?: trim((string) ($selected['blood_type'] ?? ''));
-        $formAllergies = trim((string) ($proposed['allergies'] ?? '')) ?: trim((string) ($selected['allergies'] ?? ''));
-        $formConditions = trim((string) ($proposed['existing_conditions'] ?? '')) ?: trim((string) ($selected['history'] ?? ''));
-        $formMeds = trim((string) ($proposed['current_medications'] ?? '')) ?: trim((string) ($selected['medications'] ?? ''));
+        $bhwClinicalHidden = !empty($selected['_bhw_clinical_hidden']);
+        $formBlood = trim((string) ($proposed['blood_type'] ?? ''));
+        $formAllergies = trim((string) ($proposed['allergies'] ?? ''));
+        $formConditions = trim((string) ($proposed['existing_conditions'] ?? ''));
+        $formMeds = trim((string) ($proposed['current_medications'] ?? ''));
+        if (!$bhwClinicalHidden) {
+            $formBlood = $formBlood !== '' ? $formBlood : trim((string) ($selected['blood_type'] ?? ''));
+            $formAllergies = $formAllergies !== '' ? $formAllergies : trim((string) ($selected['allergies'] ?? ''));
+            $formConditions = $formConditions !== '' ? $formConditions : trim((string) ($selected['history'] ?? ''));
+            $formMeds = $formMeds !== '' ? $formMeds : trim((string) ($selected['medications'] ?? ''));
+        }
         ?>
         <div class="mr-update-request" id="mrMedicalUpdateCard" data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>" data-patient-id="<?= (int) $selected['id'] ?>" data-request-id="<?= (int) ($pending_medical_request['id'] ?? 0) ?>">
           <strong>Patient requested a Health Summary update</strong>
@@ -318,6 +335,9 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
           <form id="mrMedicalProfileForm" class="mr-profile-form">
             <label>Blood type
               <select name="blood_type" class="form-control">
+                <?php if ($bhwClinicalHidden && $formBlood === ''): ?>
+                <option value="">Leave unchanged</option>
+                <?php endif; ?>
                 <?php foreach (['A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown'] as $bt): ?>
                 <option value="<?= $bt ?>" <?= $formBlood === $bt ? 'selected' : '' ?>><?= $bt ?></option>
                 <?php endforeach; ?>
@@ -345,15 +365,15 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
           </div>
           <div class="mr-info-item">
             <label>Allergies</label>
-            <span><?= htmlspecialchars($selected['allergies'] ?: 'No allergies recorded') ?></span>
+            <span><?= !empty($selected['_bhw_clinical_hidden']) ? 'Not available' : htmlspecialchars($selected['allergies'] ?: 'No allergies recorded') ?></span>
           </div>
           <div class="mr-info-item">
             <label>Medications</label>
-            <span><?= htmlspecialchars($selected['medications'] ?: 'No medications recorded') ?></span>
+            <span><?= !empty($selected['_bhw_clinical_hidden']) ? 'Not available' : htmlspecialchars($selected['medications'] ?: 'No medications recorded') ?></span>
           </div>
           <div class="mr-info-item" style="grid-column:1/-1;">
             <label>Medical history</label>
-            <span><?= htmlspecialchars($selected['history'] ?: 'No medical history recorded') ?></span>
+            <span><?= !empty($selected['_bhw_clinical_hidden']) ? 'Not available' : htmlspecialchars($selected['history'] ?: 'No medical history recorded') ?></span>
           </div>
         </div>
         <?php else:
