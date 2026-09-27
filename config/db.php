@@ -30,43 +30,46 @@ $isLocal = match (true) {
     default => false,
 };
 
+$envString = static function (string $key): ?string {
+    $value = getenv($key);
+    if ($value === false || $value === '') {
+        if (!array_key_exists($key, $_ENV)) {
+            return null;
+        }
+        $value = (string) $_ENV[$key];
+    }
+
+    return (string) $value;
+};
+
 if ($isLocal) {
     $dbHost = 'localhost';
     $dbName = 'medconnect';
     $dbUser = 'root';
     $dbPass = '';
+    // Explicit local overrides only. Production values in .env must not replace XAMPP.
+    if ($dbEnv === 'local' || $dbEnv === 'dev') {
+        $dbHost = $envString('DB_HOST') ?? $dbHost;
+        $dbName = $envString('DB_NAME') ?? $dbName;
+        $dbUser = $envString('DB_USER') ?? $dbUser;
+        if ($envString('DB_PASS') !== null) {
+            $dbPass = (string) $envString('DB_PASS');
+        }
+    }
 } else {
-    // Hostinger: use localhost when PHP runs on Hostinger; remote host on Vercel.
-    $dbHost = $onVercel
-        ? (string) (getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? ''))
-        : 'localhost';
-    $dbName = 'u520834156_meDBConnect26';
-    $dbUser = 'u520834156_usrMedConnect';
-    $dbPass = 'REDACTED';
-}
-
-// Optional per-key overrides from environment / .env
-$dbHost = (string) (getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? $dbHost));
-$dbName = (string) (getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? $dbName));
-$dbUser = (string) (getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? $dbUser));
-// Allow blank password (XAMPP root); only override when the key is set
-if (getenv('DB_PASS') !== false) {
-    $dbPass = (string) getenv('DB_PASS');
-} elseif (array_key_exists('DB_PASS', $_ENV)) {
-    $dbPass = (string) $_ENV['DB_PASS'];
-}
-
-if ($onVercel && $dbHost === '') {
-    http_response_code(500);
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "Database not configured for Vercel.\n\n"
-        . "In Vercel → Project → Settings → Environment Variables, set:\n"
-        . "  DB_HOST = your Hostinger Remote MySQL hostname (hPanel → Databases)\n"
-        . "  DB_NAME = u520834156_meDBConnect26\n"
-        . "  DB_USER = u520834156_usrMedConnect\n"
-        . "  DB_PASS = (your password)\n\n"
-        . "Also enable Remote MySQL in Hostinger and allow access from % (any host).";
-    exit;
+    // Hostinger PHP uses localhost MySQL unless DB_HOST is set (Vercel remote host).
+    $dbHost = $envString('DB_HOST') ?? ($onVercel ? '' : 'localhost');
+    $dbName = $envString('DB_NAME') ?? '';
+    $dbUser = $envString('DB_USER') ?? '';
+    $dbPass = $envString('DB_PASS');
+    if ($dbHost === '' || $dbName === '' || $dbUser === '' || $dbPass === null || $dbPass === '') {
+        http_response_code(500);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Database is not configured.\n\n"
+            . "Set DB_HOST, DB_NAME, DB_USER, and DB_PASS in the server environment.\n"
+            . "Do not commit those values.";
+        exit;
+    }
 }
 
 if (!defined('DB_HOST')) {

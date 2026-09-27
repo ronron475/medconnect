@@ -16,16 +16,25 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\PHPMailer;
 
 if (!defined('MAIL_HOST')) {
-    define('MAIL_HOST',       'smtp.gmail.com');
-    define('MAIL_PORT',       587);
-    define('MAIL_SMTP_SECURE','tls');
-    define('MAIL_SMTP_AUTH',  true);
-    define('MAIL_USERNAME',   'sumagaysayjanica@gmail.com');
-    define('MAIL_PASSWORD',   'REDACTED');
-    define('MAIL_FROM_EMAIL', 'sumagaysayjanica@gmail.com');
-    define('MAIL_FROM_NAME',  'MedConnect Bago City');
+    $mailEnv = static function (string $key, string $default = ''): string {
+        $value = getenv($key);
+        if ($value === false || $value === '') {
+            $value = $_ENV[$key] ?? $default;
+        }
+
+        return trim((string) $value);
+    };
+    $mailUser = $mailEnv('MAIL_USERNAME');
+    define('MAIL_HOST', $mailEnv('MAIL_HOST', 'smtp.gmail.com'));
+    define('MAIL_PORT', (int) ($mailEnv('MAIL_PORT', '587') ?: '587'));
+    define('MAIL_SMTP_SECURE', $mailEnv('MAIL_SMTP_SECURE', 'tls'));
+    define('MAIL_SMTP_AUTH', true);
+    define('MAIL_USERNAME', $mailUser);
+    define('MAIL_PASSWORD', $mailEnv('MAIL_PASSWORD'));
+    define('MAIL_FROM_EMAIL', $mailEnv('MAIL_FROM_EMAIL', $mailUser));
+    define('MAIL_FROM_NAME', $mailEnv('MAIL_FROM_NAME', 'MedConnect Bago City'));
     define('MAIL_DEBUG_MODE', false);
-    define('MAIL_CHARSET',    'UTF-8');
+    define('MAIL_CHARSET', 'UTF-8');
 }
 
 function initMailer() {
