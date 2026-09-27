@@ -63,6 +63,7 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
         'finalized_by' => '',
         'consultation_id' => $consultationId,
         'patient_id' => $patientId,
+        'interview_transcript' => [],
     ];
 
     $original = provider_clinical_support_patient_original($pdo, $consultationId, $patientId);
@@ -763,7 +764,7 @@ function provider_clinical_support_save_event(
         $doctorBucket,
         $auditNote !== '' ? $auditNote : null,
         $providerName !== '' ? $providerName : null,
-        json_encode($support, JSON_UNESCAPED_UNICODE),
+        json_encode(provider_clinical_support_without_interview_transcript($support), JSON_UNESCAPED_UNICODE),
     ]);
 
     return $support;
@@ -1141,6 +1142,214 @@ function provider_clinical_support_finalized_by_label(
  * @param array<string, mixed> $support
  * @return array<string, mixed>
  */
+/**
+ * Drop the read-only interview view before a clinical-support snapshot is stored.
+ * The transcript stays on triage_results.assessment_payload only.
+ *
+ * @param array<string, mixed> $support
+ * @return array<string, mixed>
+ */
+function provider_clinical_support_without_interview_transcript(array $support): array
+{
+    unset($support['interview_transcript']);
+
+    return $support;
+}
+
+/**
+ * Read-only triage interview for this consultation.
+ * Question text is the wording stored on the interview, otherwise the follow-up
+ * bank text for the interview language. Answers prefer patient_turns.
+ *
+ * @return list<array{question_id: string, question: string, answer: string}>
+ */
+function provider_clinical_support_interview_transcript(PDO $pdo, int $consultationId, int $patientId): array
+{
+    if ($consultationId <= 0 || $patientId <= 0) {
+        return [];
+    }
+
+    $triageId = provider_clinical_support_resolve_triage_id($pdo, $consultationId, $patientId);
+    if ($triageId <= 0) {
+        return [];
+    }
+
+    try {
+        $stmt = $pdo->prepare('
+            SELECT assessment_payload
+            FROM triage_results
+            WHERE id = ? AND patient_id = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$triageId, $patientId]);
+        $raw = $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return [];
+    }
+
+    $payload = json_decode((string) $raw, true);
+
+    return is_array($payload)
+        ? provider_clinical_support_interview_transcript_from_payload($payload)
+        : [];
+}
+
+/**
+ * @param array<string, mixed> $payload
+ * @return list<array{question_id: string, question: string, answer: string}>
+ */
+function provider_clinical_support_interview_transcript_from_payload(array $payload): array
+{
+    $interview = is_array($payload['interview'] ?? null) ? $payload['interview'] : [];
+    if ($interview === []) {
+        return [];
+    }
+
+    $language = (string) ($interview['question_language'] ?? 'english');
+    $textById = provider_clinical_support_interview_question_text($interview, $payload);
+    $answered = provider_clinical_support_interview_unique_answers(
+        provider_clinical_support_interview_answer_rows($interview)
+    );
+    $turns = [];
+    foreach ((array) ($interview['patient_turns'] ?? []) as $turn) {
+        if (!is_string($turn)) {
+            continue;
+        }
+        $turn = trim($turn);
+        if ($turn !== '') {
+            $turns[] = $turn;
+        }
+    }
+
+    $rows = [];
+    $seen = [];
+    $answerCount = count($answered);
+    $aligned = count($turns) === $answerCount + 1;
+    foreach ($answered as $index => $qa) {
+        if (!is_array($qa)) {
+            continue;
+        }
+        $qid = strtoupper(trim((string) ($qa['question_id'] ?? '')));
+        $stored = trim((string) ($qa['answer'] ?? $qa['patient_answer'] ?? ''));
+        $answer = $stored;
+        if ($aligned) {
+            $turn = trim((string) ($turns[$index + 1] ?? ''));
+            if ($turn !== '') {
+                $answer = $turn;
+            }
+        }
+        if ($answer === '') {
+            continue;
+        }
+
+        $question = trim((string) ($qa['text'] ?? $qa['question'] ?? ''));
+        if ($question === '' && $qid !== '' && isset($textById[$qid])) {
+            $question = $textById[$qid];
+        }
+        if ($question === '' && $qid !== '' && class_exists('ClinicalFollowUpQuestionBank')) {
+            $bank = ClinicalFollowUpQuestionBank::byId($qid);
+            if (is_array($bank)) {
+                $question = trim(ClinicalFollowUpQuestionBank::textForLanguage($bank, $language));
+            }
+        }
+        if ($question === '') {
+            continue;
+        }
+
+        $key = $qid . "\n" . $question . "\n" . $answer;
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        $rows[] = [
+            'question_id' => $qid,
+            'question' => $question,
+            'answer' => $answer,
+        ];
+    }
+
+    return $rows;
+}
+
+/**
+ * First occurrence wins so a copied complaint track does not shift patient_turns.
+ *
+ * @param list<array<string, mixed>> $answered
+ * @return list<array<string, mixed>>
+ */
+function provider_clinical_support_interview_unique_answers(array $answered): array
+{
+    $unique = [];
+    $seen = [];
+    foreach ($answered as $qa) {
+        if (!is_array($qa)) {
+            continue;
+        }
+        $qid = strtoupper(trim((string) ($qa['question_id'] ?? '')));
+        $stored = trim((string) ($qa['answer'] ?? $qa['patient_answer'] ?? ''));
+        $key = $qid . "\n" . $stored;
+        if (isset($seen[$key])) {
+            continue;
+        }
+        $seen[$key] = true;
+        $unique[] = $qa;
+    }
+
+    return $unique;
+}
+
+/**
+ * @param array<string, mixed> $interview
+ * @param array<string, mixed> $payload
+ * @return array<string, string>
+ */
+function provider_clinical_support_interview_question_text(array $interview, array $payload): array
+{
+    $textById = [];
+    foreach (['last_followup_question', 'next_question'] as $key) {
+        $snap = is_array($interview[$key] ?? null) ? $interview[$key] : [];
+        $id = strtoupper(trim((string) ($snap['question_id'] ?? '')));
+        $text = trim((string) ($snap['text'] ?? ''));
+        if ($id !== '' && $text !== '') {
+            $textById[$id] = $text;
+        }
+    }
+    $root = is_array($payload['followup_question'] ?? null) ? $payload['followup_question'] : [];
+    $rootId = strtoupper(trim((string) ($root['question_id'] ?? '')));
+    $rootText = trim((string) ($root['text'] ?? ''));
+    if ($rootId !== '' && $rootText !== '' && !isset($textById[$rootId])) {
+        $textById[$rootId] = $rootText;
+    }
+
+    return $textById;
+}
+
+/**
+ * @param array<string, mixed> $interview
+ * @return list<array<string, mixed>>
+ */
+function provider_clinical_support_interview_answer_rows(array $interview): array
+{
+    $rows = [];
+    foreach ((array) ($interview['questions_answered'] ?? []) as $qa) {
+        if (is_array($qa)) {
+            $rows[] = $qa;
+        }
+    }
+    foreach ((array) ($interview['complaints'] ?? []) as $track) {
+        if (!is_array($track)) {
+            continue;
+        }
+        foreach ((array) ($track['questions_answered'] ?? []) as $qa) {
+            if (is_array($qa)) {
+                $rows[] = $qa;
+            }
+        }
+    }
+
+    return $rows;
+}
+
 function provider_clinical_support_apply_authoritative_final(
     PDO $pdo,
     int $consultationId,
@@ -1149,6 +1358,11 @@ function provider_clinical_support_apply_authoritative_final(
 ): array {
     $support['consultation_id'] = $consultationId;
     $support['patient_id'] = $patientId;
+    $support['interview_transcript'] = provider_clinical_support_interview_transcript(
+        $pdo,
+        $consultationId,
+        $patientId
+    );
 
     $ai = provider_clinical_support_original_ai($pdo, $consultationId, $patientId);
     if ($ai['triage_id'] > 0 && empty($support['triage_id'])) {
