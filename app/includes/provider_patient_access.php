@@ -139,7 +139,156 @@ function provider_patient_assert_access(PDO $pdo, int $providerId, int $patientI
 }
 
 /**
- * Patients this provider may open in Medical Records / GIS (same rules as assert_access).
+ * True only when this doctor has a consultation row with this patient.
+ *
+ * Registration, active status, availability, barangay, booked slots, triage
+ * assignment, referrals, and health-summary assignment do not count.
+ */
+function provider_patient_has_consultation_history(PDO $pdo, int $providerId, int $patientId): bool
+{
+    if ($providerId <= 0 || $patientId <= 0) {
+        return false;
+    }
+
+    try {
+        $stmt = $pdo->prepare('
+            SELECT 1
+            FROM consultations
+            WHERE patient_id = ? AND provider_id = ?
+            LIMIT 1
+        ');
+        $stmt->execute([$patientId, $providerId]);
+
+        return (bool) $stmt->fetchColumn();
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
+/**
+ * Doctor may read this patient's BHW-added clinical record only with consultation history.
+ */
+function provider_may_view_bhw_clinical_data(PDO $pdo, int $providerId, int $patientId): bool
+{
+    return provider_patient_has_consultation_history($pdo, $providerId, $patientId);
+}
+
+/**
+ * Current permanent clinical profile was last saved by a BHW.
+ */
+function patient_clinical_profile_authored_by_bhw(PDO $pdo, int $patientId): bool
+{
+    if ($patientId <= 0) {
+        return false;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT LOWER(COALESCE(author.role, ''))
+            FROM users patient
+            INNER JOIN patient_registrations pr
+                ON pr.user_id = patient.id OR pr.email = patient.email
+            LEFT JOIN users author ON author.id = pr.medical_profile_updated_by
+            WHERE patient.id = ? AND patient.role = 'patient'
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId]);
+
+        return (string) ($stmt->fetchColumn() ?: '') === 'bhw';
+    } catch (PDOException $e) {
+        return false;
+    }
+}
+
+/**
+ * @return array{blood_type: string, allergies: string, existing_conditions: string, current_medications: string}
+ */
+function patient_clinical_profile_values(PDO $pdo, int $patientId): array
+{
+    $empty = [
+        'blood_type' => '',
+        'allergies' => '',
+        'existing_conditions' => '',
+        'current_medications' => '',
+    ];
+    if ($patientId <= 0) {
+        return $empty;
+    }
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT pr.blood_type, pr.allergies, pr.existing_conditions, pr.current_medications
+            FROM users patient
+            INNER JOIN patient_registrations pr
+                ON pr.user_id = patient.id OR pr.email = patient.email
+            WHERE patient.id = ? AND patient.role = 'patient'
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (PDOException $e) {
+        return $empty;
+    }
+
+    return [
+        'blood_type' => trim((string) ($row['blood_type'] ?? '')),
+        'allergies' => trim((string) ($row['allergies'] ?? '')),
+        'existing_conditions' => trim((string) ($row['existing_conditions'] ?? '')),
+        'current_medications' => trim((string) ($row['current_medications'] ?? '')),
+    ];
+}
+
+/**
+ * Blank BHW-authored clinical profile fields when this doctor has no consultation with the patient.
+ * Patient- or provider-authored profile values stay under the caller's existing access check.
+ *
+ * @param array<string, mixed> $row
+ * @return array<string, mixed>
+ */
+function provider_redact_bhw_clinical_profile(PDO $pdo, int $providerId, int $patientId, array $row): array
+{
+    if (provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId)) {
+        return $row;
+    }
+    if (!patient_clinical_profile_authored_by_bhw($pdo, $patientId)) {
+        return $row;
+    }
+
+    foreach (['blood_type', 'allergies', 'existing_conditions', 'history', 'current_medications', 'medications'] as $key) {
+        if (array_key_exists($key, $row)) {
+            $row[$key] = '';
+        }
+    }
+    $row['_bhw_clinical_hidden'] = true;
+
+    return $row;
+}
+
+/**
+ * BHW uploads use a bhw_ stored name. Other documents follow the caller's existing access check.
+ */
+function provider_may_view_patient_document(PDO $pdo, int $providerId, int $patientId, string $storedFileName): bool
+{
+    $name = strtolower(trim($storedFileName));
+    if (!str_starts_with($name, 'bhw_')) {
+        return true;
+    }
+
+    return provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId);
+}
+
+/**
+ * Empty posted clinical fields must not wipe a BHW profile the doctor is not allowed to see.
+ */
+function provider_preserve_unseen_bhw_clinical_profile(PDO $pdo, int $providerId, int $patientId): bool
+{
+    return !provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId)
+        && patient_clinical_profile_authored_by_bhw($pdo, $patientId);
+}
+
+/**
+ * Patients this doctor may open in the Patient List.
+ * Membership is a consultation row only: consultations.provider_id = this doctor.
  *
  * @return list<array<string, mixed>>
  */
@@ -148,9 +297,6 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
     if ($providerId <= 0) {
         return [];
     }
-
-    require_once __DIR__ . '/triage_assessment_schema.php';
-    triage_assessment_ensure_schema($pdo);
 
     $sql = "
         SELECT DISTINCT
@@ -178,40 +324,9 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
             CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number
         FROM users u
         INNER JOIN (
-            SELECT patient_id, MAX(last_touch) AS last_touch
-            FROM (
-                SELECT patient_id, MAX(consult_date) AS last_touch
-                FROM consultations
-                WHERE provider_id = ?
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(slot_date) AS last_touch
-                FROM appointment_slots
-                WHERE provider_id = ? AND status = 'booked'
-                  AND slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(DATE(assessed_at)) AS last_touch
-                FROM triage_results
-                WHERE assigned_provider_id = ?
-                  AND recommendation_status IN ('pending_approval', 'approved', 'rejected')
-                  AND UPPER(COALESCE(assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
-                  AND LOWER(COALESCE(outcome, '')) <> 'cancelled'
-                  AND assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(DATE(created_at)) AS last_touch
-                FROM digital_referrals
-                WHERE provider_id = ?
-                  AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(DATE(created_at)) AS last_touch
-                FROM patient_medical_update_requests
-                WHERE provider_id = ?
-                  AND status IN ('pending', 'in_review')
-                GROUP BY patient_id
-            ) combined
+            SELECT patient_id, MAX(consult_date) AS last_touch
+            FROM consultations
+            WHERE provider_id = ?
             GROUP BY patient_id
         ) rel ON rel.patient_id = u.id
         LEFT JOIN patient_registrations pr ON pr.user_id = u.id
@@ -221,62 +336,11 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
 
     try {
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$providerId, $providerId, $providerId, $providerId, $providerId]);
+        $stmt->execute([$providerId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (PDOException $e) {
-        // Older schemas may lack one of the optional tables — fall back to consult/slot only.
-        error_log('provider_patient_caseload_directory fallback: ' . $e->getMessage());
-        try {
-            $fallback = $pdo->prepare("
-                SELECT DISTINCT
-                    u.id,
-                    u.first_name,
-                    u.last_name,
-                    TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS name,
-                    CONCAT(
-                        UPPER(LEFT(COALESCE(NULLIF(u.first_name, ''), '?'), 1)),
-                        UPPER(LEFT(COALESCE(NULLIF(u.last_name, ''), ''), 1))
-                    ) AS initials,
-                    COALESCE(pr.age, '') AS age,
-                    COALESCE(pr.gender, '') AS sex,
-                    COALESCE(pr.contact_number, '') AS contact,
-                    COALESCE(CONCAT_WS(', ',
-                        NULLIF(pr.barangay, ''),
-                        NULLIF(pr.city_municipality, '')
-                    ), '') AS address,
-                    COALESCE(pr.blood_type, '') AS blood_type,
-                    COALESCE(pr.existing_conditions, '') AS history,
-                    COALESCE(pr.allergies, '') AS allergies,
-                    COALESCE(pr.current_medications, '') AS medications,
-                    COALESCE(rel.last_consult, '') AS last_consult,
-                    CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status,
-                    CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number
-                FROM users u
-                INNER JOIN (
-                    SELECT patient_id, MAX(last_consult) AS last_consult
-                    FROM (
-                        SELECT patient_id, MAX(consult_date) AS last_consult
-                        FROM consultations
-                        WHERE provider_id = ?
-                        GROUP BY patient_id
-                        UNION ALL
-                        SELECT patient_id, MAX(slot_date) AS last_consult
-                        FROM appointment_slots
-                        WHERE provider_id = ? AND status = 'booked'
-                        GROUP BY patient_id
-                    ) combined
-                    GROUP BY patient_id
-                ) rel ON rel.patient_id = u.id
-                LEFT JOIN patient_registrations pr ON pr.user_id = u.id
-                WHERE u.role = 'patient'
-                ORDER BY rel.last_consult DESC, u.last_name ASC
-            ");
-            $fallback->execute([$providerId, $providerId]);
-            $rows = $fallback->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (PDOException $e2) {
-            error_log('provider_patient_caseload_directory failed: ' . $e2->getMessage());
-            return [];
-        }
+        error_log('provider_patient_caseload_directory failed: ' . $e->getMessage());
+        return [];
     }
 
     foreach ($rows as &$row) {
