@@ -34,6 +34,7 @@ if (!empty($_SESSION['user_id'])) {
 // Revoke remember-me token (best-effort)
 try {
     remember_me_revoke_current_cookie($pdo);
+    remember_me_clear_idle_hold();
 } catch (Throwable $e) { /* non-fatal */ }
 
 $_SESSION = [];

@@ -17,10 +17,6 @@ if (!defined('SESSION_TIMEOUT_DEFAULT_MINUTES')) {
 
 function session_timeout_minutes_for_current_user(): int
 {
-    if (!empty($_SESSION['remember_me_extended'])) {
-        return REMEMBER_ME_DAYS * 24 * 60;
-    }
-
     $role = (string) ($_SESSION['user_role'] ?? '');
 
     // Provider portal supports a user-configurable timeout preference.
@@ -31,20 +27,34 @@ function session_timeout_minutes_for_current_user(): int
     return SESSION_TIMEOUT_DEFAULT_MINUTES;
 }
 
+function session_timeout_is_idle_expired(?int $now = null): bool
+{
+    if (empty($_SESSION['user_id'])) {
+        return false;
+    }
+    if (defined('MEDCONNECT_SKIP_SESSION_TIMEOUT') && MEDCONNECT_SKIP_SESSION_TIMEOUT) {
+        return false;
+    }
+    if (defined('MEDCONNECT_SESSION_READ_AND_CLOSE') && MEDCONNECT_SESSION_READ_AND_CLOSE) {
+        return false;
+    }
+
+    $timeoutMinutes = session_timeout_minutes_for_current_user();
+    if ($timeoutMinutes <= 0) {
+        return false;
+    }
+
+    $now = $now ?? time();
+    $last = (int) ($_SESSION['last_activity'] ?? ($_SESSION['provider_last_activity'] ?? $now));
+
+    return ($now - $last) > ($timeoutMinutes * 60);
+}
+
 function session_timeout_force_logout(): void
 {
-    global $pdo;
-
-    if (!empty($_SESSION['remember_me_extended'])) {
-        if (isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user_id'])) {
-            try {
-                remember_me_revoke_for_user($pdo, (int) $_SESSION['user_id']);
-            } catch (Throwable $e) { /* non-fatal */ }
-        }
-        try {
-            remember_me_clear_cookie();
-        } catch (Throwable $e) { /* non-fatal */ }
-    }
+    try {
+        remember_me_mark_idle_hold();
+    } catch (Throwable $e) { /* non-fatal */ }
 
     $_SESSION = [];
     if (!function_exists('medconnect_expire_session_cookie')) {
@@ -90,8 +100,7 @@ function session_timeout_check(): void
         return;
     }
 
-    $last = (int) ($_SESSION['last_activity'] ?? ($_SESSION['provider_last_activity'] ?? $now));
-    if (($now - $last) > ($timeoutMinutes * 60)) {
+    if (session_timeout_is_idle_expired($now)) {
         session_timeout_force_logout();
     }
 

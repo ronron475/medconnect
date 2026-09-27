@@ -366,16 +366,18 @@ try {
 
 // Optional remember-me token issuance
 $remember = (string) ($_POST['remember_me'] ?? '');
+try {
+    remember_me_clear_idle_hold();
+} catch (Throwable $e) { /* non-fatal */ }
+unset($_SESSION['remember_me_extended']);
 if ($remember === '1' || strtolower($remember) === 'true' || strtolower($remember) === 'on') {
     try {
         remember_me_issue_token($pdo, (int) $user['id']);
-        $_SESSION['remember_me_extended'] = true;
     } catch (Throwable $e) { /* non-fatal */ }
 } else {
     try {
         remember_me_revoke_current_cookie($pdo);
     } catch (Throwable $e) { /* non-fatal */ }
-    unset($_SESSION['remember_me_extended']);
 }
 
 // ── Audit Log ───────────────────────────────────────────────

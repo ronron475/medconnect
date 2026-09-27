@@ -4,6 +4,7 @@
  */
 
 require_once __DIR__ . '/system_preferences.php';
+require_once __DIR__ . '/remember_me.php';
 
 function provider_session_timeout_check(): void
 {
@@ -21,6 +22,9 @@ function provider_session_timeout_check(): void
     $last = (int) ($_SESSION['provider_last_activity'] ?? $now);
 
     if (($now - $last) > ($timeoutMinutes * 60)) {
+        try {
+            remember_me_mark_idle_hold();
+        } catch (Throwable $e) { /* non-fatal */ }
         $_SESSION = [];
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_unset();

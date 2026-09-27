@@ -79,8 +79,8 @@ if (!headers_sent()) {
   data-language="<?= htmlspecialchars($_SESSION['provider_language'] ?? 'en') ?>"
   data-time-format="<?= htmlspecialchars($_SESSION['provider_time_format'] ?? '12h') ?>"
   data-date-format="<?= htmlspecialchars($_SESSION['provider_date_format'] ?? 'M j, Y') ?>"
-  data-auto-logout="<?= !empty($_SESSION['remember_me_extended']) ? '0' : (int) ($_SESSION['provider_auto_logout'] ?? 30) ?>"
-  data-remember-extended="<?= !empty($_SESSION['remember_me_extended']) ? '1' : '0' ?>"
+  data-auto-logout="<?= (int) ($_SESSION['provider_auto_logout'] ?? 30) ?>"
+  data-remember-extended="0"
   data-expire-url="<?= htmlspecialchars(ASSET_BASE . '/app/api/provider/session/expire.php') ?>"
   data-portal="provider"
 >

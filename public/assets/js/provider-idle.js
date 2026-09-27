@@ -1,10 +1,6 @@
 (function () {
   'use strict';
 
-  if (document.body.getAttribute('data-remember-extended') === '1') {
-    return;
-  }
-
   const minutes = parseInt(document.body.getAttribute('data-auto-logout') || '0', 10);
   if (!minutes || minutes <= 0) return;
 

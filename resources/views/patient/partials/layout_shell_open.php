@@ -2,7 +2,7 @@
   id="medconnectThemeRoot"
   data-csrf="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
-  data-remember-extended="<?= !empty($_SESSION['remember_me_extended']) ? '1' : '0' ?>"
+  data-remember-extended="0"
   hidden
   aria-hidden="true"
 ></div>

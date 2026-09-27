@@ -23,7 +23,7 @@ if (($_SESSION['user_role'] ?? '') !== 'provider') {
 auth_csrf_require();
 
 try {
-    remember_me_revoke_current_cookie($pdo);
+    remember_me_mark_idle_hold();
 } catch (Throwable $e) { /* non-fatal */ }
 
 $_SESSION = [];
