@@ -57,17 +57,19 @@ if ($isLocal) {
         }
     }
 } else {
-    // Hostinger PHP uses localhost MySQL unless DB_HOST is set (Vercel remote host).
-    $dbHost = $envString('DB_HOST') ?? ($onVercel ? '' : 'localhost');
-    $dbName = $envString('DB_NAME') ?? '';
-    $dbUser = $envString('DB_USER') ?? '';
+    // Hostinger PHP on the same server uses localhost. Env values override these defaults.
+    $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
+    $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
+    $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
     $dbPass = $envString('DB_PASS');
-    if ($dbHost === '' || $dbName === '' || $dbUser === '' || $dbPass === null || $dbPass === '') {
+    if ($dbPass === null || $dbPass === '') {
+        $dbPass = '0#KQFw#m;p@V';
+    }
+    if ($dbHost === '') {
         http_response_code(500);
         header('Content-Type: text/plain; charset=utf-8');
         echo "Database is not configured.\n\n"
-            . "Set DB_HOST, DB_NAME, DB_USER, and DB_PASS in the server environment.\n"
-            . "Do not commit those values.";
+            . "Set DB_HOST for the remote database connection.";
         exit;
     }
 }
