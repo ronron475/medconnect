@@ -29,7 +29,7 @@ final class LandingPageConfig
     public static function defaults(): array
     {
         return [
-            'LANDING_HERO_ACCENT' => 'Online Video Call',
+            'LANDING_HERO_ACCENT' => 'Inline Video Call',
             'LANDING_HERO_LINE1' => 'Consultation',
             'LANDING_HERO_LINE2' => 'and AI-Powered Triage System',
             'LANDING_HERO_SUBHEADING' => 'A secure, non-emergency hybrid healthcare portal connecting patients with licensed providers through AI-assisted triage, secure video consultation, and centralized records.',
@@ -50,7 +50,12 @@ final class LandingPageConfig
     public static function all(PDO $pdo): array
     {
         $stored = system_settings_get_all($pdo);
-        return array_merge(self::defaults(), array_intersect_key($stored, array_flip(self::KEYS)));
+        $merged = array_merge(self::defaults(), array_intersect_key($stored, array_flip(self::KEYS)));
+        if (($merged['LANDING_HERO_ACCENT'] ?? '') === 'Online Video Call') {
+            $merged['LANDING_HERO_ACCENT'] = self::defaults()['LANDING_HERO_ACCENT'];
+        }
+
+        return $merged;
     }
 
     public static function get(PDO $pdo, string $key, ?string $default = null): string
