@@ -275,7 +275,7 @@ try {
 require_once BASE_PATH . '/app/includes/provider_activity.php';
 $activity = provider_load_recent_activity($pdo, $providerId, 8);
 
-// ── Live Patient List (provider caseload: consults, slots, triage, referrals, HS) ──
+// ── Live Patient List (consultations with this doctor only) ──
 $patients = [];
 $providerId = (int) ($_SESSION['user_id'] ?? 0);
 try {

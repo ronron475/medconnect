@@ -287,7 +287,8 @@ function provider_preserve_unseen_bhw_clinical_profile(PDO $pdo, int $providerId
 }
 
 /**
- * Patients this provider may open in Medical Records / GIS (same rules as assert_access).
+ * Patients this doctor may open in the Patient List.
+ * Membership is a consultation row only: consultations.provider_id = this doctor.
  *
  * @return list<array<string, mixed>>
  */
@@ -296,9 +297,6 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
     if ($providerId <= 0) {
         return [];
     }
-
-    require_once __DIR__ . '/triage_assessment_schema.php';
-    triage_assessment_ensure_schema($pdo);
 
     $sql = "
         SELECT DISTINCT
@@ -326,40 +324,9 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
             CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number
         FROM users u
         INNER JOIN (
-            SELECT patient_id, MAX(last_touch) AS last_touch
-            FROM (
-                SELECT patient_id, MAX(consult_date) AS last_touch
-                FROM consultations
-                WHERE provider_id = ?
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(slot_date) AS last_touch
-                FROM appointment_slots
-                WHERE provider_id = ? AND status = 'booked'
-                  AND slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(DATE(assessed_at)) AS last_touch
-                FROM triage_results
-                WHERE assigned_provider_id = ?
-                  AND recommendation_status IN ('pending_approval', 'approved', 'rejected')
-                  AND UPPER(COALESCE(assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
-                  AND LOWER(COALESCE(outcome, '')) <> 'cancelled'
-                  AND assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(DATE(created_at)) AS last_touch
-                FROM digital_referrals
-                WHERE provider_id = ?
-                  AND created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                GROUP BY patient_id
-                UNION ALL
-                SELECT patient_id, MAX(DATE(created_at)) AS last_touch
-                FROM patient_medical_update_requests
-                WHERE provider_id = ?
-                  AND status IN ('pending', 'in_review')
-                GROUP BY patient_id
-            ) combined
+            SELECT patient_id, MAX(consult_date) AS last_touch
+            FROM consultations
+            WHERE provider_id = ?
             GROUP BY patient_id
         ) rel ON rel.patient_id = u.id
         LEFT JOIN patient_registrations pr ON pr.user_id = u.id
@@ -369,62 +336,11 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
 
     try {
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$providerId, $providerId, $providerId, $providerId, $providerId]);
+        $stmt->execute([$providerId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     } catch (PDOException $e) {
-        // Older schemas may lack one of the optional tables — fall back to consult/slot only.
-        error_log('provider_patient_caseload_directory fallback: ' . $e->getMessage());
-        try {
-            $fallback = $pdo->prepare("
-                SELECT DISTINCT
-                    u.id,
-                    u.first_name,
-                    u.last_name,
-                    TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) AS name,
-                    CONCAT(
-                        UPPER(LEFT(COALESCE(NULLIF(u.first_name, ''), '?'), 1)),
-                        UPPER(LEFT(COALESCE(NULLIF(u.last_name, ''), ''), 1))
-                    ) AS initials,
-                    COALESCE(pr.age, '') AS age,
-                    COALESCE(pr.gender, '') AS sex,
-                    COALESCE(pr.contact_number, '') AS contact,
-                    COALESCE(CONCAT_WS(', ',
-                        NULLIF(pr.barangay, ''),
-                        NULLIF(pr.city_municipality, '')
-                    ), '') AS address,
-                    COALESCE(pr.blood_type, '') AS blood_type,
-                    COALESCE(pr.existing_conditions, '') AS history,
-                    COALESCE(pr.allergies, '') AS allergies,
-                    COALESCE(pr.current_medications, '') AS medications,
-                    COALESCE(rel.last_consult, '') AS last_consult,
-                    CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status,
-                    CONCAT('MC-', LPAD(u.id, 6, '0')) AS patient_number
-                FROM users u
-                INNER JOIN (
-                    SELECT patient_id, MAX(last_consult) AS last_consult
-                    FROM (
-                        SELECT patient_id, MAX(consult_date) AS last_consult
-                        FROM consultations
-                        WHERE provider_id = ?
-                        GROUP BY patient_id
-                        UNION ALL
-                        SELECT patient_id, MAX(slot_date) AS last_consult
-                        FROM appointment_slots
-                        WHERE provider_id = ? AND status = 'booked'
-                        GROUP BY patient_id
-                    ) combined
-                    GROUP BY patient_id
-                ) rel ON rel.patient_id = u.id
-                LEFT JOIN patient_registrations pr ON pr.user_id = u.id
-                WHERE u.role = 'patient'
-                ORDER BY rel.last_consult DESC, u.last_name ASC
-            ");
-            $fallback->execute([$providerId, $providerId]);
-            $rows = $fallback->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        } catch (PDOException $e2) {
-            error_log('provider_patient_caseload_directory failed: ' . $e2->getMessage());
-            return [];
-        }
+        error_log('provider_patient_caseload_directory failed: ' . $e->getMessage());
+        return [];
     }
 
     $rows = provider_patient_strip_hidden_bhw_clinical($pdo, $providerId, $rows);

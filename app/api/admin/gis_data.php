@@ -19,6 +19,7 @@ if (!in_array($role, ['admin', 'provider', 'superadmin'], true)) {
 
 $gis = new GisDashboardService($pdo);
 $action = (string) ($_GET['action'] ?? 'bundle');
+$viewerId = (int) ($_SESSION['user_id'] ?? 0);
 
 $filters = [
     'search'       => trim((string) ($_GET['search'] ?? '')),
@@ -45,7 +46,7 @@ try {
             break;
 
         case 'analytics':
-            $payload = ['analytics' => $gis->getAnalytics()];
+            $payload = ['analytics' => $gis->getAnalytics($role, $viewerId)];
             break;
 
         case 'updates':
@@ -73,7 +74,7 @@ try {
             $payload = [
                 'summary'      => $gis->getSummary(),
                 'patients'     => [],
-                'analytics'    => $gis->getAnalytics(),
+                'analytics'    => $gis->getAnalytics($role, $viewerId),
                 'triage_stats' => $gis->getTriageStats($role, $filters),
                 'map_config'   => $gis->getMapConfig(),
                 'server_ts'    => date('c'),
@@ -86,7 +87,7 @@ try {
             $payload = [
                 'summary'      => $gis->getSummary(),
                 'patients'     => $patients,
-                'analytics'    => $gis->getAnalytics(),
+                'analytics'    => $gis->getAnalytics($role, $viewerId),
                 'monitoring'   => $gis->getMonitoringInsights($patients),
                 'triage_stats' => $gis->getTriageStats($role, $filters),
                 'map_config'   => $gis->getMapConfig(),

@@ -766,18 +766,24 @@ final class GisDashboardService
     }
 
     /**
+     * Area analytics. Admin and superadmin stay city-wide.
+     * A provider sees aggregates only for patients with
+     * consultations.provider_id equal to that provider.
+     *
      * @return array<string, mixed>
      */
-    public function getAnalytics(): array
+    public function getAnalytics(string $viewerRole = 'admin', int $viewerId = 0): array
     {
+        $providerId = strtolower(trim($viewerRole)) === 'provider' ? $viewerId : null;
+
         return [
-            'by_province'      => $this->aggregateByField('province'),
-            'by_municipality'  => $this->aggregateByField('city_municipality'),
-            'by_barangay'      => $this->aggregateByField('barangay'),
-            'consultations'    => $this->consultationsByBarangay(),
-            'emergencies'      => $this->emergenciesByBarangay(),
-            'symptoms'         => $this->symptomsByBarangay(),
-            'conditions'       => $this->conditionsByBarangay(),
+            'by_province'      => $this->aggregateByField('province', $providerId),
+            'by_municipality'  => $this->aggregateByField('city_municipality', $providerId),
+            'by_barangay'      => $this->aggregateByField('barangay', $providerId),
+            'consultations'    => $this->consultationsByBarangay($providerId),
+            'emergencies'      => $this->emergenciesByBarangay($providerId),
+            'symptoms'         => $this->symptomsByBarangay($providerId),
+            'conditions'       => $this->conditionsByBarangay($providerId),
         ];
     }
 
@@ -1053,62 +1059,122 @@ final class GisDashboardService
     }
 
     /**
+     * Patient belongs to this provider only through a consultation row.
+     * Bookings, triage assignment, referrals, and health-summary assignment do not qualify.
+     */
+    private function consultedPatientSql(): string
+    {
+        return 'EXISTS (SELECT 1 FROM consultations c WHERE c.patient_id = u.id AND c.provider_id = ?)';
+    }
+
+    /**
+     * @param list<mixed> $params
+     * @return list<array<string, mixed>>
+     */
+    private function fetchAnalyticsRows(string $sql, array $params): array
+    {
+        if ($params === []) {
+            $stmt = $this->pdo->query($sql);
+
+            return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        }
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * null keeps the city-wide query. A non-positive provider id matches nobody.
+     */
+    private function providerAnalyticsUnavailable(?int $providerId): bool
+    {
+        return $providerId !== null && ($providerId <= 0 || !$this->tableExists('consultations'));
+    }
+
+    /**
      * @return list<array{label: string, count: int}>
      */
-    private function aggregateByField(string $field): array
+    private function aggregateByField(string $field, ?int $providerId = null): array
     {
         $column = self::resolveAggregationColumn($field);
         if ($column === null) {
             return [];
         }
-        if (!$this->tableExists('patient_registrations')) {
+        if (!$this->tableExists('patient_registrations') || $this->providerAnalyticsUnavailable($providerId)) {
             return [];
+        }
+
+        $scope = '';
+        $params = [];
+        if ($providerId !== null) {
+            $scope = ' AND ' . $this->consultedPatientSql();
+            $params[] = $providerId;
         }
 
         $sql = "
             SELECT COALESCE(NULLIF(TRIM(pr.{$column}), ''), 'Unknown') AS label, COUNT(*) AS count
             FROM users u
             INNER JOIN patient_registrations pr ON pr.email = u.email
-            WHERE u.role = 'patient'
+            WHERE u.role = 'patient'{$scope}
             GROUP BY label
             ORDER BY count DESC
             LIMIT 15
         ";
-        $stmt = $this->pdo->query($sql);
 
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        return $this->fetchAnalyticsRows($sql, $params);
     }
 
     /**
      * @return list<array{barangay: string, count: int}>
      */
-    private function consultationsByBarangay(): array
+    private function consultationsByBarangay(?int $providerId = null): array
     {
         if (!$this->tableExists('consultations') || !$this->tableExists('patient_registrations')) {
             return [];
+        }
+        if ($providerId !== null && $providerId <= 0) {
+            return [];
+        }
+
+        $scope = '';
+        $params = [];
+        if ($providerId !== null) {
+            $scope = ' WHERE c.provider_id = ?';
+            $params[] = $providerId;
         }
 
         $sql = "
             SELECT COALESCE(NULLIF(TRIM(pr.barangay), ''), 'Unknown') AS barangay, COUNT(*) AS count
             FROM consultations c
             INNER JOIN users u ON u.id = c.patient_id
-            INNER JOIN patient_registrations pr ON pr.email = u.email
+            INNER JOIN patient_registrations pr ON pr.email = u.email{$scope}
             GROUP BY barangay
             ORDER BY count DESC
             LIMIT 12
         ";
-        $stmt = $this->pdo->query($sql);
 
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        return $this->fetchAnalyticsRows($sql, $params);
     }
 
     /**
      * @return list<array{barangay: string, count: int}>
      */
-    private function emergenciesByBarangay(): array
+    private function emergenciesByBarangay(?int $providerId = null): array
     {
         if (!$this->tableExists('users') || !$this->tableExists('patient_registrations')) {
             return [];
+        }
+        if ($this->providerAnalyticsUnavailable($providerId)) {
+            return [];
+        }
+
+        $scope = '';
+        $params = [];
+        if ($providerId !== null) {
+            $scope = ' AND ' . $this->consultedPatientSql();
+            $params[] = $providerId;
         }
 
         $sql = "
@@ -1116,23 +1182,32 @@ final class GisDashboardService
             FROM users u
             INNER JOIN patient_registrations pr ON pr.email = u.email
             WHERE u.role = 'patient'
-              AND " . $this->triageLevelSelectSql('u.id') . " = 'emergency'
+              AND " . $this->triageLevelSelectSql('u.id') . " = 'emergency'{$scope}
             GROUP BY barangay
             ORDER BY count DESC
             LIMIT 12
         ";
-        $stmt = $this->pdo->query($sql);
 
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        return $this->fetchAnalyticsRows($sql, $params);
     }
 
     /**
      * @return list<array{barangay: string, label: string, count: int}>
      */
-    private function symptomsByBarangay(): array
+    private function symptomsByBarangay(?int $providerId = null): array
     {
         if (!$this->tableExists('triage_results') || !$this->tableExists('patient_registrations')) {
             return [];
+        }
+        if ($this->providerAnalyticsUnavailable($providerId)) {
+            return [];
+        }
+
+        $scope = '';
+        $params = [];
+        if ($providerId !== null) {
+            $scope = ' WHERE ' . $this->consultedPatientSql();
+            $params[] = $providerId;
         }
 
         $sql = "
@@ -1141,23 +1216,32 @@ final class GisDashboardService
                    COUNT(*) AS count
             FROM triage_results tr
             INNER JOIN users u ON u.id = tr.patient_id
-            INNER JOIN patient_registrations pr ON pr.email = u.email
+            INNER JOIN patient_registrations pr ON pr.email = u.email{$scope}
             GROUP BY barangay, label
             ORDER BY count DESC
             LIMIT 20
         ";
-        $stmt = $this->pdo->query($sql);
 
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        return $this->fetchAnalyticsRows($sql, $params);
     }
 
     /**
      * @return list<array{barangay: string, label: string, count: int}>
      */
-    private function conditionsByBarangay(): array
+    private function conditionsByBarangay(?int $providerId = null): array
     {
         if (!$this->tableExists('patient_registrations')) {
             return [];
+        }
+        if ($this->providerAnalyticsUnavailable($providerId)) {
+            return [];
+        }
+
+        $scope = '';
+        $params = [];
+        if ($providerId !== null) {
+            $scope = ' AND ' . $this->consultedPatientSql();
+            $params[] = $providerId;
         }
 
         $sql = "
@@ -1167,14 +1251,13 @@ final class GisDashboardService
             FROM patient_registrations pr
             INNER JOIN users u ON u.email = pr.email
             WHERE u.role = 'patient'
-              AND COALESCE(pr.existing_conditions, '') <> ''
+              AND COALESCE(pr.existing_conditions, '') <> ''{$scope}
             GROUP BY barangay, label
             ORDER BY count DESC
             LIMIT 20
         ";
-        $stmt = $this->pdo->query($sql);
 
-        return $stmt ? ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []) : [];
+        return $this->fetchAnalyticsRows($sql, $params);
     }
 
     private function countEmergencyCases(): int
@@ -1523,69 +1606,22 @@ final class GisDashboardService
     }
 
     /**
-     * Limit provider GIS to patients this doctor already has a clinical relationship with.
-     * Mirrors provider_patient_assert_access: consults, booked slots, assigned triage,
-     * recent referrals, and pending Health Summary requests. Never invents assignments.
+     * Limit a doctor's GIS patient list to patients they have consulted.
+     * Booked slots, triage assignment, referrals, and health-summary requests
+     * do not add a patient here. Those workflows keep their own access checks.
      *
      * @param list<string> $where
      * @param list<mixed> $params
      */
     private function applyProviderCaseloadFilter(array &$where, array &$params, int $providerId): void
     {
-        if ($providerId <= 0) {
+        if ($providerId <= 0 || !$this->tableExists('consultations')) {
             $where[] = '0 = 1';
             return;
         }
 
-        $parts = [];
-        if ($this->tableExists('consultations')) {
-            $parts[] = 'EXISTS (SELECT 1 FROM consultations c WHERE c.patient_id = u.id AND c.provider_id = ?)';
-            $params[] = $providerId;
-        }
-        if ($this->tableExists('appointment_slots')) {
-            $parts[] = "EXISTS (
-                SELECT 1 FROM appointment_slots a
-                WHERE a.patient_id = u.id AND a.provider_id = ?
-                  AND a.status = 'booked'
-                  AND a.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            )";
-            $params[] = $providerId;
-        }
-        if ($this->tableExists('triage_results') && $this->columnExists('triage_results', 'assigned_provider_id')) {
-            // Match provider_patient_assert_access: only active Care tips review assignments.
-            $parts[] = "EXISTS (
-                SELECT 1 FROM triage_results tr
-                WHERE tr.patient_id = u.id AND tr.assigned_provider_id = ?
-                  AND tr.recommendation_status IN ('pending_approval', 'approved', 'rejected')
-                  AND UPPER(COALESCE(tr.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
-                  AND LOWER(COALESCE(tr.outcome, '')) <> 'cancelled'
-                  AND tr.assessed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            )";
-            $params[] = $providerId;
-        }
-        if ($this->tableExists('digital_referrals')) {
-            $parts[] = "EXISTS (
-                SELECT 1 FROM digital_referrals r
-                WHERE r.patient_id = u.id AND r.provider_id = ?
-                  AND r.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            )";
-            $params[] = $providerId;
-        }
-        if ($this->tableExists('patient_medical_update_requests')) {
-            $parts[] = "EXISTS (
-                SELECT 1 FROM patient_medical_update_requests hs
-                WHERE hs.patient_id = u.id AND hs.provider_id = ?
-                  AND hs.status IN ('pending', 'in_review')
-            )";
-            $params[] = $providerId;
-        }
-
-        if ($parts === []) {
-            $where[] = '0 = 1';
-            return;
-        }
-
-        $where[] = '(' . implode(' OR ', $parts) . ')';
+        $where[] = 'EXISTS (SELECT 1 FROM consultations c WHERE c.patient_id = u.id AND c.provider_id = ?)';
+        $params[] = $providerId;
     }
 
     private function assignedBhwSelectSql(): string

@@ -1,0 +1,187 @@
+<?php
+/**
+ * Shared Admin / SuperAdmin operational reports.
+ * The Analytics tables and the CSV export both read these queries.
+ */
+
+declare(strict_types=1);
+
+function admin_operational_report_page_size(): int
+{
+    return 25;
+}
+
+/**
+ * @return array<string, array{title:string,description:string,headers:list<string>,sql:string,table:?string}>
+ */
+function admin_operational_report_catalog(): array
+{
+    return [
+        'appointments' => [
+            'title' => 'Appointment Summary',
+            'description' => 'Complete list of all consultations, provider assignments, and completion status.',
+            'headers' => ['ID', 'Patient ID', 'Provider', 'Type', 'Status', 'Date', 'Time'],
+            'sql' => 'SELECT id, patient_id, provider_name, consult_type, status, consult_date, consult_time
+                      FROM consultations
+                      ORDER BY id ASC',
+            'table' => 'consultations',
+        ],
+        'users' => [
+            'title' => 'User Demographics',
+            'description' => 'Breakdown of registered patients by age, gender, and barangay sector.',
+            'headers' => ['ID', 'First Name', 'Last Name', 'Email', 'Role', 'Status', 'Joined'],
+            'sql' => 'SELECT id, first_name, last_name, email, role, is_active, created_at
+                      FROM users
+                      ORDER BY id ASC',
+            'table' => 'users',
+        ],
+        'audit' => [
+            'title' => 'System Audit Snapshot',
+            'description' => 'Condensed log of all security-related actions for the current billing cycle.',
+            'headers' => ['ID', 'User ID', 'Action', 'Description', 'IP Address', 'Timestamp'],
+            'sql' => 'SELECT id, patient_id, action_type, description, ip_address, created_at
+                      FROM patient_audit_logs
+                      ORDER BY created_at DESC
+                      LIMIT 500',
+            'table' => 'patient_audit_logs',
+        ],
+    ];
+}
+
+function admin_operational_report_resolve(string $type): string
+{
+    $type = strtolower(trim($type));
+    $catalog = admin_operational_report_catalog();
+
+    return isset($catalog[$type]) ? $type : 'appointments';
+}
+
+/**
+ * @return array{title:string,description:string,headers:list<string>,sql:string,table:?string}
+ */
+function admin_operational_report_definition(string $type): array
+{
+    $catalog = admin_operational_report_catalog();
+
+    return $catalog[admin_operational_report_resolve($type)];
+}
+
+function admin_operational_report_table_exists(PDO $pdo, ?string $table): bool
+{
+    if ($table === null || $table === '') {
+        return true;
+    }
+    $stmt = $pdo->prepare('SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1');
+    $stmt->execute([$table]);
+
+    return (bool) $stmt->fetchColumn();
+}
+
+/**
+ * @param array<string, mixed> $row
+ * @return list<string>
+ */
+function admin_operational_report_values(string $type, array $row): array
+{
+    if ($type === 'users') {
+        $row['is_active'] = !empty($row['is_active']) ? 'Active' : 'Inactive';
+    }
+
+    $values = [];
+    foreach ($row as $value) {
+        $values[] = $value === null ? '' : (string) $value;
+    }
+
+    return $values;
+}
+
+/**
+ * Full report dataset used by CSV. Audit stays capped at the existing 500-row snapshot.
+ *
+ * @return list<list<string>>
+ */
+function admin_operational_report_all(PDO $pdo, string $type): array
+{
+    $type = admin_operational_report_resolve($type);
+    $definition = admin_operational_report_definition($type);
+    if (!admin_operational_report_table_exists($pdo, $definition['table'])) {
+        return [];
+    }
+
+    $stmt = $pdo->query($definition['sql']);
+    $rows = [];
+    foreach ($stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [] as $row) {
+        $rows[] = admin_operational_report_values($type, $row);
+    }
+
+    return $rows;
+}
+
+/**
+ * One table page from the same dataset as the CSV.
+ *
+ * @return array{type:string,title:string,description:string,headers:list<string>,rows:list<list<string>>,total:int,page:int,per_page:int,error:?string}
+ */
+function admin_operational_report_page(PDO $pdo, string $type, int $page, ?int $perPage = null): array
+{
+    $type = admin_operational_report_resolve($type);
+    $definition = admin_operational_report_definition($type);
+    $perPage = $perPage ?? admin_operational_report_page_size();
+    $perPage = max(1, $perPage);
+    $result = [
+        'type' => $type,
+        'title' => $definition['title'],
+        'description' => $definition['description'],
+        'headers' => $definition['headers'],
+        'rows' => [],
+        'total' => 0,
+        'page' => 1,
+        'per_page' => $perPage,
+        'error' => null,
+    ];
+
+    try {
+        if (!admin_operational_report_table_exists($pdo, $definition['table'])) {
+            return $result;
+        }
+
+        $countStmt = $pdo->query('SELECT COUNT(*) FROM (' . $definition['sql'] . ') report_count');
+        $total = (int) ($countStmt ? $countStmt->fetchColumn() : 0);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = min(max(1, $page), $pages);
+        $offset = ($page - 1) * $perPage;
+        $sql = 'SELECT * FROM (' . $definition['sql'] . ') report_page LIMIT ' . $perPage . ' OFFSET ' . $offset;
+        $stmt = $pdo->query($sql);
+        $rows = [];
+        foreach ($stmt ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [] as $row) {
+            $rows[] = admin_operational_report_values($type, $row);
+        }
+
+        $result['rows'] = $rows;
+        $result['total'] = $total;
+        $result['page'] = $page;
+    } catch (Throwable $e) {
+        error_log('admin_operational_report_page: ' . $e->getMessage());
+        $result['error'] = 'Unable to load this report.';
+    }
+
+    return $result;
+}
+
+/**
+ * @param array<string, int> $pages
+ */
+function admin_operational_report_page_href(string $basePath, string $type, int $page, array $pages): string
+{
+    $params = [];
+    foreach (array_keys(admin_operational_report_catalog()) as $key) {
+        $value = $key === $type ? $page : (int) ($pages[$key] ?? 1);
+        if ($value > 1) {
+            $params[$key . '_page'] = $value;
+        }
+    }
+    $query = http_build_query($params);
+    $href = $basePath . ($query !== '' ? '?' . $query : '');
+
+    return $href . '#report-' . rawurlencode($type);
+}

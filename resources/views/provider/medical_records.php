@@ -51,12 +51,11 @@ function mr_fetch_patient(PDO $pdo, int $id): ?array {
 }
 
 if ($requested_id > 0) {
-    $access = provider_patient_assert_access($pdo, (int) ($_SESSION['user_id'] ?? 0), $requested_id, 0);
-    if ($access['allowed']) {
+    $accessAllowed = provider_patient_has_consultation_history($pdo, $provider_id, $requested_id);
+    if ($accessAllowed) {
         $selected = mr_fetch_patient($pdo, $requested_id);
         if ($selected) {
             $selected = provider_redact_bhw_clinical_profile($pdo, $provider_id, $requested_id, $selected);
-            // Ensure GIS / triage-assigned patients appear in the left directory.
             $exists = false;
             foreach ($patients as $pRow) {
                 if ((int) ($pRow['id'] ?? 0) === $requested_id) {
@@ -86,8 +85,7 @@ if (!$selected && !$mr_access_denied && !empty($patients) && $view === 'patients
         if ($candidateId <= 0) {
             continue;
         }
-        $access = provider_patient_assert_access($pdo, $provider_id, $candidateId, 0);
-        if ($access['allowed']) {
+        if (provider_patient_has_consultation_history($pdo, $provider_id, $candidateId)) {
             $fetched = mr_fetch_patient($pdo, $candidateId);
             if (!$fetched) {
                 continue;
@@ -182,24 +180,8 @@ try {
                 $apId
             );
         }
-        if ($apId <= 0) {
+        if ($apId <= 0 || !provider_patient_has_consultation_history($pdo, $provider_id, $apId)) {
             continue;
-        }
-        $exists = false;
-        foreach ($patients as $pRow) {
-            if ((int) ($pRow['id'] ?? 0) === $apId) {
-                $exists = true;
-                break;
-            }
-        }
-        if (!$exists) {
-            $patients[] = [
-                'id' => $apId,
-                'name' => (string) ($apRow['name'] ?? ''),
-                'initials' => (string) ($apRow['initials'] ?? 'P'),
-                'contact' => (string) ($apRow['contact'] ?? ''),
-                'last_consult' => '',
-            ];
         }
         $pending_requests_by_patient[$apId] = ['id' => (int) ($apRow['request_id'] ?? 0)];
     }
@@ -230,7 +212,7 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
   <?php if (!empty($mr_access_denied)): ?>
   <div class="mr-assigned-pending" role="alert">
     <strong>Patient not available</strong>
-    <p class="text-sm" style="margin:6px 0 0;">This map patient is not on your current Medical Records caseload (no active consult, booking, Care tips assignment, referral, or Health Summary request).</p>
+    <p class="text-sm" style="margin:6px 0 0;">This patient is not on your consultation history.</p>
   </div>
   <?php endif; ?>
 
