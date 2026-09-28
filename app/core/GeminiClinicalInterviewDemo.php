@@ -217,6 +217,27 @@ final class GeminiClinicalInterviewDemo
     /** Test-only: count generateContent attempts and stop before a live Google/Railway call. */
     private static bool $geminiQuotaProbe = false;
 
+    /** Test-only. When set, generate() does not call Gemini and treats the call as HTTP 429. */
+    private static bool $openRouterQuotaProbe = false;
+
+    /** @var (callable(array<string, mixed>): ?string)|null */
+    private static $openRouterTransportForTest = null;
+
+    /**
+     * @param callable(array<string, mixed>): ?string $transport
+     */
+    public static function beginOpenRouterQuotaProbeForTest(callable $transport): void
+    {
+        self::$openRouterQuotaProbe = true;
+        self::$openRouterTransportForTest = $transport;
+    }
+
+    public static function endOpenRouterQuotaProbeForTest(): void
+    {
+        self::$openRouterQuotaProbe = false;
+        self::$openRouterTransportForTest = null;
+    }
+
     private static int $directGeminiAttempts = 0;
 
     public static function beginGeminiQuotaProbeForTest(): void
@@ -3165,12 +3186,22 @@ PROMPT;
             }
         }
 
+        if (self::$openRouterQuotaProbe) {
+            $probeError = new RuntimeException('Gemini HTTP 429: You exceeded your current quota');
+            $recovered = self::recoverDemoQuotaWithOpenRouter($probeError, $payload);
+            if (is_string($recovered)) {
+                return $recovered;
+            }
+            throw $probeError;
+        }
+
         if (self::shouldUseRailway()) {
             try {
                 return self::generateViaRailway($payload, $model);
             } catch (RuntimeException $e) {
-                if (self::isGeminiQuotaError($e->getMessage())) {
-                    throw $e;
+                $recovered = self::recoverDemoQuotaWithOpenRouter($e, $payload);
+                if (is_string($recovered)) {
+                    return $recovered;
                 }
                 $msg = strtolower($e->getMessage());
                 $thinkingReject = !empty($payload['generationConfig']['thinkingConfig'])
@@ -3196,6 +3227,10 @@ PROMPT;
                 'x-goog-api-key: ' . $key,
             ]);
         } catch (RuntimeException $e) {
+            $recovered = self::recoverDemoQuotaWithOpenRouter($e, $payload);
+            if (is_string($recovered)) {
+                return $recovered;
+            }
             // Soft-fail thinkingConfig 400 by returning empty for retry path.
             if (str_contains($e->getMessage(), 'Gemini HTTP 400')
                 && !empty($payload['generationConfig']['thinkingConfig'])
@@ -3206,6 +3241,30 @@ PROMPT;
         }
 
         return self::extractCandidateText($data);
+    }
+
+    /**
+     * Demo-only. On Gemini HTTP 429 / quota, try OpenRouter once with the same payload.
+     * A non-quota error returns null so the existing Gemini path continues.
+     * A failed or unconfigured OpenRouter call rethrows the original Gemini error.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private static function recoverDemoQuotaWithOpenRouter(RuntimeException $e, array $payload): ?string
+    {
+        if (!self::isGeminiQuotaError($e->getMessage())) {
+            return null;
+        }
+        require_once dirname(__DIR__) . '/includes/openrouter_demo_fallback.php';
+        $text = medconnect_demo_openrouter_quota_text(
+            $e->getMessage(),
+            $payload,
+            self::$openRouterTransportForTest
+        );
+        if (is_string($text) && trim($text) !== '') {
+            return trim($text);
+        }
+        throw $e;
     }
 
     /**
