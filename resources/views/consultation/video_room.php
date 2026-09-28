@@ -1225,6 +1225,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let recordingRafId = 0;
     let uploadPromise; // To wait for upload before redirecting
     let endingCall = false;
+    let patientAwaitingSoap = false;
+    let patientSoapRedirected = false;
     let recordingAudioContext;
     let recordingAudioDestination;
     let remoteAudioConnected = false;
@@ -1487,8 +1489,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (endingCall || window.__mcCallEnded) return;
       console.warn('[medConnect] WebRTC connection failed:', reason);
       if (userRole === 'provider') {
-        showProviderWaitingForPatient();
-        finalizeRecordingSegment({ quiet: true });
+        setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
+          callStatusText: 'Connection interrupted',
+        });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay(
+            'Connection interrupted',
+            'Your consultation has not been completed. Reconnecting...',
+            true,
+            { showRetry: false }
+          );
+        }
         if (window.McWebrtcPeerCall) {
           McWebrtcPeerCall.closeCurrentCall();
           McWebrtcPeerCall.resetCallState();
@@ -1497,10 +1508,15 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         return;
       }
       setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-        callStatusText: 'Connection lost',
+        callStatusText: 'Connection interrupted',
       });
       if (consultUi && typeof consultUi.setOverlay === 'function') {
-        consultUi.setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: true });
+        consultUi.setOverlay(
+          'Connection interrupted',
+          'Your consultation has not been completed. Reconnecting...',
+          true,
+          { showRetry: true }
+        );
       }
       if (consultUi && typeof consultUi.setConnectionFailed === 'function') {
         consultUi.setConnectionFailed(true, 'Trying to reconnect…');
@@ -1585,10 +1601,25 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
         if (!endingCall && localStream && !callInterval) {
           setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-            callStatusText: userRole === 'patient' ? 'Connection lost' : 'Reconnecting…',
+            callStatusText: userRole === 'patient'
+              ? 'Your provider\'s connection was interrupted.'
+              : 'Connection interrupted',
           });
+          if (userRole !== 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
+            consultUi.setOverlay(
+              'Connection interrupted',
+              'Your consultation has not been completed. Reconnecting...',
+              true,
+              { showRetry: false }
+            );
+          }
           if (userRole === 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
-            consultUi.setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: false });
+            consultUi.setOverlay(
+              'Your provider\'s connection was interrupted.',
+              'Please wait while they reconnect. Your consultation has not been completed.',
+              true,
+              { showRetry: false }
+            );
           }
           beginConnectionRetries();
         }
@@ -1601,7 +1632,12 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           callStatusText: userRole === 'patient' ? 'Trying to reconnect…' : 'Reconnecting…',
         });
         if (userRole === 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
-          consultUi.setOverlay('Connection lost', 'Trying to reconnect…', true, { showRetry: false });
+          consultUi.setOverlay(
+            'Connection interrupted',
+            'Your consultation has not been completed. Reconnecting...',
+            true,
+            { showRetry: false }
+          );
         }
       });
 
@@ -1641,8 +1677,16 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         console.warn('Peer disconnected — reconnecting signaling…');
         if (patientWaitMode) return;
         setCallPhase(window.McVideoCallCore ? window.McVideoCallCore.STATUS.RECONNECTING : 'reconnecting', {
-          callStatusText: userRole === 'patient' ? 'Connection lost' : 'Reconnecting…',
+          callStatusText: 'Connection interrupted',
         });
+        if (consultUi && typeof consultUi.setOverlay === 'function') {
+          consultUi.setOverlay(
+            'Connection interrupted',
+            'Your consultation has not been completed. Reconnecting...',
+            true,
+            { showRetry: false }
+          );
+        }
       });
 
       rtc.on('error', function (ev) {
@@ -2841,37 +2885,24 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           const videoStatus = String(data.video_status || '').toLowerCase();
           const consultDone = consultStatus === 'completed' || consultStatus === 'cancelled';
           const videoEnded = videoStatus === 'ended';
-          if (isPatient && patientLeftRejoinable && (consultDone || videoEnded)) {
-            patientLeftRejoinable = false;
-            window.__mcCallEnded = true;
-            document.getElementById('callStatus').textContent = 'This consultation has ended.';
-            if (consultUi && typeof consultUi.setOverlay === 'function') {
-              consultUi.setOverlay(
-                'Consultation ended',
-                'Your doctor ended this visit. You can review it in My Sessions.',
-                true,
-                { showRetry: false }
-              );
-            }
+          if (isPatient && consultStatus === 'completed') {
+            finishPatientAfterSoap();
             return;
           }
-          if ((consultDone || videoEnded) && !endingCall && !window.__mcCallEnded) {
-            if (isPatient) {
-              document.getElementById('callStatus').textContent = 'This consultation has ended.';
-              leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
-              return;
-            }
-            if (consultDone) {
-              document.getElementById('callStatus').textContent = 'This consultation has ended.';
-              endingCall = true;
-              window.__mcCallEnded = true;
-              disconnectLocalCall();
-              redirectAfterLeave({
-                parentMessageType: 'medconnect:call-ended',
-                reason: 'session_ended',
-              });
-              return;
-            }
+          if (isPatient && videoEnded && !consultDone) {
+            beginPatientSoapWait();
+            return;
+          }
+          if (consultDone && !isPatient && !endingCall && !window.__mcCallEnded) {
+            document.getElementById('callStatus').textContent = 'This consultation has ended.';
+            endingCall = true;
+            window.__mcCallEnded = true;
+            disconnectLocalCall();
+            redirectAfterLeave({
+              parentMessageType: 'medconnect:call-ended',
+              reason: 'session_ended',
+            });
+            return;
           }
           if (typeof data.seconds_remaining !== 'number') return;
 
@@ -3016,6 +3047,41 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
+    function beginPatientSoapWait() {
+      if (!isPatient || patientAwaitingSoap || patientSoapRedirected) return;
+      patientAwaitingSoap = true;
+      if (callInterval) {
+        clearInterval(callInterval);
+        callInterval = null;
+      }
+      const statusEl = document.getElementById('callStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Your provider ended the video and is completing the consultation.';
+      }
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay(
+          'Video ended',
+          'Your consultation has not been completed. Your provider is finishing the visit notes.',
+          true,
+          { showRetry: false }
+        );
+      }
+      const endBtn = document.getElementById('endCallBtn');
+      if (endBtn) endBtn.disabled = true;
+      if (window.McWebrtcPeerCall) {
+        try { McWebrtcPeerCall.setIntentionalLeave(true); } catch (e) {}
+        try { McWebrtcPeerCall.destroy(); } catch (e) {}
+      }
+      clearRemoteMedia();
+    }
+
+    function finishPatientAfterSoap() {
+      if (!isPatient || patientSoapRedirected) return;
+      patientSoapRedirected = true;
+      window.__mcCallEnded = true;
+      navigatePatientDashboard();
+    }
+
     function handlePeerLeftMessage(data) {
       if (!data || data.type !== 'peer_left') return false;
       if (data.role === userRole) return true;
@@ -3036,9 +3102,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       if (data.role === 'provider' && userRole === 'patient') {
-        document.getElementById('callStatus').textContent =
-          'The consultation has ended. You can view this consultation in My Sessions.';
-        leaveCallConfirmed({ reason: 'provider_left', skipApi: true });
+        beginPatientSoapWait();
         return true;
       }
 
@@ -3355,13 +3419,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           mcNoLoader: true,
         });
         const data = await res.json();
-        if (!data || !data.success) return false;
+        if (!data || !data.success) return true;
         const consultStatus = String(data.consultation_status || '').toLowerCase();
         const videoStatus = String(data.video_status || '').toLowerCase();
         if (consultStatus === 'completed' || consultStatus === 'cancelled' || consultStatus === 'canceled') {
-          return false;
+          return 'done';
         }
-        if (videoStatus === 'ended') return false;
+        if (videoStatus === 'ended') return 'soap';
         return true;
       } catch (e) {
         return true;
@@ -3429,9 +3493,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const verifyPromise = verifyConsultationStillActive();
         const mediaPromise = requestMediaAccess(lastMediaWantedVideo);
         const stillActive = await verifyPromise;
-        if (!stillActive) {
+        if (stillActive === 'soap') {
+          beginPatientSoapWait();
+          return;
+        }
+        if (stillActive === 'done') {
           patientLeftRejoinable = false;
-          await leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
+          finishPatientAfterSoap();
           return;
         }
         await mediaPromise;
