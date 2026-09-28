@@ -107,6 +107,18 @@ ok(
     'missing OPENROUTER_API_KEY returns null',
     medconnect_demo_openrouter_quota_text('Gemini HTTP 429: quota', $payload) === null
 );
+ok(
+    'key check reports missing and does not return the key',
+    medconnect_demo_openrouter_key_is_configured() === false
+);
+ok(
+    'server config api_key is accepted',
+    medconnect_demo_openrouter_api_key_from_config_value(['api_key' => 'unit-test-key']) !== ''
+);
+ok(
+    'empty server config api_key is ignored',
+    medconnect_demo_openrouter_api_key_from_config_value(['api_key' => '   ']) === ''
+);
 
 $systemMethod = new ReflectionMethod(GeminiClinicalInterviewDemo::class, 'systemPrompt');
 $systemMethod->setAccessible(true);

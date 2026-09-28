@@ -14,6 +14,9 @@ logger = logging.getLogger("medconnect.nlp.gemini")
 
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+# Same fixed free model as the clinical interview demo. Not a rotating router.
+OPENROUTER_DEMO_MODEL = "google/gemma-4-31b-it:free"
+OPENROUTER_DEMO_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 
 _startup_health: dict[str, Any] | None = None
 
@@ -40,6 +43,7 @@ def gemini_model_name() -> str:
 def log_startup_config() -> None:
     """Log Gemini env configuration at service startup (never log the key)."""
     logger.info("GEMINI/AI_API_KEY loaded=%s", bool(gemini_api_key()))
+    logger.info("OPENROUTER_API_KEY loaded=%s", bool(_env("OPENROUTER_API_KEY")))
     logger.info("AI_MODEL=%s", gemini_model_name())
     logger.info("env AI_ENABLED=%s", os.getenv("AI_ENABLED") or "(unset)")
     logger.info("env AI_PROVIDER=%s", os.getenv("AI_PROVIDER") or "(unset)")
@@ -193,6 +197,124 @@ def gemini_health_payload() -> dict[str, Any]:
     }
 
 
+def _parts_text(node: Any) -> str:
+    if not isinstance(node, dict):
+        return ""
+    parts = node.get("parts")
+    if not isinstance(parts, list):
+        return ""
+    chunks: list[str] = []
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        piece = str(part.get("text") or "")
+        if piece.strip():
+            chunks.append(piece)
+    return "\n".join(chunks)
+
+
+def _openrouter_body_from_gemini(payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Copy the Gemini system instruction and contents into one chat request."""
+    messages: list[dict[str, str]] = []
+    system = _parts_text(payload.get("systemInstruction"))
+    if system:
+        messages.append({"role": "system", "content": system})
+
+    contents = payload.get("contents")
+    if isinstance(contents, list):
+        for turn in contents:
+            if not isinstance(turn, dict):
+                continue
+            text = _parts_text(turn)
+            if not text:
+                continue
+            role = str(turn.get("role") or "user").strip().lower()
+            messages.append({
+                "role": "assistant" if role in {"model", "assistant"} else "user",
+                "content": text,
+            })
+
+    if not any(message.get("role") == "user" for message in messages):
+        return None
+
+    gen = payload.get("generationConfig")
+    gen = gen if isinstance(gen, dict) else {}
+    try:
+        temperature = float(gen.get("temperature", 0.1))
+    except (TypeError, ValueError):
+        temperature = 0.1
+    try:
+        max_tokens = int(gen.get("maxOutputTokens", 1024))
+    except (TypeError, ValueError):
+        max_tokens = 1024
+
+    return {
+        "model": OPENROUTER_DEMO_MODEL,
+        "temperature": temperature,
+        "max_tokens": max(64, min(4096, max_tokens)),
+        "messages": messages,
+    }
+
+
+def _openrouter_http_complete(payload: dict[str, Any], timeout: int) -> str | None:
+    """One OpenRouter completion. Returns model text, or None. Never logs the key."""
+    key = _env("OPENROUTER_API_KEY")
+    if not key:
+        return None
+    body = _openrouter_body_from_gemini(payload)
+    if body is None:
+        return None
+
+    req = urllib.request.Request(
+        OPENROUTER_DEMO_ENDPOINT,
+        data=json.dumps(body).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": "Bearer " + key,
+            "HTTP-Referer": "https://medconnect.bccbsis.com/public/gemini_clinical_interview_demo.php",
+            "X-Title": "medConnect clinical interview demo",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8")
+            code = int(getattr(resp, "status", 200))
+    except urllib.error.HTTPError as exc:
+        logger.warning("OpenRouter demo quota fallback unavailable: http %s", exc.code)
+        return None
+    except Exception:
+        logger.warning("OpenRouter demo quota fallback unavailable")
+        return None
+
+    if code < 200 or code >= 300:
+        logger.warning("OpenRouter demo quota fallback unavailable: http %s", code)
+        return None
+    try:
+        decoded = json.loads(raw)
+        text = str(decoded["choices"][0]["message"]["content"] or "").strip()
+    except (KeyError, IndexError, TypeError, json.JSONDecodeError):
+        return None
+    return text or None
+
+
+def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any] | None:
+    """Gemini HTTP 429 only. Same pack shape as a successful generate_content call."""
+    text = _openrouter_http_complete(payload, timeout)
+    if not text:
+        return None
+    return {
+        "model": OPENROUTER_DEMO_MODEL,
+        "text": text,
+        "response": {
+            "candidates": [
+                {"content": {"parts": [{"text": text}]}},
+            ],
+        },
+    }
+
+
 def generate_content(
     payload: dict[str, Any],
     *,
@@ -224,6 +346,10 @@ def generate_content(
             pass
         # Quota is not transient. One generateContent call must not be repeated.
         if exc.code == 429:
+            recovered = _quota_fallback_pack(body, wait)
+            if recovered is not None:
+                logger.info("Gemini HTTP 429; OpenRouter demo fallback returned text")
+                return recovered
             raise RuntimeError(f"Gemini HTTP 429: {err_body or exc.reason}") from exc
         # Retry without thinkingConfig when the model rejects it (same as PHP demo path).
         if exc.code == 400:
