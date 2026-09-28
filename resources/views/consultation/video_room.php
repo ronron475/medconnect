@@ -47,8 +47,7 @@ $stmt = $pdo->prepare("
            p.first_name as patient_first, p.last_name as patient_last,
            d.first_name as doctor_first, d.last_name as doctor_last,
            pp.specialty as provider_specialty,
-           s.id AS slot_id, s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end,
-           c.early_start_response
+           s.id AS slot_id, s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end
     FROM video_sessions vs
     JOIN consultations c ON vs.consultation_id = c.id
     LEFT JOIN users p ON c.patient_id = p.id
@@ -145,15 +144,7 @@ if (!$authorized) {
 
 if ($role === 'patient') {
     try {
-        require_once BASE_PATH . '/app/includes/consultation_queue_timing.php';
         require_once BASE_PATH . '/app/includes/consultation_video_lifecycle.php';
-        $session['status'] = (string) ($session['consult_status'] ?? '');
-        $session = consultation_timing_decorate_row($pdo, $session);
-        if (!empty($session['timing_missed'])) {
-            http_response_code(403);
-            die('Your scheduled time has passed and you did not join. You cannot enter ahead of patients already scheduled.');
-        }
-        consultation_timing_mark_patient_joined($pdo, (int) ($session['consultation_id'] ?? 0));
         consultation_patient_clear_temporarily_left($pdo, (string) $token, (int) $uid);
     } catch (Throwable $e) {
         error_log('video_room clear patient left: ' . $e->getMessage());
@@ -1071,7 +1062,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <?php endif; ?>
 
   <div id="extensionPrompt">
-    <span>The scheduled slot is almost over. This visit can continue. The next patient will wait.</span>
+    <span>5 minutes remaining. Would you like to extend?</span>
+    <?php if($role === 'provider'): ?>
+    <button onclick="requestExtension(15)" style="background:#000; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer">Extend 15m</button>
+    <?php endif; ?>
   </div>
 
   <div id="muteTtsBanner" class="mute-tts-banner" aria-hidden="true" role="status">
@@ -2777,12 +2771,20 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
 
         if (timeLeft <= 0) {
+          if (!isPatient) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById('callStatus').textContent = 'Consultation time has expired. Closing the room...';
+            endCall(true);
+            return;
+          }
+
           if (!startTimer._patientExpiredMsg) {
             startTimer._patientExpiredMsg = true;
             document.getElementById('callStatus').textContent =
-              'Scheduled slot time has ended. This consultation continues until the doctor ends it.';
+              'Scheduled slot time has ended. You can leave or stay if your doctor extends the call.';
           }
-        } else if (startTimer._patientExpiredMsg) {
+        } else if (isPatient && startTimer._patientExpiredMsg) {
           startTimer._patientExpiredMsg = false;
           document.getElementById('callStatus').textContent = 'Connected';
         }
@@ -2838,11 +2840,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const data = await res.json();
 
         if (data.success) {
-          if (data.continues_past_slot) {
-            document.getElementById('extensionPrompt').style.display = 'none';
-            showExtendToast(data.message || 'This visit can continue past the scheduled slot.', 'success');
-            return;
-          }
           if (typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
             timeLeft = data.seconds_remaining;
           } else {
@@ -2925,13 +2922,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             showExtendToast('Session extended. New end: ' + (data.end_label || 'updated') + '.', 'success');
           }
 
-          if (data.slot_window_elapsed || timeLeft <= 0) {
-            const statusEl = document.getElementById('callStatus');
-            if (statusEl && !endingCall && !window.__mcCallEnded) {
-              statusEl.textContent = 'Scheduled slot time has ended. This consultation continues until the doctor ends it.';
+          if (data.slot_expired || timeLeft <= 0) {
+            if (!isPatient && !endingCall) {
+              document.getElementById('callStatus').textContent = 'Consultation time has expired. Closing the room...';
+              endCall(true);
+              return;
             }
-          }
-          if (!isPatient && data.patient_temporarily_left && !patientWaitMode && !callHasRemoteStream) {
+            if (isPatient && data.consultation_status === 'completed' && !endingCall) {
+              document.getElementById('callStatus').textContent = 'This consultation has ended.';
+              leaveCallFast();
+            }
+          } else if (!isPatient && data.patient_temporarily_left && !patientWaitMode && !callHasRemoteStream) {
             showProviderWaitingForPatient();
           }
         })

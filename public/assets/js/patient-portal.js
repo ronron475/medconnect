@@ -611,72 +611,8 @@
     }
   }
 
-  function renderQueueTimingNotice(list) {
-    const hosts = document.querySelectorAll('[data-queue-timing-host]');
-    if (!hosts.length) return;
-    const item = (list || []).find((c) => c && c.queue_notice && c.queue_notice.kind);
-    hosts.forEach((host) => {
-      if (!item) {
-        host.hidden = true;
-        host.innerHTML = '';
-        return;
-      }
-      const notice = item.queue_notice;
-      const actions = Array.isArray(notice.actions) ? notice.actions : [];
-      let buttons = '';
-      if (actions.indexOf('join_early') !== -1) {
-        buttons += '<button type="button" class="psess-btn psess-btn--primary" data-early-start="join_early" data-consultation-id="' +
-          escapeHtml(String(notice.consultation_id || item.id || '')) + '">Join Early</button>';
-      }
-      if (actions.indexOf('keep_time') !== -1) {
-        buttons += '<button type="button" class="psess-btn" data-early-start="keep_time" data-consultation-id="' +
-          escapeHtml(String(notice.consultation_id || item.id || '')) + '">Keep Scheduled Time</button>';
-      }
-      host.hidden = false;
-      host.className = 'psess-live-banner' + (notice.kind === 'delayed' ? '' : ' psess-live-banner--ready');
-      host.innerHTML =
-        '<div class="psess-live-banner__text">' +
-        '<strong>' + escapeHtml(notice.title || '') + '</strong>' +
-        '<span>' + escapeHtml(notice.message || '') + '</span>' +
-        (buttons ? '<div class="psess-live-banner__actions">' + buttons + '</div>' : '') +
-        '</div>';
-    });
-  }
-
-  async function respondEarlyStart(consultationId, choice) {
-    const id = parseInt(String(consultationId || '0'), 10);
-    if (!id || !choice) return;
-    const body = new FormData();
-    body.set('consultation_id', String(id));
-    body.set('choice', choice);
-    const csrf = document.body?.dataset?.csrf || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-    if (csrf) body.set('csrf_token', csrf);
-    try {
-      const res = await fetch(APP_BASE + '/app/api/patient/early_start_response.php', {
-        method: 'POST',
-        body,
-        credentials: 'same-origin',
-      });
-      const json = await res.json();
-      if (!json || !json.success) {
-        window.alert((json && json.message) || 'Could not save your choice.');
-        return;
-      }
-      refreshConsultationStatus();
-    } catch (_) {
-      window.alert('Could not save your choice.');
-    }
-  }
-
-  document.addEventListener('click', (e) => {
-    const earlyBtn = e.target && e.target.closest ? e.target.closest('[data-early-start]') : null;
-    if (!earlyBtn) return;
-    e.preventDefault();
-    respondEarlyStart(earlyBtn.getAttribute('data-consultation-id'), earlyBtn.getAttribute('data-early-start'));
-  });
-
   async function refreshConsultationStatus() {
-    if (!document.getElementById('sessions-list') && !document.querySelector('[data-queue-timing-host]')) return;
+    if (!document.getElementById('sessions-list')) return;
     try {
       const res = await fetch(APP_BASE + '/app/api/consultations/consultation_status.php', {
         credentials: 'same-origin',
@@ -698,7 +634,6 @@
         byId[id] = Object.assign({}, byId[id] || {}, item);
       });
       window.consultations = Object.keys(byId).map((k) => byId[k]);
-      renderQueueTimingNotice(window.consultations);
 
       let becameActive = false;
       window.consultations.forEach((c) => {
@@ -720,7 +655,7 @@
   window.refreshConsultationStatus = refreshConsultationStatus;
 
   // Live poll while waiting for provider to start the room.
-  if (document.getElementById('sessions-list') || document.querySelector('[data-queue-timing-host]')) {
+  if (document.getElementById('sessions-list')) {
     refreshConsultationStatus();
     setInterval(function () {
       if (document.hidden) return;
@@ -731,12 +666,9 @@
     });
     document.addEventListener('medconnect:live-sync', function (ev) {
       var changed = (ev.detail && ev.detail.changed) || [];
-      if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1 || changed.indexOf('notifications') !== -1) {
+      if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1) {
         refreshConsultationStatus();
       }
-    });
-    document.addEventListener('medconnect:notifications-arrived', function () {
-      refreshConsultationStatus();
     });
   }
 
