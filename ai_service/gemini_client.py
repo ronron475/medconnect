@@ -15,7 +15,7 @@ logger = logging.getLogger("medconnect.nlp.gemini")
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 # Same fixed free model as the clinical interview demo. Not a rotating router.
-OPENROUTER_DEMO_MODEL = "google/gemma-4-31b-it:free"
+OPENROUTER_DEMO_MODEL = "nvidia/nemotron-3.5-lightning:free"
 OPENROUTER_DEMO_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 
 _startup_health: dict[str, Any] | None = None
