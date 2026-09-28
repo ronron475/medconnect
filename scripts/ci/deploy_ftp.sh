@@ -35,6 +35,7 @@ mirror -R --verbose --parallel=4 \
   --exclude-glob .git/** \
   --exclude-glob .env \
   --exclude-glob .env.* \
+  --exclude-glob app/config/openrouter_local.php \
   --exclude-glob .cursor/ \
   --exclude-glob .cursor/** \
   --exclude-glob .vercel/ \

@@ -49,6 +49,7 @@ $excludeFiles = [
     'public/test_db_connection.php',
     'public/debug_profile.php',
     'public/delete_user.php',
+    'app/config/openrouter_local.php',
 ];
 
 function deploy_rel(string $root, string $path): string

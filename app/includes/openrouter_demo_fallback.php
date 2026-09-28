@@ -17,14 +17,44 @@ define('MEDCONNECT_OPENROUTER_DEMO_FALLBACK_LOADED', true);
 const MEDCONNECT_OPENROUTER_DEMO_MODEL = 'google/gemma-4-31b-it:free';
 const MEDCONNECT_OPENROUTER_DEMO_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
+function medconnect_demo_openrouter_local_config_path(): string
+{
+    return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'openrouter_local.php';
+}
+
+/**
+ * @param mixed $loaded
+ */
+function medconnect_demo_openrouter_api_key_from_config_value($loaded): string
+{
+    if (!is_array($loaded)) {
+        return '';
+    }
+
+    return trim((string) ($loaded['api_key'] ?? ''));
+}
+
 function medconnect_demo_openrouter_api_key(): string
 {
+    $path = medconnect_demo_openrouter_local_config_path();
+    if (is_readable($path)) {
+        $fromFile = medconnect_demo_openrouter_api_key_from_config_value(include $path);
+        if ($fromFile !== '') {
+            return $fromFile;
+        }
+    }
+
     $val = getenv('OPENROUTER_API_KEY');
     if ($val === false || $val === '') {
         $val = $_ENV['OPENROUTER_API_KEY'] ?? '';
     }
 
     return trim((string) $val);
+}
+
+function medconnect_demo_openrouter_key_is_configured(): bool
+{
+    return medconnect_demo_openrouter_api_key() !== '';
 }
 
 function medconnect_demo_gemini_error_is_quota(string $message): bool
