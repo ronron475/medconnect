@@ -59,7 +59,7 @@ foreach ($pairRows as $row) {
     $last_msg = $msgs !== [] ? $msgs[array_key_last($msgs)] : null;
 
     $stmtMeta = $pdo->prepare("
-        SELECT consult_type, status, consult_date, consult_time
+        SELECT status, consult_date, consult_time
         FROM consultations
         WHERE id = ?
         LIMIT 1
@@ -67,13 +67,13 @@ foreach ($pairRows as $row) {
     $stmtMeta->execute([$cid]);
     $meta = $stmtMeta->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    $consult_label = $meta['consult_type'] ?: 'General consultation';
     $fallback_time = !empty($meta['consult_date'])
         ? date('M j, g:i A', strtotime(($meta['consult_date'] ?? '') . ' ' . ($meta['consult_time'] ?? '00:00:00')))
         : '';
-    $preview = $last_msg
-        ? mb_strimwidth((string) ($last_msg['message'] ?? ''), 0, 72, '…')
-        : $consult_label;
+    $lastText = trim((string) ($last_msg['message'] ?? ''));
+    $preview = $lastText !== ''
+        ? mb_strimwidth($lastText, 0, 72, '…')
+        : 'No messages yet';
     $list_time = $last_msg && !empty($last_msg['time'])
         ? (string) $last_msg['time']
         : ($fallback_time !== '' ? $fallback_time : format_message_list_time((string) ($row['last_at'] ?? '')));
@@ -93,10 +93,10 @@ foreach ($pairRows as $row) {
         'preview' => $preview,
         'time' => $list_time,
         'fallback_time' => $fallback_time,
-        'fallback_preview' => $consult_label,
+        'fallback_preview' => 'No messages yet',
         'status' => $status,
         'status_label' => ucwords(str_replace('_', ' ', $status)),
-        'consult_type' => $consult_label,
+        'consult_type' => 'Consultation',
         'is_archived' => (int) ($row['is_archived'] ?? 0),
         'unread' => (int) ($row['unread'] ?? 0),
         'messages' => $msgs,

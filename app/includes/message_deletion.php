@@ -962,11 +962,13 @@ function message_list_pair_conversations(PDO $pdo, int $userId, string $role, st
             $canonical = (int) $ids[0];
         }
 
-        $fallbackPreview = '';
+        $fallbackPreview = $role === 'provider' ? '' : 'No messages yet';
         $fallbackAt = '';
         foreach ($pairRows as $r) {
             if ((int) $r['consultation_id'] === $canonical) {
-                $fallbackPreview = (string) ($r['consult_type'] ?? 'Consultation');
+                if ($role === 'provider') {
+                    $fallbackPreview = (string) ($r['consult_type'] ?? 'Consultation');
+                }
                 $fallbackAt = trim(($r['consult_date'] ?? '') . ' ' . ($r['consult_time'] ?? ''));
                 if ($fallbackAt === '') {
                     $fallbackAt = (string) ($r['created_at'] ?? '');
@@ -974,8 +976,10 @@ function message_list_pair_conversations(PDO $pdo, int $userId, string $role, st
                 break;
             }
         }
-        if ($fallbackPreview === '' && $pairRows) {
+        if ($fallbackPreview === '' && $pairRows && $role === 'provider') {
             $fallbackPreview = (string) ($pairRows[0]['consult_type'] ?? 'Consultation');
+        }
+        if ($fallbackAt === '' && $pairRows) {
             $fallbackAt = (string) ($pairRows[0]['created_at'] ?? '');
         }
 

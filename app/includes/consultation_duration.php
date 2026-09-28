@@ -226,12 +226,12 @@ function consultation_duration_snapshot(
 
     $status = strtolower(trim(str_replace(' ', '_', $consultationStatus)));
     $statusLabel = '';
-    if (in_array($status, ['completed', 'ended'], true) || ($started !== '' && $ended !== '')) {
+    if ($status === 'cancelled' || $status === 'canceled') {
+        $statusLabel = 'Cancelled';
+    } elseif (in_array($status, ['completed', 'ended'], true) || ($started !== '' && $ended !== '')) {
         $statusLabel = $endedEarly ? 'Completed — Ended early' : 'Completed';
     } elseif ($status === 'in_consultation' || ($started !== '' && $ended === '')) {
         $statusLabel = 'In progress';
-    } elseif ($status === 'cancelled' || $status === 'canceled') {
-        $statusLabel = 'Cancelled';
     }
 
     $scheduledEndAt = '';
