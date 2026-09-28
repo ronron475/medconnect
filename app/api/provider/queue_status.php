@@ -117,10 +117,13 @@ try {
             default => $nextWaiting['early_start_offered_at'] ? 'Waiting for the patient' : '',
         };
         $nextStart = $nextWaiting['timing_slot_start'] ?? null;
+        $previousVisit = consultation_timing_previous_completed_visit($pdo, $providerId);
         $nextPayload = [
             'id' => (int) $nextWaiting['id'],
             'patient_name' => trim((string) ($nextWaiting['patient_name'] ?? '')),
             'scheduled_label' => $nextStart ? date('g:i A', (int) $nextStart) : '',
+            'previous_patient_name' => (string) ($previousVisit['patient_name'] ?? ''),
+            'previous_ended_early' => !empty($previousVisit['ended_early']),
             'early_start_response' => $response,
             'early_start_response_label' => $responseLabel,
             'can_offer_early' => $activeVideoId === 0

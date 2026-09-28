@@ -190,7 +190,12 @@
       (p.ended_label ? '<div><dt>Ended</dt><dd>' + escapeHtml(p.ended_label) + '</dd></div>' : '') +
       (p.actual_duration_label ? '<div><dt>Actual duration</dt><dd>' + escapeHtml(p.actual_duration_label) + '</dd></div>' : '') +
       (p.status_label ? '<div><dt>Status</dt><dd>' + escapeHtml(p.status_label) + '</dd></div>' : '') +
-      '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
+      '</dl>' +
+      '<div class="mc-vc-primary-complaint">' +
+        '<div class="mc-vc-primary-complaint__label">Primary Complaint</div>' +
+        '<div class="mc-vc-primary-complaint__text">' + escapeHtml(p.chief_complaint || '—') + '</div>' +
+      '</div>' +
+      '<dl class="mc-vc-info-dl">' +
       '<div><dt>AI classification</dt><dd>' + escapeHtml(p.ai_classification || '—') + (p.confidence ? ' <span class="mc-vc-muted">(' + escapeHtml(p.confidence) + ')</span>' : '') + '</dd></div>' +
       '<div><dt>Final classification</dt><dd>' + escapeHtml(p.final_classification || p.ai_classification || '—') + '</dd></div>' +
       '<div><dt>Allergies</dt><dd>' + list(p.allergies) + '</dd></div>' +

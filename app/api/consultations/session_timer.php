@@ -65,11 +65,15 @@ try {
 
     $startedAt = trim((string) ($row['started_at'] ?? ''));
     $endedAt = trim((string) ($row['ended_at'] ?? ''));
-    $deadlineTs = consultation_session_deadline_ts(
-        $startedAt !== '' ? $startedAt : null,
-        $scheduledSeconds,
-        $calendarEndTs
-    );
+    // Scheduled end is the booked slot end. Video start must not move that clock.
+    $deadlineTs = $calendarEndTs;
+    if ($deadlineTs === null) {
+        $deadlineTs = consultation_session_deadline_ts(
+            $startedAt !== '' ? $startedAt : null,
+            $scheduledSeconds,
+            null
+        );
+    }
     if ($deadlineTs === null) {
         $deadlineTs = time() + $scheduledSeconds;
     }
@@ -110,6 +114,8 @@ try {
     echo json_encode([
         'success' => true,
         'seconds_remaining' => $seconds_remaining,
+        'scheduled_end_ts' => $deadlineTs,
+        'overtime_seconds' => max(0, $now - $deadlineTs),
         'scheduled_duration_seconds' => $scheduledSeconds,
         'elapsed_seconds' => $elapsed_seconds,
         'actual_duration_seconds' => $actual_seconds,

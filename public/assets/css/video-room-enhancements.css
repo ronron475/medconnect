@@ -1080,3 +1080,27 @@ html[data-theme-resolved='dark'] body.role-patient.is-ended-consultation .mc-vc-
     inset: auto;
   }
 }
+
+.mc-vc-primary-complaint {
+  margin: 12px 0 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(1, 138, 147, 0.16);
+  border: 1px solid rgba(94, 234, 212, 0.35);
+}
+
+.mc-vc-primary-complaint__label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #5eead4;
+  margin-bottom: 4px;
+}
+
+.mc-vc-primary-complaint__text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.4;
+}

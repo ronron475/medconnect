@@ -186,9 +186,11 @@
       body = '<strong>' + name + ' chose Join Early.</strong><p>You can open their session now. Their scheduled queue position is unchanged.</p>';
     } else if (next.early_start_response === 'keep_time') {
       body = '<strong>' + name + ' chose Keep Scheduled Time.</strong><p>This is not a missed visit. Open the session' + when + '.</p>';
-    } else if (next.can_offer_early && !activeVideoId) {
+    } else if (next.can_offer_early && !activeVideoId && sessionStorage.getItem('mc-keep-next-' + next.id) !== '1') {
       body = '<strong>Ready for Next Patient</strong><p>' + name + ' is scheduled' + when + '.</p>' +
         '<button type="button" class="queue-btn primary" id="readyForNextBtn">Ready for Next Patient</button>';
+    } else if (next.can_offer_early && sessionStorage.getItem('mc-keep-next-' + next.id) === '1') {
+      body = '<strong>Keeping scheduled time</strong><p>' + name + ' stays' + when + '.</p>';
     } else if (next.early_start_response_label) {
       body = '<strong>Next: ' + name + '</strong><p>' + escapeHtml(next.early_start_response_label) + '.</p>';
     } else if (activeVideoId) {
@@ -203,9 +205,62 @@
     const btn = document.getElementById('readyForNextBtn');
     if (btn) {
       btn.addEventListener('click', function () {
-        offerNextPatient(btn);
+        openEarlyStartConfirm(next, function () {
+          offerNextPatient(btn);
+        });
       });
     }
+  }
+
+  function openEarlyStartConfirm(next, onOffer) {
+    const existing = document.getElementById('mcEarlyStartConfirm');
+    if (existing) existing.remove();
+    const prev = String(next.previous_patient_name || '').trim();
+    const name = String(next.patient_name || 'the next patient');
+    const when = String(next.scheduled_label || 'the scheduled time');
+    const endedLine = prev
+      ? ('Current consultation with ' + prev + (next.previous_ended_early ? ' has ended early.' : ' has ended.'))
+      : 'The current consultation has ended.';
+    const wrap = document.createElement('div');
+    wrap.id = 'mcEarlyStartConfirm';
+    wrap.setAttribute('role', 'dialog');
+    wrap.setAttribute('aria-modal', 'true');
+    wrap.setAttribute('aria-labelledby', 'mcEarlyStartTitle');
+    wrap.style.cssText = 'position:fixed;inset:0;z-index:100400;background:rgba(2,6,23,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    wrap.innerHTML =
+      '<div style="width:min(440px,100%);background:#fff;color:#0f172a;border-radius:16px;padding:22px 22px 16px;box-shadow:0 24px 60px rgba(0,0,0,.28);">' +
+      '<h2 id="mcEarlyStartTitle" style="margin:0 0 8px;font-size:18px;">Ready for Next Patient?</h2>' +
+      '<p style="margin:0 0 8px;line-height:1.45;">' + escapeHtml(endedLine) + '</p>' +
+      '<p style="margin:0 0 4px;"><strong>Next patient:</strong> ' + escapeHtml(name) + '</p>' +
+      '<p style="margin:0 0 16px;"><strong>Scheduled:</strong> ' + escapeHtml(when) + '</p>' +
+      '<p style="margin:0 0 16px;">Would you like to offer an early start?</p>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">' +
+      '<button type="button" data-early-choice="cancel" class="queue-btn">Cancel</button>' +
+      '<button type="button" data-early-choice="keep" class="queue-btn">Keep Scheduled Time</button>' +
+      '<button type="button" data-early-choice="offer" class="queue-btn primary">Offer Early Start</button>' +
+      '</div></div>';
+    wrap.addEventListener('click', function (event) {
+      const choice = event.target && event.target.getAttribute ? event.target.getAttribute('data-early-choice') : '';
+      if (event.target === wrap) {
+        wrap.remove();
+        return;
+      }
+      if (choice === 'cancel') {
+        wrap.remove();
+        return;
+      }
+      if (choice === 'keep') {
+        if (next.id) sessionStorage.setItem('mc-keep-next-' + next.id, '1');
+        wrap.remove();
+        renderQueueTiming(next, 0);
+        return;
+      }
+      if (choice === 'offer') {
+        wrap.remove();
+        onOffer();
+      }
+    });
+    document.body.appendChild(wrap);
   }
 
   async function offerNextPatient(btn) {

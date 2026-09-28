@@ -123,7 +123,7 @@ $show_dash_live_strip = $dash_live_session && $dash_live_join && !$has_active_co
       <span>Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider') ?> has opened the video room.</span>
       <?php else: ?>
       <strong>Waiting for your provider</strong>
-      <span>Your session with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider') ?> will open when they start the call.</span>
+      <span>You have a scheduled consultation with Dr. <?= htmlspecialchars($dash_live_session['provider_name'] ?? 'your provider') ?>. It stays on your original time until they start the call.</span>
       <?php endif; ?>
     </div>
     <?php if ($dash_live_join['allowed'] && !empty($dash_live_session['room_token'])): ?>

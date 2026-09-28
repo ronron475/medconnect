@@ -832,29 +832,22 @@
         menu.style.bottom = 'auto';
         menu.style.maxWidth = Math.max(160, vw - pad * 2) + 'px';
 
+        const controls = q('mcVcControls');
+        const controlsTop = controls ? controls.getBoundingClientRect().top : vh;
+        const limitBottom = Math.max(pad + 48, Math.min(vh - pad, controlsTop - gap));
+        const available = Math.max(120, limitBottom - pad);
+        menu.style.maxHeight = available + 'px';
+
         const mw = Math.min(Math.max(menu.offsetWidth || 200, 200), vw - pad * 2);
-        const mh = Math.max(menu.offsetHeight || 48, 48);
+        const mh = Math.min(Math.max(menu.offsetHeight || 48, 48), available);
 
-        // Prefer aligning to the 3-dot button, opening above (clears bottom controls).
         let left = rect.right - mw;
-        let top = rect.top - mh - gap;
-
         if (left < pad) left = pad;
         if (left + mw > vw - pad) left = Math.max(pad, vw - mw - pad);
 
-        const roomAbove = rect.top - pad;
-        const roomBelow = vh - rect.bottom - pad;
-        if (top < pad || mh + gap > roomAbove) {
-          if (roomBelow >= Math.min(mh, roomAbove) || roomBelow >= mh) {
-            top = rect.bottom + gap;
-          } else {
-            top = Math.max(pad, Math.min(rect.top - mh - gap, vh - mh - pad));
-          }
-        }
-        if (top + mh > vh - pad) {
-          top = Math.max(pad, vh - mh - pad);
-        }
+        let top = limitBottom - mh;
         if (top < pad) top = pad;
+        if (top + mh > limitBottom) top = Math.max(pad, limitBottom - mh);
 
         menu.style.left = Math.round(left) + 'px';
         menu.style.top = Math.round(top) + 'px';

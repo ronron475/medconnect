@@ -340,8 +340,10 @@
             '<button type="button" class="psess-btn psess-btn--outline" disabled>Opens ' +
             (joinAccess.opensAt || 'at scheduled time') + '</button>';
         } else if (joinAccess.mode === 'waiting') {
-          primary =
-            '<button type="button" class="psess-btn psess-btn--outline psess-waiting-pulse" disabled>Waiting for Provider</button>';
+          const delayed = c.queue_notice && c.queue_notice.kind === 'delayed';
+          primary = delayed
+            ? '<button type="button" class="psess-btn psess-btn--outline psess-waiting-pulse" disabled title="Your provider is still finishing another consultation.">Waiting for your provider</button>'
+            : '<button type="button" class="psess-btn psess-btn--outline psess-waiting-pulse" disabled>Waiting for Provider</button>';
         } else {
           primary =
             '<button type="button" class="psess-btn psess-btn--outline" disabled>Not Available Yet</button>';
@@ -579,6 +581,7 @@
     const bannerTitle = document.getElementById('psess-live-banner-title');
     const bannerSub = document.getElementById('psess-live-banner-sub');
     const waiting = (list || []).some((c) => consultationJoinAccess(c).mode === 'waiting');
+    const delayed = (list || []).some((c) => c.queue_notice && c.queue_notice.kind === 'delayed');
     const ready = (list || []).some((c) => consultationJoinAccess(c).allowed);
 
     if (banner && bannerTitle) {
@@ -587,6 +590,11 @@
         banner.className = 'psess-live-banner psess-live-banner--ready';
         bannerTitle.textContent = 'Your provider started the room';
         if (bannerSub) bannerSub.textContent = 'Click Join Video Call on your session card when you are ready.';
+      } else if (delayed) {
+        banner.hidden = false;
+        banner.className = 'psess-live-banner';
+        bannerTitle.textContent = 'Consultation Delayed';
+        if (bannerSub) bannerSub.textContent = 'Waiting for your provider. Your provider is still finishing another consultation.';
       } else if (waiting) {
         banner.hidden = false;
         banner.className = 'psess-live-banner';
@@ -601,6 +609,9 @@
     if (ready) {
       hint.hidden = false;
       hint.textContent = 'Your provider started the room — click Join Video Call when you are ready.';
+    } else if (delayed) {
+      hint.hidden = false;
+      hint.textContent = 'Waiting for your provider. Your provider is still finishing another consultation.';
     } else if (waiting) {
       hint.hidden = false;
       hint.textContent = 'Checking for your provider… Join will appear automatically when they start.';
@@ -622,21 +633,37 @@
       }
       const notice = item.queue_notice;
       const actions = Array.isArray(notice.actions) ? notice.actions : [];
+      const consultId = escapeHtml(String(notice.consultation_id || item.id || ''));
       let buttons = '';
       if (actions.indexOf('join_early') !== -1) {
         buttons += '<button type="button" class="psess-btn psess-btn--primary" data-early-start="join_early" data-consultation-id="' +
-          escapeHtml(String(notice.consultation_id || item.id || '')) + '">Join Early</button>';
+          consultId + '">Join Early</button>';
       }
       if (actions.indexOf('keep_time') !== -1) {
         buttons += '<button type="button" class="psess-btn" data-early-start="keep_time" data-consultation-id="' +
-          escapeHtml(String(notice.consultation_id || item.id || '')) + '">Keep Scheduled Time</button>';
+          consultId + '">Keep Scheduled Time</button>';
       }
+      const whenText = notice.scheduled_label ? ('Scheduled time: ' + notice.scheduled_label) : '';
+      const when = whenText ? '<span>' + escapeHtml(whenText) + '</span>' : '';
       host.hidden = false;
+      if (notice.kind === 'early_offer') {
+        host.className = '';
+        host.innerHTML =
+          '<div role="dialog" aria-modal="true" aria-labelledby="mcPatientEarlyTitle" style="position:fixed;inset:0;z-index:100400;background:rgba(2,6,23,.55);display:flex;align-items:center;justify-content:center;padding:16px;">' +
+          '<div style="width:min(440px,100%);background:#fff;color:#0f172a;border-radius:16px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.28);">' +
+          '<strong id="mcPatientEarlyTitle" style="display:block;font-size:18px;margin-bottom:8px;">' + escapeHtml(notice.title || 'Your provider is ready early') + '</strong>' +
+          '<span style="display:block;line-height:1.45;margin-bottom:8px;">' + escapeHtml(notice.message || '') + '</span>' +
+          (whenText ? '<span style="display:block;margin-bottom:16px;">' + escapeHtml(whenText) + '</span>' : '') +
+          (buttons ? '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">' + buttons + '</div>' : '') +
+          '</div></div>';
+        return;
+      }
       host.className = 'psess-live-banner' + (notice.kind === 'delayed' ? '' : ' psess-live-banner--ready');
       host.innerHTML =
         '<div class="psess-live-banner__text">' +
-        '<strong>' + escapeHtml(notice.title || '') + '</strong>' +
+        '<strong>' + escapeHtml(notice.title || (notice.kind === 'delayed' ? 'Waiting for your provider' : '')) + '</strong>' +
         '<span>' + escapeHtml(notice.message || '') + '</span>' +
+        (when ? when : '') +
         (buttons ? '<div class="psess-live-banner__actions">' + buttons + '</div>' : '') +
         '</div>';
     });

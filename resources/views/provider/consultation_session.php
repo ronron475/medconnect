@@ -2114,6 +2114,10 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     color: #64748b;
     line-height: 1.4;
 }
+body.provider-body:has(.video-shell.is-call-active) #pdHamburger,
+body.provider-body:has(.video-shell.is-call-active) .mc-theme-toggle {
+    display: none !important;
+}
 @media (max-width: 768px) {
     .hs-grid { grid-template-columns: 1fr; }
     html:has(.consultation-session),
@@ -2204,6 +2208,13 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     body.provider-body:has(.video-shell.is-call-active) .mc-messages-fab,
     body.provider-body:has(.video-shell.is-call-active) .messages-fab {
         display: none !important;
+    }
+    body.provider-body:has(.video-shell.is-call-active) #pdHamburger,
+    body.provider-body:has(.video-shell.is-call-active) .mc-theme-toggle {
+        display: none !important;
+    }
+    body.provider-body:has(.video-shell.is-call-active) .pd-header-page::after {
+        content: none !important;
     }
     .video-shell.is-call-active .active-call,
     .video-shell.is-call-active .mc-provider-video-dock,
@@ -4995,6 +5006,16 @@ document.addEventListener('click', function (e) {
     }
 });
 
+function syncVideoCallHeader(isLive) {
+    const title = document.querySelector('.pd-header-page');
+    if (title) {
+        if (!title.dataset.mcOriginalTitle) {
+            title.dataset.mcOriginalTitle = title.textContent;
+        }
+        title.textContent = isLive ? 'medConnect' : title.dataset.mcOriginalTitle;
+    }
+}
+
 function setVideoShellLive(isLive) {
     const shell = document.getElementById('videoInterface');
     const panel = document.getElementById('videoPanel');
@@ -5003,6 +5024,7 @@ function setVideoShellLive(isLive) {
     if (!shell) return;
     shell.classList.toggle('is-live', !!isLive);
     shell.classList.toggle('is-call-active', !!isLive);
+    syncVideoCallHeader(!!isLive);
     if (panel) panel.classList.toggle('is-call-active', !!isLive);
     if (floatingBtn) {
         floatingBtn.classList.toggle('show', !!isLive && !mobileCallFullscreen);
@@ -5345,42 +5367,67 @@ window.addEventListener('medconnect:video-shell-scroll-away', () => {
     const panel = document.getElementById('readyNextPanel');
     const btn = document.getElementById('readyForNextBtn');
     if (!panel || !btn) return;
+    let pendingNext = null;
 
-    async function paint() {
-        try {
-            const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/queue_status.php?_=' + Date.now(), {
-                credentials: 'same-origin',
-                headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
-                cache: 'no-store'
-            });
-            const data = await res.json();
-            if (!data || !data.success) return;
-            const next = data.next_patient;
-            if (!next) {
-                panel.textContent = '';
-                btn.style.display = 'none';
-                return;
-            }
-            if (next.early_start_response === 'join_early') {
-                panel.textContent = (next.patient_name || 'The next patient') + ' chose Join Early.';
-                btn.style.display = 'none';
-            } else if (next.early_start_response === 'keep_time') {
-                panel.textContent = (next.patient_name || 'The next patient') + ' chose Keep Scheduled Time. This is not a missed visit.';
-                btn.style.display = 'none';
-            } else if (next.can_offer_early) {
-                panel.textContent = (next.patient_name || 'The next patient') + ' is scheduled' + (next.scheduled_label ? ' at ' + next.scheduled_label : '') + '.';
-                btn.style.display = 'block';
-            } else if (next.early_start_response_label) {
-                panel.textContent = (next.patient_name || 'Next patient') + ': ' + next.early_start_response_label + '.';
-                btn.style.display = 'none';
-            } else {
-                panel.textContent = '';
-                btn.style.display = 'none';
-            }
-        } catch (_) {}
+    function currentVisitStillOpen() {
+        const shell = document.getElementById('videoInterface');
+        const soapBanner = document.getElementById('finalAssessmentBanner');
+        const callLive = !!(shell && shell.classList.contains('is-call-active'));
+        const soapOpen = !!(soapBanner && !soapBanner.hidden && soapBanner.classList.contains('is-visible'));
+        return callLive || soapOpen;
     }
 
-    btn.addEventListener('click', async function () {
+    function openEarlyStartConfirm(next) {
+        const existing = document.getElementById('mcEarlyStartConfirm');
+        if (existing) existing.remove();
+        const prev = String(next.previous_patient_name || '').trim();
+        const name = String(next.patient_name || 'the next patient');
+        const when = String(next.scheduled_label || 'the scheduled time');
+        const endedLine = prev
+            ? ('Current consultation with ' + prev + (next.previous_ended_early ? ' has ended early.' : ' has ended.'))
+            : 'The current consultation has ended.';
+        const wrap = document.createElement('div');
+        wrap.id = 'mcEarlyStartConfirm';
+        wrap.setAttribute('role', 'dialog');
+        wrap.setAttribute('aria-modal', 'true');
+        wrap.style.cssText = 'position:fixed;inset:0;z-index:100400;background:rgba(2,6,23,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+        wrap.innerHTML =
+            '<div style="width:min(440px,100%);background:#fff;color:#0f172a;border-radius:16px;padding:22px 22px 16px;box-shadow:0 24px 60px rgba(0,0,0,.28);">' +
+            '<h2 style="margin:0 0 8px;font-size:18px;">Ready for Next Patient?</h2>' +
+            '<p style="margin:0 0 8px;line-height:1.45;"></p>' +
+            '<p style="margin:0 0 4px;"></p>' +
+            '<p style="margin:0 0 16px;"></p>' +
+            '<p style="margin:0 0 16px;">Would you like to offer an early start?</p>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;">' +
+            '<button type="button" data-early-choice="cancel" class="session-btn">Cancel</button>' +
+            '<button type="button" data-early-choice="keep" class="session-btn">Keep Scheduled Time</button>' +
+            '<button type="button" data-early-choice="offer" class="session-btn primary">Offer Early Start</button>' +
+            '</div></div>';
+        const paragraphs = wrap.querySelectorAll('p');
+        if (paragraphs[0]) paragraphs[0].textContent = endedLine;
+        if (paragraphs[1]) paragraphs[1].textContent = 'Next patient: ' + name;
+        if (paragraphs[2]) paragraphs[2].textContent = 'Scheduled: ' + when;
+        wrap.addEventListener('click', function (event) {
+            const choice = event.target && event.target.getAttribute ? event.target.getAttribute('data-early-choice') : '';
+            if (event.target === wrap || choice === 'cancel') {
+                wrap.remove();
+                return;
+            }
+            if (choice === 'keep') {
+                if (next.id) sessionStorage.setItem('mc-keep-next-' + next.id, '1');
+                wrap.remove();
+                paint();
+                return;
+            }
+            if (choice === 'offer') {
+                wrap.remove();
+                offerEarlyStart();
+            }
+        });
+        document.body.appendChild(wrap);
+    }
+
+    async function offerEarlyStart() {
         btn.disabled = true;
         const body = new URLSearchParams({
             csrf_token: document.body.dataset.csrf || ''
@@ -5395,11 +5442,59 @@ window.addEventListener('medconnect:video-shell-scroll-away', () => {
             const msg = document.getElementById('extensionMsg');
             if (msg) {
                 msg.style.display = 'block';
-                msg.textContent = (data && data.message) || '';
+                msg.textContent = (data && (data.message || (data.data && data.data.message))) || '';
             }
         } catch (_) {}
         btn.disabled = false;
         paint();
+    }
+
+    async function paint() {
+        try {
+            const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/queue_status.php?_=' + Date.now(), {
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
+                cache: 'no-store'
+            });
+            const data = await res.json();
+            if (!data || !data.success) return;
+            const next = data.next_patient || (data.data && data.data.next_patient) || null;
+            pendingNext = next;
+            if (currentVisitStillOpen()) {
+                panel.textContent = 'Finish this consultation before starting the next patient.';
+                btn.style.display = 'none';
+                return;
+            }
+            if (!next) {
+                panel.textContent = '';
+                btn.style.display = 'none';
+                return;
+            }
+            if (next.early_start_response === 'join_early') {
+                panel.textContent = (next.patient_name || 'The next patient') + ' chose Join Early.';
+                btn.style.display = 'none';
+            } else if (next.early_start_response === 'keep_time') {
+                panel.textContent = (next.patient_name || 'The next patient') + ' chose Keep Scheduled Time. This is not a missed visit.';
+                btn.style.display = 'none';
+            } else if (next.can_offer_early && sessionStorage.getItem('mc-keep-next-' + next.id) === '1') {
+                panel.textContent = 'Keeping the scheduled time for ' + (next.patient_name || 'the next patient') + (next.scheduled_label ? ' at ' + next.scheduled_label : '') + '.';
+                btn.style.display = 'none';
+            } else if (next.can_offer_early) {
+                panel.textContent = (next.patient_name || 'The next patient') + ' is scheduled' + (next.scheduled_label ? ' at ' + next.scheduled_label : '') + '.';
+                btn.style.display = 'block';
+            } else if (next.early_start_response_label) {
+                panel.textContent = (next.patient_name || 'Next patient') + ': ' + next.early_start_response_label + '.';
+                btn.style.display = 'none';
+            } else {
+                panel.textContent = '';
+                btn.style.display = 'none';
+            }
+        } catch (_) {}
+    }
+
+    btn.addEventListener('click', function () {
+        if (!pendingNext || currentVisitStillOpen()) return;
+        openEarlyStartConfirm(pendingNext);
     });
 
     paint();

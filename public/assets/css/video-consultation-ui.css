@@ -255,6 +255,14 @@ html:has(body.mc-true-fullscreen) {
   color: var(--mc-vc-warn);
 }
 
+.mc-vc-pill--timer.is-overtime {
+  font-family: inherit;
+  white-space: normal;
+  line-height: 1.25;
+  text-align: right;
+  max-width: min(46vw, 280px);
+}
+
 .mc-vc-pill--duration {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   color: #e2e8f0;
@@ -1451,8 +1459,7 @@ body.embedded-shell.role-provider .mc-vc-pip video {
     padding-bottom: 4px;
   }
 
-  .mc-vc-participant-sub,
-  .mc-vc-header-meta .mc-vc-slot-timer {
+  .mc-vc-participant-sub {
     display: none;
   }
 
@@ -1677,7 +1684,6 @@ body.role-patient .mc-vc-header .mc-vc-header-meta {
   pointer-events: auto;
 }
 
-body.role-patient .mc-vc-slot-timer,
 body.role-patient .mc-vc-pill--secure {
   display: none;
 }

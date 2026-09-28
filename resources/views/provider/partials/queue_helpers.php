@@ -319,6 +319,15 @@ function consultation_patient_join_access(array $item): array
         ];
     }
 
+    if (!empty($item['timing_blocked_by_earlier']) && in_array($ctx['status'], ['scheduled', 'pending'], true)) {
+        return [
+            'allowed'         => false,
+            'mode'            => 'waiting',
+            'reason'          => 'Waiting for your provider. Your provider is still finishing another consultation.',
+            'scheduled_label' => $ctx['scheduled_label'],
+        ];
+    }
+
     // Scheduled/pending on the appointment day → wait for provider to press Start.
     if ($provider_access['allowed'] && in_array($ctx['status'], ['scheduled', 'pending'], true)) {
         return [

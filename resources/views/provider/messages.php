@@ -221,7 +221,12 @@ require __DIR__ . '/partials/layout_open.php';
             <span class="msg-avatar" aria-hidden="true"><?= htmlspecialchars($conversation['initials']) ?></span>
             <span class="msg-item-body">
               <span class="msg-name-row">
-                <span class="msg-name"><?= htmlspecialchars($conversation['name']) ?></span>
+                <span class="msg-name-cluster">
+                  <span class="msg-name"><?= htmlspecialchars($conversation['name']) ?></span>
+                  <?php if ((int) ($conversation['consultation_id'] ?? 0) > 0): ?>
+                  <span class="msg-consult-badge">CONSULTATION</span>
+                  <?php endif; ?>
+                </span>
                 <span class="msg-time" data-msg-time="<?= $index ?>"><?= htmlspecialchars($conversation['time']) ?></span>
               </span>
               <span class="msg-preview" data-msg-preview="<?= $index ?>"><?= htmlspecialchars($conversation['preview']) ?></span>
@@ -276,7 +281,7 @@ require __DIR__ . '/partials/layout_open.php';
 
       <div class="msg-clinical-strip" aria-label="Consultation summary">
         <div class="msg-clinical-cell msg-clinical-cell--complaint">
-          <div class="clinical-label">Consultation</div>
+          <div class="clinical-label" id="activeComplaintLabel">Primary Complaint</div>
           <div class="clinical-value" id="activeComplaint"><?= htmlspecialchars($active_msg['complaint']) ?></div>
         </div>
         <div class="msg-clinical-cell msg-clinical-cell--triage">
@@ -292,7 +297,7 @@ require __DIR__ . '/partials/layout_open.php';
       <div id="messageAlert" class="msg-alert"></div>
 
       <div class="thread-body" id="threadBody">
-        <div class="bubble-row seed-message">
+        <div class="bubble-row seed-message seed-message--complaint" hidden>
           <div class="msg-avatar" id="patientBubbleInitials" aria-hidden="true"><?= htmlspecialchars($active_msg['initials']) ?></div>
           <div class="msg-bubble-stack">
             <div class="bubble patient" id="patientPreview"><?= htmlspecialchars($active_msg['preview']) ?></div>
@@ -456,6 +461,10 @@ function escapeHtml(value) {
 function renderThread(item) {
   document.querySelectorAll('.dynamic-message').forEach((node) => node.remove());
   document.querySelectorAll('.seed-message').forEach((node) => {
+    if (node.classList.contains('seed-message--complaint')) {
+      node.hidden = true;
+      return;
+    }
     node.style.display = item.messages && item.messages.length ? 'none' : '';
   });
 
@@ -552,6 +561,10 @@ function setActiveConversation(index) {
   activeName.textContent = item.name;
   updatePresence(item);
   updateStatusPill(item);
+  const complaintLabel = document.getElementById('activeComplaintLabel');
+  if (complaintLabel) {
+    complaintLabel.textContent = Number(item.consultation_id) ? 'Primary Complaint' : 'Details';
+  }
   activeComplaint.textContent = item.complaint;
   activeTriage.textContent = item.triage;
   activeAddress.textContent = item.address;

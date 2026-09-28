@@ -221,11 +221,15 @@ if (!empty($session['slot_end'])) {
     $calendar_slot_end_ts = strtotime($slot_date . ' ' . $session['consult_time']) + $scheduled_duration_seconds;
 }
 $video_started_at = trim((string) ($session['started_at'] ?? ''));
-$session_deadline_ts = consultation_session_deadline_ts(
-    $video_started_at !== '' ? $video_started_at : null,
-    $scheduled_duration_seconds,
-    $calendar_slot_end_ts
-);
+// Allotted time ends at the booked slot end, not at video-start plus a fixed length.
+$session_deadline_ts = $calendar_slot_end_ts;
+if ($session_deadline_ts === null) {
+    $session_deadline_ts = consultation_session_deadline_ts(
+        $video_started_at !== '' ? $video_started_at : null,
+        $scheduled_duration_seconds,
+        null
+    );
+}
 $seconds_remaining = consultation_seconds_remaining_until($session_deadline_ts);
 $elapsed_capped_seconds = consultation_elapsed_capped_seconds(
     $video_started_at !== '' ? $video_started_at : null,
@@ -936,11 +940,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Secure
         </span>
-        <span class="mc-vc-pill mc-vc-pill--duration" id="consultDuration" title="Consultation duration"><?= sprintf('%02d:%02d', (int) floor($elapsed_capped_seconds / 60), $elapsed_capped_seconds % 60) ?></span>
-        <span class="mc-vc-pill mc-vc-pill--timer mc-vc-slot-timer" id="timerDisplay" title="Time remaining in slot"><?= sprintf('%02d:%02d', (int) floor($seconds_remaining / 60), $seconds_remaining % 60) ?></span>
-        <?php if (!$is_patient): ?>
-        <button type="button" class="mc-vc-pill extend-btn" id="extendBtn" onclick="requestExtension(15)">+15 min</button>
-        <?php endif; ?>
+        <span class="mc-vc-pill mc-vc-pill--timer mc-vc-slot-timer" id="timerDisplay" title="Allotted consultation time"><?= sprintf('%02d:%02d', (int) floor(max(0, $seconds_remaining) / 60), max(0, $seconds_remaining) % 60) ?></span>
       </div>
     </header>
 
@@ -1071,7 +1071,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <?php endif; ?>
 
   <div id="extensionPrompt">
-    <span>The scheduled slot is almost over. This visit can continue. The next patient will wait.</span>
+    <span><?= $is_patient
+        ? 'About 1 minute left in your allotted time. The call continues until your provider ends it.'
+        : 'About 1 minute left in the allotted time. The call continues until you end it.' ?></span>
   </div>
 
   <div id="muteTtsBanner" class="mute-tts-banner" aria-hidden="true" role="status">
@@ -1215,6 +1217,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let lastMediaWantedVideo = true;
     let mediaRequestInFlight = false;
     let timeLeft = <?= (int) $seconds_remaining ?>;
+    let slotEndTs = <?= (int) ($session_deadline_ts ?: 0) ?>;
+    let allottedSeconds = <?= (int) $scheduled_duration_seconds ?>;
+    let patientAwaitingSoap = false;
+    let patientSoapRedirected = false;
     let extendingSession = false;
     let timerInterval;
     let mediaRecorder;
@@ -2709,40 +2715,60 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
+    function formatClock(totalSeconds) {
+      const safe = Math.max(0, totalSeconds);
+      const mins = Math.floor(safe / 60);
+      const secs = safe % 60;
+      return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function allottedMinutesLabel() {
+      const mins = Math.max(1, Math.round((allottedSeconds > 0 ? allottedSeconds : 0) / 60));
+      return mins + ' min';
+    }
+
     function updateTimerDisplay() {
-      const displaySeconds = Math.max(0, timeLeft);
-      const mins = Math.floor(displaySeconds / 60);
-      const secs = displaySeconds % 60;
-      document.getElementById('timerDisplay').textContent =
-        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      const el = document.getElementById('timerDisplay');
+      if (!el) return;
+      const now = Math.floor(Date.now() / 1000);
+      const end = slotEndTs > 0 ? slotEndTs : (now + Math.max(0, timeLeft));
+      const remain = end - now;
+      const prompt = document.getElementById('extensionPrompt');
+      const statusEl = document.getElementById('callStatus');
+      el.classList.toggle('is-overtime', remain <= 0);
+      if (remain > 60) {
+        el.textContent = formatClock(remain);
+        el.title = 'Time remaining in the allotted consultation';
+        if (prompt) prompt.style.display = 'none';
+        return;
+      }
+      if (remain > 0) {
+        el.textContent = formatClock(remain);
+        el.title = 'About 1 minute remaining in the allotted consultation';
+        if (prompt && !window.__mcCallEnded && !patientAwaitingSoap) prompt.style.display = 'flex';
+        return;
+      }
+      const overtime = -remain;
+      const overtimeMins = Math.floor(overtime / 60);
+      const overtimeSecs = overtime % 60;
+      const overtimeLabel = overtimeMins > 0
+        ? ('+' + overtimeMins + ' min' + (overtimeSecs ? ' ' + overtimeSecs + ' sec' : ''))
+        : ('+' + overtimeSecs + ' sec');
+      el.textContent = 'Allotted: ' + allottedMinutesLabel() + ' · Overtime ' + overtimeLabel;
+      el.title = 'Allotted time has ended. The call continues until the provider ends it.';
+      if (prompt) prompt.style.display = 'none';
+      if (statusEl && !endingCall && !window.__mcCallEnded && !patientAwaitingSoap && !updateTimerDisplay._overtimeNoted) {
+        updateTimerDisplay._overtimeNoted = true;
+        statusEl.textContent = isPatient
+          ? 'Allotted time has ended. You stay connected until your provider ends the call.'
+          : 'Allotted time has ended. The call continues until you end it.';
+      }
     }
 
     function startTimer() {
       if (timerInterval) clearInterval(timerInterval);
-      startTimer._patientExpiredMsg = false;
-
-      timerInterval = setInterval(() => {
-        if (timeLeft > 0) {
-          timeLeft--;
-        }
-
-        updateTimerDisplay();
-
-        if (timeLeft === 300 && !isPatient) {
-          document.getElementById('extensionPrompt').style.display = 'flex';
-        }
-
-        if (timeLeft <= 0) {
-          if (!startTimer._patientExpiredMsg) {
-            startTimer._patientExpiredMsg = true;
-            document.getElementById('callStatus').textContent =
-              'Scheduled slot time has ended. This consultation continues until the doctor ends it.';
-          }
-        } else if (startTimer._patientExpiredMsg) {
-          startTimer._patientExpiredMsg = false;
-          document.getElementById('callStatus').textContent = 'Connected';
-        }
-      }, 1000);
+      updateTimerDisplay();
+      timerInterval = setInterval(updateTimerDisplay, 1000);
     }
 
     function showExtendToast(message, type = 'success') {
@@ -2775,6 +2801,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
 
     async function requestExtension(mins = 15) {
+      // Allotted time is the booked slot. Do not add an artificial extension.
+      return;
       if (isPatient || extendingSession || consultationId <= 0) return;
 
       const extendBtn = document.getElementById('extendBtn');
@@ -2841,65 +2869,35 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           const videoStatus = String(data.video_status || '').toLowerCase();
           const consultDone = consultStatus === 'completed' || consultStatus === 'cancelled';
           const videoEnded = videoStatus === 'ended';
-          if (isPatient && patientLeftRejoinable && (consultDone || videoEnded)) {
-            patientLeftRejoinable = false;
-            window.__mcCallEnded = true;
-            document.getElementById('callStatus').textContent = 'This consultation has ended.';
-            if (consultUi && typeof consultUi.setOverlay === 'function') {
-              consultUi.setOverlay(
-                'Consultation ended',
-                'Your doctor ended this visit. You can review it in My Sessions.',
-                true,
-                { showRetry: false }
-              );
-            }
+          if (isPatient && (consultStatus === 'completed' || consultStatus === 'cancelled' || consultStatus === 'canceled')) {
+            finishPatientAfterSoap();
             return;
           }
-          if ((consultDone || videoEnded) && !endingCall && !window.__mcCallEnded) {
-            if (isPatient) {
-              document.getElementById('callStatus').textContent = 'This consultation has ended.';
-              leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
-              return;
-            }
-            if (consultDone) {
-              document.getElementById('callStatus').textContent = 'This consultation has ended.';
-              endingCall = true;
-              window.__mcCallEnded = true;
-              disconnectLocalCall();
-              redirectAfterLeave({
-                parentMessageType: 'medconnect:call-ended',
-                reason: 'session_ended',
-              });
-              return;
-            }
+          if (isPatient && videoEnded && !consultDone) {
+            beginPatientSoapWait();
+            return;
           }
-          if (typeof data.seconds_remaining !== 'number') return;
-
-          const previous = timeLeft;
-          timeLeft = data.seconds_remaining;
+          if (consultDone && !isPatient && !endingCall && !window.__mcCallEnded) {
+            document.getElementById('callStatus').textContent = 'This consultation has ended.';
+            endingCall = true;
+            window.__mcCallEnded = true;
+            disconnectLocalCall();
+            redirectAfterLeave({
+              parentMessageType: 'medconnect:call-ended',
+              reason: 'session_ended',
+            });
+            return;
+          }
+          if (typeof data.scheduled_end_ts === 'number' && data.scheduled_end_ts > 0) {
+            slotEndTs = data.scheduled_end_ts;
+          }
+          if (typeof data.scheduled_duration_seconds === 'number' && data.scheduled_duration_seconds > 0) {
+            allottedSeconds = data.scheduled_duration_seconds;
+          }
+          if (typeof data.seconds_remaining === 'number') {
+            timeLeft = data.seconds_remaining;
+          }
           updateTimerDisplay();
-          if (consultUi && typeof consultUi.setDurationFromServer === 'function') {
-            consultUi.setDurationFromServer(data);
-          } else if (consultUi && typeof consultUi.startDurationTimer === 'function') {
-            consultUi.startDurationTimer();
-          }
-
-          if (timeLeft > 300) {
-            document.getElementById('extensionPrompt').style.display = 'none';
-          }
-
-          if (isPatient && previous <= 0 && timeLeft > 0) {
-            startTimer._patientExpiredMsg = false;
-            document.getElementById('callStatus').textContent = 'Your doctor extended the session.';
-            showExtendToast('Session extended. New end: ' + (data.end_label || 'updated') + '.', 'success');
-          }
-
-          if (data.slot_window_elapsed || timeLeft <= 0) {
-            const statusEl = document.getElementById('callStatus');
-            if (statusEl && !endingCall && !window.__mcCallEnded) {
-              statusEl.textContent = 'Scheduled slot time has ended. This consultation continues until the doctor ends it.';
-            }
-          }
           if (!isPatient && data.patient_temporarily_left && !patientWaitMode && !callHasRemoteStream) {
             showProviderWaitingForPatient();
           }
@@ -3016,6 +3014,39 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
     }
 
+    function beginPatientSoapWait() {
+      if (!isPatient || patientAwaitingSoap || patientSoapRedirected) return;
+      patientAwaitingSoap = true;
+      const statusEl = document.getElementById('callStatus');
+      if (statusEl) {
+        statusEl.textContent = 'Your provider ended the video and is completing the consultation.';
+      }
+      if (consultUi && typeof consultUi.setOverlay === 'function') {
+        consultUi.setOverlay(
+          'Video ended',
+          'Your provider is completing the consultation notes. You will return to your dashboard when it is finished.',
+          true,
+          { showRetry: false }
+        );
+      }
+      const endBtn = document.getElementById('endCallBtn');
+      if (endBtn) endBtn.disabled = true;
+      const prompt = document.getElementById('extensionPrompt');
+      if (prompt) prompt.style.display = 'none';
+      if (window.McWebrtcPeerCall) {
+        try { McWebrtcPeerCall.setIntentionalLeave(true); } catch (e) {}
+        try { McWebrtcPeerCall.destroy(); } catch (e) {}
+      }
+      clearRemoteMedia();
+    }
+
+    function finishPatientAfterSoap() {
+      if (!isPatient || patientSoapRedirected) return;
+      patientSoapRedirected = true;
+      window.__mcCallEnded = true;
+      navigatePatientDashboard();
+    }
+
     function handlePeerLeftMessage(data) {
       if (!data || data.type !== 'peer_left') return false;
       if (data.role === userRole) return true;
@@ -3036,9 +3067,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }
 
       if (data.role === 'provider' && userRole === 'patient') {
-        document.getElementById('callStatus').textContent =
-          'The consultation has ended. You can view this consultation in My Sessions.';
-        leaveCallConfirmed({ reason: 'provider_left', skipApi: true });
+        beginPatientSoapWait();
         return true;
       }
 
@@ -3359,10 +3388,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const consultStatus = String(data.consultation_status || '').toLowerCase();
         const videoStatus = String(data.video_status || '').toLowerCase();
         if (consultStatus === 'completed' || consultStatus === 'cancelled' || consultStatus === 'canceled') {
-          return false;
+          return 'done';
         }
-        if (videoStatus === 'ended') return false;
-        return true;
+        if (videoStatus === 'ended') return 'soap';
+        return 'active';
       } catch (e) {
         return true;
       }
@@ -3429,9 +3458,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const verifyPromise = verifyConsultationStillActive();
         const mediaPromise = requestMediaAccess(lastMediaWantedVideo);
         const stillActive = await verifyPromise;
-        if (!stillActive) {
+        if (stillActive === 'soap') {
+          beginPatientSoapWait();
+          return;
+        }
+        if (stillActive === 'done') {
           patientLeftRejoinable = false;
-          await leaveCallConfirmed({ reason: 'session_ended', skipApi: true });
+          finishPatientAfterSoap();
           return;
         }
         await mediaPromise;
@@ -3558,11 +3591,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     window.addEventListener('message', (event) => {
       if (event.origin !== window.location.origin || !event.data) return;
       if (event.data.type === 'medconnect:extend-session') {
-        if (typeof event.data.seconds_remaining === 'number' && event.data.seconds_remaining > 0) {
-          timeLeft = event.data.seconds_remaining;
-        } else {
-          applyExtension(event.data.extension_mins || 15, event.data.new_end_label || '');
-        }
         return;
       }
       if (event.data.type === 'medconnect:shell-leave-fast' || event.data.type === 'medconnect:shell-end-call') {

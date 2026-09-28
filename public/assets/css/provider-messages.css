@@ -123,6 +123,28 @@ body.provider-body .provider-page-body .msg-clinical-cell {
   min-width: 0;
 }
 
+body.provider-body .provider-page-body .msg-name-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+body.provider-body .provider-page-body .msg-consult-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(1, 138, 147, 0.14);
+  color: #0f766e;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  flex-shrink: 0;
+}
+
 body.provider-body .provider-page-body .clinical-label {
   color: var(--mc-msg-muted, #64748b);
   font-size: 10px;
