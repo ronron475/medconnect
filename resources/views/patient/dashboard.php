@@ -322,9 +322,16 @@ for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-{$i} days"));
     $count = 0;
     foreach ($all_consults as $c) {
-        if (($c['consult_date'] ?? '') === $date) {
-            $count++;
+        if (($c['consult_date'] ?? '') !== $date) {
+            continue;
         }
+        // Activity graph and weekly total: completed/attended visits only.
+        // Cancelled, rejected, no-show, upcoming, and scheduled rows stay out.
+        $activityStatus = strtolower(str_replace(['_', ' '], '-', trim((string) ($c['status'] ?? ''))));
+        if (!in_array($activityStatus, ['completed', 'attended', 'done'], true)) {
+            continue;
+        }
+        $count++;
     }
     $week_chart[] = [
         'label'    => date('D', strtotime($date)),
