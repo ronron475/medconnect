@@ -2,11 +2,11 @@
 /**
  * Auto-end consultations after their scheduled slot time has passed.
  */
-require_once __DIR__ . '/bhw_patient_workflow.php';
 require_once __DIR__ . '/patient_booking_status.php';
 
 /**
- * Mark overdue consultations ended and close any stale video sessions.
+ * Cancel a visit the patient never joined after the slot ends.
+ * An in-progress consultation stays open until the provider ends it and saves SOAP.
  *
  * @return int Number of consultations updated
  */
@@ -52,29 +52,6 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
 
     $updated = 0;
 
-    $hasCompletedAt = false;
-    try {
-        $col = $pdo->query("SHOW COLUMNS FROM consultations LIKE 'completed_at'");
-        $hasCompletedAt = (bool) ($col && $col->fetch(PDO::FETCH_ASSOC));
-    } catch (Throwable $e) {
-        $hasCompletedAt = false;
-    }
-    if ($hasCompletedAt) {
-        $complete = $pdo->prepare("
-            UPDATE consultations
-            SET status = 'completed',
-                completed_at = COALESCE(completed_at, NOW())
-            WHERE id = ?
-              AND status = 'in_consultation'
-        ");
-    } else {
-        $complete = $pdo->prepare("
-            UPDATE consultations
-            SET status = 'completed'
-            WHERE id = ?
-              AND status = 'in_consultation'
-        ");
-    }
     $cancel = $pdo->prepare("
         UPDATE consultations
         SET status = 'cancelled'
@@ -93,21 +70,9 @@ function consultations_auto_expire(PDO $pdo, ?int $patient_id = null, ?int $prov
         $status = (string) $row['status'];
 
         if ($status === 'in_consultation') {
-            $complete->execute([$id]);
-            $completedRows = $complete->rowCount();
-            $updated += $completedRows;
-            if ($completedRows > 0) {
-                require_once __DIR__ . '/appointment_slots.php';
-                appointment_slot_set_consultation_status($pdo, $id, 'completed');
-
-                $pidStmt = $pdo->prepare('SELECT patient_id FROM consultations WHERE id = ? LIMIT 1');
-                $pidStmt->execute([$id]);
-                $pid = (int) ($pidStmt->fetchColumn() ?: 0);
-                if ($pid > 0) {
-                    BhwPatientWorkflow::onConsultationCompleted($pdo, $pid, 'session_expired');
-                    patient_triage_close_cases_for_consultation($pdo, $id);
-                }
-            }
+            // A live or in-progress visit stays open past the slot. Only provider
+            // End plus SOAP finalize may complete it.
+            continue;
         } else {
             $cancel->execute([$id]);
             $updated += $cancel->rowCount();

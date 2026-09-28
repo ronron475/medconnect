@@ -204,11 +204,10 @@
 
   function sessionBucket(c) {
     const status = String(c.status || '').toLowerCase().replace(/\s+/g, '_');
+    const videoStatus = String(c.video_status || '').toLowerCase();
     const hasLiveRoom = !!(c.room_token && String(c.room_token).trim());
-    if (status === 'in_consultation' && hasLiveRoom) return 'active';
-    if (status === 'cancelled' || status === 'canceled') return 'past';
-    if (status === 'completed') return 'past';
-    if (status === 'in_consultation') return 'past';
+    if (status === 'cancelled' || status === 'canceled' || status === 'completed') return 'past';
+    if (status === 'in_consultation' || hasLiveRoom || videoStatus === 'active') return 'active';
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (parseConsultDate(c.consult_date) < today.getTime()) return 'past';
@@ -456,6 +455,8 @@
         dateLabel + (timeLabel ? (type === 'past' ? '</p><p class="psess-card__datetime psess-card__datetime--time">' + timeLabel : ' · ' + timeLabel) : '') +
         '</p>' +
         triageStack +
+        (bucket === 'active' && (c.room_token || String(c.video_status || '').toLowerCase() === 'active')
+          ? '<p class="psess-card__meta">Your provider has started the consultation.</p>' : '') +
         extraMeta +
         rescheduleBanner +
         '</div></div>' +
@@ -585,8 +586,8 @@
       if (ready) {
         banner.hidden = false;
         banner.className = 'psess-live-banner psess-live-banner--ready';
-        bannerTitle.textContent = 'Your provider started the room';
-        if (bannerSub) bannerSub.textContent = 'Click Join Video Call on your session card when you are ready.';
+        bannerTitle.textContent = 'Active';
+        if (bannerSub) bannerSub.textContent = 'Your provider has started the consultation.';
       } else if (waiting) {
         banner.hidden = false;
         banner.className = 'psess-live-banner';
@@ -600,7 +601,7 @@
     if (!hint) return;
     if (ready) {
       hint.hidden = false;
-      hint.textContent = 'Your provider started the room — click Join Video Call when you are ready.';
+      hint.textContent = 'Your provider has started the consultation.';
     } else if (waiting) {
       hint.hidden = false;
       hint.textContent = 'Checking for your provider… Join will appear automatically when they start.';
@@ -621,17 +622,28 @@
       if (!json || !json.success || !Array.isArray(json.items)) return;
 
       const byId = {};
+      const previousBucket = {};
       (window.consultations || []).forEach((c) => {
-        byId[String(c.id)] = c;
+        const id = String(c.id);
+        byId[id] = c;
+        previousBucket[id] = sessionBucket(c);
       });
       json.items.forEach((item) => {
         const id = String(item.id);
+        if (item.room_token) item.video_status = item.video_status || 'active';
         byId[id] = Object.assign({}, byId[id] || {}, item);
       });
       window.consultations = Object.keys(byId).map((k) => byId[k]);
 
+      let becameActive = false;
+      window.consultations.forEach((c) => {
+        const id = String(c.id);
+        if (previousBucket[id] === 'upcoming' && sessionBucket(c) === 'active') becameActive = true;
+      });
+
       const tab = document.querySelector('.psess-tab.is-active') || document.querySelector('.tab-btn.active');
-      const type = tab?.dataset?.sessTab || (tab && /past/i.test(tab.textContent || '') ? 'past' : 'upcoming');
+      let type = tab?.dataset?.sessTab || (tab && /past/i.test(tab.textContent || '') ? 'past' : 'upcoming');
+      if (becameActive && type === 'upcoming') type = 'active';
       if (typeof window.filterSessions === 'function') {
         window.filterSessions(type);
       }
@@ -647,7 +659,6 @@
     refreshConsultationStatus();
     setInterval(function () {
       if (document.hidden) return;
-      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
       refreshConsultationStatus();
     }, 5000);
     document.addEventListener('visibilitychange', function () {
