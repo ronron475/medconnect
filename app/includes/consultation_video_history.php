@@ -181,8 +181,10 @@ function consultation_video_history_summary(
         return $empty;
     }
 
-    if ($status === 'cancelled') {
-        $empty['video_status_label'] = 'Not started';
+    if (in_array($status, ['cancelled', 'canceled'], true)) {
+        $empty['video_status_label'] = 'Cancelled';
+        $empty['status_label'] = 'Cancelled';
+        $empty['session_outcome_label'] = 'Not applicable';
         return $empty;
     }
 

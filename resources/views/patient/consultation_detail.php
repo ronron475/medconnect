@@ -105,7 +105,8 @@ $scheduledDurationLabel = (string) ($durationSnap['scheduled_duration_label'] ??
 $endedEarly = !empty($durationSnap['ended_early']);
 
 $status = strtolower(trim((string) ($consult['status'] ?? '')));
-if ($status === 'cancelled' || $status === 'canceled') {
+$isCancelled = in_array($status, ['cancelled', 'canceled'], true);
+if ($isCancelled) {
     $statusLabel = 'Cancelled';
     $statusChip = 'cancelled';
 } elseif ($isFinalized || $status === 'completed' || ($video && (string) ($video['status'] ?? '') === 'ended')) {
@@ -266,7 +267,7 @@ $patient_page_stylesheets = [
         <?php endif; ?>
         <div class="pmh-kv-item pmh-kv-item--status">
           <dt>Status</dt>
-          <dd><?= htmlspecialchars((string) ($videoHistory['status_label'] ?: $videoHistory['video_status_label'] ?: $statusLabel)) ?></dd>
+          <dd><?= htmlspecialchars($isCancelled ? 'Cancelled' : (string) ($videoHistory['status_label'] ?: $videoHistory['video_status_label'] ?: $statusLabel)) ?></dd>
         </div>
         <div class="pmh-kv-item">
           <dt>Provider</dt>
@@ -343,14 +344,20 @@ $patient_page_stylesheets = [
     </section>
     <?php endif; ?>
 
-    <section class="pmh-panel pmh-detail-card pmh-detail-card--docs<?= !$isFinalized ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
+    <section class="pmh-panel pmh-detail-card pmh-detail-card--docs<?= (!$isFinalized && !$isCancelled) ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
       <div class="pmh-detail-card__head">
         <h3 class="pmh-detail-card__title">Provider documentation</h3>
-        <?php if (!$isFinalized): ?>
+        <?php if ($isCancelled): ?>
+        <span class="pmh-detail__pending-badge">Not applicable</span>
+        <?php elseif (!$isFinalized): ?>
         <span class="pmh-detail__pending-badge">In progress</span>
         <?php endif; ?>
       </div>
-      <?php if (!$isFinalized): ?>
+      <?php if ($isCancelled): ?>
+      <div class="pmh-detail__pending">
+        <p class="pmh-detail__pending-lead">No provider documentation is available because this consultation was cancelled.</p>
+      </div>
+      <?php elseif (!$isFinalized): ?>
       <div class="pmh-detail__pending">
         <p class="pmh-detail__pending-lead">Provider documentation is still in progress.</p>
         <p class="pmh-detail__pending-note">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
