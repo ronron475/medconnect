@@ -98,7 +98,8 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         self.assertEqual(messages[1], {"role": "user", "content": USER})
         self.assertEqual(seen[0]["model"], gemini_client.OPENROUTER_DEMO_MODEL)
         self.assertEqual(seen[0]["response_format"], {"type": "json_object"})
-        self.assertEqual(seen[0]["reasoning"], {"enabled": False})
+        self.assertNotIn("reasoning", seen[0])
+        self.assertGreaterEqual(seen[0]["max_tokens"], 2048)
         self.assertEqual(pack["text"], OPENROUTER_TEXT)
         self.assertEqual(pack["model"], gemini_client.OPENROUTER_DEMO_MODEL)
         self.assertEqual(
@@ -179,6 +180,52 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         self.assertIn("candidates", body["data"]["response"])
         self.assertEqual(openrouter.call_count, 1)
         self._assert_no_keys(response.text)
+
+    def test_gemini_429_openrouter_json_uses_existing_response_pack(self) -> None:
+        """HTTP 429 → one OpenRouter completion → JSON text in the Gemini pack."""
+
+        class _Response:
+            status = 200
+
+            def read(self) -> bytes:
+                return json.dumps({
+                    "choices": [{
+                        "message": {
+                            "role": "assistant",
+                            "content": None,
+                            "reasoning": "draft\n" + OPENROUTER_TEXT,
+                        },
+                    }],
+                }).encode("utf-8")
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        seen: list[dict] = []
+
+        def _urlopen(req, timeout=0):
+            seen.append(json.loads(req.data.decode("utf-8")))
+            self.assertGreaterEqual(timeout, 5)
+            return _Response()
+
+        with patch.object(gemini_client, "_post_generate", side_effect=_http_error(429, b'{"error":{"code":429}}')), \
+             patch("urllib.request.urlopen", side_effect=_urlopen):
+            pack = gemini_client.generate_content(self.payload, model="gemini-3.5-flash", timeout=15)
+
+        self.assertEqual(len(seen), 1)
+        self.assertEqual(seen[0]["response_format"], {"type": "json_object"})
+        self.assertNotIn("reasoning", seen[0])
+        self.assertEqual(pack["text"], OPENROUTER_TEXT)
+        self.assertEqual(
+            pack["response"]["candidates"][0]["content"]["parts"][0]["text"],
+            OPENROUTER_TEXT,
+        )
+        self.assertEqual(pack["model"], gemini_client.OPENROUTER_DEMO_MODEL)
+        self._assert_no_keys(json.dumps(pack))
+        self._assert_no_keys(json.dumps(seen))
 
 
 if __name__ == "__main__":

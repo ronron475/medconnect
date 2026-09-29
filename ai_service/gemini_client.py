@@ -255,11 +255,55 @@ def _openrouter_body_from_gemini(payload: dict[str, Any]) -> dict[str, Any] | No
         "messages": messages,
     }
     # Gemini responseMimeType application/json. OpenRouter enforces that as JSON mode.
-    # Reasoning stays off so the completion is the JSON object, not an analysis preamble.
+    # Do not send reasoning.enabled=false. This model only accepts effort medium/low;
+    # a disable flag is rejected, the fallback returns nothing, and PHP stops on Gemini HTTP 429.
     if str(gen.get("responseMimeType") or "").strip().lower() == "application/json":
         body["response_format"] = {"type": "json_object"}
-        body["reasoning"] = {"enabled": False}
+        body["max_tokens"] = max(int(body["max_tokens"]), 2048)
     return body
+
+
+def _openrouter_content_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content.strip()
+    if not isinstance(content, list):
+        return ""
+    chunks: list[str] = []
+    for item in content:
+        if isinstance(item, str) and item.strip():
+            chunks.append(item.strip())
+        elif isinstance(item, dict):
+            piece = str(item.get("text") or "").strip()
+            if piece:
+                chunks.append(piece)
+    return "\n".join(chunks).strip()
+
+
+def _openrouter_json_object(text: str) -> str:
+    text = text.strip()
+    if text.startswith("{") and text.endswith("}"):
+        return text
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        return text[start:end + 1].strip()
+    return ""
+
+
+def _openrouter_choice_text(decoded: dict[str, Any]) -> str:
+    """Model text for the existing Gemini parser. Empty content is not a success."""
+    try:
+        message = decoded["choices"][0]["message"]
+    except (KeyError, IndexError, TypeError):
+        return ""
+    if not isinstance(message, dict):
+        return ""
+    text = _openrouter_content_text(message.get("content"))
+    if text:
+        return text
+    # Default reasoning can fill max_tokens and leave content empty.
+    # Pass only a JSON object through, which is what the PHP parser accepts.
+    return _openrouter_json_object(_openrouter_content_text(message.get("reasoning")))
 
 
 def _openrouter_http_complete(payload: dict[str, Any], timeout: int) -> str | None:
@@ -299,8 +343,8 @@ def _openrouter_http_complete(payload: dict[str, Any], timeout: int) -> str | No
         return None
     try:
         decoded = json.loads(raw)
-        text = str(decoded["choices"][0]["message"]["content"] or "").strip()
-    except (KeyError, IndexError, TypeError, json.JSONDecodeError):
+        text = _openrouter_choice_text(decoded if isinstance(decoded, dict) else {})
+    except (TypeError, json.JSONDecodeError):
         return None
     return text or None
 
