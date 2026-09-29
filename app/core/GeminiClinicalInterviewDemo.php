@@ -53,6 +53,7 @@ final class GeminiClinicalInterviewDemo
         }
 
         $context = self::blankContext($complaint);
+        $context['question_language'] = self::lockedQuestionLanguage($complaint, '');
         $context['conversation'][] = [
             'role' => 'patient',
             'text' => $complaint,
@@ -179,6 +180,11 @@ final class GeminiClinicalInterviewDemo
             'text' => $answer,
             'kind' => 'answer',
         ];
+        $locked = trim((string) ($context['question_language'] ?? ''));
+        if ($locked === '') {
+            $locked = self::lockedQuestionLanguage((string) ($context['chief_complaint'] ?? ''), '');
+        }
+        $context['question_language'] = self::lockedQuestionLanguage($answer, $locked);
 
         $gemini = self::callGemini('answer', $context, $answer);
         if ($gemini === null) {
@@ -712,6 +718,7 @@ final class GeminiClinicalInterviewDemo
     {
         return [
             'chief_complaint' => $complaint,
+            'question_language' => '',
             'patient_turns' => [],
             'conversation' => [],
             'awaiting_question' => '',
@@ -1073,6 +1080,102 @@ final class GeminiClinicalInterviewDemo
         }
 
         return 'english';
+    }
+
+    /**
+     * Question language for the next follow-up.
+     * Opening text sets it. Short or marker-free replies keep it.
+     * A longer utterance with real language evidence may switch it.
+     */
+    private static function lockedQuestionLanguage(string $text, string $locked): string
+    {
+        $text = trim($text);
+        $locked = strtolower(trim($locked));
+        if ($locked !== '' && class_exists('ClinicalInterviewEngine')) {
+            $locked = ClinicalInterviewEngine::normalizeQuestionLanguage($locked);
+        }
+        if ($text === '') {
+            return $locked !== '' ? $locked : 'english';
+        }
+        if ($locked !== '' && self::answerKeepsLockedLanguage($text)) {
+            return $locked;
+        }
+        if (!class_exists('HiligaynonLanguageDetector') || !class_exists('ClinicalInterviewEngine')) {
+            return $locked !== '' ? $locked : 'english';
+        }
+        if ($locked !== '' && !HiligaynonLanguageDetector::hasLexicalEvidence($text)) {
+            return $locked;
+        }
+
+        return ClinicalInterviewEngine::questionLanguageFromDetection(
+            HiligaynonLanguageDetector::detect($text),
+            $text
+        );
+    }
+
+    private static function answerKeepsLockedLanguage(string $text): bool
+    {
+        if (self::isContextualShortReply($text)) {
+            return true;
+        }
+        $words = preg_split('/[^\p{L}\p{N}]+/u', trim($text)) ?: [];
+        $words = array_values(array_filter($words, static fn ($word) => $word !== ''));
+
+        return count($words) <= 3;
+    }
+
+    private static function questionLanguagePromptLine(array $context): string
+    {
+        $lang = strtolower(trim((string) ($context['question_language'] ?? '')));
+        if ($lang === '' && class_exists('ClinicalInterviewEngine')) {
+            $lang = self::lockedQuestionLanguage((string) ($context['chief_complaint'] ?? ''), '');
+        }
+        $label = match ($lang) {
+            'tagalog' => 'Tagalog',
+            'english' => 'English',
+            'hiligaynon' => 'Hiligaynon/Ilonggo',
+            default => 'the patient\'s own language',
+        };
+
+        return "Detected question language for next_question: {$label}. "
+            . "Write that single follow-up naturally in this language only. "
+            . "Do not translate the patient into another language, and do not mix in a language the patient did not use.\n";
+    }
+
+    /**
+     * @param list<string> $turns
+     * @return array{question_language:string, after_turns:list<array{question_language:string}>}
+     */
+    public static function questionLanguageStateForTest(string $complaint, array $turns = []): array
+    {
+        $language = self::lockedQuestionLanguage($complaint, '');
+        $after = [];
+        foreach ($turns as $turn) {
+            $language = self::lockedQuestionLanguage((string) $turn, $language);
+            $after[] = ['question_language' => $language];
+        }
+
+        return [
+            'question_language' => self::lockedQuestionLanguage($complaint, ''),
+            'after_turns' => $after,
+        ];
+    }
+
+    public static function followUpQuestionLanguageMatchesForTest(string $question, string $expected): bool
+    {
+        $question = trim($question);
+        if ($question === '' || !class_exists('HiligaynonLanguageDetector') || !class_exists('ClinicalInterviewEngine')) {
+            return false;
+        }
+        if (!HiligaynonLanguageDetector::hasLexicalEvidence($question)) {
+            return false;
+        }
+        $detected = ClinicalInterviewEngine::questionLanguageFromDetection(
+            HiligaynonLanguageDetector::detect($question),
+            $question
+        );
+
+        return $detected === ClinicalInterviewEngine::normalizeQuestionLanguage($expected);
     }
 
     /**
@@ -2577,7 +2680,8 @@ final class GeminiClinicalInterviewDemo
                 . "Use COMMON-SENSE clinical conversation. Understand the COMPLETE patient meaning — do not blindly fill schema fields.\n"
                 . "Pipeline: NLP/domain mappings above are checked first; you are Gemini Flash semantic interpretation/fallback.\n"
                 . "Decide whether the opening text is a genuine health/medical concern by MEANING.\n"
-                . "Support English, Hiligaynon/Ilonggo, Tagalog, mixed language, slang, informal wording, misspellings, and local expressions.\n\n"
+                . "Support English, Hiligaynon/Ilonggo, Tagalog, mixed language, slang, informal wording, misspellings, and local expressions.\n"
+                . self::questionLanguagePromptLine($context) . "\n"
                 . "Original patient opening (preserve exactly; do not rewrite as the stored complaint):\n"
                 . (string) ($context['chief_complaint'] ?? '') . "\n\n"
                 . $nlpBlock . "\n"
@@ -2600,7 +2704,8 @@ final class GeminiClinicalInterviewDemo
             . "Do NOT ask repetitive, unnatural, or irrelevant questions.\n"
             . "Interpret short replies (yes/no/negation/particles) by conversational context — they are often VALID answers, not new symptoms.\n"
             . "Never treat discourse particles/fillers/intensifiers (or English glosses like intensifier words) as medical symptoms.\n"
-            . "Final acuity is NOT your job.\n\n"
+            . "Final acuity is NOT your job.\n"
+            . self::questionLanguagePromptLine($context) . "\n"
             . "Original patient complaint (preserve exactly):\n"
             . (string) ($context['chief_complaint'] ?? '') . "\n\n"
             . "Current question the patient was answering:\n"
@@ -2635,6 +2740,15 @@ COMMON-SENSE CONVERSATION (critical):
 - Ask only the single most clinically relevant missing question needed to understand the complaint.
 - Questions must be natural and context-aware.
 - If the complaint is already clinically obvious, do not ask unnecessary clarification — set interview_sufficient=true when appropriate.
+
+FOLLOW-UP LANGUAGE (next_question only):
+- The user message names the question language already detected from the patient. Write next_question only in that language.
+- Keep English, Hiligaynon/Ilonggo, Tagalog, mixed, informal, slang, and misspelled input in that same language. Do not translate it.
+- When that language is Hiligaynon/Ilonggo, write natural Hiligaynon/Ilonggo. Do not mix in Tagalog or English.
+- When it is Tagalog, write natural Tagalog. When it is English, write natural English.
+- Mixed wording may stay mixed only to the degree the patient already mixed it.
+- Use the full conversation and the latest answer. Ask only for clinically relevant information that is still missing.
+- Do not repeat information the patient already gave. Do not use an awkward literal translation.
 
 Short answers & discourse particles:
 - Interpret short replies such as affirmatives, negatives, and brief particles according to the CURRENT question's conversational context (they can be VALID).
