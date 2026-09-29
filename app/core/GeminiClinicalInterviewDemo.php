@@ -41,6 +41,7 @@ final class GeminiClinicalInterviewDemo
      */
     public static function start(string $complaint): array
     {
+        self::$aiProviderUsed = '';
         $complaint = trim($complaint);
         if ($complaint === '') {
             return self::errorResult(self::blankContext(), 'Enter a health concern or symptom you are experiencing.', null);
@@ -136,6 +137,7 @@ final class GeminiClinicalInterviewDemo
      */
     public static function answer(string $answer, array $prior): array
     {
+        self::$aiProviderUsed = '';
         $answer = trim($answer);
         $context = self::normalizeContext($prior);
         if (($context['chief_complaint'] ?? '') === '') {
@@ -202,6 +204,9 @@ final class GeminiClinicalInterviewDemo
     }
 
     private static string $lastError = '';
+
+    /** gemini | openrouter | empty. Display only. Set from the model on the response that supplied this turn's text. */
+    private static string $aiProviderUsed = '';
 
     public static function lastError(): string
     {
@@ -495,6 +500,7 @@ final class GeminiClinicalInterviewDemo
             'final_triage' => is_array($context['final_triage'] ?? null) ? $context['final_triage'] : null,
             'interview_context' => $context,
             'gemini_called' => !empty($context['gemini_called']),
+            'ai_provider_used' => self::aiProviderUsedLabel(),
             'health_gate' => is_array($context['health_gate'] ?? null) ? $context['health_gate'] : null,
             'debug' => [
                 'gemini_raw_structured' => $debugGemini,
@@ -2917,6 +2923,7 @@ PROMPT;
      */
     private static function generate(array $payload): string
     {
+        self::$aiProviderUsed = '';
         $model = 'gemini-3.5-flash';
         self::ensureGeminiConfig();
         if (function_exists('medconnect_gemini_model')) {
@@ -2985,7 +2992,10 @@ PROMPT;
             throw $e;
         }
 
-        return self::extractCandidateText($data);
+        $text = self::extractCandidateText($data);
+        self::$aiProviderUsed = 'gemini';
+
+        return $text;
     }
 
     /**
@@ -3007,6 +3017,7 @@ PROMPT;
             self::$openRouterTransportForTest
         );
         if (is_string($text) && trim($text) !== '') {
+            self::$aiProviderUsed = 'openrouter';
             return trim($text);
         }
         throw $e;
@@ -3059,7 +3070,32 @@ PROMPT;
             throw new RuntimeException('empty Gemini response');
         }
 
+        self::noteAiProviderFromRailwayModel((string) ($data['model'] ?? ''));
+
         return $text;
+    }
+
+    /**
+     * Railway already returns the model that produced the text.
+     * A gemini* id is Gemini. Any other id is the quota fallback.
+     */
+    private static function noteAiProviderFromRailwayModel(string $model): void
+    {
+        $model = strtolower(trim($model));
+        if ($model === '') {
+            self::$aiProviderUsed = '';
+            return;
+        }
+        self::$aiProviderUsed = str_starts_with($model, 'gemini') ? 'gemini' : 'openrouter';
+    }
+
+    private static function aiProviderUsedLabel(): string
+    {
+        return match (self::$aiProviderUsed) {
+            'gemini' => 'Gemini Flash',
+            'openrouter' => 'OpenRouter (Gemini quota fallback)',
+            default => 'Unknown',
+        };
     }
 
     /**
