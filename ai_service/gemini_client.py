@@ -14,8 +14,8 @@ logger = logging.getLogger("medconnect.nlp.gemini")
 
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-# Same fixed free model as the clinical interview demo. Not a rotating router.
-OPENROUTER_DEMO_MODEL = "nvidia/nemotron-3.5-lightning:free"
+# Fixed free model whose endpoint accepts JSON mode. Not a rotating router.
+OPENROUTER_DEMO_MODEL = "nvidia/nemotron-3-super-120b-a12b:free"
 OPENROUTER_DEMO_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
 
 _startup_health: dict[str, Any] | None = None
@@ -248,12 +248,18 @@ def _openrouter_body_from_gemini(payload: dict[str, Any]) -> dict[str, Any] | No
     except (TypeError, ValueError):
         max_tokens = 1024
 
-    return {
+    body: dict[str, Any] = {
         "model": OPENROUTER_DEMO_MODEL,
         "temperature": temperature,
         "max_tokens": max(64, min(4096, max_tokens)),
         "messages": messages,
     }
+    # Gemini responseMimeType application/json. OpenRouter enforces that as JSON mode.
+    # Reasoning stays off so the completion is the JSON object, not an analysis preamble.
+    if str(gen.get("responseMimeType") or "").strip().lower() == "application/json":
+        body["response_format"] = {"type": "json_object"}
+        body["reasoning"] = {"enabled": False}
+    return body
 
 
 def _openrouter_http_complete(payload: dict[str, Any], timeout: int) -> str | None:

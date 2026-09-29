@@ -97,6 +97,8 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         self.assertEqual(messages[0], {"role": "system", "content": SYSTEM})
         self.assertEqual(messages[1], {"role": "user", "content": USER})
         self.assertEqual(seen[0]["model"], gemini_client.OPENROUTER_DEMO_MODEL)
+        self.assertEqual(seen[0]["response_format"], {"type": "json_object"})
+        self.assertEqual(seen[0]["reasoning"], {"enabled": False})
         self.assertEqual(pack["text"], OPENROUTER_TEXT)
         self.assertEqual(pack["model"], gemini_client.OPENROUTER_DEMO_MODEL)
         self.assertEqual(
