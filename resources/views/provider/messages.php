@@ -103,7 +103,7 @@ try {
 
         $list_time = $last_msg && !empty($last_msg['time'])
             ? (string) $last_msg['time']
-            : date('M j, g:i A', strtotime(($row['consult_date'] ?? '') . ' ' . ($row['consult_time'] ?? '00:00:00')));
+            : date('M j, Y', strtotime(($row['consult_date'] ?? '') . ' ' . ($row['consult_time'] ?? '00:00:00'))) . ' • ' . date('g:i A', strtotime(($row['consult_date'] ?? '') . ' ' . ($row['consult_time'] ?? '00:00:00')));
 
         $conversations[] = [
             'consultation_id'      => $cid,

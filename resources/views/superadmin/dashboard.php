@@ -64,7 +64,7 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                             <td><?= htmlspecialchars(trim(($a['first_name'] ?? '') . ' ' . ($a['last_name'] ?? '')) ?: 'System') ?></td>
                             <td><code class="text-xs"><?= htmlspecialchars($a['action'] ?? $a['action_type'] ?? '') ?></code></td>
                             <td><?= htmlspecialchars($a['module'] ?? 'system') ?></td>
-                            <td class="adm-date-cell"><?= !empty($a['created_at']) ? date('M j, g:i A', strtotime($a['created_at'])) : '—' ?></td>
+                            <td class="adm-date-cell"><?= !empty($a['created_at']) ? date('M j, Y', strtotime($a['created_at'])) . ' • ' . date('g:i A', strtotime($a['created_at'])) : '—' ?></td>
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>
@@ -91,7 +91,7 @@ $admLiveJsVer = (int) @filemtime(ASSETS_PATH . '/js/admin-dashboard-live.js');
                             <td><?= htmlspecialchars(trim(($l['first_name'] ?? '') . ' ' . ($l['last_name'] ?? ''))) ?></td>
                             <td><span class="adm-role-badge adm-role-badge--default"><?= strtoupper(htmlspecialchars($l['role'] ?? '')) ?></span></td>
                             <td class="text-xs"><?= htmlspecialchars($l['ip_address'] ?? '—') ?></td>
-                            <td class="adm-date-cell"><?= date('M j, g:i A', strtotime($l['created_at'])) ?></td>
+                            <td class="adm-date-cell"><?= date('M j, Y', strtotime($l['created_at'])) . ' • ' . date('g:i A', strtotime($l['created_at'])) ?></td>
                         </tr>
                     <?php endforeach; endif; ?>
                     </tbody>

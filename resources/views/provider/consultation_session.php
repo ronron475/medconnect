@@ -186,7 +186,7 @@ try {
     consultation_messages_ensure_schema($pdo);
     $session_messages = message_fetch_pair_messages($pdo, $consultation_id, (int)$_SESSION['user_id']);
     foreach ($session_messages as &$session_message) {
-        $session_message['time'] = $session_message['time'] ?? date('M j, g:i A', strtotime($session_message['created_at']));
+        $session_message['time'] = $session_message['time'] ?? date('M j, Y', strtotime($session_message['created_at'])) . ' • ' . date('g:i A', strtotime($session_message['created_at']));
     }
     unset($session_message);
 } catch (Exception $e) {
@@ -2525,7 +2525,14 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     box-sizing: border-box;
 }
 .final-assessment-banner.is-visible {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+.final-assessment-banner__copy {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 .final-assessment-banner__title {
     margin: 0 0 4px;
@@ -2534,21 +2541,121 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     color: #78350f;
 }
 .final-assessment-banner__text {
-    margin: 0 0 10px;
+    margin: 0;
     font-size: 13px;
     line-height: 1.5;
 }
 .final-assessment-banner__actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+    flex: 0 0 auto;
+    justify-content: flex-end;
     align-items: center;
-    width: 100%;
+    margin: 0;
 }
 .final-assessment-banner__actions .session-btn {
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0;
+    background: #0f766e;
+    color: #fff;
+    border: 0;
+    box-shadow: 0 8px 18px rgba(15, 118, 110, 0.28);
+    font-weight: 800;
+}
+@media (max-width: 640px) {
+    .final-assessment-banner.is-visible {
+        flex-wrap: wrap;
+    }
+    .final-assessment-banner__actions {
+        width: 100%;
+    }
+}
+body.provider-body:has(.video-shell.is-call-active) .pd-hamburger,
+body.provider-body:has(.video-shell.is-call-active) .mc-theme-toggle,
+body.provider-body:has(.video-shell.is-call-active) #toggleVideoSizeBtn,
+body.provider-body:has(.video-shell.is-call-active) #mobileCallExpandBtn,
+body.provider-body:has(.video-shell.is-call-active) .mc-messages-fab,
+body.provider-body:has(.video-shell.is-call-active) .messages-fab {
+    display: none !important;
+}
+#soapDocumentation {
+    overflow: visible;
+}
+.icd-search { position: relative; z-index: 30; }
+.icd-search__input { width: 100%; }
+.icd-search__list {
+    position: absolute;
+    z-index: 80;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    max-height: 240px;
+    overflow: auto;
+    background: #fff;
+    border: 1px solid #dce8ed;
+    border-radius: 10px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+.icd-search__list[hidden] { display: none !important; }
+.icd-search__list button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font: inherit;
+    color: #0f172a;
+}
+.icd-search__list button:hover,
+.icd-search__list button:focus { background: #ecfeff; }
+.icd-search__code { font-weight: 800; margin-right: 6px; }
+.soap-sign__doctor {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.soap-sign__pad {
+    position: relative;
+    height: 160px;
+    border: 1px dashed #0f766e;
+    border-radius: 12px;
+    background: #fff;
+    overflow: hidden;
+    touch-action: none;
+}
+.soap-sign__pad canvas {
+    display: block;
+    width: 100%;
+    height: 160px;
+    cursor: crosshair;
+    touch-action: none;
+}
+.soap-sign__pad-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    pointer-events: none;
+}
+.soap-sign__pad.is-drawn .soap-sign__pad-hint { display: none; }
+.soap-sign__clear {
+    margin-top: 8px;
+}
+.soap-sign__image {
+    display: block;
+    max-width: 280px;
+    height: auto;
+    margin-top: 8px;
+    background: #fff;
+    border: 1px solid #dce8ed;
+    border-radius: 8px;
 }
 .final-assessment-required-modal {
     position: fixed;
@@ -2715,11 +2822,13 @@ body.final-assessment-modal-open {
 
 <?php if (!$consultation_completed): ?>
 <div id="finalAssessmentBanner" class="final-assessment-banner<?= !empty($videoEndedPendingFinal) ? ' is-visible' : '' ?>" role="status"<?= empty($videoEndedPendingFinal) ? ' hidden' : '' ?>>
-  <p class="final-assessment-banner__title">Final Assessment required</p>
-  <p class="final-assessment-banner__text">
-    The video call has ended. This consultation is not completed until you submit the patient’s Final Assessment
-    (SOAP note + final case urgency). The patient will not see a doctor final result before you submit.
-  </p>
+  <div class="final-assessment-banner__copy">
+    <p class="final-assessment-banner__title">Final Assessment Required</p>
+    <p class="final-assessment-banner__text">
+      The video call has ended. This consultation is not completed until you submit the patient’s Final Assessment
+      (SOAP note, ICD-10 diagnosis, signature, and final case urgency).
+    </p>
+  </div>
   <div class="final-assessment-banner__actions">
     <button type="button" class="session-btn primary" id="finalAssessmentGoBtn">Complete Final Assessment</button>
   </div>
@@ -2817,9 +2926,9 @@ body.final-assessment-modal-open {
                 <?php if (!empty($video_history['scheduled_duration_label'])): ?>
                 <div class="info-row"><span class="info-key">Scheduled duration</span><span class="info-val"><?= htmlspecialchars((string) $video_history['scheduled_duration_label']) ?></span></div>
                 <?php endif; ?>
-                <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? '—')) ?></span></div>
-                <div class="info-row"><span class="info-key">Ended</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? '—')) ?></span></div>
-                <div class="info-row"><span class="info-key">Actual duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['actual_duration_label'] ?: ($video_history['duration_label'] ?? '—'))) ?></span></div>
+                <div class="info-row"><span class="info-key">Start Time</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['started_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">End Time</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['ended_label'] ?? '—')) ?></span></div>
+                <div class="info-row"><span class="info-key">Duration</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['actual_duration_label'] ?: ($video_history['duration_label'] ?? '—'))) ?></span></div>
                 <?php if (!empty($video_history['participants_label'])): ?>
                 <div class="info-row"><span class="info-key">Participants</span><span class="info-val"><?= htmlspecialchars((string) $video_history['participants_label']) ?></span></div>
                 <?php endif; ?>
@@ -2841,9 +2950,12 @@ body.final-assessment-modal-open {
                   require BASE_PATH . '/resources/views/partials/consultation_recording_panel.php';
                 ?>
                 <?php else: ?>
-                <div class="info-row"><span class="info-key">Video consultation</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['video_status_label'] ?? 'Not started')) ?></span></div>
+                <div class="info-row"><span class="info-key">Status</span><span class="info-val"><?= htmlspecialchars((string) ($video_history['video_status_label'] ?? 'Not started')) ?></span></div>
                 <?php if (!empty($video_history['started_label'])): ?>
-                <div class="info-row"><span class="info-key">Started</span><span class="info-val"><?= htmlspecialchars((string) $video_history['started_label']) ?></span></div>
+                <div class="info-row"><span class="info-key">Start Time</span><span class="info-val"><?= htmlspecialchars((string) $video_history['started_label']) ?></span></div>
+                <?php endif; ?>
+                <?php if (!empty($video_history['actual_duration_label'])): ?>
+                <div class="info-row"><span class="info-key">Duration</span><span class="info-val"><?= htmlspecialchars((string) $video_history['actual_duration_label']) ?></span></div>
                 <?php endif; ?>
                 <?php
                   $recording_btn_class = 'session-btn primary';
@@ -2906,8 +3018,17 @@ body.final-assessment-modal-open {
 
                     <div class="soap-grid">
                         <div>
-                            <label class="pd-label">Final Diagnosis</label>
-                            <textarea name="diagnosis" class="pd-textarea" placeholder="ICD-10 or clinical diagnosis..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['diagnosis'] ?? '')) ?></textarea>
+                            <label class="pd-label" for="icdSearchInput">Final Diagnosis</label>
+                            <?php if ($soap_readonly): ?>
+                            <textarea class="pd-textarea" readonly><?= htmlspecialchars((string) ($clinical_note['diagnosis'] ?? '')) ?></textarea>
+                            <?php else: ?>
+                            <div class="icd-search" id="icdSearch">
+                                <input type="search" id="icdSearchInput" class="pd-input icd-search__input" placeholder="Search ICD-10 code or description" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="icdSearchList" aria-autocomplete="list">
+                                <ul id="icdSearchList" class="icd-search__list" role="listbox" hidden></ul>
+                                <input type="hidden" name="diagnosis" id="icdDiagnosis" value="<?= htmlspecialchars((string) ($clinical_note['diagnosis'] ?? '')) ?>">
+                            </div>
+                            <p class="soap-sign__hint">Choose a code from the list. Example: A09 – Infectious gastroenteritis and colitis, unspecified</p>
+                            <?php endif; ?>
                         </div>
                         <div>
                             <label class="pd-label">Digital Prescription</label>
@@ -2918,24 +3039,17 @@ body.final-assessment-modal-open {
                     <?php if (!$consultation_completed): ?>
                     <div class="soap-sign" id="soapSignature">
                         <h3 class="soap-sign__title">Electronic Signature</h3>
-                        <div class="soap-sign__field">
-                            <input
-                                type="text"
-                                id="soapProviderName"
-                                class="pd-input soap-sign__name<?= $soap_esign_name !== '' ? ' soap-sign__name--populated' : '' ?>"
-                                value="<?= htmlspecialchars($soap_esign_name) ?>"
-                                readonly
-                                aria-readonly="true"
-                                aria-label="Electronic signature"
-                                tabindex="-1"
-                                <?= $soap_esign_name === '' ? 'placeholder="Provider Full Name unavailable"' : '' ?>
-                            >
-                            <p class="soap-sign__hint">Uses your Full Name from your provider account. No separate signature entry is required.</p>
+                        <p class="soap-sign__doctor" id="soapProviderName"><?= htmlspecialchars($soap_esign_name !== '' ? $soap_esign_name : 'Provider name unavailable') ?></p>
+                        <div class="soap-sign__pad" id="soapSignatureWrap">
+                            <canvas id="soapSignatureCanvas" aria-label="Draw your signature"></canvas>
+                            <span class="soap-sign__pad-hint" id="soapSignaturePlaceholder">Sign here</span>
                         </div>
+                        <button type="button" class="session-btn soap-sign__clear" id="soapSignatureClear">Clear</button>
+                        <p class="soap-sign__hint">Draw your signature with a mouse or finger. It is required before submission.</p>
 
-                        <input type="hidden" name="signature_method" value="typed">
+                        <input type="hidden" name="signature_method" id="soapSignatureMethod" value="drawn">
                         <input type="hidden" name="signature_name" id="soapSignatureName" value="<?= htmlspecialchars($soap_esign_name) ?>">
-                        <input type="hidden" name="signature_data" id="soapSignatureData" value="<?= htmlspecialchars($soap_esign_name) ?>">
+                        <input type="hidden" name="signature_data" id="soapSignatureData" value="">
 
                         <label class="soap-sign__confirm">
                             <input type="checkbox" name="soap_confirm" id="soapConfirm" value="1">
@@ -2954,6 +3068,9 @@ body.final-assessment-modal-open {
                                 This SOAP note has been electronically signed and finalized.
                             <?php endif; ?>
                         </p>
+                        <?php if (clinical_note_is_image_payload((string) ($clinical_note['signature_data'] ?? ''))): ?>
+                        <img class="soap-sign__image" alt="Electronic signature" src="<?= htmlspecialchars((string) $clinical_note['signature_data']) ?>">
+                        <?php endif; ?>
                     </div>
                     <?php endif; ?>
                 </form>
@@ -3299,7 +3416,7 @@ body.final-assessment-modal-open {
                 <p class="text-xs text-muted mb-sm">Scheduled slot: <strong id="scheduledEndLabel"><?= htmlspecialchars($slot_end_label) ?></strong>. The visit can continue past this time. The next patient keeps their own slot.</p>
                 <div id="readyNextPanel" class="text-xs" style="margin-bottom:10px;"></div>
                 <button class="session-btn primary" style="width: 100%; display:none;" type="button" id="readyForNextBtn">
-                    Ready for Next Patient
+                    Ready for Next Patient Early
                 </button>
                 <p id="extensionMsg" class="text-xs" style="margin-top: 8px; display: none;"></p>
             </div>
@@ -3618,10 +3735,8 @@ body.final-assessment-modal-open {
                     <hr style="border: 0; border-top: 1px solid #e2edf1; margin: 10px 0;">
 
                     <label class="pd-label">Schedule Follow-up</label>
-                    <input type="date" id="followUpDate" class="pd-input" style="width: 100%;">
                     <p class="text-xs text-muted" style="margin:6px 0 0;">Registered mobile: <strong><?= htmlspecialchars($patient_contact !== '' ? $patient_contact : 'Not on file') ?></strong></p>
-                    <button class="session-btn" style="width: 100%; margin-top:8px;" onclick="scheduleFollowUp()">Book Follow-up</button>
-                    <button type="button" class="session-btn primary" style="width: 100%; margin-top:8px;" onclick="openFollowUpModal()">Open follow-up form</button>
+                    <button type="button" class="session-btn primary" style="width: 100%; margin-top:8px;" onclick="openFollowUpModal()">Book follow-up</button>
                 </div>
             </div>
         </div>
@@ -3784,6 +3899,7 @@ body.final-assessment-modal-open {
 </div>
 
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/soap-signature.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/soap-signature.js') ?>"></script>
 <script>
 // SESSION TIMER
 let seconds = 0;
@@ -5356,22 +5472,28 @@ window.addEventListener('medconnect:video-shell-scroll-away', () => {
             const data = await res.json();
             if (!data || !data.success) return;
             const next = data.next_patient;
+            const activeVideoId = parseInt(data.active_video_consultation_id || 0, 10);
+            const name = (next && next.patient_name) || 'The next patient';
+            const when = next && next.scheduled_label ? ' at ' + next.scheduled_label : '';
             if (!next) {
                 panel.textContent = '';
                 btn.style.display = 'none';
                 return;
             }
-            if (next.early_start_response === 'join_early') {
-                panel.textContent = (next.patient_name || 'The next patient') + ' chose Join Early.';
+            if (activeVideoId) {
+                panel.textContent = 'Previous consultation in progress. Next patient is waiting: ' + name + when + '.';
+                btn.style.display = 'none';
+            } else if (next.early_start_response === 'join_early') {
+                panel.textContent = name + ' chose Start Early. Scheduled time' + when + ' is unchanged.';
                 btn.style.display = 'none';
             } else if (next.early_start_response === 'keep_time') {
-                panel.textContent = (next.patient_name || 'The next patient') + ' chose Keep Scheduled Time. This is not a missed visit.';
+                panel.textContent = name + ' chose Keep Scheduled Time. This is not a missed visit.';
                 btn.style.display = 'none';
             } else if (next.can_offer_early) {
-                panel.textContent = (next.patient_name || 'The next patient') + ' is scheduled' + (next.scheduled_label ? ' at ' + next.scheduled_label : '') + '.';
+                panel.textContent = 'Ready for Next Patient Early. ' + name + ' is scheduled' + when + '.';
                 btn.style.display = 'block';
             } else if (next.early_start_response_label) {
-                panel.textContent = (next.patient_name || 'Next patient') + ': ' + next.early_start_response_label + '.';
+                panel.textContent = name + ': ' + next.early_start_response_label + '.';
                 btn.style.display = 'none';
             } else {
                 panel.textContent = '';
@@ -5491,25 +5613,16 @@ const soapSignerNames = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE) ?>;
 
 let soapUiReady = false;
+let soapSignaturePad = null;
 
 function syncSoapSignatureFields() {
     const name = String(soapSignerNames.full || '').trim();
     const display = document.getElementById('soapProviderName');
     const hiddenData = document.getElementById('soapSignatureData');
     const hiddenName = document.getElementById('soapSignatureName');
-    if (display) {
-        display.value = name;
-        display.setAttribute('value', name);
-        if (name) {
-            display.classList.add('soap-sign__name--populated');
-            display.removeAttribute('placeholder');
-        } else {
-            display.classList.remove('soap-sign__name--populated');
-            display.setAttribute('placeholder', 'Provider Full Name unavailable');
-        }
-    }
-    if (hiddenData) hiddenData.value = name;
+    if (display && display.tagName !== 'INPUT') display.textContent = name || 'Provider name unavailable';
     if (hiddenName) hiddenName.value = name;
+    if (hiddenData && soapSignaturePad) hiddenData.value = soapSignaturePad.toDataURL();
 }
 
 function soapClientValidationMessage() {
@@ -5522,7 +5635,14 @@ function soapClientValidationMessage() {
             return 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.';
         }
     }
+    const diagnosis = document.getElementById('icdDiagnosis');
+    if (!diagnosis || !String(diagnosis.value || '').trim()) {
+        return 'Select a final diagnosis from the ICD-10 list.';
+    }
     syncSoapSignatureFields();
+    if (!soapSignaturePad || !soapSignaturePad.hasInk()) {
+        return 'Draw your electronic signature before submitting.';
+    }
     if (!String(soapSignerNames.full || '').trim()) {
         return 'Provider identity could not be verified. Please refresh and try again.';
     }
@@ -5618,6 +5738,24 @@ function initSoapSignatureUi() {
     if (soapUiReady) return;
     soapUiReady = true;
 
+    const canvas = document.getElementById('soapSignatureCanvas');
+    if (canvas && window.SoapSignaturePad) {
+        soapSignaturePad = new window.SoapSignaturePad(canvas, {
+            wrap: document.getElementById('soapSignatureWrap'),
+            placeholder: document.getElementById('soapSignaturePlaceholder')
+        });
+        soapSignaturePad.onChange = function () {
+            syncSoapSignatureFields();
+            updateSoapFinalizeReady();
+        };
+        const clearBtn = document.getElementById('soapSignatureClear');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                soapSignaturePad.clear();
+            });
+        }
+    }
+    initIcdSearch();
     syncSoapSignatureFields();
 
     const confirmEl = document.getElementById('soapConfirm');
@@ -5629,6 +5767,11 @@ function initSoapSignatureUi() {
         form.addEventListener('change', updateSoapFinalizeReady);
         form.addEventListener('reset', function () {
             setTimeout(function () {
+                if (soapSignaturePad) soapSignaturePad.clear();
+                const diagnosis = document.getElementById('icdDiagnosis');
+                const search = document.getElementById('icdSearchInput');
+                if (diagnosis) diagnosis.value = '';
+                if (search) search.value = '';
                 syncSoapSignatureFields();
                 updateSoapFinalizeReady();
             }, 0);
@@ -5685,6 +5828,69 @@ function initSoapSignatureUi() {
     updateSoapFinalizeReady();
 }
 
+function initIcdSearch() {
+    const input = document.getElementById('icdSearchInput');
+    const list = document.getElementById('icdSearchList');
+    const hidden = document.getElementById('icdDiagnosis');
+    if (!input || !list || !hidden) return;
+    let timer = 0;
+    if (hidden.value) input.value = hidden.value;
+
+    function closeList() {
+        list.hidden = true;
+        input.setAttribute('aria-expanded', 'false');
+    }
+
+    function choose(label) {
+        hidden.value = label;
+        input.value = label;
+        closeList();
+        updateSoapFinalizeReady();
+    }
+
+    input.addEventListener('input', function () {
+        if (input.value.trim() !== hidden.value) hidden.value = '';
+        window.clearTimeout(timer);
+        const q = input.value.trim();
+        if (q.length < 2) {
+            closeList();
+            updateSoapFinalizeReady();
+            return;
+        }
+        timer = window.setTimeout(function () {
+            fetch('<?= ASSET_BASE ?>/app/api/provider/icd10_search.php?q=' + encodeURIComponent(q), {
+                credentials: 'same-origin',
+                headers: { Accept: 'application/json' }
+            }).then(function (res) { return res.json(); }).then(function (data) {
+                const rows = (data && data.results) || [];
+                list.innerHTML = '';
+                if (!rows.length) {
+                    closeList();
+                    return;
+                }
+                rows.forEach(function (row) {
+                    const li = document.createElement('li');
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.innerHTML = '<span class="icd-search__code"></span><span></span>';
+                    btn.querySelector('.icd-search__code').textContent = row.code || '';
+                    btn.querySelector('span:last-child').textContent = row.description || '';
+                    btn.addEventListener('click', function () { choose(row.label || ''); });
+                    li.appendChild(btn);
+                    list.appendChild(li);
+                });
+                list.hidden = false;
+                input.setAttribute('aria-expanded', 'true');
+            }).catch(function () { closeList(); });
+        }, 220);
+        updateSoapFinalizeReady();
+    });
+
+    document.addEventListener('click', function (event) {
+        if (!event.target.closest('#icdSearch')) closeList();
+    });
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSoapSignatureUi);
 } else {
@@ -5708,10 +5914,21 @@ async function finalizeConsultation() {
     }
     const confirmBtn = document.getElementById('soapFinalizeConfirm');
     const finalizeBtn = document.getElementById('soapFinalizeBtn');
-    if (confirmBtn) confirmBtn.disabled = true;
-    if (finalizeBtn) finalizeBtn.disabled = true;
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.dataset.label = confirmBtn.dataset.label || confirmBtn.textContent;
+        confirmBtn.textContent = 'Saving…';
+    }
+    if (finalizeBtn) {
+        finalizeBtn.disabled = true;
+        finalizeBtn.dataset.label = finalizeBtn.dataset.label || finalizeBtn.textContent;
+        finalizeBtn.textContent = 'Saving…';
+    }
     const data = await saveSOAP(true);
-    if (confirmBtn) confirmBtn.disabled = false;
+    if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = confirmBtn.dataset.label || 'Confirm';
+    }
     if (data && data.success) {
         openSoapSuccessModal(
             data.message ||
@@ -5726,7 +5943,10 @@ async function finalizeConsultation() {
         }
         return;
     }
-    if (finalizeBtn) finalizeBtn.disabled = false;
+    if (finalizeBtn) {
+        finalizeBtn.disabled = false;
+        finalizeBtn.textContent = finalizeBtn.dataset.label || 'Finalize SOAP Note';
+    }
     const failMsg = (data && data.message) ? data.message : 'Could not finalize consultation.';
     if (err) {
         err.textContent = failMsg;
@@ -5804,22 +6024,8 @@ async function issueReferral() {
     });
 })();
 
-async function scheduleFollowUp() {
-    const date = document.getElementById('followUpDate').value;
-    if (!date) return alert('Select follow-up date.');
-    try {
-        const fd = new FormData();
-        fd.append('patient_id', sessionPatientId);
-        fd.append('consultation_id', sessionConsultationId);
-        fd.append('followup_date', date);
-        fd.append('message', 'Follow-up scheduled from consultation session.');
-        fd.append('csrf_token', sessionCsrf);
-        const res = await fetch(sessionAssetBase + '/app/api/provider/schedule_followup.php', { method: 'POST', body: fd, credentials: 'same-origin' });
-        const data = await res.json();
-        showSessionChatAlert(data.message || (data.success ? 'Follow-up scheduled.' : 'Could not schedule follow-up.'), data.success ? 'success' : 'error');
-    } catch (e) {
-        showSessionChatAlert('Network error scheduling follow-up.', 'error');
-    }
+function scheduleFollowUp() {
+    openFollowUpModal();
 }
 
 /* â”€â”€ Post-consultation follow-up decision â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

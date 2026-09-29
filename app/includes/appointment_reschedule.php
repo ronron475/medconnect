@@ -197,8 +197,8 @@ function appointment_reschedule_provider_request(
         return ['ok' => false, 'message' => 'Could not submit reschedule request. Please try again.'];
     }
 
-    $oldWhen = date('M j, Y', strtotime($oldDate)) . ' at ' . date('g:i A', strtotime($oldTime));
-    $newWhen = date('M j, Y', strtotime($newDate)) . ' at ' . date('g:i A', strtotime($newTime));
+    $oldWhen = date('M j, Y', strtotime($oldDate)) . ' • ' . date('g:i A', strtotime($oldTime));
+    $newWhen = date('M j, Y', strtotime($newDate)) . ' • ' . date('g:i A', strtotime($newTime));
 
     audit_log($pdo, [
         'patient_id'  => $patientId,
@@ -426,8 +426,8 @@ function appointment_reschedule_patient_respond(
         return ['ok' => false, 'message' => 'Could not process your response. Please try again.'];
     }
 
-    $oldWhen = date('M j, Y', strtotime((string) $req['old_date'])) . ' at ' . date('g:i A', strtotime((string) $req['old_time']));
-    $newWhen = date('M j, Y', strtotime((string) $req['new_date'])) . ' at ' . date('g:i A', strtotime((string) $req['new_time']));
+    $oldWhen = date('M j, Y', strtotime((string) $req['old_date'])) . ' • ' . date('g:i A', strtotime((string) $req['old_time']));
+    $newWhen = date('M j, Y', strtotime((string) $req['new_date'])) . ' • ' . date('g:i A', strtotime((string) $req['new_time']));
 
     audit_log($pdo, [
         'patient_id'  => $patientId,

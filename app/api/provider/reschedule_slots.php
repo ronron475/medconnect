@@ -50,9 +50,7 @@ try {
         }
         $slots[] = [
             'id' => (int) $row['id'],
-            'label' => date('g:i A', strtotime($startTime))
-                . ' – '
-                . date('g:i A', strtotime($endTime)),
+            'label' => appointment_slot_range_label($startTime, $endTime),
         ];
     }
 

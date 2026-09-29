@@ -226,7 +226,7 @@ $tabs_list = ['overview' => 'Overview', 'consultations' => 'Consultations', 'cli
           <?= htmlspecialchars((string) ($apRow['name'] ?? 'Patient')) ?>
         </a>
         <?php if (!empty($apRow['request_created_at'])): ?>
-        <span class="text-xs text-muted"> · <?= date('M j, Y g:i A', strtotime((string) $apRow['request_created_at'])) ?></span>
+        <span class="text-xs text-muted"> · <?= date('M j, Y', strtotime((string) $apRow['request_created_at'])) . ' • ' . date('g:i A', strtotime((string) $apRow['request_created_at'])) ?></span>
         <?php endif; ?>
       </li>
       <?php endforeach; ?>

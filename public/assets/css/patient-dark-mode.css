@@ -93,9 +93,15 @@ html[data-theme-resolved='dark'] body.patient-portal .sb-profile {
 }
 
 html[data-theme-resolved='dark'] body.patient-portal .sb-logout {
-  background: #151F2E !important;
-  border-color: #243347 !important;
-  color: #8FAABF !important;
+  background: var(--card-bg, #151F2E) !important;
+  border-color: var(--border-color, #243347) !important;
+  color: var(--text-secondary, #8FAABF) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .sb-logout:hover {
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: var(--accent-red, #fca5a5) !important;
+  border-color: rgba(239, 68, 68, 0.25) !important;
 }
 
 /* ── Topbar ── */
@@ -1338,6 +1344,7 @@ html[data-theme-resolved='dark'] body.patient-portal .pdash-status-item strong,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-action__provider,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-action__msg,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-action__date,
+html[data-theme-resolved='dark'] body.patient-portal .pdash-action__slot,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-quick__link,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-care__title,
 html[data-theme-resolved='dark'] body.patient-portal .pdash-session__info h4,

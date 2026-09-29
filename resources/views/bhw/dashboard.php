@@ -1,6 +1,6 @@
 <?php
 /**
- * BHW sector dashboard — live SQL metrics and triage queue (barangay-scoped).
+ * BHW sector dashboard — live barangay consultation trends and notifications.
  */
 $page_title = 'Dashboard';
 $bhw_current_file = 'dashboard.php';
@@ -19,7 +19,6 @@ $bhwCtx = [
 $dashFilters = ['days' => 7];
 // Unassigned BHW (barangay_id=0) uses deny-all SQL → live zeros, same UI shell.
 $dashboardCharts = BhwWorkflows::getDashboardCharts($pdo, $bhwCtx, $dashFilters);
-$queueRaw = BhwWorkflows::getTriageQueue($pdo, $bhwCtx, 15, $dashFilters);
 
 $bhwDashCss = ASSETS_PATH . '/css/bhw-dashboard.css';
 $bhwDashCssVer = file_exists($bhwDashCss) ? (int) filemtime($bhwDashCss) : time();
@@ -42,64 +41,21 @@ require __DIR__ . '/partials/layout_open.php';
         <h3 class="bhw-dash-charts-heading">Activity</h3>
         <p class="bhw-dash-charts-sub">Live barangay trends</p>
       </div>
-      <div class="mc-chart-filters mc-chart-filters--inline bhw-dash-chart-filters">
-        <label class="mc-chart-filters__label" for="bhw_dash_days">Period</label>
-        <select id="bhw_dash_days" class="form-select mc-chart-filters__control" aria-label="Chart date range">
-          <option value="1">Today</option>
-          <option value="7" selected>Week</option>
-          <option value="30">Month</option>
-          <option value="365">Year</option>
-        </select>
+      <div class="bhw-dash-period">
+        <button type="button" id="bhw_dash_period_btn" class="bhw-dash-period__btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="bhw_dash_period_menu">Week</button>
+        <ul id="bhw_dash_period_menu" class="bhw-dash-period__menu" role="listbox" aria-label="Chart date range" hidden>
+          <li role="presentation"><button type="button" role="option" data-value="1" aria-selected="false">Days</button></li>
+          <li role="presentation"><button type="button" role="option" data-value="7" aria-selected="true">Weeks</button></li>
+          <li role="presentation"><button type="button" role="option" data-value="30" aria-selected="false">Months</button></li>
+        </ul>
+        <input type="hidden" id="bhw_dash_days" value="7">
       </div>
     </div>
     <div class="bhw-dash-charts-grid">
       <article class="bhw-chart-card">
-        <h4 id="bhw_dash_title_consult">Consultations</h4>
-        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_consult_week" aria-label="Consultations chart"></canvas></div>
+        <h4 id="bhw_dash_title_consult">Consultation trends</h4>
+        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_consult_week" aria-label="Consultation trends chart"></canvas></div>
       </article>
-      <article class="bhw-chart-card">
-        <h4 id="bhw_dash_title_reg">New registrations</h4>
-        <div class="bhw-chart-wrap bhw-chart-wrap--line"><canvas id="bhw_dash_reg_week" aria-label="Registrations chart"></canvas></div>
-      </article>
-    </div>
-  </section>
-
-  <section class="bhw-dash-panel bhw-dash-panel--queue" aria-labelledby="bhwDashQueueTitle">
-    <div class="bhw-dash-panel__head">
-      <h3 id="bhwDashQueueTitle">Triage &amp; Scheduling Queue</h3>
-      <span class="bhw-dash-compliance">Logistical view · RA 10173 compliant</span>
-    </div>
-    <div class="bhw-dash-panel__toolbar" role="search">
-      <div class="bhw-dash-search">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" id="resident-search" placeholder="Search by resident name…" aria-label="Search residents in queue">
-      </div>
-    </div>
-    <div class="bhw-dash-panel__body bhw-dash-panel__body--flush">
-      <div class="table-responsive">
-        <table class="bhw-dash-queue-table">
-          <thead>
-            <tr>
-              <th scope="col">Resident</th>
-              <th scope="col">Urgency</th>
-              <th scope="col">Status</th>
-              <th scope="col" class="text-end">Action</th>
-            </tr>
-          </thead>
-          <tbody id="queue-tbody">
-            <?php if (empty($queueRaw)): ?>
-            <tr>
-              <td colspan="4">
-                <div class="bhw-dash-queue-empty">
-                  No triage records in your barangay yet.
-                  <a href="patients/list.php">Open Patient List</a>.
-                </div>
-              </td>
-            </tr>
-            <?php endif; ?>
-          </tbody>
-        </table>
-      </div>
     </div>
   </section>
 
@@ -116,86 +72,17 @@ require __DIR__ . '/partials/layout_open.php';
 ob_start();
 ?>
 (function () {
-  var initialQueue = <?= json_encode($queueRaw, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
-  var searchInput = document.getElementById('resident-search');
   var dashDays = document.getElementById('bhw_dash_days');
+  var periodBtn = document.getElementById('bhw_dash_period_btn');
+  var periodMenu = document.getElementById('bhw_dash_period_menu');
   var chartsRoot = document.getElementById('bhwDashChartsRoot');
-  var tableBody = document.getElementById('queue-tbody');
   var REFRESH_MS = (window.McChartTheme && McChartTheme.REFRESH_MS) ? McChartTheme.REFRESH_MS : 15000;
+  var periodButtonLabels = { '1': 'Days', '7': 'Week', '30': 'Months' };
+  var lastChartsFp = '';
 
   function dashFilters() {
     return { days: dashDays ? dashDays.value : '7' };
   }
-
-  function updateChartTitles(payload) {
-    var days = (payload && payload.days) || (dashDays ? dashDays.value : 7);
-    var rangeText = (window.McChartTheme && McChartTheme.periodRangeLabel)
-      ? McChartTheme.periodRangeLabel(days)
-      : ('last ' + days + ' days');
-    var tc = document.getElementById('bhw_dash_title_consult');
-    var tr = document.getElementById('bhw_dash_title_reg');
-    if (tc) tc.textContent = 'Consultations — ' + rangeText;
-    if (tr) tr.textContent = 'New registrations — ' + rangeText;
-  }
-
-  function esc(v) {
-    return String(v == null ? '' : v)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function badgeClass(urgency) {
-    var u = (urgency || '').toLowerCase();
-    if (u === 'high' || u.indexOf('urgent') >= 0) return 'bhw-badge-high';
-    if (u === 'moderate') return 'bhw-badge-moderate';
-    return 'bhw-badge-low';
-  }
-
-  function rowClass(urgency) {
-    var u = (urgency || '').toLowerCase();
-    if (u === 'high' || u.indexOf('urgent') >= 0) return 'bhw-row-high';
-    if (u === 'moderate') return 'bhw-row-moderate';
-    return '';
-  }
-
-  function renderQueue(rows) {
-    if (!rows.length) {
-      tableBody.innerHTML = '<tr><td colspan="4"><div class="bhw-dash-queue-empty">No triage records match your filters.</div></td></tr>';
-      return;
-    }
-    tableBody.innerHTML = rows.map(function (r) {
-      var name = ((r.first_name || '') + ' ' + (r.last_name || '')).trim();
-      var purok = r.purok || '—';
-      var urgency = (r.urgency_label || 'low');
-      var status = r.status || 'pending';
-      var pid = r.patient_id || '';
-      return '<tr class="' + rowClass(urgency) + '" data-name="' + esc(name.toLowerCase()) + '">' +
-        '<td data-label="Resident">' +
-          '<div class="bhw-dash-resident-name">' + esc(name) + '</div>' +
-          '<div class="bhw-dash-resident-meta">' + esc(purok) + '</div>' +
-        '</td>' +
-        '<td data-label="Urgency"><span class="bhw-badge ' + badgeClass(urgency) + '">' + esc(String(urgency).toUpperCase()) + '</span></td>' +
-        '<td data-label="Status"><span class="bhw-badge bhw-badge-scheduled">' + esc(status) + '</span></td>' +
-        '<td class="text-end" data-label="Action">' +
-          '<a class="bhw-btn-teal" href="patients/list.php?patient_id=' + encodeURIComponent(pid) + '">View Patient</a>' +
-        '</td></tr>';
-    }).join('');
-    filterRows();
-  }
-
-  function filterRows() {
-    var query = (searchInput.value || '').toLowerCase().trim();
-    Array.from(tableBody.rows).forEach(function (row) {
-      if (row.cells.length < 2) return;
-      var name = row.dataset.name || '';
-      row.style.display = !query || name.indexOf(query) >= 0 ? '' : 'none';
-    });
-  }
-
-  var lastQueueFp = '';
-  var lastChartsFp = '';
 
   function stableFp(value) {
     try {
@@ -205,48 +92,70 @@ ob_start();
     }
   }
 
+  function setPeriodOpen(open) {
+    if (!periodBtn || !periodMenu) return;
+    periodBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    periodMenu.hidden = !open;
+  }
+
+  function applyPeriod(value, refresh) {
+    var next = String(value || '7');
+    if (dashDays) dashDays.value = next;
+    if (periodBtn) periodBtn.textContent = periodButtonLabels[next] || 'Week';
+    if (periodMenu) {
+      periodMenu.querySelectorAll('[role="option"]').forEach(function (opt) {
+        opt.setAttribute('aria-selected', opt.getAttribute('data-value') === next ? 'true' : 'false');
+      });
+    }
+    if (chartsRoot) chartsRoot.setAttribute('data-days', next);
+    if (refresh) {
+      lastChartsFp = '';
+      refreshDashboard();
+    }
+  }
+
+  function refreshNotifications() {
+    if (window.MedConnectNotifications && typeof MedConnectNotifications.refreshWidgets === 'function') {
+      MedConnectNotifications.refreshWidgets();
+    }
+  }
+
   function refreshDashboard() {
-    if (document.hidden) return;
+    if (document.hidden || !window.BhwPortal) return;
     BhwPortal.get('dashboard.php', dashFilters()).then(function (res) {
-      if (!res.success) return;
-
-      // Rebuild queue only when rows change — avoids layout churn below the charts.
-      var queue = res.queue || [];
-      var queueFp = stableFp(queue);
-      if (queueFp !== lastQueueFp) {
-        lastQueueFp = queueFp;
-        renderQueue(queue);
-      }
-
-      if (res.charts && window.BhwDashboardCharts) {
-        var chartsFp = stableFp(res.charts);
-        updateChartTitles(res.charts);
-        // Chart module updates Chart.js data in place (no destroy/remount).
-        if (chartsFp !== lastChartsFp || !lastChartsFp) {
-          lastChartsFp = chartsFp;
-          BhwDashboardCharts.update(res.charts);
-        }
+      if (!res.success || !res.charts || !window.BhwDashboardCharts) return;
+      var chartsFp = stableFp(res.charts);
+      if (chartsFp !== lastChartsFp || !lastChartsFp) {
+        lastChartsFp = chartsFp;
+        BhwDashboardCharts.update(res.charts);
       }
     }).catch(function () {});
+    refreshNotifications();
   }
 
-  dashDays?.addEventListener('change', function () {
-    if (chartsRoot) chartsRoot.setAttribute('data-days', dashDays.value);
-    lastChartsFp = '';
-    lastQueueFp = '';
-    refreshDashboard();
-  });
-
-  searchInput.addEventListener('input', filterRows);
-  if (initialQueue.length) {
-    lastQueueFp = stableFp(initialQueue);
-    renderQueue(initialQueue);
+  if (periodBtn && periodMenu) {
+    periodBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      setPeriodOpen(periodMenu.hidden);
+    });
+    periodMenu.addEventListener('click', function (e) {
+      var opt = e.target.closest('[role="option"]');
+      if (!opt) return;
+      applyPeriod(opt.getAttribute('data-value'), true);
+      setPeriodOpen(false);
+    });
+    document.addEventListener('click', function (e) {
+      if (!periodMenu.hidden && !e.target.closest('.bhw-dash-period')) setPeriodOpen(false);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setPeriodOpen(false);
+    });
   }
-  updateChartTitles(<?= json_encode($dashboardCharts) ?>);
+
   lastChartsFp = stableFp(<?= json_encode($dashboardCharts) ?>);
   window.refreshBhwDashboard = refreshDashboard;
 
-  var dashTimer = setInterval(function () {
+  setInterval(function () {
     if (document.hidden) return;
     if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
     refreshDashboard();
@@ -260,7 +169,9 @@ ob_start();
       changed.indexOf('triage') !== -1 ||
       changed.indexOf('queue') !== -1 ||
       changed.indexOf('appointments') !== -1 ||
-      changed.indexOf('consultations') !== -1
+      changed.indexOf('consultations') !== -1 ||
+      changed.indexOf('followups') !== -1 ||
+      changed.indexOf('notifications') !== -1
     ) {
       refreshDashboard();
     }

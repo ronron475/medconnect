@@ -281,6 +281,17 @@ function patient_portal_has_scheduled_followup(PDO $pdo, int $patientId): bool
 }
 
 /**
+ * Provider-scheduled follow-up visits stay on their booked slot.
+ * A new patient booking must not move them.
+ *
+ * @param array<string, mixed> $consult
+ */
+function patient_consultation_is_provider_followup(array $consult): bool
+{
+    return strcasecmp(trim((string) ($consult['consult_type'] ?? '')), 'Follow-up') === 0;
+}
+
+/**
  * Whether an open consultation can be updated in-place (same-day slot change for the same case).
  *
  * @param array<string, mixed> $consult
@@ -288,6 +299,9 @@ function patient_portal_has_scheduled_followup(PDO $pdo, int $patientId): bool
 function patient_consultation_may_be_rebooked_in_place(array $consult, int $newTriageId): bool
 {
     if ($newTriageId <= 0) {
+        return false;
+    }
+    if (patient_consultation_is_provider_followup($consult)) {
         return false;
     }
     if (strtolower((string) ($consult['status'] ?? '')) === 'in_consultation') {

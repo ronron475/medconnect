@@ -215,7 +215,7 @@ function patient_upcoming_cancellable_consultation(PDO $pdo, int $patientId): ?a
     $time = (string) ($row['consult_time'] ?? '');
     $when = $date !== '' ? date('M j, Y', strtotime($date)) : 'scheduled time';
     if ($time !== '') {
-        $when .= ' at ' . date('g:i A', strtotime($time));
+        $when .= ' • ' . date('g:i A', strtotime($time));
     }
 
     return [

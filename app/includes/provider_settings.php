@@ -332,7 +332,7 @@ function provider_settings_list_sessions(PDO $pdo, int $userId): array
             'device' => (string) ($row['device'] ?? 'desktop'),
             'ip_address' => (string) ($row['ip_address'] ?? ''),
             'last_activity_label' => !empty($row['last_activity'])
-                ? date('M j, Y g:i A', strtotime((string) $row['last_activity']))
+                ? date('M j, Y', strtotime((string) $row['last_activity'])) . ' • ' . date('g:i A', strtotime((string) $row['last_activity']))
                 : '—',
         ];
     }, $rows);

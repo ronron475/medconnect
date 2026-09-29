@@ -699,26 +699,138 @@
 }
 
 @media (max-width: 768px) {
+  .bhw-pl-page,
+  .bhw-pl-table-wrap,
+  .bhw-pl-toolbar,
+  .bhw-pl-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
   .bhw-pl-table-scroll {
     display: none;
   }
 
   .bhw-pl-cards {
     display: flex;
+    width: 100%;
+    padding: 8px;
+    gap: 8px;
+    box-sizing: border-box;
   }
 
-  .bhw-pl-toolbar select {
-    flex: 1 1 calc(50% - 4px);
+  /* Column toolbar: a 200px flex-basis is height, which left a gap under the field and centered the icon in that gap. */
+  body.bhw-body .bhw-pl-toolbar-search {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    align-self: stretch;
+  }
+
+  body.bhw-body .bhw-pl-toolbar-search input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  body.bhw-body .bhw-pl-toolbar-search svg {
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  body.bhw-body .bhw-pl-toolbar select {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  body.bhw-body .bhw-pl-header-actions {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.bhw-body .bhw-pl-header-actions .bhw-pl-btn {
+    flex: 0 0 auto;
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .bhw-pl-card {
+    padding: 10px 12px;
+  }
+
+  .bhw-pl-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .bhw-pl-card-head .bhw-pl-badge {
+    align-self: flex-start;
+    width: auto;
+  }
+
+  .bhw-pl-name {
+    font-size: 15px;
+  }
+
+  .bhw-pl-email {
+    font-size: 12px;
+  }
+
+  .bhw-pl-card-meta {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  .bhw-pl-card-meta > div {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 6px;
+    align-items: start;
+  }
+
+  .bhw-pl-card-meta dd {
+    overflow-wrap: anywhere;
+  }
+
+  .bhw-pl-card .bhw-pl-row-actions {
+    display: flex;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .bhw-pl-card .bhw-pl-menu {
+    flex: 1 1 0;
+    display: flex;
     min-width: 0;
   }
 
-  .bhw-pl-header-actions {
+  .bhw-pl-card .bhw-pl-btn-view,
+  .bhw-pl-card .bhw-pl-menu-trigger {
+    flex: 1 1 0;
     width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    box-sizing: border-box;
   }
 
-  .bhw-pl-header-actions .bhw-pl-btn {
-    flex: 1;
-    justify-content: center;
+  .bhw-pl-card .bhw-pl-menu-panel {
+    left: auto;
+    right: 0;
+    max-width: min(220px, calc(100vw - 32px));
   }
 }
 

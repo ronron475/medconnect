@@ -42,7 +42,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       <div class="text-xs text-muted" style="margin-top:4px;">
         <?= sa_backup_status_badge((string) $latest['status']) ?>
         · <?= htmlspecialchars((string) $latest['backup_type']) ?>
-        · <?= date('M j, Y g:i A', strtotime((string) $latest['created_at'])) ?>
+        · <?= date('M j, Y', strtotime((string) $latest['created_at'])) . ' • ' . date('g:i A', strtotime((string) $latest['created_at'])) ?>
       </div>
     <?php else: ?>
       <div class="text-sm text-muted" style="margin-top:6px;">No backups yet</div>
@@ -58,7 +58,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <?php if ($autoStatus): ?>
       <div style="margin-top:6px;"><?= sa_backup_status_badge((string) $autoStatus) ?></div>
       <div class="text-xs text-muted" style="margin-top:4px;">
-        <?= $autoAt ? date('M j, Y g:i A', strtotime((string) $autoAt)) : '—' ?>
+        <?= $autoAt ? date('M j, Y', strtotime((string) $autoAt)) . ' • ' . date('g:i A', strtotime((string) $autoAt)) : '—' ?>
         <?php if (!empty($lastAuto['filename'])): ?>
           · <?= htmlspecialchars((string) $lastAuto['filename']) ?>
         <?php endif; ?>
@@ -153,7 +153,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <td data-label="Type"><?= htmlspecialchars($b['backup_type']) ?></td>
         <td data-label="Status"><?= sa_backup_status_badge((string) $b['status']) ?></td>
         <td data-label="Size" class="text-xs"><?= !empty($b['file_size']) ? number_format(((int) $b['file_size']) / 1024, 1) . ' KB' : '—' ?></td>
-        <td data-label="Created" class="text-xs text-muted"><?= !empty($b['created_at']) ? date('M j, Y g:i A', strtotime($b['created_at'])) : '—' ?></td>
+        <td data-label="Created" class="text-xs text-muted"><?= !empty($b['created_at']) ? date('M j, Y', strtotime($b['created_at'])) . ' • ' . date('g:i A', strtotime($b['created_at'])) : '—' ?></td>
         <td data-label="Actions" style="display:flex;gap:6px;flex-wrap:wrap;">
           <?php if ($canAct): ?>
           <a class="mc-btn mc-btn--outline" style="padding:4px 10px;font-size:11px;" href="<?= htmlspecialchars($api) ?>?action=download&id=<?= (int) $b['id'] ?>">Download</a>

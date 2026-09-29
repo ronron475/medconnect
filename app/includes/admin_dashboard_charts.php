@@ -112,31 +112,153 @@ function admin_chart_merge_daily_counts(array $series, array $rows, string $date
     return $series;
 }
 
+/**
+ * A consultation counts only after the patient was actually seen.
+ * Booked, waiting, and cancelled rows stay out of the trend.
+ */
+function admin_chart_consulted_where_sql(bool $hasCompletedAt): string
+{
+    $happened = "LOWER(TRIM(COALESCE(c.status,''))) IN ('completed','in_consultation','ended','closed')";
+    if ($hasCompletedAt) {
+        $happened = "({$happened} OR c.completed_at IS NOT NULL)";
+    }
+
+    return $happened
+        . " AND LOWER(TRIM(COALESCE(c.status,''))) NOT IN ('cancelled','canceled')"
+        . ' AND c.patient_id IS NOT NULL AND c.patient_id > 0';
+}
+
+/**
+ * @return array{date_expr:string,where_sql:string,join_sql:string}|null
+ */
+function admin_chart_consulted_query_parts(PDO $pdo): ?array
+{
+    if (!admin_chart_table_exists($pdo, 'consultations')) {
+        return null;
+    }
+
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+    } catch (Throwable $e) {
+        return null;
+    }
+
+    $dateParts = [];
+    $hasCompletedAt = in_array('completed_at', $cols, true);
+    if ($hasCompletedAt) {
+        $dateParts[] = 'c.completed_at';
+    }
+    if (in_array('consult_date', $cols, true)) {
+        $dateParts[] = 'c.consult_date';
+    }
+    if (in_array('created_at', $cols, true)) {
+        $dateParts[] = 'c.created_at';
+    }
+    if ($dateParts === []) {
+        return null;
+    }
+
+    $join = '';
+    if (admin_chart_table_exists($pdo, 'users')) {
+        $alive = admin_chart_users_not_soft_deleted_sql($pdo, 'u');
+        $join = "INNER JOIN users u ON u.id = c.patient_id
+            AND LOWER(TRIM(COALESCE(u.role,''))) = 'patient'
+            AND {$alive}";
+    }
+
+    return [
+        'date_expr' => 'COALESCE(' . implode(', ', $dateParts) . ')',
+        'where_sql' => admin_chart_consulted_where_sql($hasCompletedAt),
+        'join_sql'  => $join,
+    ];
+}
+
 /** @return list<array{date:string,label:string,count:int,is_today:bool}> */
 function admin_chart_consultations_daily(PDO $pdo, int $days = 30): array
 {
+    $days = admin_chart_normalize_period_days($days);
+    if ($days >= 365) {
+        return admin_chart_consultations_monthly($pdo, 12);
+    }
+
     $series = admin_chart_last_n_days($days);
-    if (!admin_chart_table_exists($pdo, 'consultations')) {
+    $parts = admin_chart_consulted_query_parts($pdo);
+    if ($parts === null) {
         return $series;
     }
 
-    $start = $series[0]['date'];
+    $start = $series[0]['date'] . ' 00:00:00';
+    $dateExpr = 'DATE(' . $parts['date_expr'] . ')';
     try {
-        $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
-        $hasCreated = in_array('created_at', $cols, true);
-        $dateExpr = $hasCreated
-            ? 'DATE(COALESCE(consult_date, created_at))'
-            : 'DATE(consult_date)';
         $stmt = $pdo->prepare("
-            SELECT {$dateExpr} AS d, COUNT(*) AS cnt
-            FROM consultations
+            SELECT {$dateExpr} AS d, COUNT(DISTINCT c.patient_id) AS cnt
+            FROM consultations c
+            {$parts['join_sql']}
             WHERE {$dateExpr} >= ?
+              AND {$parts['where_sql']}
             GROUP BY {$dateExpr}
             ORDER BY d ASC
         ");
         $stmt->execute([$start]);
         $series = admin_chart_merge_daily_counts($series, $stmt->fetchAll(PDO::FETCH_ASSOC));
     } catch (Throwable $e) {}
+
+    return $series;
+}
+
+/**
+ * Monthly count of distinct patients who consulted (year trend).
+ *
+ * @return list<array{date:string,label:string,count:int,is_today:bool}>
+ */
+function admin_chart_consultations_monthly(PDO $pdo, int $months = 12): array
+{
+    $months = max(1, min(24, $months));
+    $series = [];
+    $counts = [];
+
+    for ($i = $months - 1; $i >= 0; $i--) {
+        $ts = strtotime(date('Y-m-01') . " -{$i} months");
+        $key = date('Y-m', $ts);
+        $series[] = [
+            'date'     => $key . '-01',
+            'label'    => date('M Y', $ts),
+            'count'    => 0,
+            'is_today' => $i === 0,
+        ];
+        $counts[$key] = 0;
+    }
+
+    $parts = admin_chart_consulted_query_parts($pdo);
+    if ($parts === null) {
+        return $series;
+    }
+
+    $start = $series[0]['date'] . ' 00:00:00';
+    $monthExpr = "DATE_FORMAT({$parts['date_expr']}, '%Y-%m')";
+    try {
+        $stmt = $pdo->prepare("
+            SELECT {$monthExpr} AS ym, COUNT(DISTINCT c.patient_id) AS cnt
+            FROM consultations c
+            {$parts['join_sql']}
+            WHERE {$parts['date_expr']} >= ?
+              AND {$parts['where_sql']}
+            GROUP BY {$monthExpr}
+        ");
+        $stmt->execute([$start]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $ym = (string) ($row['ym'] ?? '');
+            if (array_key_exists($ym, $counts)) {
+                $counts[$ym] = (int) ($row['cnt'] ?? 0);
+            }
+        }
+    } catch (Throwable $e) {}
+
+    foreach ($series as &$point) {
+        $ym = substr((string) $point['date'], 0, 7);
+        $point['count'] = (int) ($counts[$ym] ?? 0);
+    }
+    unset($point);
 
     return $series;
 }
@@ -324,9 +446,8 @@ function admin_chart_triage_daily(PDO $pdo, int $days = 30): array
 function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
 {
     $days = admin_chart_normalize_period_days($days);
-    // Overview companion series stay short; registration trends use the selected period.
     $companionDays = $days > 30 ? 30 : $days;
-    $consultations = admin_chart_consultations_daily($pdo, $companionDays);
+    $consultations = admin_chart_consultations_daily($pdo, $days);
     $registrations = admin_chart_registrations_daily($pdo, $days);
     $triage        = admin_chart_triage_daily($pdo, $companionDays);
     $roles         = admin_chart_user_roles($pdo);

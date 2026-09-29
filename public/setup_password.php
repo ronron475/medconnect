@@ -6,6 +6,9 @@ require_once __DIR__ . '/../app/includes/patient_account_security.php';
 $token = trim($_GET['token'] ?? '');
 $user = $token !== '' ? patient_find_by_setup_token($pdo, $token) : null;
 $valid = (bool) $user;
+if ($valid) {
+    patient_note_gmail_verified($pdo, (int) $user['id']);
+}
 $asset = ASSET_BASE;
 $csrf = $_SESSION['csrf_token'] ?? '';
 ?>
@@ -65,12 +68,12 @@ $csrf = $_SESSION['csrf_token'] ?? '';
       <?php if (!$valid): ?>
         <div class="setup-invalid">
           <h2 class="setup-title">Link Expired or Invalid</h2>
-          <p class="setup-sub">This password setup link is no longer valid. Please contact your Barangay Health Worker or use the temporary password provided at registration to sign in.</p>
+          <p class="setup-sub">This verification link is no longer valid. Ask your Barangay Health Worker to start registration again so a new link can be sent to your Gmail.</p>
           <a href="<?= $asset ?>/index.php" class="setup-btn" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;width:auto;padding:0 24px;">Go to Sign In</a>
         </div>
       <?php else: ?>
         <h1 class="setup-title">Complete Your Account</h1>
-        <p class="setup-sub">Welcome, <strong><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></strong>. Create your password and accept our policies to activate your patient portal.</p>
+        <p class="setup-sub">Your Gmail is verified, <strong><?= htmlspecialchars($user['first_name'] . ' ' . $user['last_name']) ?></strong>. Create your password on this device. Your Barangay Health Worker cannot see or set it, and it is not sent by email.</p>
         <div id="setup-alert" class="setup-alert" role="alert" hidden></div>
         <form id="setupForm" novalidate>
           <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>"/>

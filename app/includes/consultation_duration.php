@@ -27,7 +27,8 @@ function consultation_actual_duration_seconds(?string $startedAt, ?string $ended
 
 /**
  * Human label from exact seconds (floor minutes — never round up).
- * Examples: "45 seconds", "14 minutes", "1 hour 2 minutes".
+ * Examples: "less than 1 minute", "14 minutes", "1 hour 2 minutes".
+ * Sub-minute spans stay in minutes so user-facing labels do not show seconds.
  */
 function consultation_format_duration_seconds(?int $seconds): string
 {
@@ -36,7 +37,7 @@ function consultation_format_duration_seconds(?int $seconds): string
     }
 
     if ($seconds < 60) {
-        return $seconds . ' second' . ($seconds === 1 ? '' : 's');
+        return 'less than 1 minute';
     }
 
     $mins = intdiv($seconds, 60);
@@ -55,7 +56,7 @@ function consultation_format_duration_seconds(?int $seconds): string
 }
 
 /**
- * Clock label with seconds: "10:11:00 PM"
+ * User-facing clock label: "10:11 PM". Seconds stay in the stored timestamp.
  */
 function consultation_format_clock_time(?string $datetime): string
 {
@@ -68,7 +69,7 @@ function consultation_format_clock_time(?string $datetime): string
         return '';
     }
 
-    return date('g:i:s A', $ts);
+    return date('g:i A', $ts);
 }
 
 /**
@@ -133,22 +134,23 @@ function consultation_scheduled_duration_seconds_for_id(PDO $pdo, int $consultat
 }
 
 /**
- * Live call deadline: started_at + configured scheduled duration.
- * Before the video starts, falls back to calendar slot end when provided.
+ * Official end of the allotted window.
+ * appointment_slots.end_time wins. Actual video start does not move that end.
+ * started_at + slot length is only a fallback when no slot end is stored.
  */
 function consultation_session_deadline_ts(
     ?string $videoStartedAt,
     int $scheduledDurationSeconds,
     ?int $calendarSlotEndTs = null
 ): ?int {
+    if ($calendarSlotEndTs !== null && $calendarSlotEndTs > 0) {
+        return $calendarSlotEndTs;
+    }
     $start = ($videoStartedAt !== null && trim($videoStartedAt) !== '')
         ? strtotime($videoStartedAt)
         : false;
     if ($start !== false && $scheduledDurationSeconds > 0) {
         return $start + $scheduledDurationSeconds;
-    }
-    if ($calendarSlotEndTs !== null && $calendarSlotEndTs > 0) {
-        return $calendarSlotEndTs;
     }
 
     return null;
@@ -168,7 +170,7 @@ function consultation_seconds_remaining_until(?int $deadlineTs, ?int $nowTs = nu
 }
 
 /**
- * Elapsed call seconds capped at the scheduled limit (for live timer display).
+ * Elapsed call seconds from the video start. Not capped: overtime stays visible.
  */
 function consultation_elapsed_capped_seconds(
     ?string $videoStartedAt,
@@ -187,12 +189,7 @@ function consultation_elapsed_capped_seconds(
         ? strtotime($videoEndedAt)
         : false;
     $until = ($end !== false) ? $end : ($nowTs ?? time());
-    $elapsed = max(0, (int) ($until - $start));
-    if ($scheduledDurationSeconds > 0) {
-        return min($elapsed, $scheduledDurationSeconds);
-    }
-
-    return $elapsed;
+    return max(0, (int) ($until - $start));
 }
 
 /**
@@ -232,7 +229,7 @@ function consultation_duration_snapshot(
     } elseif (in_array($status, ['completed', 'ended'], true) || ($started !== '' && $ended !== '')) {
         $statusLabel = $endedEarly ? 'Completed — Ended early' : 'Completed';
     } elseif ($status === 'in_consultation' || ($started !== '' && $ended === '')) {
-        $statusLabel = 'In progress';
+        $statusLabel = 'Ongoing';
     }
 
     $scheduledEndAt = '';

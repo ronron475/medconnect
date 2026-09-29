@@ -183,16 +183,16 @@
     const when = next.scheduled_label ? ' at ' + escapeHtml(next.scheduled_label) : '';
     let body = '';
     if (next.early_start_response === 'join_early') {
-      body = '<strong>' + name + ' chose Join Early.</strong><p>You can open their session now. Their scheduled queue position is unchanged.</p>';
+      body = '<strong>' + name + ' chose Start Early.</strong><p>You can open their session now. Their scheduled time' + when + ' is unchanged.</p>';
     } else if (next.early_start_response === 'keep_time') {
       body = '<strong>' + name + ' chose Keep Scheduled Time.</strong><p>This is not a missed visit. Open the session' + when + '.</p>';
     } else if (next.can_offer_early && !activeVideoId) {
-      body = '<strong>Ready for Next Patient</strong><p>' + name + ' is scheduled' + when + '.</p>' +
-        '<button type="button" class="queue-btn primary" id="readyForNextBtn">Ready for Next Patient</button>';
+      body = '<strong>Ready for Next Patient Early</strong><p>' + name + ' is scheduled' + when + '.</p>' +
+        '<button type="button" class="queue-btn primary" id="readyForNextBtn">Ready for Next Patient Early</button>';
     } else if (next.early_start_response_label) {
       body = '<strong>Next: ' + name + '</strong><p>' + escapeHtml(next.early_start_response_label) + '.</p>';
     } else if (activeVideoId) {
-      body = '<strong>Next in queue: ' + name + '</strong><p>They stay in scheduled order while the current consultation continues.</p>';
+      body = '<strong>Previous consultation in progress</strong><p>Next patient is waiting: ' + name + when + '.</p>';
     } else {
       banner.hidden = true;
       banner.innerHTML = '';

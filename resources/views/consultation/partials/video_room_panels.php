@@ -128,21 +128,21 @@ $info_sub = !empty($is_patient)
         <div id="mcVcPostCallStartedRow" hidden>
           <dt>
             <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-            Started
+            Start Time
           </dt>
           <dd id="mcVcPostCallStarted">—</dd>
         </div>
         <div id="mcVcPostCallEndedRow" hidden>
           <dt>
             <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-            Ended
+            End Time
           </dt>
           <dd id="mcVcPostCallEnded">—</dd>
         </div>
         <div id="mcVcPostCallDurationRow">
           <dt>
             <span class="mc-vc-postcall__ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
-            Actual duration
+            Duration
           </dt>
           <dd id="mcVcPostCallDuration">—</dd>
         </div>

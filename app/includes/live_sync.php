@@ -69,7 +69,8 @@ function live_sync_payload(PDO $pdo, int $userId, string $role): array
             $fingerprints['queue'],
             $fingerprints['triage'],
             live_sync_admin_users_fp($pdo),
-            $fingerprints['staff_applications']
+            $fingerprints['staff_applications'],
+            live_sync_admin_consult_trends_fp($pdo)
         );
     }
 
@@ -465,6 +466,47 @@ function live_sync_admin_queue_fp(PDO $pdo, string $today): string
          FROM consultations
          WHERE consult_date = ?",
         [$today]
+    ));
+}
+
+/**
+ * Whole-table consultation fingerprint so Consultation Trends refresh
+ * when a patient is seen, not only when today's queue counts change.
+ */
+function live_sync_admin_consult_trends_fp(PDO $pdo): string
+{
+    if (!live_sync_table_exists($pdo, 'consultations')) {
+        return live_sync_hash('0');
+    }
+
+    $hasCompleted = false;
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $hasCompleted = in_array('completed_at', $cols, true);
+    } catch (Throwable $e) {
+        $hasCompleted = false;
+    }
+
+    $completedExpr = $hasCompleted
+        ? 'COALESCE(MAX(UNIX_TIMESTAMP(completed_at)),0)'
+        : '0';
+    $seenExpr = $hasCompleted
+        ? "COALESCE(SUM(
+                LOWER(TRIM(COALESCE(status,''))) IN ('completed','in_consultation','ended','closed')
+                OR completed_at IS NOT NULL
+           ),0)"
+        : "COALESCE(SUM(
+                LOWER(TRIM(COALESCE(status,''))) IN ('completed','in_consultation','ended','closed')
+           ),0)";
+
+    return live_sync_hash(live_sync_row(
+        $pdo,
+        "SELECT COUNT(*), COALESCE(MAX(id),0),
+                COALESCE(MAX(UNIX_TIMESTAMP(created_at)),0),
+                {$completedExpr},
+                {$seenExpr},
+                COALESCE(COUNT(DISTINCT patient_id),0)
+         FROM consultations"
     ));
 }
 

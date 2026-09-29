@@ -601,13 +601,21 @@ body.provider-body .provider-page-body .bubble-row .pd-avatar {
   flex-shrink: 0;
 }
 
+body.patient-portal .bubble-row > div:not(.msg-avatar) {
+  width: fit-content;
+  max-width: min(72%, 520px);
+}
+
 body.patient-portal .bubble,
 body.provider-body .provider-page-body .bubble {
+  width: auto;
   max-width: min(72%, 520px);
   border-radius: 12px;
   padding: 8px 10px;
   font-size: 13px;
   line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: normal;
 }
 
 body.patient-portal .bubble.provider,
@@ -808,6 +816,10 @@ body.provider-body .provider-page-body .msg-back {
 
   body.patient-portal .msg-item {
     grid-template-columns: 36px minmax(0, 1fr) auto;
+  }
+
+  body.patient-portal .bubble-row > div:not(.msg-avatar) {
+    max-width: 86%;
   }
 
   body.patient-portal .bubble,

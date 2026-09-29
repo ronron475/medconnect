@@ -112,7 +112,7 @@ try {
     if ($nextWaiting) {
         $response = strtolower(trim((string) ($nextWaiting['early_start_response'] ?? '')));
         $responseLabel = match ($response) {
-            'join_early' => 'Join Early',
+            'join_early' => 'Start Early',
             'keep_time' => 'Keep Scheduled Time',
             default => $nextWaiting['early_start_offered_at'] ? 'Waiting for the patient' : '',
         };

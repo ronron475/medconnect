@@ -24,7 +24,15 @@ try {
             Api::success(['patient' => $p]);
             break;
         case 'create':
-            Api::error('BHWs cannot register new patients. Patients must complete the main registration flow.', 403);
+            if ($method !== 'POST') {
+                Api::error('Method not allowed.', 405);
+            }
+            $created = BhwWorkflows::registerPatient($pdo, $ctx, $_POST);
+            Api::success($created, $created['label']);
+            break;
+        case 'register_status':
+            $id = (int) ($_GET['patient_id'] ?? 0);
+            Api::success(BhwWorkflows::registrationStatus($pdo, $ctx, $id));
             break;
         case 'update':
             if ($method !== 'POST') {

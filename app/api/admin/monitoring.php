@@ -103,7 +103,7 @@ if ($type === 'live') {
                     : 'Unassigned',
                 'patient_name'    => (string) ($r['patient_name'] ?? ''),
                 'status'          => (string) ($r['status'] ?? ''),
-                'started_label'   => $started !== '' ? date('M j, Y g:i A', strtotime($started)) : '—',
+                'started_label'   => $started !== '' ? date('M j, Y', strtotime($started)) . ' • ' . date('g:i A', strtotime($started)) : '—',
                 'duration_label'  => admin_live_duration_label($started),
                 'connection'      => $connection,
                 'urgency_label'   => admin_queue_priority_label(

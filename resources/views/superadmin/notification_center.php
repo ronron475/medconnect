@@ -104,7 +104,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             </td>
             <td data-label="Priority"><span class="mc-badge"><?= htmlspecialchars($n['priority'] ?? 'normal') ?></span></td>
             <td data-label="Read"><?= $n['is_read'] ? 'Yes' : 'No' ?></td>
-            <td data-label="Time" class="text-xs text-muted"><?= date('M j, g:i A', strtotime($n['created_at'])) ?></td>
+            <td data-label="Time" class="text-xs text-muted"><?= date('M j, Y', strtotime($n['created_at'])) . ' • ' . date('g:i A', strtotime($n['created_at'])) ?></td>
             <td data-label="Actions" class="sa-nc__cell-actions">
               <?php if (!$n['is_read']): ?>
               <button type="button" class="mc-btn mc-btn--outline mc-btn--info sa-nc__row-btn js-mark-read" data-id="<?= (int) $n['id'] ?>">Read</button>

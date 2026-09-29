@@ -129,17 +129,28 @@ function pch_filter_url(string $filter): string
         <article class="pch-consult-card">
           <div class="pch-consult-card__head">
             <div>
-              <div class="pch-consult-card__title">Visit · <?= htmlspecialchars($dateLabel) ?></div>
+              <div class="pch-consult-card__title">
+                <span class="pch-consult-card__title-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                Visit · <?= htmlspecialchars($dateLabel) ?>
+              </div>
               <div class="pch-consult-card__date">Consultation #<?= (int) $row['id'] ?><?= $timeLabel ? ' · ' . htmlspecialchars($timeLabel) : '' ?></div>
             </div>
             <span class="pch-chip <?= htmlspecialchars(provider_consultation_status_chip_class($status)) ?>">
+              <?php if ($status === 'completed'): ?>
+              <svg class="pch-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+              <?php endif; ?>
               <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
             </span>
           </div>
 
           <div class="pch-consult-card__body">
             <div class="pch-consult-col pch-consult-col--medical">
-              <h4 class="pch-consult-col__title">Medical info</h4>
+              <h4 class="pch-consult-col__title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6a2 2 0 0 1 2 2v1H7V5a2 2 0 0 1 2-2z"/><path d="M7 6h10v14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6z"/></svg>
+                Medical info
+              </h4>
               <dl class="pch-kv">
                 <div class="pch-kv__row">
                   <dt>Patient complaint</dt>
@@ -147,31 +158,28 @@ function pch_filter_url(string $filter): string
                 </div>
                 <div class="pch-kv__row">
                   <dt>Doctor</dt>
-                  <dd><?= htmlspecialchars((string) ($row['doctor_name'] ?? '—')) ?></dd>
+                  <dd><?= htmlspecialchars((string) ($row['doctor_name'] ?: '—')) ?></dd>
                 </div>
-                <?php if (!empty($row['ai_classification'])): ?>
                 <div class="pch-kv__row">
                   <dt>AI classification</dt>
-                  <dd><?= htmlspecialchars((string) $row['ai_classification']) ?></dd>
+                  <dd><?= htmlspecialchars(trim((string) ($row['ai_classification'] ?? '')) ?: '—') ?></dd>
                 </div>
-                <?php endif; ?>
-                <?php if (!empty($row['final_classification'])): ?>
                 <div class="pch-kv__row">
                   <dt>Final doctor classification</dt>
-                  <dd><?= htmlspecialchars((string) $row['final_classification']) ?></dd>
+                  <dd><?= htmlspecialchars(trim((string) ($row['final_classification'] ?? '')) ?: '—') ?></dd>
                 </div>
-                <?php endif; ?>
-                <?php if (!empty($row['diagnosis'])): ?>
                 <div class="pch-kv__row">
                   <dt>Diagnosis</dt>
-                  <dd><?= htmlspecialchars((string) $row['diagnosis']) ?></dd>
+                  <dd><?= htmlspecialchars(trim((string) ($row['diagnosis'] ?? '')) ?: '—') ?></dd>
                 </div>
-                <?php endif; ?>
               </dl>
             </div>
 
             <div class="pch-consult-col pch-consult-col--session">
-              <h4 class="pch-consult-col__title">Session details</h4>
+              <h4 class="pch-consult-col__title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Session details
+              </h4>
               <dl class="pch-kv">
                 <?php if ($vhCompleted): ?>
                 <div class="pch-kv__row">
@@ -189,19 +197,19 @@ function pch_filter_url(string $filter): string
                 </div>
                 <?php endif; ?>
                 <div class="pch-kv__row">
-                  <dt>Started</dt>
+                  <dt>Start Time</dt>
                   <dd><?= htmlspecialchars((string) ($vh['started_label'] ?? '—')) ?></dd>
                 </div>
                 <div class="pch-kv__row">
-                  <dt>Ended</dt>
+                  <dt>End Time</dt>
                   <dd><?= htmlspecialchars((string) ($vh['ended_label'] ?? '—')) ?></dd>
                 </div>
                 <div class="pch-kv__row">
-                  <dt>Actual duration</dt>
+                  <dt>Duration</dt>
                   <dd><?= htmlspecialchars((string) ($vh['actual_duration_label'] ?: ($vh['duration_label'] ?? '—'))) ?></dd>
                 </div>
                 <div class="pch-kv__row">
-                  <dt>Call status</dt>
+                  <dt>Status</dt>
                   <dd><?= htmlspecialchars((string) ($vh['status_label'] ?: ($vh['video_status_label'] ?? 'Completed'))) ?></dd>
                 </div>
                 <div class="pch-kv__row">
@@ -234,9 +242,21 @@ function pch_filter_url(string $filter): string
                 <?php endif; ?>
                 <?php else: ?>
                 <div class="pch-kv__row">
-                  <dt>Video consultation</dt>
+                  <dt>Status</dt>
                   <dd><span class="pch-session-badge"><?= htmlspecialchars($vhLabel) ?></span></dd>
                 </div>
+                <?php if (!empty($vh['started_label'])): ?>
+                <div class="pch-kv__row">
+                  <dt>Start Time</dt>
+                  <dd><?= htmlspecialchars((string) $vh['started_label']) ?></dd>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty($vh['actual_duration_label'])): ?>
+                <div class="pch-kv__row">
+                  <dt>Duration</dt>
+                  <dd><?= htmlspecialchars((string) $vh['actual_duration_label']) ?></dd>
+                </div>
+                <?php endif; ?>
                 <?php if ($recUrl !== ''): ?>
                 <div class="pch-kv__row">
                   <dt>Video recording</dt>
@@ -256,10 +276,16 @@ function pch_filter_url(string $filter): string
           <div class="pch-consult-card__footer">
             <div class="pch-consult-card__tags">
               <span class="pch-chip <?= htmlspecialchars(provider_consultation_status_chip_class($status)) ?>">
+                <?php if ($status === 'completed'): ?>
+                <svg class="pch-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+                <?php endif; ?>
                 <?= htmlspecialchars(provider_consultation_status_label($status)) ?>
               </span>
               <?php if ($vhCompleted): ?>
-              <span class="pch-session-badge pch-session-badge--done">Video completed</span>
+              <span class="pch-session-badge pch-session-badge--done">
+                <svg class="pch-chip__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 10l4.55-2.28A1 1 0 0 1 21 8.62v6.76a1 1 0 0 1-1.45.9L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/></svg>
+                Video completed
+              </span>
               <?php elseif ($vhLabel !== ''): ?>
               <span class="pch-session-badge"><?= htmlspecialchars($vhLabel) ?></span>
               <?php endif; ?>
@@ -273,7 +299,7 @@ function pch_filter_url(string $filter): string
               <?php endif; ?>
               <a href="<?= htmlspecialchars($sessionUrl) ?>" class="mc-btn mc-btn--outline pch-consult-card__btn">View History</a>
               <?php if ($status === 'completed' && !empty($row['clinical_note_finalized'])): ?>
-              <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn mc-btn--outline pch-consult-card__btn">View SOAP</a>
+              <a href="<?= htmlspecialchars(ASSET_BASE) ?>/views/provider/medical_records.php?view=patients&amp;patient_id=<?= (int) $patient_detail['id'] ?>&amp;tab=clinical_notes" class="mc-btn pch-consult-card__btn pch-consult-card__btn--solid">View SOAP</a>
               <?php endif; ?>
             </div>
           </div>

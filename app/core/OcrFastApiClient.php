@@ -10,6 +10,40 @@ final class OcrFastApiClient
         return defined('OCR_USE_FASTAPI') && OCR_USE_FASTAPI === true;
     }
 
+    /**
+     * Same TLS policy as the AI service client (AI_SSL_VERIFY plus the project CA bundle).
+     *
+     * @return array<int, mixed>
+     */
+    public static function curlSslOptions(): array
+    {
+        $raw = getenv('AI_SSL_VERIFY');
+        if ($raw === false || $raw === '') {
+            $raw = $_ENV['AI_SSL_VERIFY'] ?? 'true';
+        }
+        $verify = !in_array(strtolower(trim((string) $raw)), ['0', 'false', 'no', 'off'], true);
+        if (!$verify) {
+            return [
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => 0,
+            ];
+        }
+
+        $options = [
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ];
+        $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+        if (!is_readable($ca)) {
+            $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
+        }
+        if ($ca !== '' && is_readable($ca)) {
+            $options[CURLOPT_CAINFO] = $ca;
+        }
+
+        return $options;
+    }
+
     public static function baseUrl(): string
     {
         if (defined('OCR_FASTAPI_URL')) {
@@ -55,9 +89,8 @@ final class OcrFastApiClient
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => defined('OCR_FASTAPI_TIMEOUT') ? (int) OCR_FASTAPI_TIMEOUT : 90,
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_HTTPHEADER     => medconnect_ai_service_auth_headers(),
-        ]);
+        ] + self::curlSslOptions());
 
         $response = curl_exec($curl);
         $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
@@ -65,6 +98,7 @@ final class OcrFastApiClient
         curl_close($curl);
 
         if ($response === false || $curlErr !== '') {
+            error_log('OCR FastAPI request failed: ' . ($curlErr !== '' ? $curlErr : 'empty response'));
             return null;
         }
 
@@ -94,10 +128,15 @@ final class OcrFastApiClient
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => $timeout,
             CURLOPT_CONNECTTIMEOUT => $timeout,
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
+        ] + self::curlSslOptions());
         $response = curl_exec($curl);
+        $curlErr = curl_error($curl);
         curl_close($curl);
-        return ($response === false) ? null : $response;
+        if ($response === false || $curlErr !== '') {
+            error_log('OCR FastAPI health failed: ' . ($curlErr !== '' ? $curlErr : 'empty response'));
+            return null;
+        }
+
+        return $response;
     }
 }

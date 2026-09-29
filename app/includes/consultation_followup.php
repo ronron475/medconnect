@@ -8,7 +8,8 @@ declare(strict_types=1);
  * A follow-up may be saved as REQUIRED BUT UNSCHEDULED when the provider has no
  * future availability yet — the system must never invent a time slot to fill the
  * gap. A scheduled follow-up is only accepted against a real, still-available
- * `appointment_slots` row belonging to that provider.
+ * `appointment_slots` row belonging to that provider. That slot is the booking:
+ * the same save creates one scheduled consultation and claims the slot.
  */
 
 require_once __DIR__ . '/appointment_slots.php';
@@ -152,7 +153,7 @@ function consultation_followup_available_slots(PDO $pdo, int $providerId, int $l
             'slot_date'  => $date,
             'start_time' => $start,
             'end_time'   => (string) $row['end_time'],
-            'label'      => date('D, M j, Y', strtotime($date)) . ' · ' . date('g:i A', strtotime($date . ' ' . $start)),
+            'label'      => date('M j, Y', strtotime($date)) . ' • ' . date('g:i A', strtotime($date . ' ' . $start)),
         ];
     }
 
@@ -236,6 +237,54 @@ function consultation_followup_existing_decision(PDO $pdo, int $consultationId):
 }
 
 /**
+ * One follow-up row per original consultation, including a legacy date-only row
+ * that never set follow_up_decided_at.
+ *
+ * @return array{success: bool, message: string, followup_id: int, scheduled: bool, already_decided: bool}|null
+ */
+function consultation_followup_already_saved(PDO $pdo, int $consultationId): ?array
+{
+    if ($consultationId <= 0) {
+        return null;
+    }
+
+    $existing = consultation_followup_existing_decision($pdo, $consultationId);
+    $followupId = (int) ($existing['follow_up_id'] ?? 0);
+    $slotId = 0;
+
+    if (!$existing['decided']) {
+        $stmt = $pdo->prepare('
+            SELECT id, slot_id
+            FROM followups
+            WHERE consultation_id = ?
+            ORDER BY id ASC
+            LIMIT 1
+        ');
+        $stmt->execute([$consultationId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            return null;
+        }
+
+        $followupId = (int) $row['id'];
+        $slotId = (int) ($row['slot_id'] ?? 0);
+        consultation_followup_save_decision_flag($pdo, $consultationId, true, $followupId);
+    } elseif ($followupId > 0) {
+        $check = $pdo->prepare('SELECT slot_id FROM followups WHERE id = ? LIMIT 1');
+        $check->execute([$followupId]);
+        $slotId = (int) ($check->fetchColumn() ?: 0);
+    }
+
+    return [
+        'success'         => true,
+        'already_decided' => true,
+        'followup_id'     => $followupId,
+        'scheduled'       => $slotId > 0,
+        'message'         => 'Follow-up decision was already saved for this consultation.',
+    ];
+}
+
+/**
  * Record the provider's decision.
  *
  * $slotId > 0  → schedule against that real slot (validated, then claimed).
@@ -255,25 +304,9 @@ function consultation_followup_record_decision(
 ): array {
     consultation_followup_ensure_schema($pdo);
 
-    $existing = consultation_followup_existing_decision($pdo, $consultationId);
-    if ($existing['decided']) {
-        $existingId = (int) ($existing['follow_up_id'] ?? 0);
-        // A saved follow-up may still be unscheduled, so read the row rather
-        // than inferring "scheduled" from the id existing.
-        $wasScheduled = false;
-        if ($existingId > 0) {
-            $check = $pdo->prepare('SELECT slot_id FROM followups WHERE id = ? LIMIT 1');
-            $check->execute([$existingId]);
-            $wasScheduled = (int) ($check->fetchColumn() ?: 0) > 0;
-        }
-
-        return [
-            'success'         => true,
-            'already_decided' => true,
-            'followup_id'     => $existingId,
-            'scheduled'       => $wasScheduled,
-            'message'         => 'Follow-up decision was already saved for this consultation.',
-        ];
+    $already = consultation_followup_already_saved($pdo, $consultationId);
+    if ($already !== null) {
+        return $already;
     }
 
     if (!$required) {
@@ -283,89 +316,206 @@ function consultation_followup_record_decision(
             'success'     => true,
             'followup_id' => 0,
             'scheduled'   => false,
-            'message'     => 'Consultation completed. No follow-up required.',
+            'message'     => 'No follow-up required.',
         ];
     }
 
-    $slot = null;
-    if ($slotId > 0) {
-        $slot = consultation_followup_validate_slot($pdo, $providerId, $slotId);
-        if ($slot === null) {
-            return [
-                'success'     => false,
-                'followup_id' => 0,
-                'scheduled'   => false,
-                'message'     => 'That follow-up slot is no longer available. Pick another time from your schedule.',
-            ];
-        }
+    $ownTx = !$pdo->inTransaction();
+    if ($ownTx) {
+        $pdo->beginTransaction();
     }
 
-    $followupDate = $slot !== null ? (string) $slot['slot_date'] : null;
-    $status = $slot !== null ? 'scheduled' : 'unscheduled';
-    $message = $slot !== null
-        ? 'Follow-up scheduled after video consultation.'
-        : 'Follow-up required. No provider availability yet — to be scheduled once slots open.';
+    try {
+        $providerName = null;
+        if ($consultationId > 0) {
+            $lock = $pdo->prepare('
+                SELECT provider_name, follow_up_decided_at, follow_up_id
+                FROM consultations
+                WHERE id = ?
+                FOR UPDATE
+            ');
+            $lock->execute([$consultationId]);
+            $locked = $lock->fetch(PDO::FETCH_ASSOC) ?: null;
 
+            $held = $pdo->prepare('
+                SELECT id, slot_id
+                FROM followups
+                WHERE consultation_id = ?
+                ORDER BY id ASC
+                LIMIT 1
+                FOR UPDATE
+            ');
+            $held->execute([$consultationId]);
+            $heldRow = $held->fetch(PDO::FETCH_ASSOC) ?: null;
+
+            if ($locked && ($locked['follow_up_decided_at'] !== null || $heldRow)) {
+                $followupId = $heldRow
+                    ? (int) $heldRow['id']
+                    : (int) ($locked['follow_up_id'] ?? 0);
+                $slotHeld = $heldRow ? (int) ($heldRow['slot_id'] ?? 0) : 0;
+                if ($heldRow && $locked['follow_up_decided_at'] === null) {
+                    consultation_followup_save_decision_flag($pdo, $consultationId, true, $followupId);
+                }
+                if ($ownTx) {
+                    $pdo->commit();
+                }
+
+                return [
+                    'success'         => true,
+                    'already_decided' => true,
+                    'followup_id'     => $followupId,
+                    'scheduled'       => $slotHeld > 0,
+                    'message'         => 'Follow-up decision was already saved for this consultation.',
+                ];
+            }
+
+            if ($locked) {
+                $providerName = trim((string) ($locked['provider_name'] ?? ''));
+                if ($providerName === '') {
+                    $providerName = null;
+                }
+            }
+        }
+
+        $slot = null;
+        if ($slotId > 0) {
+            $slotStmt = $pdo->prepare('
+                SELECT id, provider_id, slot_date, start_time, end_time, status
+                FROM appointment_slots
+                WHERE id = ?
+                FOR UPDATE
+            ');
+            $slotStmt->execute([$slotId]);
+            $candidate = $slotStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+            $start = $candidate
+                ? appointment_slot_start_datetime((string) $candidate['slot_date'], (string) $candidate['start_time'])
+                : null;
+            $usable = $candidate
+                && (int) $candidate['provider_id'] === $providerId
+                && (string) $candidate['status'] === 'available'
+                && $start > appointment_now();
+            if (!$usable) {
+                if ($ownTx && $pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+
+                return [
+                    'success'     => false,
+                    'followup_id' => 0,
+                    'scheduled'   => false,
+                    'message'     => 'That follow-up slot is no longer available. Pick another time from your schedule.',
+                ];
+            }
+            $slot = $candidate;
+        }
+
+        $bookedConsultationId = 0;
+        if ($slot !== null) {
+            $bookedConsultationId = consultation_followup_insert_visit(
+                $pdo,
+                $providerId,
+                $patientId,
+                $providerName,
+                $slot
+            );
+            if (!appointment_slot_claim_available(
+                $pdo,
+                (int) $slot['id'],
+                $providerId,
+                $patientId,
+                $bookedConsultationId
+            )) {
+                if ($ownTx && $pdo->inTransaction()) {
+                    $pdo->rollBack();
+                }
+
+                return [
+                    'success'     => false,
+                    'followup_id' => 0,
+                    'scheduled'   => false,
+                    'message'     => 'That follow-up slot is no longer available. Pick another time from your schedule.',
+                ];
+            }
+        }
+
+        $followupDate = $slot !== null ? (string) $slot['slot_date'] : null;
+        $status = $slot !== null ? 'scheduled' : 'unscheduled';
+        $message = $slot !== null
+            ? 'Follow-up scheduled after video consultation.'
+            : 'Follow-up required. No provider availability yet — to be scheduled once slots open.';
+
+        $stmt = $pdo->prepare("
+            INSERT INTO followups
+                (consultation_id, patient_id, provider_id, followup_date, slot_id, message, notes, status, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        ");
+        $stmt->execute([
+            $consultationId ?: null,
+            $patientId,
+            $providerId,
+            $followupDate,
+            $slot !== null ? (int) $slot['id'] : null,
+            $message,
+            $notes !== '' ? $notes : null,
+            $status,
+        ]);
+        $followupId = (int) $pdo->lastInsertId();
+
+        consultation_followup_save_decision_flag($pdo, $consultationId, true, $followupId);
+
+        if ($ownTx) {
+            $pdo->commit();
+        }
+
+        return [
+            'success'                 => true,
+            'followup_id'             => $followupId,
+            'scheduled'               => $slot !== null,
+            'booked_consultation_id'  => $bookedConsultationId,
+            'message'                 => $slot !== null
+                ? 'Follow-up scheduled for ' . date('M j, Y', strtotime((string) $followupDate))
+                    . ' • ' . date('g:i A', strtotime((string) $slot['slot_date'] . ' ' . (string) $slot['start_time'])) . '.'
+                : 'Follow-up marked as required. No available slots yet — schedule it once you add availability.',
+        ];
+    } catch (Throwable $e) {
+        if ($ownTx && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+}
+
+/**
+ * The follow-up visit is a new scheduled consultation. The original visit is not updated.
+ *
+ * @param array<string, mixed> $slot
+ */
+function consultation_followup_insert_visit(
+    PDO $pdo,
+    int $providerId,
+    int $patientId,
+    ?string $providerName,
+    array $slot
+): int {
+    $date = (string) $slot['slot_date'];
+    $time = (string) $slot['start_time'];
     $stmt = $pdo->prepare("
-        INSERT INTO followups
-            (consultation_id, patient_id, provider_id, followup_date, slot_id, message, notes, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        INSERT INTO consultations
+            (patient_id, provider_id, provider_name, consult_type, consult_date, consult_time,
+             original_consult_date, original_consult_time, status, created_at)
+        VALUES (?, ?, ?, 'Follow-up', ?, ?, ?, ?, 'scheduled', NOW())
     ");
     $stmt->execute([
-        $consultationId ?: null,
         $patientId,
         $providerId,
-        $followupDate,
-        $slot !== null ? (int) $slot['id'] : null,
-        $message,
-        $notes !== '' ? $notes : null,
-        $status,
+        $providerName,
+        $date,
+        $time,
+        $date,
+        $time,
     ]);
-    $followupId = (int) $pdo->lastInsertId();
 
-    // Hold the slot so another patient cannot take the follow-up time.
-    if ($slot !== null) {
-        $claim = $pdo->prepare("
-            UPDATE appointment_slots
-            SET status = 'blocked',
-                patient_id = ?
-            WHERE id = ?
-              AND provider_id = ?
-              AND status = 'available'
-        ");
-        $claim->execute([$patientId, (int) $slot['id'], $providerId]);
-
-        if ($claim->rowCount() === 0) {
-            // Lost the race: keep the follow-up but downgrade it to unscheduled
-            // rather than pointing at a slot someone else now owns.
-            $pdo->prepare("
-                UPDATE followups
-                SET followup_date = NULL, slot_id = NULL, status = 'unscheduled'
-                WHERE id = ?
-            ")->execute([$followupId]);
-
-            consultation_followup_save_decision_flag($pdo, $consultationId, true, $followupId);
-
-            return [
-                'success'     => true,
-                'followup_id' => $followupId,
-                'scheduled'   => false,
-                'message'     => 'That time was taken while saving. Follow-up is flagged as required but not scheduled.',
-            ];
-        }
-    }
-
-    consultation_followup_save_decision_flag($pdo, $consultationId, true, $followupId);
-
-    return [
-        'success'     => true,
-        'followup_id' => $followupId,
-        'scheduled'   => $slot !== null,
-        'message'     => $slot !== null
-            ? 'Follow-up scheduled for ' . date('D, M j, Y', strtotime((string) $followupDate))
-                . ' at ' . date('g:i A', strtotime((string) $slot['slot_date'] . ' ' . (string) $slot['start_time'])) . '.'
-            : 'Follow-up marked as required. No available slots yet — schedule it once you add availability.',
-    ];
+    return (int) $pdo->lastInsertId();
 }
 
 /** Write the decision onto the consultation exactly once. */

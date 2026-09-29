@@ -60,15 +60,18 @@ try {
     $slot_stmt->execute([$consultation_id, $provider_id]);
     $slot = $slot_stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($slot) {
+    if ($slot && trim((string) ($slot['end_time'] ?? '')) !== '') {
         $slot_date = $slot['slot_date'];
         $current_end_time = $slot['end_time'];
-        $slot_id = (int) $slot['id'];
     } else {
-        $slot_date = $consultation['consult_date'] ?: date('Y-m-d');
-        $base = $consultation['consult_time'] ?: date('H:i:s');
-        $current_end_time = date('H:i:s', strtotime($slot_date . ' ' . $base) + (30 * 60));
-        $slot_id = 0;
+        echo json_encode([
+            'success' => true,
+            'continues_past_slot' => true,
+            'message' => 'This visit can continue. The booked appointment slot is unchanged.',
+            'extension_mins' => 0,
+            'seconds_remaining' => 0,
+        ]);
+        exit;
     }
 
     $current_end_ts = strtotime($slot_date . ' ' . $current_end_time);

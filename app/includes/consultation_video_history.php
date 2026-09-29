@@ -193,7 +193,7 @@ function consultation_video_history_summary(
         if ($videoRow && $vsStatus === 'active') {
             $empty['has_session'] = true;
             $empty['video_status'] = 'active';
-            $empty['video_status_label'] = 'In progress';
+            $empty['video_status_label'] = 'Ongoing';
             $started = (string) ($videoRow['started_at'] ?? '');
             if ($started !== '' && strtotime($started)) {
                 $empty['started_label'] = consultation_format_clock_time($started);
@@ -202,12 +202,16 @@ function consultation_video_history_summary(
                     $empty['scheduled_duration_seconds'] = $scheduledDurationSeconds;
                     $empty['scheduled_duration_label'] = consultation_format_duration_seconds($scheduledDurationSeconds);
                 }
-                $empty['status_label'] = 'In progress';
+                $elapsed = consultation_elapsed_capped_seconds($started, max(0, $scheduledDurationSeconds));
+                $empty['actual_duration_seconds'] = $elapsed;
+                $empty['actual_duration_label'] = consultation_format_duration_seconds($elapsed);
+                $empty['duration_label'] = $empty['actual_duration_label'];
+                $empty['status_label'] = 'Ongoing';
             }
             return $empty;
         }
         $empty['has_session'] = (bool) $videoRow;
-        $empty['video_status_label'] = 'In progress';
+        $empty['video_status_label'] = 'Ongoing';
         return $empty;
     }
 
@@ -331,7 +335,7 @@ function consultation_video_history_summary(
     }
 
     if ($vsStatus === 'active') {
-        $summary['video_status_label'] = 'In progress';
+        $summary['video_status_label'] = 'Ongoing';
         return $summary;
     }
 
@@ -449,7 +453,7 @@ function consultation_provider_recent_recordings(PDO $pdo, int $providerId, int 
             'consultation_id' => $cid,
             'patient_name' => trim((string) ($row['patient_name'] ?? '')) ?: 'Patient',
             'ended_at' => $ended,
-            'ended_label' => ($ended !== '' && strtotime($ended)) ? date('M j, Y g:i A', strtotime($ended)) : '',
+            'ended_label' => ($ended !== '' && strtotime($ended)) ? date('M j, Y', strtotime($ended)) . ' • ' . date('g:i A', strtotime($ended)) : '',
             'segment_count' => $playableCount,
             'view_url' => $url,
         ];

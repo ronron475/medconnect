@@ -321,6 +321,20 @@
   body.bhw-body .bhw-card {
     padding: 12px;
   }
+
+  body.bhw-body .bhw-afu-tabs,
+  body.bhw-body .bhw-afu-search,
+  body.bhw-body .bhw-afu-card,
+  body.bhw-body .bhw-afu-card__actions,
+  body.bhw-body .bhw-afu-card__actions .bhw-btn-teal,
+  body.bhw-body .bhw-afu-card__actions .bhw-btn-outline {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.bhw-body .bhw-afu-tab {
+    flex: 1 1 calc(33% - 6px);
+  }
 }
 
 @media (max-width: 360px) {

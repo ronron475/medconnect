@@ -630,10 +630,15 @@
 
 .pdash-action__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 4px;
+}
+
+.pdash-action__when {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .pdash-action__date {
@@ -643,6 +648,17 @@
   letter-spacing: 0.03em;
   color: #028090;
   margin-bottom: 0;
+}
+
+.pdash-action__slot {
+  margin-top: 2px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #0f172a;
+  overflow-wrap: anywhere;
 }
 
 .pdash-action__provider {

@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../config/db.php';
-require_once dirname(__DIR__, 2) . '/app/includes/mailer.php';
+require_once dirname(__DIR__) . '/app/includes/mailer.php';
 require_once __DIR__ . '/../app/includes/login_security.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

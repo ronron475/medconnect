@@ -40,13 +40,9 @@
     if (!raw) return '—';
     try {
       var d = new Date(String(raw).replace(' ', 'T'));
-      return d.toLocaleString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        + ' • '
+        + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     } catch (e) {
       return raw;
     }
@@ -223,7 +219,7 @@
         refreshNavBadge(unreadCount);
       }
       renderRows(filteredRows());
-      setStatus('Updated ' + new Date().toLocaleTimeString(), false);
+      setStatus('Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), false);
     } catch (e) {
       setStatus('Load failed.', true);
       tbody.innerHTML = emptyStateHtml();

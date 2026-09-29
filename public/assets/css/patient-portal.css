@@ -2270,6 +2270,10 @@ body.patient-portal .pdash-followup textarea.form-control {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  max-width: 100%;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 

@@ -36,9 +36,9 @@ function queue_scheduled_label(?string $consult_date, ?string $consult_time = nu
         return 'No scheduled date';
     }
 
-    $label = date('l, F j, Y', strtotime($consult_date));
+    $label = date('M j, Y', strtotime($consult_date));
     if ($consult_time) {
-        $label .= ' at ' . date('g:i A', strtotime((string) $consult_time));
+        $label .= ' • ' . date('g:i A', strtotime((string) $consult_time));
     }
 
     return $label;

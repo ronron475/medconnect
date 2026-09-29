@@ -90,7 +90,7 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
             if (is_array($decoded) && !empty($decoded['available'])) {
                 $decoded['assessed_at'] = (string) ($latestRow['created_at'] ?? '');
                 $decoded['assessed_label'] = $decoded['assessed_at'] !== ''
-                    ? date('M j, Y g:i A', strtotime($decoded['assessed_at']))
+                    ? date('M j, Y', strtotime($decoded['assessed_at'])) . ' • ' . date('g:i A', strtotime($decoded['assessed_at']))
                     : '';
                 if (empty($decoded['patient_original_complaint'])) {
                     $decoded['patient_original_complaint'] = $original['complaint'];
@@ -280,7 +280,7 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
     $aiCaps = $aiKey !== 'unknown' ? provider_clinical_support_caps_label($aiKey) : '';
 
     $assessedAt = (string) ($row['assessed_at'] ?? '');
-    $assessedLabel = $assessedAt !== '' ? date('M j, Y g:i A', strtotime($assessedAt)) : '';
+    $assessedLabel = $assessedAt !== '' ? date('M j, Y', strtotime($assessedAt)) . ' • ' . date('g:i A', strtotime($assessedAt)) : '';
 
     $currentComplaint = trim((string) ($row['chief_complaint'] ?? ''));
     $currentComplaintSubmittedAt = $assessedLabel;
@@ -578,7 +578,7 @@ function provider_clinical_support_from_assessment(array $assessment): array
         'recommended_actions' => $actions,
         'emergency_warning_signs' => $warnings,
         'assessed_at' => date('Y-m-d H:i:s'),
-        'assessed_label' => date('M j, Y g:i A'),
+        'assessed_label' => date('M j, Y') . ' • ' . date('g:i A'),
         'doctor_override' => true,
         'final_urgency' => $finalUrgency,
         'ai_urgency' => $finalUrgency,
@@ -812,7 +812,7 @@ function provider_clinical_support_audit_trail(PDO $pdo, int $consultationId): a
             'doctor_urgency' => provider_clinical_support_urgency_label((string) ($row['doctor_urgency_bucket'] ?? ($row['urgency_bucket'] ?? ''))),
             'audit_note' => trim((string) ($row['audit_note'] ?? '')),
             'created_at' => $created,
-            'created_label' => $created !== '' ? date('M j, Y g:i A', strtotime($created)) : '',
+            'created_label' => $created !== '' ? date('M j, Y', strtotime($created)) . ' • ' . date('g:i A', strtotime($created)) : '',
         ];
     }
     return $out;
@@ -1415,7 +1415,7 @@ function provider_clinical_support_apply_authoritative_final(
             $created = (string) ($override['created_at'] ?? '');
             if ($created !== '') {
                 $support['assessed_at'] = $created;
-                $support['assessed_label'] = date('M j, Y g:i A', strtotime($created));
+                $support['assessed_label'] = date('M j, Y', strtotime($created)) . ' • ' . date('g:i A', strtotime($created));
             }
 
             return $support;
@@ -1568,7 +1568,7 @@ function provider_clinical_support_persist_doctor_override(
     );
     $support['available'] = true;
     $support['assessed_at'] = date('Y-m-d H:i:s');
-    $support['assessed_label'] = date('M j, Y g:i A');
+    $support['assessed_label'] = date('M j, Y') . ' • ' . date('g:i A');
 
     $triageId = $linkedTriageId;
     if ($triageId > 0) {

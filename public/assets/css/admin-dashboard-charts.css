@@ -258,9 +258,67 @@ html[data-theme-resolved='dark'] .adm-line-chart__dot {
   stroke: #1e293b;
 }
 
-/* ── 2×2 User Overview dashboard layout ── */
+/* ── User Overview dashboard layout ── */
 .adm-overview-section {
   gap: 0;
+}
+
+/* Admin: overview spans the row; trends and distribution sit underneath */
+body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-overview-grid {
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr);
+  gap: 16px !important;
+}
+
+body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-overview-card {
+  grid-column: 1 / -1;
+}
+
+body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-chart-card {
+  border-radius: 16px;
+  border-color: #e6edf5;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-chart-canvas-wrap--trend,
+body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-chart-canvas-wrap--roles {
+  min-height: 240px;
+  height: clamp(240px, 28vh, 300px);
+}
+
+.adm-chart-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.adm-chart-period__label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.adm-charts-updated {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+@media (min-width: 901px) {
+  body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-overview-tiles {
+    flex: none;
+    align-content: start;
+  }
+}
+
+@media (max-width: 1100px) {
+  body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-overview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .adm-overview-grid {
@@ -610,6 +668,11 @@ html[data-theme-resolved='dark'] .adm-chart-period__select {
   background: #1e293b;
   border-color: #334155;
   color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] .adm-chart-period__label,
+html[data-theme-resolved='dark'] .adm-charts-updated {
+  color: var(--mc-theme-text-secondary, #cbd5e1);
 }
 
 html[data-theme-resolved='dark'] .adm-overview-tile--total { background: rgba(15, 118, 110, 0.18); }

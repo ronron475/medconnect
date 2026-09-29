@@ -13,6 +13,9 @@ if (!defined('MEDCONNECT_SESSION_NAME')) {
     );
 }
 
+// Function declarations are compiled on each include. A runtime return cannot stop a second require.
+if (!function_exists('medconnect_session_cookie_path')) {
+
 /**
  * Cookie path scoped to this MedConnect install (not the whole host).
  * Examples: "/" (vhost/public docroot) or "/medconnect" (XAMPP subdirectory).
@@ -225,4 +228,6 @@ function medconnect_session_set_identity(array $user): void
             $_SESSION['superadmin_id'] = $uid;
             break;
     }
+}
+
 }

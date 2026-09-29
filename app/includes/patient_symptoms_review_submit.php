@@ -463,7 +463,17 @@ function patient_symptoms_review_assignment_meta(PDO $pdo, int $assignedId): arr
     if ($slot && !empty($slot['start_time'])) {
         $start = date('g:i A', strtotime((string) $slot['start_time']));
         $end = !empty($slot['end_time']) ? date('g:i A', strtotime((string) $slot['end_time'])) : '';
-        $label = $end !== '' ? ($start . '–' . $end) : $start;
+        $label = $end !== '' ? ($start . ' – ' . $end) : $start;
+        if ($end !== '' && !empty($slot['start_time']) && !empty($slot['end_time'])) {
+            $startTs = strtotime((string) $slot['start_time']);
+            $endTs = strtotime((string) $slot['end_time']);
+            if ($startTs && $endTs && $endTs > $startTs) {
+                $mins = intdiv($endTs - $startTs, 60);
+                if ($mins > 0) {
+                    $label .= ' · ' . $mins . ' mins';
+                }
+            }
+        }
     }
 
     return [

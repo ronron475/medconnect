@@ -15,39 +15,48 @@ require __DIR__ . '/../partials/layout_open.php';
 
   <header class="bhw-records-header bhw-page-intro">
     <div>
-      <p class="bhw-records-sub">Browse uploaded documents and prescriptions for residents in <strong>Brgy. <?= $barangay_label ?></strong>. Select a patient below to review their file history.</p>
+      <p class="bhw-records-sub">Search residents in <strong>Brgy. <?= $barangay_label ?></strong> and open their record. Profile, health information, consultations, prescriptions, and documents stay in your barangay.</p>
     </div>
-    <a href="upload.php<?= $preselect ? '?patient_id=' . $preselect : '' ?>" class="bhw-records-link-btn" id="bhwRecordsUploadLink" style="display:none;">Upload document</a>
   </header>
 
-  <nav class="bhw-records-nav" aria-label="Records sections">
-    <a href="index.php<?= $preselect ? '?patient_id=' . $preselect : '' ?>" class="bhw-records-nav__item is-active" aria-current="page">View records</a>
-    <a href="upload.php<?= $preselect ? '?patient_id=' . $preselect : '' ?>" class="bhw-records-nav__item">Upload document</a>
-  </nav>
+  <section class="bhw-records-finder" aria-labelledby="bhwRecordsSearchLabel">
+    <label class="bhw-records-search-label" id="bhwRecordsSearchLabel" for="bhwRecordsSearch">Search patients</label>
+    <div class="bhw-records-search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="bhwRecordsSearch" placeholder="Search by name, email, or contact number" autocomplete="off" aria-controls="bhwRecordsResults">
+    </div>
+    <p class="bhw-records-section__sub" id="bhwRecordsResultMeta">Loading patients in your barangay…</p>
+    <div id="bhwRecordsResults" class="bhw-records-results" aria-live="polite"></div>
+  </section>
 
-  <div class="bhw-records-main bhw-records-view-main">
-    <section class="bhw-records-section" aria-labelledby="bhwRecordsSecFind">
-      <h3 class="bhw-records-section__title" id="bhwRecordsSecFind">Find patient</h3>
-      <p class="bhw-records-section__sub">Search by name, email, or contact number. Only patients in your barangay are listed.</p>
-      <div id="bhwRecordsPicker" class="bhw-records-picker-mount" aria-live="polite"></div>
-    </section>
-
-    <section class="bhw-records-section" aria-labelledby="bhwRecordsSecDocs">
-      <h3 class="bhw-records-section__title" id="bhwRecordsSecDocs">Uploaded documents</h3>
-      <p class="bhw-records-section__sub">Residency and supporting files submitted for the selected patient.</p>
-      <div id="bhwRecordsDocs">
-        <div class="bhw-records-empty">
-          <strong>Select a patient</strong>
-          <span>Choose a resident from your barangay to view their records.</span>
+  <div class="bhw-records-modal" id="bhwRecordsModal" hidden>
+    <div class="bhw-records-modal__backdrop" data-records-close></div>
+    <div class="bhw-records-modal__panel" role="dialog" aria-modal="true" aria-labelledby="bhwRecordsModalTitle">
+      <header class="bhw-records-modal__head">
+        <div class="bhw-records-modal__identity">
+          <div class="bhw-records-card__avatar" id="bhwRecordsModalAvatar" aria-hidden="true">—</div>
+          <div>
+            <h2 id="bhwRecordsModalTitle">Patient record</h2>
+            <p id="bhwRecordsModalMeta">Loading record…</p>
+          </div>
         </div>
+        <button type="button" class="bhw-records-modal__close" id="bhwRecordsModalClose" data-records-close aria-label="Close patient record">Close</button>
+      </header>
+      <div class="bhw-records-tabs" role="tablist" aria-label="Patient record sections">
+        <button type="button" class="bhw-records-tabs__btn is-active" role="tab" id="bhwRecordsTabProfile" aria-selected="true" aria-controls="bhwRecordsPanelProfile" data-records-tab="profile">Profile</button>
+        <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabHealth" aria-selected="false" aria-controls="bhwRecordsPanelHealth" data-records-tab="health" tabindex="-1">Health Information</button>
+        <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabConsults" aria-selected="false" aria-controls="bhwRecordsPanelConsults" data-records-tab="consults" tabindex="-1">Consultations</button>
+        <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabRx" aria-selected="false" aria-controls="bhwRecordsPanelRx" data-records-tab="rx" tabindex="-1">Prescriptions</button>
+        <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabDocs" aria-selected="false" aria-controls="bhwRecordsPanelDocs" data-records-tab="docs" tabindex="-1">Documents</button>
       </div>
-    </section>
-
-    <section class="bhw-records-section bhw-records-section--last" aria-labelledby="bhwRecordsSecRx">
-      <h3 class="bhw-records-section__title" id="bhwRecordsSecRx">Prescriptions</h3>
-      <p class="bhw-records-section__sub">Medications prescribed during provider consultations.</p>
-      <div id="bhwRecordsRx"></div>
-    </section>
+      <div class="bhw-records-modal__body">
+        <section class="bhw-records-panel is-active" id="bhwRecordsPanelProfile" role="tabpanel" aria-labelledby="bhwRecordsTabProfile" data-records-panel="profile"></section>
+        <section class="bhw-records-panel" id="bhwRecordsPanelHealth" role="tabpanel" aria-labelledby="bhwRecordsTabHealth" data-records-panel="health" hidden></section>
+        <section class="bhw-records-panel" id="bhwRecordsPanelConsults" role="tabpanel" aria-labelledby="bhwRecordsTabConsults" data-records-panel="consults" hidden></section>
+        <section class="bhw-records-panel" id="bhwRecordsPanelRx" role="tabpanel" aria-labelledby="bhwRecordsTabRx" data-records-panel="rx" hidden></section>
+        <section class="bhw-records-panel" id="bhwRecordsPanelDocs" role="tabpanel" aria-labelledby="bhwRecordsTabDocs" data-records-panel="docs" hidden></section>
+      </div>
+    </div>
   </div>
 
 </div>

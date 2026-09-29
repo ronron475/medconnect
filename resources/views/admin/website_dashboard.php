@@ -214,7 +214,7 @@ $lpConfig = $config = LandingPageConfig::all($pdo);
         <h3>Live Preview</h3>
         <p class="lp-mgmt__preview-meta" id="lpPreviewUpdated">
           <?php if ($stats['last_updated']): ?>
-            Last updated <?= htmlspecialchars(date('M j, Y g:i A', strtotime($stats['last_updated']))) ?>
+            Last updated <?= htmlspecialchars(date('M j, Y', strtotime($stats['last_updated'])) . ' • ' . date('g:i A', strtotime($stats['last_updated']))) ?>
             <?= $stats['last_updated_by'] ? ' by ' . htmlspecialchars($stats['last_updated_by']) : '' ?>
           <?php else: ?>
             Not updated yet

@@ -22,6 +22,7 @@ function bhw_nav_groups(): array
             'description' => 'Assist and update registered patient information',
             'children' => [
                 ['file' => 'patients/list.php', 'label' => 'Patient List', 'hint' => 'Search barangay patients', 'icon' => 'list', 'sidebar' => true],
+                ['file' => 'patients/register.php', 'label' => 'Patient Registration', 'hint' => 'Register a barangay patient', 'icon' => 'user-plus', 'sidebar' => true],
                 ['file' => 'patients/update.php', 'label' => 'Update Patient Info', 'hint' => 'Edit contact & medical data', 'icon' => 'edit', 'sidebar' => false],
             ],
         ],
@@ -51,16 +52,16 @@ function bhw_nav_groups(): array
             'label' => 'Referrals',
             'description' => 'View doctor referrals for your barangay',
             'children' => [
-                ['file' => 'referral/status.php', 'label' => 'View Referrals', 'hint' => 'Read-only barangay referrals', 'icon' => 'share', 'sidebar' => true],
+                ['file' => 'referral/status.php', 'label' => 'View Referrals', 'hint' => 'Read-only barangay referrals', 'icon' => 'share', 'sidebar' => false],
             ],
         ],
         [
             'id' => 'followup',
             'icon' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
-            'label' => 'Appointment and Follow-up Queue',
+            'label' => 'Appointment History',
             'description' => 'Barangay appointment and follow-up queue',
             'children' => [
-                ['file' => 'followup/track.php', 'label' => 'Appointment and Follow-up Queue', 'hint' => 'Live appointment & follow-up queue', 'icon' => 'activity', 'sidebar' => true],
+                ['file' => 'followup/track.php', 'label' => 'Appointment History', 'hint' => 'Live appointment & follow-up queue', 'icon' => 'activity', 'sidebar' => true],
                 ['file' => 'followup/reminders.php', 'label' => 'Send Reminders', 'hint' => 'Notify patients to follow up', 'icon' => 'bell', 'sidebar' => false],
             ],
         ],
@@ -113,7 +114,6 @@ function bhw_nav_resolve_file(string $file): string
         'consultation/status.php'    => 'consultations/index.php',
         'triage/encode.php'          => 'patients/list.php',
         'triage/submit.php'          => 'patients/list.php',
-        'patients/register.php'      => 'patients/list.php',
         'patients/update.php'        => 'patients/list.php',
         'records/upload.php'         => 'records/index.php',
         'followup/reminders.php'     => 'followup/track.php',
@@ -209,7 +209,7 @@ function bhw_nav_sections(): array
         ['section' => null, 'items' => [
             [$dash['file'], $dash['label'], $dash['icon']],
         ]],
-        // Final BHW sidebar order: Patient List → Records → View Referrals → Appointment and Follow-up Queue
+        // Final BHW sidebar order: Patient List → Patient Registration → Records → Appointment History
         ['section' => 'Barangay Operations', 'items' => $collectItems([
             'patients', 'records', 'referral', 'followup',
         ])],
