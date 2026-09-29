@@ -171,6 +171,72 @@
     scheduleSlotEnd(item);
   }
 
+  function renderQueueTiming(next, activeVideoId) {
+    const banner = document.getElementById('queueTimingBanner');
+    if (!banner) return;
+    if (!next) {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    const name = escapeHtml(next.patient_name || 'The next patient');
+    const when = next.scheduled_label ? ' at ' + escapeHtml(next.scheduled_label) : '';
+    let body = '';
+    if (next.early_start_response === 'join_early') {
+      body = '<strong>' + name + ' chose Start Early.</strong><p>You can open their session now. Their scheduled time' + when + ' is unchanged.</p>';
+    } else if (next.early_start_response === 'keep_time') {
+      body = '<strong>' + name + ' chose Keep Scheduled Time.</strong><p>This is not a missed visit. Open the session' + when + '.</p>';
+    } else if (next.can_offer_early && !activeVideoId) {
+      body = '<strong>Ready for Next Patient Early</strong><p>' + name + ' is scheduled' + when + '.</p>' +
+        '<button type="button" class="queue-btn primary" id="readyForNextBtn">Ready for Next Patient Early</button>';
+    } else if (next.early_start_response_label) {
+      body = '<strong>Next: ' + name + '</strong><p>' + escapeHtml(next.early_start_response_label) + '.</p>';
+    } else if (activeVideoId) {
+      body = '<strong>Previous consultation in progress</strong><p>Next patient is waiting: ' + name + when + '.</p>';
+    } else {
+      banner.hidden = true;
+      banner.innerHTML = '';
+      return;
+    }
+    banner.hidden = false;
+    banner.innerHTML = '<div class="queue-panel-header"><div class="queue-panel-title">Queue timing</div></div><div style="padding:12px 16px;">' + body + '</div>';
+    const btn = document.getElementById('readyForNextBtn');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        offerNextPatient(btn);
+      });
+    }
+  }
+
+  async function offerNextPatient(btn) {
+    btn.disabled = true;
+    const body = new FormData();
+    const csrf = document.body?.dataset?.csrf || '';
+    if (csrf) body.set('csrf_token', csrf);
+    try {
+      const res = await fetch(base + '/app/api/provider/ready_for_next.php', {
+        method: 'POST',
+        body,
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
+      const json = await res.json();
+      const banner = document.getElementById('queueTimingBanner');
+      if (banner && json && json.message) {
+        const note = document.createElement('p');
+        note.textContent = json.message;
+        banner.appendChild(note);
+      }
+      refreshQueueStatus();
+    } catch (_) {
+      btn.disabled = false;
+    }
+  }
+
+  document.addEventListener('medconnect:notifications-arrived', function () {
+    refreshQueueStatus();
+  });
+
   async function refreshQueueStatus() {
     try {
       const res = await fetch(base + '/app/api/provider/queue_status.php?_=' + Date.now(), {
@@ -185,6 +251,7 @@
       const stats = data.stats || (data.data && data.data.stats) || null;
       items.forEach(applyItem);
       updateStats(stats);
+      renderQueueTiming(data.next_patient || (data.data && data.data.next_patient) || null, data.active_video_consultation_id || 0);
     } catch (_) {
       /* silent retry on next poll */
     }

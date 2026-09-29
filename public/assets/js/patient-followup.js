@@ -231,7 +231,9 @@
         return;
       }
       wrap.innerHTML = slots.map(function (slot) {
-        const label = slot.label || slot.start_time || slot.time || 'Slot';
+        const rawLabel = String(slot.label || slot.start_time || slot.time || 'Slot');
+        const labelParts = rawLabel.split(' · ');
+        const label = labelParts.length > 1 ? labelParts[0] + '\n' + labelParts.slice(1).join(' · ') : rawLabel;
         const id = slot.id || slot.slot_id;
         return '<button type="button" class="psess-followup-slot-btn" data-slot-id="' + escapeHtml(String(id)) + '">' + escapeHtml(label) + '</button>';
       }).join('');

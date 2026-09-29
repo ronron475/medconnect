@@ -4,6 +4,7 @@
  * Run: php scripts/dev/test_consultation_queue_timing.php
  */
 require_once dirname(__DIR__, 2) . '/app/includes/consultation_queue_timing.php';
+require_once dirname(__DIR__, 2) . '/app/includes/consultation_duration.php';
 require_once dirname(__DIR__, 2) . '/resources/views/provider/partials/queue_helpers.php';
 
 $pass = 0;
@@ -163,6 +164,8 @@ check('Start path enforces one clinically open consultation',
     str_contains($startVideo, 'consultation_timing_other_open_consultation_id'));
 check('Same consultation can still be resumed for SOAP',
     consultation_timing_provider_start_decision(at('08:40'), $p1Start, $p1End, 'in_consultation', false, true, false, '', false, false)['allowed'] === true);
+check('Early actual start keeps the stored slot end',
+    consultation_session_deadline_ts('2026-09-27 08:45:00', 1800, at('09:30')) === at('09:30'));
 
 foreach ($results as [$status, $name]) {
     echo $status . '  ' . $name . PHP_EOL;

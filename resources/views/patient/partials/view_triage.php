@@ -242,7 +242,7 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
         maxlength="500"
         <?= $interview_complaint_locked ? 'readonly aria-readonly="true"' : 'required' ?>
       ><?= htmlspecialchars($registration_chief_complaint) ?></textarea>
-      <?php if ($preliminary_payload !== null || $chief_complaint_locked): ?>
+      <?php if (!$consultation_already_assigned && ($preliminary_payload !== null || $chief_complaint_locked)): ?>
       <p class="text-xs text-muted patient-triage-complaint-hint">
         <?php if ($preliminary_payload !== null): ?>
         This primary complaint is locked for the current triage session. To describe a different concern, click <strong>Start New Complaint</strong>.
@@ -319,13 +319,11 @@ $show_start_new_consultation_wrap = $consultation_already_assigned
     </div>
 
     <?php if ($consultation_already_assigned): ?>
-    <button type="button" class="mc-btn mc-btn--outline patient-triage-submit" id="patientTriageSubmit" disabled aria-disabled="true">
-      Consultation Already Assigned
-    </button>
     <p class="text-xs text-muted patient-triage-submit-hint">
-      Your complaint is on file and a doctor is already assigned. This consultation will not be submitted again.
-      <?php if (empty($force_new_concern)): ?>
-      To describe a different health concern, use <strong>Start New Complaint</strong>.
+      <?php if ($assigned_display_name !== ''): ?>
+      Your existing complaint is already assigned to Dr. <?= htmlspecialchars($assigned_display_name) ?>.
+      <?php else: ?>
+      Your existing complaint is already assigned.
       <?php endif; ?>
     </p>
     <?php elseif (!empty($emergency_blocks_booking)): ?>

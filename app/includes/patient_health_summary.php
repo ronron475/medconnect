@@ -116,10 +116,10 @@ function patient_medical_format_request_row(PDO $pdo, ?array $row): ?array
         'assigned_provider_label' => patient_medical_provider_label($pdo, $providerId),
         'created_at' => (string) ($row['created_at'] ?? ''),
         'created_at_label' => !empty($row['created_at'])
-            ? date('M j, Y g:i A', strtotime((string) $row['created_at']))
+            ? date('M j, Y', strtotime((string) $row['created_at'])) . ' • ' . date('g:i A', strtotime((string) $row['created_at']))
             : '',
         'reviewed_at_label' => !empty($row['reviewed_at'])
-            ? date('M j, Y g:i A', strtotime((string) $row['reviewed_at']))
+            ? date('M j, Y', strtotime((string) $row['reviewed_at'])) . ' • ' . date('g:i A', strtotime((string) $row['reviewed_at']))
             : '',
     ];
 }
@@ -272,7 +272,7 @@ function patient_health_summary_load(PDO $pdo, int $userId): array
         'medications' => $medications,
         'metadata' => [
             'last_updated_at' => $updatedAt,
-            'last_updated_at_label' => $updatedAt ? date('M j, Y \a\t g:i A', strtotime((string) $updatedAt)) : 'Not available',
+            'last_updated_at_label' => $updatedAt ? date('M j, Y', strtotime((string) $updatedAt)) . ' • ' . date('g:i A', strtotime((string) $updatedAt)) : 'Not available',
             'last_updated_by' => $updatedByName,
             'last_updated_by_id' => $updatedById > 0 ? $updatedById : null,
             'last_updated_by_role' => $updatedByRole,

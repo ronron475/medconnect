@@ -207,19 +207,19 @@ $patient_page_stylesheets = [
         <?php endif; ?>
         <?php if ($startLabel !== ''): ?>
         <div class="pmh-kv-item">
-          <dt>Started</dt>
+          <dt>Start Time</dt>
           <dd><?= htmlspecialchars($startLabel) ?></dd>
         </div>
         <?php endif; ?>
         <?php if ($endLabel !== ''): ?>
         <div class="pmh-kv-item">
-          <dt>Ended</dt>
+          <dt>End Time</dt>
           <dd><?= htmlspecialchars($endLabel) ?></dd>
         </div>
         <?php endif; ?>
         <?php if ($durationLabel !== ''): ?>
         <div class="pmh-kv-item">
-          <dt>Actual duration</dt>
+          <dt>Duration</dt>
           <dd><?= htmlspecialchars($durationLabel) ?></dd>
         </div>
         <?php endif; ?>
@@ -249,19 +249,19 @@ $patient_page_stylesheets = [
         <?php endif; ?>
         <?php if (!empty($videoHistory['started_label'])): ?>
         <div class="pmh-kv-item">
-          <dt>Started</dt>
+          <dt>Start Time</dt>
           <dd><?= htmlspecialchars((string) $videoHistory['started_label']) ?></dd>
         </div>
         <?php endif; ?>
         <?php if (!empty($videoHistory['ended_label'])): ?>
         <div class="pmh-kv-item">
-          <dt>Ended</dt>
+          <dt>End Time</dt>
           <dd><?= htmlspecialchars((string) $videoHistory['ended_label']) ?></dd>
         </div>
         <?php endif; ?>
         <?php if (!empty($videoHistory['actual_duration_label']) || !empty($videoHistory['duration_label'])): ?>
         <div class="pmh-kv-item">
-          <dt>Actual duration</dt>
+          <dt>Duration</dt>
           <dd><?= htmlspecialchars((string) ($videoHistory['actual_duration_label'] ?: $videoHistory['duration_label'])) ?></dd>
         </div>
         <?php endif; ?>
@@ -302,7 +302,7 @@ $patient_page_stylesheets = [
         ?>
         <li class="<?= $isFirst ? 'is-first' : '' ?><?= $isLast ? ' is-last' : '' ?>">
           <strong><?= htmlspecialchars((string) $event['label']) ?></strong>
-          <span><?= htmlspecialchars(date('M j, Y g:i A', strtotime((string) $event['at']))) ?></span>
+          <span><?= htmlspecialchars(date('M j, Y', strtotime((string) $event['at'])) . ' • ' . date('g:i A', strtotime((string) $event['at']))) ?></span>
         </li>
         <?php endforeach; ?>
       </ol>
@@ -350,7 +350,7 @@ $patient_page_stylesheets = [
         <?php if ($isCancelled): ?>
         <span class="pmh-detail__pending-badge">Not applicable</span>
         <?php elseif (!$isFinalized): ?>
-        <span class="pmh-detail__pending-badge">In progress</span>
+        <span class="pmh-detail__pending-badge">Ongoing</span>
         <?php endif; ?>
       </div>
       <?php if ($isCancelled): ?>

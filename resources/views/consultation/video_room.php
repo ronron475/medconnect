@@ -182,7 +182,7 @@ $apptTime = (string) ($session['slot_start'] ?? $session['consult_time'] ?? '');
 if ($apptDate !== '') {
     $appointment_label = date('M j, Y', strtotime($apptDate));
     if ($apptTime !== '') {
-        $appointment_label .= ' — ' . date('g:i A', strtotime($apptTime));
+        $appointment_label .= ' • ' . date('g:i A', strtotime($apptTime));
     }
 }
 $provider_specialty = trim((string) ($session['provider_specialty'] ?? ''));
@@ -319,6 +319,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       scheduledDurationSeconds: <?= (int) $scheduled_duration_seconds ?>,
       elapsedSeconds: <?= (int) $elapsed_capped_seconds ?>,
       secondsRemaining: <?= (int) $seconds_remaining ?>,
+      scheduledEndUnix: <?= (int) ($session_deadline_ts ?? 0) ?>,
       scheduledEndLabel: <?= json_encode($slot_end_label) ?>,
     };
   </script>
@@ -875,6 +876,120 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       padding: 3px 8px;
       border-radius: 999px;
     }
+    /* Provider call: one timer, no extra chrome. Switch camera is handheld-only. */
+    body.role-provider .mc-vc-top-actions,
+    body.role-provider .mc-vc-pill--secure,
+    body.role-provider #timerDisplay,
+    body.role-provider #mcVcFullscreenBtn,
+    body.embedded-shell.role-provider #mcVcFullscreenBtn,
+    body.role-provider #mcVcMinimizeBtn,
+    body.role-provider #mcVcSpeakerBtn,
+    body.role-provider #mcVcTtsBtn,
+    body.role-provider [data-mc-proxy="mcVcSpeakerBtn"],
+    body.role-provider [data-mc-proxy="mcVcFullscreenBtn"],
+    body.role-provider #compactHint,
+    body.role-provider:not(.is-handheld) #mcVcFlipBtn,
+    body.role-provider:not(.is-handheld) .mc-vc-switch-camera {
+      display: none !important;
+    }
+    body.role-provider.is-handheld .mc-vc-switch-camera {
+      display: grid !important;
+    }
+    body.role-provider.is-handheld #mcVcFlipBtn {
+      display: none !important;
+    }
+    #timerDisplay,
+    #extendBtn,
+    #extensionPrompt button {
+      display: none !important;
+    }
+    .mc-vc-pill--duration,
+    body.role-provider .mc-vc-pill--duration {
+      display: inline-flex !important;
+    }
+    body.role-provider .mc-vc-more-menu {
+      z-index: 80;
+    }
+    .violation-modal {
+      z-index: 100300;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .violation-dialog {
+      overflow: visible;
+      position: relative;
+      z-index: 2;
+    }
+    .violation-dialog__body {
+      overflow: visible;
+    }
+    .violation-reason {
+      position: relative;
+      z-index: 3;
+    }
+    .violation-reason__btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 44px;
+      padding: 11px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #111827;
+      color: #f8fafc;
+      font: inherit;
+      font-size: 0.875rem;
+      text-align: left;
+      cursor: pointer;
+    }
+    .violation-reason__btn[aria-expanded="true"] {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.28);
+    }
+    .violation-reason__menu {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% + 4px);
+      z-index: 20;
+      margin: 0;
+      padding: 6px;
+      list-style: none;
+      max-height: 240px;
+      overflow: auto;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #fff;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    }
+    .violation-reason__menu[hidden] {
+      display: none !important;
+    }
+    .violation-reason__menu button {
+      display: block;
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #0f172a;
+      font: inherit;
+      font-size: 0.875rem;
+      text-align: left;
+      cursor: pointer;
+    }
+    .violation-reason__menu button:hover,
+    .violation-reason__menu button[aria-selected="true"] {
+      background: #e0f2fe;
+    }
+    .violation-reason__error {
+      margin: 6px 0 0;
+      color: #fca5a5;
+      font-size: 12px;
+      font-weight: 700;
+    }
   </style>
 </head>
 <body
@@ -882,6 +997,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   data-csrf="<?= htmlspecialchars($pageCsrfToken, ENT_QUOTES, 'UTF-8') ?>"
   data-asset-base="<?= htmlspecialchars(ASSET_BASE, ENT_QUOTES, 'UTF-8') ?>"
 >
+<?php if (!$is_patient): ?>
+<script>document.body.classList.toggle('is-handheld', /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));</script>
+<?php endif; ?>
 <?php /* No boot loader overlay — dual Chrome tabs must be interactive immediately. */ ?>
 
   <div id="mediaPermissionGate" class="media-permission-gate" role="dialog" aria-modal="true" aria-labelledby="mediaPermissionTitle">
@@ -1022,24 +1140,28 @@ if (session_status() === PHP_SESSION_ACTIVE) {
                 <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                 <span class="mc-vc-more-item__label">Chat</span>
               </button>
+              <?php if ($is_patient): ?>
               <button type="button" class="mc-vc-more-item" id="mcVcTtsBtn" role="menuitem" title="Type a message while muted" aria-label="Open typed voice message">
                 <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg></span>
                 <span class="mc-vc-more-item__label">Text</span>
               </button>
+              <?php endif; ?>
               <?php if (!$is_patient): ?>
               <button type="button" class="mc-vc-more-item" id="violationReportBtn" role="menuitem" title="Report patient during consultation" aria-label="Report patient during consultation">
                 <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>
                 <span class="mc-vc-more-item__label">Report Patient</span>
               </button>
               <?php endif; ?>
-              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFlipBtn" role="menuitem">
+              <button type="button" class="mc-vc-more-item mc-vc-more-item--compact mc-vc-switch-camera" data-mc-proxy="mcVcFlipBtn" role="menuitem">
                 <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
                 <span class="mc-vc-more-item__label">Switch camera</span>
               </button>
+              <?php if ($is_patient): ?>
               <button type="button" class="mc-vc-more-item" data-mc-proxy="mcVcSpeakerBtn" role="menuitem" title="Speaker on or off" aria-label="Toggle speaker">
                 <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></span>
                 <span class="mc-vc-more-item__label">Speaker</span>
               </button>
+              <?php endif; ?>
               <button type="button" class="mc-vc-more-item mc-vc-more-item--compact" data-mc-proxy="mcVcFullscreenBtn" role="menuitem">
                 <span class="mc-vc-more-item__icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></span>
                 <span class="mc-vc-more-item__label">Fullscreen</span>
@@ -1062,10 +1184,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <?php endif; ?>
 
   <div id="extensionPrompt">
-    <span>5 minutes remaining. Would you like to extend?</span>
-    <?php if($role === 'provider'): ?>
-    <button onclick="requestExtension(15)" style="background:#000; color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:11px; cursor:pointer">Extend 15m</button>
-    <?php endif; ?>
+    <span>About 1 minute remains in the scheduled time. The call stays open until the provider ends it.</span>
   </div>
 
   <div id="muteTtsBanner" class="mute-tts-banner" aria-hidden="true" role="status">
@@ -1140,16 +1259,26 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         <p id="violationModalDesc">Report a possible violation during this video consultation. The report is sent to an authorized administrator for review and does not automatically suspend the patient's account.</p>
       </header>
       <div class="violation-dialog__body">
-        <div class="violation-field">
-          <label for="violationReason">Report reason</label>
-          <select id="violationReason" required aria-required="true">
-            <option value="">Select a reason…</option>
+        <div class="violation-field violation-reason">
+          <label id="violationReasonLabel" for="violationReasonBtn">Report reason</label>
+          <input type="hidden" id="violationReason" value="">
+          <button type="button" class="violation-reason__btn" id="violationReasonBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="violationReasonList">Select a reason…</button>
+          <ul id="violationReasonList" class="violation-reason__menu" role="listbox" hidden>
             <?php
             require_once BASE_PATH . '/app/includes/case_reports_schema.php';
-            foreach (case_report_valid_video_reasons() as $vr): ?>
-            <option value="<?= htmlspecialchars($vr) ?>"><?= htmlspecialchars(case_report_reason_label($vr)) ?></option>
+            $providerReportReasons = [
+                'abuse_harassment' => 'Abuse / Harassment',
+                'inappropriate_behavior' => 'Inappropriate behavior',
+                'fake_identity' => 'Fake identity',
+                'spam' => 'Spam',
+                'medical_misuse' => 'Medical misuse',
+                'other' => 'Other',
+            ];
+            foreach ($providerReportReasons as $vr => $vrLabel): ?>
+            <li role="none"><button type="button" role="option" data-value="<?= htmlspecialchars($vr) ?>" aria-selected="false"><?= htmlspecialchars($vrLabel) ?></button></li>
             <?php endforeach; ?>
-          </select>
+          </ul>
+          <p class="violation-reason__error" id="violationReasonError" hidden></p>
         </div>
         <div class="violation-field">
           <label for="violationNotes" id="violationNotesLabel">Additional details (optional)</label>
@@ -1507,7 +1636,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (consultUi && typeof consultUi.setOverlay === 'function') {
         consultUi.setOverlay(
           'Connection interrupted',
-          'Your consultation has not been completed. Reconnecting...',
+          userRole === 'patient'
+            ? 'Your provider\'s connection was interrupted. Please wait while we try to reconnect.'
+            : 'Your consultation has not been completed. Reconnecting...',
           true,
           { showRetry: true }
         );
@@ -1609,8 +1740,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           }
           if (userRole === 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
             consultUi.setOverlay(
-              'Your provider\'s connection was interrupted.',
-              'Please wait while they reconnect. Your consultation has not been completed.',
+              'Connection interrupted',
+              'Your provider\'s connection was interrupted. Please wait while we try to reconnect.',
               true,
               { showRetry: false }
             );
@@ -1628,7 +1759,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (userRole === 'patient' && consultUi && typeof consultUi.setOverlay === 'function') {
           consultUi.setOverlay(
             'Connection interrupted',
-            'Your consultation has not been completed. Reconnecting...',
+            'Your provider\'s connection was interrupted. Please wait while we try to reconnect.',
             true,
             { showRetry: false }
           );
@@ -1676,7 +1807,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         if (consultUi && typeof consultUi.setOverlay === 'function') {
           consultUi.setOverlay(
             'Connection interrupted',
-            'Your consultation has not been completed. Reconnecting...',
+            userRole === 'patient'
+              ? 'Your provider\'s connection was interrupted. Please wait while we try to reconnect.'
+              : 'Your consultation has not been completed. Reconnecting...',
             true,
             { showRetry: false }
           );
@@ -2755,39 +2888,21 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
+    function showSlotWarning(show) {
+      const prompt = document.getElementById('extensionPrompt');
+      if (!prompt) return;
+      prompt.style.display = show ? 'flex' : 'none';
+    }
+
     function startTimer() {
       if (timerInterval) clearInterval(timerInterval);
-      startTimer._patientExpiredMsg = false;
 
       timerInterval = setInterval(() => {
         if (timeLeft > 0) {
           timeLeft--;
         }
-
         updateTimerDisplay();
-
-        if (timeLeft === 300 && !isPatient) {
-          document.getElementById('extensionPrompt').style.display = 'flex';
-        }
-
-        if (timeLeft <= 0) {
-          if (!isPatient) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-            document.getElementById('callStatus').textContent = 'Consultation time has expired. Closing the room...';
-            endCall(true);
-            return;
-          }
-
-          if (!startTimer._patientExpiredMsg) {
-            startTimer._patientExpiredMsg = true;
-            document.getElementById('callStatus').textContent =
-              'Scheduled slot time has ended. You can leave or stay if your doctor extends the call.';
-          }
-        } else if (isPatient && startTimer._patientExpiredMsg) {
-          startTimer._patientExpiredMsg = false;
-          document.getElementById('callStatus').textContent = 'Connected';
-        }
+        showSlotWarning(timeLeft > 0 && timeLeft <= 60);
       }, 1000);
     }
 
@@ -2801,23 +2916,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }, 4500);
     }
 
-    function applyExtension(mins, label) {
-      timeLeft += mins * 60;
-      if (window.__mcVideoRoomMeta) {
-        const prev = parseInt(window.__mcVideoRoomMeta.scheduledDurationSeconds, 10) || 0;
-        window.__mcVideoRoomMeta.scheduledDurationSeconds = prev + (mins * 60);
-      }
-      if (consultUi && typeof consultUi.setDurationFromServer === 'function') {
-        const sched = (window.__mcVideoRoomMeta && window.__mcVideoRoomMeta.scheduledDurationSeconds)
-          ? window.__mcVideoRoomMeta.scheduledDurationSeconds
-          : null;
-        consultUi.setDurationFromServer({
-          scheduled_duration_seconds: sched,
-        });
-      }
-      document.getElementById('extensionPrompt').style.display = 'none';
-      const suffix = label ? ' New end: ' + label + '.' : '';
-      showExtendToast('Session extended by ' + mins + ' minutes.' + suffix, 'success');
+    function applyExtension() {
+      syncTimerFromServer();
     }
 
     async function requestExtension(mins = 15) {
@@ -2840,22 +2940,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const data = await res.json();
 
         if (data.success) {
-          if (typeof data.seconds_remaining === 'number' && data.seconds_remaining > 0) {
+          if (typeof data.seconds_remaining === 'number') {
             timeLeft = data.seconds_remaining;
-          } else {
-            applyExtension(data.extension_mins || mins, data.new_end_label || '');
           }
-          document.getElementById('extensionPrompt').style.display = 'none';
-          notifyParent({
-            type: 'medconnect:session-extended',
-            extension_mins: data.extension_mins || mins,
-            new_end_label: data.new_end_label || ''
-          });
-          if (!data.seconds_remaining) {
-            showExtendToast(data.message || 'Session extended.', 'success');
-          } else {
-            showExtendToast((data.message || 'Session extended.') + (data.new_end_label ? ' New end: ' + data.new_end_label + '.' : ''), 'success');
-          }
+          syncTimerFromServer();
+          showExtendToast(data.message || 'The booked slot is unchanged. The call can continue.', 'success');
         } else {
           showExtendToast(data.message || 'Could not extend session.', 'error');
         }
@@ -2903,7 +2992,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           }
           if (typeof data.seconds_remaining !== 'number') return;
 
-          const previous = timeLeft;
           timeLeft = data.seconds_remaining;
           updateTimerDisplay();
           if (consultUi && typeof consultUi.setDurationFromServer === 'function') {
@@ -2912,27 +3000,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
             consultUi.startDurationTimer();
           }
 
-          if (timeLeft > 300) {
-            document.getElementById('extensionPrompt').style.display = 'none';
-          }
+          showSlotWarning(timeLeft > 0 && timeLeft <= 60);
 
-          if (isPatient && previous <= 0 && timeLeft > 0) {
-            startTimer._patientExpiredMsg = false;
-            document.getElementById('callStatus').textContent = 'Your doctor extended the session.';
-            showExtendToast('Session extended. New end: ' + (data.end_label || 'updated') + '.', 'success');
+          if (isPatient && data.consultation_status === 'completed' && !endingCall) {
+            document.getElementById('callStatus').textContent = 'This consultation has ended.';
+            leaveCallFast();
+            return;
           }
-
-          if (data.slot_expired || timeLeft <= 0) {
-            if (!isPatient && !endingCall) {
-              document.getElementById('callStatus').textContent = 'Consultation time has expired. Closing the room...';
-              endCall(true);
-              return;
-            }
-            if (isPatient && data.consultation_status === 'completed' && !endingCall) {
-              document.getElementById('callStatus').textContent = 'This consultation has ended.';
-              leaveCallFast();
-            }
-          } else if (!isPatient && data.patient_temporarily_left && !patientWaitMode && !callHasRemoteStream) {
+          if (!isPatient && data.patient_temporarily_left && !patientWaitMode && !callHasRemoteStream) {
             showProviderWaitingForPatient();
           }
         })
@@ -3627,11 +3702,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     window.addEventListener('message', (event) => {
       if (event.origin !== window.location.origin || !event.data) return;
       if (event.data.type === 'medconnect:extend-session') {
-        if (typeof event.data.seconds_remaining === 'number' && event.data.seconds_remaining > 0) {
-          timeLeft = event.data.seconds_remaining;
-        } else {
-          applyExtension(event.data.extension_mins || 15, event.data.new_end_label || '');
-        }
+        syncTimerFromServer();
         return;
       }
       if (event.data.type === 'medconnect:shell-leave-fast' || event.data.type === 'medconnect:shell-end-call') {
@@ -3747,6 +3818,53 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
       }
 
+      const reasonBtn = document.getElementById('violationReasonBtn');
+      const reasonList = document.getElementById('violationReasonList');
+      const reasonError = document.getElementById('violationReasonError');
+
+      function setReasonError(message) {
+        if (!reasonError) return;
+        reasonError.hidden = !message;
+        reasonError.textContent = message || '';
+      }
+
+      function closeReasonList() {
+        if (!reasonList || !reasonBtn) return;
+        reasonList.hidden = true;
+        reasonBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      function chooseReason(value, label) {
+        const reasonEl = document.getElementById('violationReason');
+        if (reasonEl) reasonEl.value = value;
+        if (reasonBtn) reasonBtn.textContent = label;
+        if (reasonList) {
+          reasonList.querySelectorAll('[role="option"]').forEach((btn) => {
+            btn.setAttribute('aria-selected', btn.getAttribute('data-value') === value ? 'true' : 'false');
+          });
+        }
+        setReasonError('');
+        closeReasonList();
+        syncNotesRequirement();
+      }
+
+      if (reasonBtn && reasonList) {
+        reasonBtn.addEventListener('click', (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const open = reasonList.hidden;
+          reasonList.hidden = !open;
+          reasonBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+        reasonList.addEventListener('click', (event) => {
+          const option = event.target.closest('[data-value]');
+          if (!option) return;
+          event.preventDefault();
+          event.stopPropagation();
+          chooseReason(option.getAttribute('data-value') || '', option.textContent.trim());
+        });
+      }
+
       function syncNotesRequirement() {
         const reasonEl = document.getElementById('violationReason');
         const notesLabel = document.getElementById('violationNotesLabel');
@@ -3807,9 +3925,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         const notes = notesEl ? String(notesEl.value || '').trim() : '';
 
         if (!endOnly && !reason) {
-          alert('Please select a report reason.');
+          setReasonError('Please select a report reason.');
           return;
         }
+        setReasonError('');
         if (!endOnly && reason === 'other' && notes.length < 10) {
           alert('Please describe what happened (at least 10 characters) when selecting Other.');
           return;
@@ -3852,6 +3971,11 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         openViolationModal();
       });
       document.getElementById('violationReason')?.addEventListener('change', syncNotesRequirement);
+      document.addEventListener('click', (event) => {
+        if (!reasonList || reasonList.hidden) return;
+        if (event.target.closest('.violation-reason')) return;
+        closeReasonList();
+      });
       document.getElementById('violationCancelBtn')?.addEventListener('click', closeViolationModal);
       document.getElementById('violationSubmitBtn')?.addEventListener('click', () => submitViolation(false, false));
       document.getElementById('violationEndOnlyBtn')?.addEventListener('click', () => submitViolation(false, true));

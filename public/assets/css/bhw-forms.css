@@ -1517,6 +1517,59 @@
   }
 }
 
+@media (max-width: 768px) {
+  .bhw-register-page,
+  .bhw-register-form,
+  .bhw-register-form .bhw-form-card,
+  .bhw-register-form .bhw-form-grid,
+  .bhw-register-form .bhw-field {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .bhw-register-header {
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  .bhw-register-header-text h2 {
+    font-size: 1.25rem;
+  }
+
+  .bhw-register-header-text p {
+    font-size: 13px;
+    max-width: none;
+  }
+
+  .bhw-register-form .bhw-form-card {
+    padding: 12px;
+  }
+
+  .bhw-register-form .bhw-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .bhw-register-form .bhw-form-card .form-control,
+  .bhw-register-form select.form-control {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+
+  .bhw-register-form .bhw-form-actions .bhw-btn-teal,
+  .bhw-register-form .bhw-form-actions .bhw-btn-ghost {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
 @media (max-width: 640px) {
   .bhw-register-header {
     flex-direction: column;
@@ -1534,6 +1587,29 @@
   .bhw-form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.bhw-reg-status {
+  scroll-margin-top: 88px;
+}
+
+.bhw-reg-status__label {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f4c5c;
+  line-height: 1.35;
+}
+
+.bhw-reg-status__detail {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f766e;
+}
+
+.bhw-reg-status.is-done .bhw-reg-status__label {
+  color: #047857;
 }
 
 .bhw-reg-success-modal { text-align: left; }

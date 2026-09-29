@@ -19,8 +19,8 @@
 
   function statusClass(status) {
     var s = String(status || 'pending').toLowerCase();
-    if (s === 'approved' || s === 'verified') return 'bhw-records-status--approved';
-    if (s === 'rejected') return 'bhw-records-status--rejected';
+    if (s === 'approved' || s === 'verified' || s === 'completed') return 'bhw-records-status--approved';
+    if (s === 'rejected' || s === 'cancelled' || s === 'canceled') return 'bhw-records-status--rejected';
     return 'bhw-records-status--pending';
   }
 
@@ -33,8 +33,8 @@
       return '<div class="bhw-records-empty">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">' +
         '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' +
-        '<strong>No documents yet</strong>' +
-        '<span>Upload residency proof, lab results, or referral letters for this patient.</span>' +
+        '<strong>No documents on file</strong>' +
+        '<span>Uploaded health documents for this patient will appear here.</span>' +
         '</div>';
     }
 
@@ -75,59 +75,290 @@
       '<tbody>' + rows + '</tbody></table></div>';
   }
 
-  function loadRecords(patientId, outDocs, outRx, uploadLink) {
-    if (!patientId) {
-      outDocs.innerHTML = '<div class="bhw-records-empty"><strong>Select a patient</strong><span>Choose a resident from your barangay to view their records.</span></div>';
-      outRx.innerHTML = '';
-      if (uploadLink) uploadLink.style.display = 'none';
-      return;
+  var viewRoot = document.getElementById('bhwRecordsView');
+  if (viewRoot && window.BhwPortal) {
+    var searchInput = document.getElementById('bhwRecordsSearch');
+    var resultsEl = document.getElementById('bhwRecordsResults');
+    var metaEl = document.getElementById('bhwRecordsResultMeta');
+    var modal = document.getElementById('bhwRecordsModal');
+    var modalTitle = document.getElementById('bhwRecordsModalTitle');
+    var modalMeta = document.getElementById('bhwRecordsModalMeta');
+    var modalAvatar = document.getElementById('bhwRecordsModalAvatar');
+    var panels = {
+      profile: document.getElementById('bhwRecordsPanelProfile'),
+      health: document.getElementById('bhwRecordsPanelHealth'),
+      consults: document.getElementById('bhwRecordsPanelConsults'),
+      rx: document.getElementById('bhwRecordsPanelRx'),
+      docs: document.getElementById('bhwRecordsPanelDocs')
+    };
+    var preselect = parseInt(viewRoot.dataset.preselect || '0', 10);
+    var searchTimer = null;
+    var listFp = '';
+    var recordFp = '';
+    var openPatientId = 0;
+    var lastFocus = null;
+    var REFRESH_MS = 15000;
+
+    function dash(value) {
+      var text = value == null ? '' : String(value).trim();
+      return text ? text : '—';
     }
 
-    if (uploadLink) {
-      uploadLink.href = 'upload.php?patient_id=' + patientId;
-      uploadLink.style.display = '';
+    function formatSex(value) {
+      var s = String(value || '').toLowerCase();
+      if (s === 'm' || s === 'male') return 'Male';
+      if (s === 'f' || s === 'female') return 'Female';
+      return dash(value);
     }
 
-    BhwPortal.get('records.php', { action: 'list', patient_id: patientId }).then(function (r) {
-      if (!r.success) {
-        var msg = escapeHtml(r.message || 'Could not load records.');
-        outDocs.innerHTML = '<div class="bhw-records-empty"><strong>Unable to load</strong><span>' + msg + '</span></div>';
-        outRx.innerHTML = '';
+    function formatWhen(dateValue, timeValue) {
+      var dateText = formatDate(dateValue);
+      if (!timeValue) return dateText;
+      var d = new Date(String(dateValue).slice(0, 10) + 'T' + timeValue);
+      if (isNaN(d.getTime())) return dateText;
+      return dateText + ' • ' + d.toLocaleTimeString('en-PH', { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function patientName(p) {
+      return [p.first_name, p.middle_name, p.last_name, p.suffix].filter(function (part) {
+        return part && String(part).trim();
+      }).join(' ');
+    }
+
+    function initials(p) {
+      var a = (p.first_name || '?').charAt(0);
+      var b = (p.last_name || '').charAt(0);
+      return (a + b).toUpperCase();
+    }
+
+    function addressLine(p) {
+      if (p.full_address && String(p.full_address).trim()) return String(p.full_address).trim();
+      return [p.purok, p.address, p.barangay, p.city_municipality, p.province].filter(function (part) {
+        return part && String(part).trim();
+      }).join(', ');
+    }
+
+    function stableFp(value) {
+      try { return JSON.stringify(value || null); } catch (e) { return ''; }
+    }
+
+    function fieldGrid(rows) {
+      return '<dl class="bhw-records-fields">' + rows.map(function (row) {
+        return '<div><dt>' + escapeHtml(row[0]) + '</dt><dd>' + escapeHtml(dash(row[1])) + '</dd></div>';
+      }).join('') + '</dl>';
+    }
+
+    function setTab(name) {
+      viewRoot.querySelectorAll('[data-records-tab]').forEach(function (btn) {
+        var on = btn.getAttribute('data-records-tab') === name;
+        btn.classList.toggle('is-active', on);
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+        btn.tabIndex = on ? 0 : -1;
+      });
+      Object.keys(panels).forEach(function (key) {
+        if (!panels[key]) return;
+        var on = key === name;
+        panels[key].hidden = !on;
+        panels[key].classList.toggle('is-active', on);
+      });
+    }
+
+    function renderPatientList(patients) {
+      if (!resultsEl) return;
+      if (!patients.length) {
+        resultsEl.innerHTML = '<div class="bhw-records-empty"><strong>No matching patients</strong><span>Try another name, email, or contact number in your barangay.</span></div>';
+        if (metaEl) metaEl.textContent = '0 patients';
         return;
       }
-      var rec = r.records || {};
-      outDocs.innerHTML = renderDocuments(rec.documents || []);
-      outRx.innerHTML = renderPrescriptions(rec.prescriptions || []);
-      if (window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
-    });
-  }
-
-  var viewRoot = document.getElementById('bhwRecordsView');
-  if (viewRoot) {
-    var pickerEl = document.getElementById('bhwRecordsPicker');
-    var outDocs = document.getElementById('bhwRecordsDocs');
-    var outRx = document.getElementById('bhwRecordsRx');
-    var uploadLink = document.getElementById('bhwRecordsUploadLink');
-    var preselect = parseInt(viewRoot.dataset.preselect || '0', 10);
-
-    var picker = BhwPortal.mountPatientPicker(pickerEl, {
-      label: 'Search patient',
-      placeholder: 'Type name, email, or contact number…',
-      preselect: preselect > 0 ? preselect : 0,
-      openOnLoad: false,
-      onSelect: function (id) {
-        loadRecords(id, outDocs, outRx, uploadLink);
-      },
-      onClear: function () {
-        loadRecords(0, outDocs, outRx, uploadLink);
-      }
-    });
-
-    if (preselect > 0) {
-      loadRecords(preselect, outDocs, outRx, uploadLink);
-    } else {
-      loadRecords(0, outDocs, outRx, uploadLink);
+      if (metaEl) metaEl.textContent = patients.length + (patients.length === 1 ? ' patient' : ' patients') + ' in your barangay';
+      resultsEl.innerHTML = patients.map(function (p) {
+        var name = patientName(p) || 'Patient';
+        var detail = [p.age ? ('Age ' + p.age) : '', formatSex(p.gender), p.contact_number || ''].filter(Boolean).join(' · ');
+        return '<button type="button" class="bhw-records-card" data-patient-id="' + escapeHtml(p.id) + '">' +
+          '<span class="bhw-records-card__avatar" aria-hidden="true">' + escapeHtml(initials(p)) + '</span>' +
+          '<span class="bhw-records-card__body">' +
+            '<strong>' + escapeHtml(name) + '</strong>' +
+            '<span>' + escapeHtml(detail || '—') + '</span>' +
+            '<span>' + escapeHtml(p.barangay ? ('Brgy. ' + p.barangay) : (p.email || '')) + '</span>' +
+          '</span>' +
+        '</button>';
+      }).join('');
     }
+
+    function loadPatients() {
+      var q = searchInput ? searchInput.value.trim() : '';
+      BhwPortal.get('patients.php', { action: 'list', q: q }).then(function (r) {
+        if (!r.success) {
+          if (resultsEl) {
+            resultsEl.innerHTML = '<div class="bhw-records-empty"><strong>Unable to load patients</strong><span>' + escapeHtml(r.message || 'Please try again.') + '</span></div>';
+          }
+          return;
+        }
+        var patients = r.patients || [];
+        var fp = stableFp(patients);
+        if (fp === listFp) return;
+        listFp = fp;
+        renderPatientList(patients);
+      }).catch(function () {});
+    }
+
+    function renderRecord(payload) {
+      var p = payload.patient || {};
+      var rec = payload.records || {};
+      var name = patientName(p) || 'Patient';
+      if (modalTitle) modalTitle.textContent = name;
+      if (modalAvatar) modalAvatar.textContent = initials(p);
+      if (modalMeta) {
+        modalMeta.textContent = [p.age ? ('Age ' + p.age) : '', formatSex(p.gender), p.contact_number || ''].filter(Boolean).join(' · ') || 'Patient record';
+      }
+      if (panels.profile) {
+        panels.profile.innerHTML = fieldGrid([
+          ['Name', name],
+          ['Age', p.age],
+          ['Sex', formatSex(p.gender)],
+          ['Phone number', p.contact_number],
+          ['Email', p.email],
+          ['Barangay', p.barangay],
+          ['Purok', p.purok],
+          ['Address', addressLine(p)]
+        ]);
+      }
+      if (panels.health) {
+        panels.health.innerHTML = fieldGrid([
+          ['Allergies', p.allergies],
+          ['Medical conditions', p.existing_conditions],
+          ['Current medications', p.current_medications],
+          ['Blood type', p.blood_type]
+        ]);
+      }
+      if (panels.consults) {
+        var visits = rec.consultations || [];
+        panels.consults.innerHTML = visits.length ? visits.map(function (c) {
+          var assessment = c.diagnosis || '';
+          var note = c.recommendation || '';
+          var triage = [c.urgency_label, c.triage_classification].filter(Boolean).join(' · ');
+          return '<article class="bhw-records-visit">' +
+            '<header><strong>' + escapeHtml(formatWhen(c.consult_date, c.consult_time)) + '</strong>' +
+            '<span class="bhw-records-status ' + statusClass(c.status) + '">' + escapeHtml((c.status || 'scheduled').replace(/_/g, ' ')) + '</span></header>' +
+            '<p><span>Provider</span> ' + escapeHtml(dash(c.provider_name)) + '</p>' +
+            '<p><span>Chief complaint</span> ' + escapeHtml(dash(c.chief_complaint)) + '</p>' +
+            '<p><span>Final assessment</span> ' + escapeHtml(dash(assessment)) + '</p>' +
+            (note ? '<p><span>Recommendation</span> ' + escapeHtml(note) + '</p>' : '') +
+            (triage ? '<p><span>Triage</span> ' + escapeHtml(triage) + '</p>' : '') +
+            '</article>';
+        }).join('') : '<div class="bhw-records-empty"><strong>No consultations yet</strong><span>Appointments and completed visits for this patient will appear here.</span></div>';
+      }
+      if (panels.rx) panels.rx.innerHTML = renderPrescriptions(rec.prescriptions || []);
+      if (panels.docs) panels.docs.innerHTML = renderDocuments(rec.documents || []);
+    }
+
+    function loadRecord(patientId, refresh) {
+      if (!patientId) return;
+      BhwPortal.get('records.php', {
+        action: 'list',
+        patient_id: patientId,
+        refresh: refresh ? '1' : '0'
+      }).then(function (r) {
+        if (!r.success) {
+          if (panels.profile) {
+            panels.profile.innerHTML = '<div class="bhw-records-empty"><strong>Unable to open this record</strong><span>' + escapeHtml(r.message || 'This patient is outside your barangay.') + '</span></div>';
+          }
+          return;
+        }
+        var fp = stableFp({ patient: r.patient, records: r.records });
+        if (fp === recordFp) return;
+        recordFp = fp;
+        renderRecord(r);
+        if (!refresh && window.MedConnectNavBadgesRefresh) window.MedConnectNavBadgesRefresh();
+      }).catch(function () {});
+    }
+
+    function openRecord(patientId, trigger) {
+      openPatientId = patientId;
+      recordFp = '';
+      lastFocus = trigger || document.activeElement;
+      if (modal) modal.hidden = false;
+      document.body.classList.add('bhw-records-modal-open');
+      setTab('profile');
+      Object.keys(panels).forEach(function (key) {
+        if (panels[key]) panels[key].innerHTML = '<div class="bhw-records-empty"><strong>Loading record…</strong></div>';
+      });
+      var closeBtn = document.getElementById('bhwRecordsModalClose');
+      if (closeBtn) closeBtn.focus();
+      loadRecord(patientId, false);
+    }
+
+    function closeRecord() {
+      if (modal) modal.hidden = true;
+      document.body.classList.remove('bhw-records-modal-open');
+      openPatientId = 0;
+      recordFp = '';
+      if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(function () {
+          listFp = '';
+          loadPatients();
+        }, 300);
+      });
+    }
+
+    if (resultsEl) {
+      resultsEl.addEventListener('click', function (e) {
+        var card = e.target.closest('[data-patient-id]');
+        if (!card) return;
+        openRecord(parseInt(card.getAttribute('data-patient-id'), 10) || 0, card);
+      });
+    }
+
+    viewRoot.querySelectorAll('[data-records-tab]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setTab(btn.getAttribute('data-records-tab'));
+      });
+    });
+
+    viewRoot.querySelectorAll('[data-records-close]').forEach(function (el) {
+      el.addEventListener('click', closeRecord);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal && !modal.hidden) closeRecord();
+    });
+
+    if (modal && modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+
+    loadPatients();
+    if (preselect > 0) openRecord(preselect, null);
+
+    setInterval(function () {
+      if (document.hidden) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      loadPatients();
+      if (openPatientId) loadRecord(openPatientId, true);
+    }, REFRESH_MS);
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) return;
+      listFp = '';
+      recordFp = '';
+      loadPatients();
+      if (openPatientId) loadRecord(openPatientId, true);
+    });
+
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      var relevant = ['triage', 'queue', 'appointments', 'consultations', 'followups', 'notifications'];
+      if (!changed.some(function (key) { return relevant.indexOf(key) !== -1; })) return;
+      listFp = '';
+      recordFp = '';
+      loadPatients();
+      if (openPatientId) loadRecord(openPatientId, true);
+    });
   }
 
   var uploadRoot = document.getElementById('bhwRecordsUpload');

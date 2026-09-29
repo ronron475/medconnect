@@ -9,6 +9,7 @@ Api::requireRole('provider');
 
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_expiry.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_queue_timing.php';
 
 $providerId = (int) ($_SESSION['user_id'] ?? 0);
 if ($providerId <= 0) {
@@ -20,17 +21,26 @@ header('Cache-Control: no-store');
 try {
     consultations_auto_expire($pdo, null, $providerId);
 
+    $joinedSql = consultation_timing_latest_patient_joined_sql('c');
     $stmt = $pdo->prepare("
         SELECT
             c.id,
+            c.patient_id,
+            c.provider_id,
             c.consult_date,
             c.consult_time,
             c.status,
+            c.early_start_offered_at,
+            c.early_start_response,
+            c.early_start_responded_at,
             vs.room_token,
+            {$joinedSql} AS patient_joined_at,
             s.slot_date,
             s.start_time AS slot_start,
-            s.end_time AS slot_end
+            s.end_time AS slot_end,
+            CONCAT(TRIM(u.first_name), ' ', TRIM(u.last_name)) AS patient_name
         FROM consultations c
+        JOIN users u ON u.id = c.patient_id
         LEFT JOIN video_sessions vs ON vs.consultation_id = c.id AND vs.status = 'active'
         LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         WHERE c.provider_id = ?
@@ -51,7 +61,13 @@ try {
     ];
     $today = date('Y-m-d');
 
+    consultation_timing_sync_delay_notices($pdo, $providerId);
+    $nextWaiting = consultation_timing_next_waiting_patient($pdo, $providerId);
+    $activeVideoId = consultation_timing_active_video_consultation_id($pdo, $providerId);
+    $openClinicalId = consultation_timing_other_open_consultation_id($pdo, $providerId);
+
     foreach ($rows as $row) {
+        $row = consultation_timing_decorate_row($pdo, $row);
         $ctx = queue_session_context($row);
         $access = queue_session_access($row);
         $status = queue_normalize_status((string) ($row['status'] ?? 'pending'));
@@ -85,6 +101,34 @@ try {
             'live_room_url'    => !empty($row['room_token'])
                 ? (ASSET_BASE . '/views/consultation/video_room.php?token=' . urlencode((string) $row['room_token']))
                 : '',
+            'early_start_response' => (string) ($row['early_start_response'] ?? ''),
+            'patient_name'    => (string) ($row['patient_name'] ?? ''),
+            'timing_missed'   => !empty($row['timing_missed']),
+            'patient_ever_joined' => !empty($row['patient_ever_joined']),
+        ];
+    }
+
+    $nextPayload = null;
+    if ($nextWaiting) {
+        $response = strtolower(trim((string) ($nextWaiting['early_start_response'] ?? '')));
+        $responseLabel = match ($response) {
+            'join_early' => 'Start Early',
+            'keep_time' => 'Keep Scheduled Time',
+            default => $nextWaiting['early_start_offered_at'] ? 'Waiting for the patient' : '',
+        };
+        $nextStart = $nextWaiting['timing_slot_start'] ?? null;
+        $nextPayload = [
+            'id' => (int) $nextWaiting['id'],
+            'patient_name' => trim((string) ($nextWaiting['patient_name'] ?? '')),
+            'scheduled_label' => $nextStart ? date('g:i A', (int) $nextStart) : '',
+            'early_start_response' => $response,
+            'early_start_response_label' => $responseLabel,
+            'can_offer_early' => $activeVideoId === 0
+                && $openClinicalId === 0
+                && $nextStart !== null
+                && time() < (int) $nextStart
+                && $response === ''
+                && trim((string) ($nextWaiting['early_start_offered_at'] ?? '')) === '',
         ];
     }
 
@@ -92,6 +136,8 @@ try {
         'items'      => $items,
         'stats'      => $stats,
         'server_now' => time(),
+        'active_video_consultation_id' => $activeVideoId,
+        'next_patient' => $nextPayload,
     ]);
 } catch (Throwable $e) {
     error_log('queue_status.php: ' . $e->getMessage());

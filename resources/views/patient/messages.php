@@ -36,7 +36,7 @@ if (!function_exists('format_message_list_time')) {
             return '';
         }
         $ts = strtotime($raw);
-        return $ts ? date('M j, g:i A', $ts) : $raw;
+        return $ts ? date('M j, Y', $ts) . ' • ' . date('g:i A', $ts) : $raw;
     }
 }
 
@@ -68,7 +68,7 @@ foreach ($pairRows as $row) {
     $meta = $stmtMeta->fetch(PDO::FETCH_ASSOC) ?: [];
 
     $fallback_time = !empty($meta['consult_date'])
-        ? date('M j, g:i A', strtotime(($meta['consult_date'] ?? '') . ' ' . ($meta['consult_time'] ?? '00:00:00')))
+        ? date('M j, Y', strtotime(($meta['consult_date'] ?? '') . ' ' . ($meta['consult_time'] ?? '00:00:00'))) . ' • ' . date('g:i A', strtotime(($meta['consult_date'] ?? '') . ' ' . ($meta['consult_time'] ?? '00:00:00')))
         : '';
     $lastText = trim((string) ($last_msg['message'] ?? ''));
     $preview = $lastText !== ''

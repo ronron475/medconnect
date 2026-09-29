@@ -24,7 +24,7 @@ function provider_activity_time_label(string $datetime): string
         return (int) floor($diff / 3600) . ' hr ago';
     }
 
-    return date('M j, g:i A', $ts);
+    return date('M j, Y', $ts) . ' • ' . date('g:i A', $ts);
 }
 
 /**

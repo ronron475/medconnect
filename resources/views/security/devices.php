@@ -97,7 +97,7 @@ portal_layout_open($role);
               <p class="mc-notif-message" style="-webkit-line-clamp:3;">
                 <?= htmlspecialchars(substr((string) ($d['device_fingerprint'] ?? ''), 0, 16) . '…') ?>
                 <br/>
-                Last seen: <?= htmlspecialchars(date('M j, Y g:i A', strtotime((string) ($d['last_seen_at'] ?? 'now')))) ?>
+                Last seen: <?= htmlspecialchars(date('M j, Y', strtotime((string) ($d['last_seen_at'] ?? 'now'))) . ' • ' . date('g:i A', strtotime((string) ($d['last_seen_at'] ?? 'now')))) ?>
               </p>
               <div class="mc-notif-meta">
                 <span><?= htmlspecialchars((string) ($d['last_ip'] ?? '')) ?></span>
@@ -137,7 +137,7 @@ portal_layout_open($role);
                 IP: <?= htmlspecialchars((string) ($e['ip_address'] ?? '')) ?>
               </p>
               <div class="mc-notif-meta">
-                <span><?= htmlspecialchars(date('M j, Y g:i A', strtotime((string) ($e['created_at'] ?? 'now')))) ?></span>
+                <span><?= htmlspecialchars(date('M j, Y', strtotime((string) ($e['created_at'] ?? 'now'))) . ' • ' . date('g:i A', strtotime((string) ($e['created_at'] ?? 'now')))) ?></span>
               </div>
             </div>
           </div>

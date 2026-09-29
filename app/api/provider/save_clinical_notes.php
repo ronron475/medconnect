@@ -14,6 +14,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patien
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_signature.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/icd10_lookup.php';
 
 clinical_tables_ensure($pdo);
 patient_consultation_records_schema_ensure($pdo);
@@ -101,6 +102,19 @@ if ($alreadyFinalized) {
     exit;
 }
 
+    $diagRaw = trim((string) ($data['diagnosis'] ?? ''));
+    if ($diagRaw !== '') {
+        $icd = icd10_match_label($diagRaw);
+        if ($icd === null) {
+            echo json_encode(['success' => false, 'message' => 'Select a final diagnosis from the ICD-10 list.']);
+            exit;
+        }
+        $data['diagnosis'] = $icd['label'];
+    } elseif ($finalize) {
+        echo json_encode(['success' => false, 'message' => 'Select a final diagnosis from the ICD-10 list.']);
+        exit;
+    }
+
     if ($finalize) {
         foreach (['subjective', 'objective', 'assessment', 'plan'] as $soapField) {
             if (trim((string) ($data[$soapField] ?? '')) === '') {
@@ -121,7 +135,6 @@ if ($alreadyFinalized) {
             exit;
         }
 
-        // Electronic signature = authenticated provider Full Name only (server-authoritative).
         $identity = clinical_note_provider_identity($pdo, (int) $data['provider_id']);
         $signatureName = trim((string) ($identity['full_name'] ?? ''));
         if ($signatureName === '') {
@@ -132,8 +145,13 @@ if ($alreadyFinalized) {
             exit;
         }
 
-        $data['signature_method'] = 'typed';
-        $data['signature'] = $signatureName;
+        $drawn = clinical_note_drawn_signature_valid((string) ($data['signature'] ?? ''));
+        if (!$drawn['ok']) {
+            echo json_encode(['success' => false, 'message' => $drawn['message']]);
+            exit;
+        }
+
+        $data['signature_method'] = 'drawn';
         $data['signature_name'] = $signatureName;
 
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';

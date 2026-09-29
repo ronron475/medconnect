@@ -276,10 +276,10 @@ function patient_settings_list_sessions(PDO $pdo, int $userId): array
             'ip_address' => (string) ($row['ip_address'] ?? ''),
             'last_activity' => $row['last_activity'] ?? null,
             'last_activity_label' => !empty($row['last_activity'])
-                ? date('M j, Y g:i A', strtotime((string) $row['last_activity']))
+                ? date('M j, Y', strtotime((string) $row['last_activity'])) . ' • ' . date('g:i A', strtotime((string) $row['last_activity']))
                 : '—',
             'created_at_label' => !empty($row['created_at'])
-                ? date('M j, Y g:i A', strtotime((string) $row['created_at']))
+                ? date('M j, Y', strtotime((string) $row['created_at'])) . ' • ' . date('g:i A', strtotime((string) $row['created_at']))
                 : '—',
         ];
     }, $rows);
@@ -312,7 +312,7 @@ function patient_settings_list_devices(PDO $pdo, int $userId): array
             'os' => $meta['os'],
             'device_type' => $meta['device_type'],
             'last_seen_label' => !empty($row['last_seen_at'])
-                ? date('M j, Y g:i A', strtotime((string) $row['last_seen_at']))
+                ? date('M j, Y', strtotime((string) $row['last_seen_at'])) . ' • ' . date('g:i A', strtotime((string) $row['last_seen_at']))
                 : '—',
             'last_ip' => (string) ($row['last_ip'] ?? ''),
         ];

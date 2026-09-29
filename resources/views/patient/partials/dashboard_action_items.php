@@ -55,19 +55,34 @@ $cleanFollowupMessage = static function (?string $message): string {
         <?php
         $status = strtolower(trim((string) ($f['status'] ?? 'scheduled')));
         $dateRaw = (string) ($f['followup_date'] ?? '');
+        $slotStart = trim((string) ($f['slot_start_time'] ?? ''));
+        $hasSlot = (int) ($f['slot_id'] ?? 0) > 0 && $slotStart !== '';
+        $timeLabel = ($hasSlot && $dateRaw !== '')
+            ? date('g:i A', strtotime($dateRaw . ' ' . $slotStart))
+            : '';
         $isOverdue = ($status === 'scheduled' && $dateRaw !== '' && $dateRaw < $today);
         $isToday = ($status === 'scheduled' && $dateRaw === $today);
         $providerName = trim(($f['provider_first'] ?? '') . ' ' . ($f['provider_last'] ?? ''));
         $msg = $cleanFollowupMessage($f['message'] ?? '');
         $statusLabel = $isOverdue ? 'Overdue' : ($isToday ? 'Due today' : ucfirst($status));
         $statusClass = $isOverdue ? 'is-overdue' : ($isToday ? 'is-today' : ('is-' . preg_replace('/[^a-z_]/', '', $status)));
+        $plainDate = $dateRaw !== '' ? date('M j, Y', strtotime($dateRaw)) : 'Date TBD';
+        $whenLabel = ($dateRaw !== '' && $hasSlot && $timeLabel !== '')
+            ? ($plainDate . ' • ' . $timeLabel)
+            : '';
         ?>
         <article class="pdash-action <?= htmlspecialchars($statusClass) ?>">
           <div class="pdash-action__top">
-            <div class="pdash-action__date"><?= $dateRaw !== '' ? date('M j, Y', strtotime($dateRaw)) : 'Date TBD' ?></div>
+            <div class="pdash-action__when">
+              <?php if ($whenLabel !== ''): ?>
+                <div class="pdash-action__slot"><?= htmlspecialchars($whenLabel) ?></div>
+              <?php else: ?>
+                <div class="pdash-action__date"><?= htmlspecialchars($plainDate) ?></div>
+              <?php endif; ?>
+            </div>
             <span class="pdash-action__status <?= htmlspecialchars($statusClass) ?>"><?= htmlspecialchars($statusLabel) ?></span>
           </div>
-          <div class="pdash-action__provider">Dr. <?= htmlspecialchars($providerName !== '' ? $providerName : 'Provider') ?></div>
+          <div class="pdash-action__provider"><?= $hasSlot ? 'Doctor: ' : 'Dr. ' ?><?= htmlspecialchars($providerName !== '' ? $providerName : 'Provider') ?></div>
           <p class="pdash-action__msg"><?= htmlspecialchars($msg) ?></p>
           <?php if (!empty($f['contact_number'])): ?>
             <p class="pdash-action__meta">Registered mobile on file: <?= htmlspecialchars((string) $f['contact_number']) ?></p>

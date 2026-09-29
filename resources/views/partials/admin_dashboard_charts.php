@@ -1,11 +1,15 @@
 <?php
 /**
- * Live analytics charts — 2×2 User Overview layout (Admin + Super Admin).
+ * Live analytics charts.
+ * Admin: full-width User Overview, then registration trends + distribution.
+ * Super Admin: same tiles, plus System Status in the 2×2 grid.
  * Expects: $pdo
  */
 if (!isset($pdo)) {
     return;
 }
+
+$adm_show_system_status = defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin';
 
 require_once BASE_PATH . '/app/includes/admin_dashboard_charts.php';
 
@@ -20,7 +24,7 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $chart_theme_css_ver ?>">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css?v=<?= $chart_ui_css_ver ?>">
 
-<section class="adm-charts-section adm-overview-section" id="admChartsRoot" data-days="<?= $chart_days ?>" aria-label="User overview and system status">
+<section class="adm-charts-section adm-overview-section<?= $adm_show_system_status ? '' : ' adm-overview-section--admin' ?>" id="admChartsRoot" data-days="<?= $chart_days ?>" aria-label="<?= $adm_show_system_status ? 'User overview and system status' : 'User overview' ?>">
   <div class="adm-charts-grid adm-overview-grid">
     <article class="adm-chart-card adm-overview-card">
       <div class="adm-chart-card__head">
@@ -71,11 +75,11 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
     <article class="adm-chart-card">
       <div class="adm-chart-card__head">
         <div>
-          <h3 class="adm-chart-card__title">User Registration Trends</h3>
-          <p class="adm-chart-card__sub" id="admChartRegSub">New user sign-ups — <?= htmlspecialchars($chart_period_label) ?></p>
+          <h3 class="adm-chart-card__title">Consultation Trends</h3>
+          <p class="adm-chart-card__sub" id="admChartRegSub">Patients who consulted — <?= htmlspecialchars($chart_period_label) ?></p>
         </div>
         <div class="adm-chart-period">
-          <label class="visually-hidden" for="admChartsDays">Period</label>
+          <label class="adm-chart-period__label" for="admChartsDays">Period</label>
           <select id="admChartsDays" class="form-select adm-chart-period__select" aria-label="Registration trend period">
             <option value="1"<?= $chart_days === 1 ? ' selected' : '' ?>>1 Day</option>
             <option value="7"<?= $chart_days === 7 ? ' selected' : '' ?>>1 Week</option>
@@ -85,9 +89,9 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
         </div>
       </div>
       <div class="adm-chart-canvas-wrap adm-chart-canvas-wrap--trend">
-        <canvas id="admChartReg" aria-label="User registration trends chart"></canvas>
+        <canvas id="admChartReg" aria-label="Consultation trends chart"></canvas>
       </div>
-      <span id="admChartsUpdated" class="visually-hidden">Loading…</span>
+      <p id="admChartsUpdated" class="adm-charts-updated">Loading…</p>
     </article>
 
     <article class="adm-chart-card">
@@ -102,6 +106,7 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
       </div>
     </article>
 
+    <?php if ($adm_show_system_status): ?>
     <article class="adm-chart-card">
       <div class="adm-chart-card__head">
         <div>
@@ -120,6 +125,7 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
         <ul class="adm-sys-status__list" id="admSysStatusList" aria-label="System status breakdown"></ul>
       </div>
     </article>
+    <?php endif; ?>
   </div>
 </section>
 

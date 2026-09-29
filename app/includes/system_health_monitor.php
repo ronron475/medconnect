@@ -181,7 +181,7 @@ function system_health_snapshot(PDO $pdo): array
         if ($row) {
             $backup = [
                 'status'   => (string) ($row['status'] ?? 'unknown'),
-                'label'    => strtoupper((string) ($row['status'] ?? 'unknown')) . ' — ' . date('M j, Y g:i A', strtotime((string) $row['created_at'])),
+                'label'    => strtoupper((string) ($row['status'] ?? 'unknown')) . ' — ' . date('M j, Y', strtotime((string) $row['created_at'])) . ' • ' . date('g:i A', strtotime((string) $row['created_at'])),
                 'at'       => (string) $row['created_at'],
                 'filename' => (string) ($row['filename'] ?? ''),
             ];
@@ -192,7 +192,7 @@ function system_health_snapshot(PDO $pdo): array
 
     return [
         'generated_at'    => $generatedAt,
-        'generated_label' => date('M j, Y g:i A'),
+        'generated_label' => date('M j, Y') . ' • ' . date('g:i A'),
         'overall_status'  => $overall,
         'services'        => $services,
         'metrics'         => $metrics,

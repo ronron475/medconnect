@@ -299,9 +299,11 @@ $show_dashboard_care_tips_section = patient_dashboard_show_care_tips_section(
 $patient_followups = [];
 if ($pdo->query("SHOW TABLES LIKE 'followups'")->rowCount()) {
     $fu = $pdo->prepare("
-        SELECT f.*, u.first_name AS provider_first, u.last_name AS provider_last
+        SELECT f.*, u.first_name AS provider_first, u.last_name AS provider_last,
+               s.start_time AS slot_start_time, s.end_time AS slot_end_time
         FROM followups f
         JOIN users u ON f.provider_id = u.id
+        LEFT JOIN appointment_slots s ON s.id = f.slot_id
         WHERE f.patient_id = ?
         ORDER BY
           CASE LOWER(COALESCE(f.status, 'scheduled'))

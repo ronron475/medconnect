@@ -577,7 +577,7 @@ function consultation_timing_sync_delay_notices(PDO $pdo, int $providerId): void
                 (int) $row['patient_id'],
                 'patient',
                 'Consultation Delayed',
-                'The doctor is currently attending to another consultation. Please wait. We apologize for the inconvenience.',
+                'Your provider is currently finishing the previous consultation. Please remain in the waiting room. You will be notified when your provider is ready.',
                 (int) $row['id'],
                 '/views/patient/consultations.php'
             );
@@ -649,16 +649,22 @@ function consultation_timing_patient_notice(PDO $pdo, array $row): ?array
         return [
             'kind' => 'delayed',
             'title' => 'Consultation Delayed',
-            'message' => 'The doctor is currently attending to another consultation. Please wait. We apologize for the inconvenience.',
+            'message' => 'Your provider is currently finishing the previous consultation. Please remain in the waiting room. You will be notified when your provider is ready.',
             'actions' => [],
         ];
     }
 
     if ($offered && $response === '' && $start !== null && $now < (int) $start && in_array($status, ['pending', 'scheduled'], true)) {
+        $when = date('g:i A', (int) $start);
+        $end = $row['timing_slot_end'] ?? null;
+        if ($end) {
+            $when .= ' – ' . date('g:i A', (int) $end);
+        }
+
         return [
             'kind' => 'early_offer',
-            'title' => 'Your doctor can see you early',
-            'message' => 'The doctor finished the previous visit and can start yours before the scheduled time.',
+            'title' => 'Your provider is ready early.',
+            'message' => 'Your consultation is scheduled for ' . $when . ', but your provider is available now.',
             'actions' => ['join_early', 'keep_time'],
             'consultation_id' => $consultationId,
         ];
@@ -765,12 +771,16 @@ function consultation_timing_offer_early_start(PDO $pdo, int $providerId): array
             WHERE id = ? AND provider_id = ? AND early_start_response IS NULL
         ")->execute([(int) $next['id'], $providerId]);
         $when = date('g:i A', (int) $start);
+        $end = $next['timing_slot_end'] ?? null;
+        if ($end) {
+            $when .= ' – ' . date('g:i A', (int) $end);
+        }
         consultation_timing_notify(
             $pdo,
             (int) $next['patient_id'],
             'patient',
-            'Consultation Can Start Early',
-            'Your doctor is ready before ' . $when . '. You can join early or keep your scheduled time. Ignoring this does not count as a missed visit.',
+            'Your provider is ready early.',
+            'Your consultation is scheduled for ' . $when . ', but your provider is available now.',
             (int) $next['id'],
             '/views/patient/consultations.php'
         );
@@ -823,7 +833,7 @@ function consultation_timing_record_early_response(PDO $pdo, int $patientId, int
         WHERE id = ? AND patient_id = ? AND early_start_response IS NULL
     ")->execute([$choice, $consultationId, $patientId]);
 
-    $label = $choice === 'join_early' ? 'Join Early' : 'Keep Scheduled Time';
+    $label = $choice === 'join_early' ? 'Start Early' : 'Keep Scheduled Time';
     $nameStmt = $pdo->prepare('SELECT CONCAT(TRIM(first_name), " ", TRIM(last_name)) FROM users WHERE id = ? LIMIT 1');
     $nameStmt->execute([$patientId]);
     $name = trim((string) ($nameStmt->fetchColumn() ?: 'The patient'));

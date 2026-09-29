@@ -184,7 +184,11 @@
   function fmtDate(s) {
     if (!s) return '—';
     var d = new Date(s.replace(' ', 'T'));
-    return isNaN(d) ? s : d.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+    return isNaN(d)
+      ? s
+      : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        + ' • '
+        + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   function showSkeleton(on) {

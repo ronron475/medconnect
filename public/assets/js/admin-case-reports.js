@@ -33,7 +33,9 @@
     if (!value) return '—';
     var d = new Date(value.replace(' ', 'T'));
     if (isNaN(d.getTime())) return esc(value);
-    return d.toLocaleString();
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      + ' • '
+      + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   function consultationRef(report) {

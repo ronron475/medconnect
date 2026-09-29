@@ -481,9 +481,38 @@ function patient_complete_account_setup(PDO $pdo, int $userId, string $newPasswo
             terms_accepted_at = NOW(),
             privacy_accepted_at = NOW(),
             account_status = 'active',
+            is_active = 1,
+            is_email_verified = 1,
             updated_at = NOW()
         WHERE id = ? AND role = 'patient'
     ")->execute([$hash, $userId]);
+
+    $prCols = patient_security_pr_columns($pdo);
+    if (in_array('status', $prCols, true)) {
+        $sets = ["status = 'verified'"];
+        if (in_array('consent_given', $prCols, true)) {
+            $sets[] = 'consent_given = 1';
+        }
+        if (in_array('consent_timestamp', $prCols, true)) {
+            $sets[] = 'consent_timestamp = NOW()';
+        }
+        $pdo->prepare(
+            'UPDATE patient_registrations SET ' . implode(', ', $sets) . ' WHERE user_id = ? AND status = ?'
+        )->execute([$userId, 'pending_verification']);
+    }
+}
+
+/**
+ * Opening the emailed setup link proves the patient controls that Gmail.
+ * Does not set a password or activate login.
+ */
+function patient_note_gmail_verified(PDO $pdo, int $userId): void
+{
+    if ($userId <= 0) {
+        return;
+    }
+    $pdo->prepare('UPDATE users SET is_email_verified = 1 WHERE id = ? AND role = ? AND is_email_verified = 0')
+        ->execute([$userId, 'patient']);
 }
 
 /**

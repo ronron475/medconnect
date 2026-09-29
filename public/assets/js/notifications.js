@@ -983,6 +983,8 @@
     loadPage(1);
   }
 
+  let lastWidgetsFp = '';
+
   function initWidgets() {
     const containers = document.querySelectorAll('[data-notif-widgets]');
     if (!containers.length) return;
@@ -991,6 +993,10 @@
       if (!data.success || !data.widgets) return;
       const w = data.widgets;
       if (typeof w.unread_count !== 'undefined') updateBadge(w.unread_count);
+      let fp = '';
+      try { fp = JSON.stringify(w); } catch (e) { fp = ''; }
+      if (fp && fp === lastWidgetsFp) return;
+      lastWidgetsFp = fp;
       containers.forEach(function (container) {
         container.querySelectorAll('[data-widget]').forEach(function (el) {
           const key = el.dataset.widget;
@@ -1083,6 +1089,7 @@
 
   window.MedConnectNotifications = {
     refresh: loadDropdown,
+    refreshWidgets: initWidgets,
     poll: poll,
     refreshCount: refreshCount,
     markAllRead: markAllRead,

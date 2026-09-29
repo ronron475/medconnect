@@ -50,10 +50,14 @@
     let facingMode = 'user';
     let durationStartedAtMs = 0;
     let scheduledDurationSeconds = 0;
+    let scheduledEndMs = 0;
 
     const meta = (typeof window !== 'undefined' && window.__mcVideoRoomMeta) ? window.__mcVideoRoomMeta : {};
     if (meta.scheduledDurationSeconds) {
       scheduledDurationSeconds = Math.max(0, parseInt(meta.scheduledDurationSeconds, 10) || 0);
+    }
+    if (meta.scheduledEndUnix) {
+      scheduledEndMs = Math.max(0, parseInt(meta.scheduledEndUnix, 10) || 0) * 1000;
     }
     if (meta.elapsedSeconds != null) {
       durationSeconds = Math.max(0, parseInt(meta.elapsedSeconds, 10) || 0);
@@ -540,14 +544,21 @@
     }
 
     function syncDurationFromServerClock() {
-      if (!durationStartedAtMs) return;
-      let elapsed = Math.floor((Date.now() - durationStartedAtMs) / 1000);
+      if (!durationStartedAtMs && !scheduledEndMs) return;
+      let elapsed = durationStartedAtMs
+        ? Math.floor((Date.now() - durationStartedAtMs) / 1000)
+        : durationSeconds;
       if (elapsed < 0) elapsed = 0;
-      if (scheduledDurationSeconds > 0 && elapsed > scheduledDurationSeconds) {
-        elapsed = scheduledDurationSeconds;
-      }
       durationSeconds = elapsed;
-      if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
+      if (!els.durationEl) return;
+      if (scheduledEndMs && Date.now() >= scheduledEndMs) {
+        const overtime = Math.max(0, Math.floor((Date.now() - scheduledEndMs) / 1000));
+        els.durationEl.textContent = 'OT ' + formatDuration(overtime);
+        els.durationEl.title = 'Overtime past the scheduled end. The call continues until the provider ends it.';
+        return;
+      }
+      els.durationEl.textContent = formatDuration(durationSeconds);
+      els.durationEl.title = 'Consultation duration';
     }
 
     function startDurationTimer() {
@@ -560,14 +571,7 @@
         durationStartedAtMs = Date.now() - (durationSeconds * 1000);
       }
       syncDurationFromServerClock();
-      durationInterval = setInterval(() => {
-        syncDurationFromServerClock();
-        if (scheduledDurationSeconds > 0 && durationSeconds >= scheduledDurationSeconds) {
-          // Hold at configured limit — do not invent time beyond scheduled duration.
-          durationSeconds = scheduledDurationSeconds;
-          if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
-        }
-      }, 1000);
+      durationInterval = setInterval(syncDurationFromServerClock, 1000);
     }
 
     function setDurationFromServer(payload) {
@@ -575,16 +579,17 @@
       if (typeof payload.scheduled_duration_seconds === 'number' && payload.scheduled_duration_seconds > 0) {
         scheduledDurationSeconds = payload.scheduled_duration_seconds;
       }
+      if (typeof payload.scheduled_end_unix === 'number' && payload.scheduled_end_unix > 0) {
+        scheduledEndMs = payload.scheduled_end_unix * 1000;
+      }
       if (payload.started_at) {
         const parsed = Date.parse(String(payload.started_at).replace(' ', 'T'));
         if (!isNaN(parsed)) durationStartedAtMs = parsed;
       }
       if (typeof payload.elapsed_seconds === 'number') {
         durationSeconds = Math.max(0, payload.elapsed_seconds);
-        if (els.durationEl) els.durationEl.textContent = formatDuration(durationSeconds);
-      } else {
-        syncDurationFromServerClock();
       }
+      syncDurationFromServerClock();
     }
 
     function stopMonitors() {

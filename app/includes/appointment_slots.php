@@ -25,6 +25,25 @@ function appointment_slot_duration_minutes(int $duration): int
     return in_array($duration, [15, 30, 45, 60], true) ? $duration : 30;
 }
 
+/** User-facing range from stored slot times. Duration is the actual start/end difference. */
+function appointment_slot_range_label(string $startTime, string $endTime): string
+{
+    $startTs = strtotime($startTime);
+    $endTs = strtotime($endTime);
+    if (!$startTs || !$endTs) {
+        return '';
+    }
+    $label = date('g:i A', $startTs) . ' – ' . date('g:i A', $endTs);
+    if ($endTs > $startTs) {
+        $mins = intdiv($endTs - $startTs, 60);
+        if ($mins > 0) {
+            $label .= ' · ' . $mins . ' mins';
+        }
+    }
+
+    return $label;
+}
+
 function appointment_slot_start_datetime(string $slotDate, string $startTime): DateTimeImmutable
 {
     $time = substr($startTime, 0, 8);
@@ -503,9 +522,7 @@ function appointment_slots_patient_today(PDO $pdo, int $providerId, bool $genera
             'end_time'   => $endTime,
             'status'     => 'AVAILABLE',
             'bookable'   => true,
-            'label'      => date('g:i A', strtotime($startTime))
-                . ' – '
-                . date('g:i A', strtotime($endTime)),
+            'label'      => appointment_slot_range_label($startTime, $endTime),
         ];
     }
 

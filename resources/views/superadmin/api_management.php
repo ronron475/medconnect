@@ -18,7 +18,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <input type="text" name="<?= htmlspecialchars($row['api_key']) ?>" value="<?= htmlspecialchars($row['api_value']) ?>"
            class="mc-btn mc-btn--outline" style="width:100%;background:#fff;text-align:left;margin-top:6px;">
     <?php if (!empty($row['updated_at'])): ?>
-    <span class="text-xs text-muted">Last updated <?= date('M j, Y g:i A', strtotime($row['updated_at'])) ?></span>
+    <span class="text-xs text-muted">Last updated <?= date('M j, Y', strtotime($row['updated_at'])) . ' • ' . date('g:i A', strtotime($row['updated_at'])) ?></span>
     <?php endif; ?>
   </label>
   <?php endforeach; endif; ?>

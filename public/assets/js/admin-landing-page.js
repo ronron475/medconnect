@@ -30,7 +30,11 @@
   function fmtDate(s) {
     if (!s) return '—';
     var d = new Date(String(s).replace(' ', 'T'));
-    return isNaN(d.getTime()) ? s : d.toLocaleString();
+    return isNaN(d.getTime())
+      ? s
+      : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        + ' • '
+        + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   function setStat(id, val) {

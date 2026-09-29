@@ -346,7 +346,7 @@
       id: 'webrtc-active',
       type: 'webrtc',
       title: st.label || 'Video consultation',
-      subtitle: mode === 'pip' ? 'Tap to expand' : 'In progress',
+      subtitle: mode === 'pip' ? 'Tap to expand' : 'Ongoing',
       restoreUrl: '',
       minimized: mode === 'pip',
       meta: {

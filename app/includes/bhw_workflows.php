@@ -69,8 +69,223 @@ final class BhwWorkflows
 
     public static function registerPatient(PDO $pdo, array $ctx, array $data): array
     {
-        unset($pdo, $ctx, $data);
-        throw new RuntimeException('BHWs cannot register new patients. Patients must complete the main registration flow.');
+        $barangayId = (int) ($ctx['barangay_id'] ?? 0);
+        $barangayName = trim((string) ($ctx['barangay_name'] ?? ''));
+        $bhwId = (int) ($ctx['bhw_id'] ?? 0);
+        if ($barangayId <= 0 || $barangayName === '' || $bhwId <= 0) {
+            throw new InvalidArgumentException('BHW sector not assigned. Contact administrator.');
+        }
+
+        unset($data['password'], $data['confirm_password'], $data['new_password']);
+
+        require_once __DIR__ . '/contact_validation.php';
+        patient_registration_ensure_schema($pdo);
+
+        $fullName = preg_replace('/\s+/u', ' ', trim((string) ($data['full_name'] ?? ''))) ?? '';
+        if ($fullName === '' || mb_strlen($fullName) < 2 || mb_strlen($fullName) > 200) {
+            throw new InvalidArgumentException('Enter the patient\'s full name.');
+        }
+        $nameParts = preg_split('/\s+/u', $fullName, 2) ?: [];
+        $firstName = (string) ($nameParts[0] ?? '');
+        $lastName = trim((string) ($nameParts[1] ?? ''));
+        if ($lastName === '') {
+            $lastName = $firstName;
+        }
+        if (mb_strlen($firstName) > 80 || mb_strlen($lastName) > 80) {
+            throw new InvalidArgumentException('Enter a shorter full name.');
+        }
+
+        $email = mc_normalize_email((string) ($data['email'] ?? $data['gmail'] ?? ''));
+        if ($emailErr = mc_gmail_validation_error($email, true)) {
+            throw new InvalidArgumentException($emailErr);
+        }
+        if (mc_users_email_exists($pdo, $email)) {
+            throw new InvalidArgumentException(MC_MSG_EMAIL_DUP);
+        }
+        $emailDup = $pdo->prepare('SELECT id FROM patient_registrations WHERE LOWER(email) = LOWER(?) LIMIT 1');
+        $emailDup->execute([$email]);
+        if ($emailDup->fetch()) {
+            throw new InvalidArgumentException(MC_MSG_EMAIL_DUP);
+        }
+
+        $contactRaw = trim((string) ($data['contact_number'] ?? ''));
+        if ($phoneErr = mc_phone_validation_error($contactRaw, true)) {
+            throw new InvalidArgumentException($phoneErr);
+        }
+        $contact = mc_canonical_ph_mobile($contactRaw);
+        if (patient_registration_contact_exists($pdo, $contact) || mc_users_phone_exists($pdo, $contact)) {
+            throw new InvalidArgumentException('An account with this contact number already exists.');
+        }
+
+        $blood = trim((string) ($data['blood_type'] ?? 'Unknown'));
+        $bloodAllowed = ['Unknown', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+        if (!in_array($blood, $bloodAllowed, true)) {
+            throw new InvalidArgumentException('Select a valid blood type.');
+        }
+
+        $clip = static function (string $value): ?string {
+            $value = trim($value);
+            if ($value === '') {
+                return null;
+            }
+            if (mb_strlen($value) > 2000) {
+                throw new InvalidArgumentException('Medical notes must be 2000 characters or less.');
+            }
+            return $value;
+        };
+        $allergies = $clip((string) ($data['allergies'] ?? ''));
+        $conditions = $clip((string) ($data['existing_conditions'] ?? $data['medical_conditions'] ?? ''));
+        $medications = $clip((string) ($data['current_medications'] ?? $data['medications'] ?? ''));
+
+        $address = 'Brgy. ' . $barangayName . ', Bago City, Negros Occidental';
+        if (mb_strlen($address) > 300) {
+            $address = mb_substr($address, 0, 300);
+        }
+
+        $nationalId = hash('sha256', random_bytes(32));
+        $setup = patient_generate_setup_token();
+        $discardedHash = patient_hash_password(bin2hex(random_bytes(32)));
+        $patientCode = patient_generate_code($pdo);
+
+        $userCols = patient_security_user_columns($pdo);
+        $userInsertCols = ['first_name', 'last_name', 'email', 'password', 'role', 'is_active', 'is_email_verified', 'created_at'];
+        $userInsertVals = [$firstName, $lastName, $email, $discardedHash, 'patient', 0, 0];
+        $userPlaceholders = ['?', '?', '?', '?', '?', '?', '?', 'NOW()'];
+        if (in_array('phone', $userCols, true)) {
+            $userInsertCols[] = 'phone';
+            $userInsertVals[] = $contact;
+            $userPlaceholders[] = '?';
+        }
+        if (in_array('account_status', $userCols, true)) {
+            $userInsertCols[] = 'account_status';
+            $userInsertVals[] = 'active';
+            $userPlaceholders[] = '?';
+        }
+        if (in_array('must_change_password', $userCols, true)) {
+            $userInsertCols[] = 'must_change_password';
+            $userInsertVals[] = 0;
+            $userPlaceholders[] = '?';
+        }
+        if (in_array('password_setup_token', $userCols, true)) {
+            $userInsertCols[] = 'password_setup_token';
+            $userInsertVals[] = $setup['token'];
+            $userPlaceholders[] = '?';
+        }
+        if (in_array('password_setup_expiry', $userCols, true)) {
+            $userInsertCols[] = 'password_setup_expiry';
+            $userInsertVals[] = $setup['expiry'];
+            $userPlaceholders[] = '?';
+        }
+
+        $registrationId = 0;
+        $userId = 0;
+        try {
+            $pdo->beginTransaction();
+            $pdo->prepare(
+                'INSERT INTO users (' . implode(', ', $userInsertCols) . ') VALUES (' . implode(', ', $userPlaceholders) . ')'
+            )->execute($userInsertVals);
+            $userId = (int) $pdo->lastInsertId();
+
+            $pdo->prepare("
+                INSERT INTO patient_registrations (
+                    first_name, last_name, full_name, email, contact_number,
+                    date_of_birth, age, address, full_address,
+                    barangay, barangay_id, city_municipality, province,
+                    national_id, blood_type, existing_conditions, allergies, current_medications,
+                    status, patient_code, user_id, registered_by_bhw_id, created_at
+                ) VALUES (
+                    ?, ?, ?, ?, ?,
+                    '1900-01-01', 0, ?, ?,
+                    ?, ?, 'Bago City', 'Negros Occidental',
+                    ?, ?, ?, ?, ?,
+                    'pending_verification', ?, ?, ?, NOW()
+                )
+            ")->execute([
+                $firstName, $lastName, $fullName, $email, $contact,
+                $address, $address,
+                $barangayName, $barangayId,
+                $nationalId, $blood, $conditions, $allergies, $medications,
+                $patientCode, $userId, $bhwId,
+            ]);
+            $registrationId = (int) $pdo->lastInsertId();
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            if ($e instanceof InvalidArgumentException) {
+                throw $e;
+            }
+            throw new InvalidArgumentException(patient_registration_friendly_db_error($e));
+        }
+
+        require_once __DIR__ . '/mailer.php';
+        $sent = sendPatientWelcomeEmail($email, $fullName, $patientCode, $setup['token']);
+        if (empty($sent['success'])) {
+            $pdo->prepare('DELETE FROM patient_registrations WHERE id = ?')->execute([$registrationId]);
+            $pdo->prepare('DELETE FROM users WHERE id = ? AND role = ?')->execute([$userId, 'patient']);
+            throw new InvalidArgumentException('The verification email could not be sent, so registration was not saved. Try again when email delivery is available.');
+        }
+
+        bhw_audit($pdo, $userId, 'bhw_patient_registered', 'BHW started patient registration. The patient must verify Gmail and create their own password.', [
+            'patient_name' => $fullName,
+            'email' => $email,
+        ]);
+
+        return self::registrationStatus($pdo, $ctx, $userId);
+    }
+
+    /**
+     * Live status for a BHW-started registration. Never returns a password or setup link.
+     *
+     * @return array{patient_id: int, full_name: string, email: string, status: string, label: string, detail: string}
+     */
+    public static function registrationStatus(PDO $pdo, array $ctx, int $patientId): array
+    {
+        $bhwId = (int) ($ctx['bhw_id'] ?? 0);
+        if ($patientId <= 0 || $bhwId <= 0 || !bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
+            throw new InvalidArgumentException('Registration not found.');
+        }
+
+        $stmt = $pdo->prepare("
+            SELECT u.id, u.is_active, u.is_email_verified,
+                   pr.full_name, pr.email, pr.registered_by_bhw_id,
+                   CASE WHEN u.password_setup_token IS NULL OR u.password_setup_token = '' THEN 0 ELSE 1 END AS has_setup_token
+            FROM users u
+            INNER JOIN patient_registrations pr ON pr.user_id = u.id
+            WHERE u.id = ? AND u.role = 'patient'
+            LIMIT 1
+        ");
+        $stmt->execute([$patientId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row || (int) ($row['registered_by_bhw_id'] ?? 0) !== $bhwId) {
+            throw new InvalidArgumentException('Registration not found.');
+        }
+
+        $gmailVerified = (int) ($row['is_email_verified'] ?? 0) === 1;
+        $loginReady = (int) ($row['is_active'] ?? 0) === 1 && (int) ($row['has_setup_token'] ?? 0) === 0;
+        if ($loginReady) {
+            $status = 'completed';
+            $label = 'Registration completed';
+            $detail = 'Password created — Registration completed';
+        } elseif ($gmailVerified) {
+            $status = 'awaiting_password';
+            $label = 'Gmail verified — waiting for patient to create password';
+            $detail = 'Waiting for patient to create password';
+        } else {
+            $status = 'awaiting_gmail';
+            $label = 'Waiting for Gmail verification';
+            $detail = '';
+        }
+
+        return [
+            'patient_id' => (int) $row['id'],
+            'full_name' => (string) ($row['full_name'] ?? ''),
+            'email' => (string) ($row['email'] ?? ''),
+            'status' => $status,
+            'label' => $label,
+            'detail' => $detail,
+        ];
     }
 
     public static function updatePatient(PDO $pdo, array $ctx, int $patientId, array $data): void
@@ -715,7 +930,7 @@ final class BhwWorkflows
         $start = trim((string) ($row['slot_start_time'] ?? ''));
         if ($date !== '' && $start !== '') {
             $row['followup_datetime_label'] = date('M j, Y', strtotime($date))
-                . ' · ' . date('g:i A', strtotime($date . ' ' . $start));
+                . ' • ' . date('g:i A', strtotime($date . ' ' . $start));
         } elseif ($date !== '') {
             $row['followup_datetime_label'] = date('M j, Y', strtotime($date));
         } else {
@@ -761,11 +976,34 @@ final class BhwWorkflows
             . ' OR LOWER(TRIM(COALESCE(pr.email, \'\'))) = LOWER(TRIM(COALESCE(p.email, \'\'))))';
         $rows = [];
         $seenPatientKeys = [];
+        // A booked follow-up visit is listed once, from the followups row.
+        $followupVisitIds = [];
+        try {
+            $visitStmt = $pdo->query("
+                SELECT s.consultation_id
+                FROM followups f
+                INNER JOIN appointment_slots s ON s.id = f.slot_id
+                WHERE s.consultation_id IS NOT NULL
+                  AND LOWER(COALESCE(f.status, '')) NOT IN ('cancelled', 'canceled')
+            ");
+            foreach ($visitStmt ? $visitStmt->fetchAll(PDO::FETCH_COLUMN) : [] as $visitId) {
+                $visitId = (int) $visitId;
+                if ($visitId > 0) {
+                    $followupVisitIds[$visitId] = true;
+                }
+            }
+        } catch (Throwable $e) {
+            $followupVisitIds = [];
+        }
 
         $pushRow = static function (array $row) use (&$rows, &$seenPatientKeys): void {
+            $followupId = (int) ($row['followup_id'] ?? 0);
             $key = (int) ($row['patient_id'] ?? 0)
                 . '|' . (string) ($row['source'] ?? '')
                 . '|' . (string) ($row['sort_key'] ?? '');
+            if ((string) ($row['source'] ?? '') === 'followup' && $followupId > 0) {
+                $key .= '|fu:' . $followupId;
+            }
             if (isset($seenPatientKeys[$key])) {
                 return;
             }
@@ -805,6 +1043,9 @@ final class BhwWorkflows
             $seenConsultIds = [];
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $c) {
                 $cid = (int) ($c['id'] ?? 0);
+                if ($cid > 0 && isset($followupVisitIds[$cid])) {
+                    continue;
+                }
                 if ($cid > 0 && isset($seenConsultIds[$cid])) {
                     continue;
                 }
@@ -853,15 +1094,18 @@ final class BhwWorkflows
             $slotJoin = $hasSlots ? 'LEFT JOIN appointment_slots s ON s.id = f.slot_id' : '';
 
             $fuSql = "
-                SELECT f.id, f.patient_id, f.followup_date, f.status,
-                       CONCAT(p.first_name, ' ', p.last_name) AS patient_name
+                SELECT f.id, f.patient_id, f.consultation_id, f.followup_date, f.status,
+                       f.message, f.notes,
+                       CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
+                       TRIM(CONCAT(COALESCE(prov.first_name, ''), ' ', COALESCE(prov.last_name, ''))) AS provider_name
                        {$slotSelect}
                 FROM followups f
                 INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
                 INNER JOIN patient_registrations pr ON {$prJoin}
+                LEFT JOIN users prov ON prov.id = f.provider_id
                 {$slotJoin}
                 WHERE {$clause}
-                  AND LOWER(COALESCE(f.status, '')) NOT IN ('completed', 'cancelled', 'canceled')
+                  AND LOWER(COALESCE(f.status, '')) NOT IN ('cancelled', 'canceled')
                 ORDER BY (f.followup_date IS NULL) ASC, f.followup_date ASC, f.id DESC
                 LIMIT 300
             ";
@@ -881,26 +1125,55 @@ final class BhwWorkflows
                 $date = trim((string) ($f['followup_date'] ?? ''));
                 $start = trim((string) ($f['slot_start_time'] ?? ''));
                 $isPast = $date !== '' && strtotime($date) < strtotime('today');
-                if ($raw === 'missed' || ($raw === 'scheduled' && $isPast)) {
+                if ($raw === 'completed') {
+                    $statusLabel = 'Completed';
+                    $rawKey = 'completed';
+                    $group = 'completed';
+                } elseif ($raw === 'missed' || ($raw === 'scheduled' && $isPast)) {
                     $statusLabel = 'Missed';
                     $rawKey = 'missed';
+                    $group = 'past';
                 } elseif ($raw === 'unscheduled' || $date === '') {
-                    $statusLabel = 'Pending';
-                    $rawKey = 'pending';
+                    $statusLabel = 'Unscheduled';
+                    $rawKey = 'unscheduled';
+                    $group = 'pending';
+                } elseif ($raw === 'scheduled') {
+                    $statusLabel = 'Scheduled';
+                    $rawKey = 'scheduled';
+                    $group = 'upcoming';
                 } else {
-                    $statusLabel = 'Follow-up';
-                    $rawKey = 'follow_up';
+                    $statusLabel = $raw !== '' ? ucfirst($raw) : 'Unknown';
+                    $rawKey = $raw !== '' ? $raw : 'unknown';
+                    $group = 'upcoming';
                 }
                 $sortTime = $start !== '' ? $start : '00:00:00';
+                $doctor = trim((string) ($f['provider_name'] ?? ''));
+                $instructions = trim((string) ($f['message'] ?? ''));
+                if ($instructions === '') {
+                    $instructions = trim((string) ($f['notes'] ?? ''));
+                }
+                $when = 'Date TBD';
+                if ($date !== '') {
+                    $when = date('M j, Y', strtotime($date));
+                    if ($start !== '') {
+                        $when .= ' • ' . date('g:i A', strtotime('1970-01-01 ' . $start));
+                    }
+                }
                 $pushRow([
+                    'followup_id' => $fid,
+                    'consultation_id' => (int) ($f['consultation_id'] ?? 0),
                     'patient_id' => $pid,
                     'patient_name' => trim((string) ($f['patient_name'] ?? '')) ?: '—',
+                    'provider_name' => $doctor !== '' ? $doctor : '—',
+                    'instructions' => $instructions,
+                    'followup_group' => $group,
+                    'when_label' => $when,
                     'appointment_date' => $date !== '' ? date('M j, Y', strtotime($date)) : 'Date TBD',
                     'appointment_time' => $start !== '' ? date('g:i A', strtotime('1970-01-01 ' . $start)) : '—',
                     'status' => $statusLabel,
                     'status_key' => $rawKey,
                     'source' => 'followup',
-                    'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime,
+                    'sort_key' => ($date !== '' ? $date : '9999-99-99') . ' ' . $sortTime . ' ' . str_pad((string) $fid, 10, '0', STR_PAD_LEFT),
                 ]);
             }
         } catch (Throwable $e) {
@@ -1107,6 +1380,11 @@ final class BhwWorkflows
             throw new InvalidArgumentException('Follow-up not found in your barangay.');
         }
 
+        $status = strtolower(trim((string) ($row['status'] ?? '')));
+        if ($status !== 'scheduled') {
+            throw new InvalidArgumentException('Only scheduled follow-ups can be reminded.');
+        }
+
         $email = trim((string) ($row['patient_email'] ?? ''));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException('Patient has no valid registered email on file.');
@@ -1124,14 +1402,18 @@ final class BhwWorkflows
                       AND (
                         meta LIKE ?
                         OR meta LIKE ?
+                        OR meta LIKE ?
+                        OR meta LIKE ?
                       )
                     ORDER BY id DESC
                     LIMIT 1
                 ");
                 $dup->execute([
                     (int) $row['patient_id'],
-                    '%"followup_id":' . $followupId . '%',
-                    '%"followup_id": ' . $followupId . '%',
+                    '%"followup_id":' . $followupId . ',%',
+                    '%"followup_id":' . $followupId . '}%',
+                    '%"followup_id": ' . $followupId . ',%',
+                    '%"followup_id": ' . $followupId . '}%',
                 ]);
                 if ($dup->fetchColumn()) {
                     throw new InvalidArgumentException(
@@ -1150,13 +1432,29 @@ final class BhwWorkflows
             throw new InvalidArgumentException('This follow-up has no scheduled date yet, so an email reminder cannot be sent.');
         }
 
+        $slotStart = '';
+        $slotEnd = '';
+        $slotId = (int) ($row['slot_id'] ?? 0);
+        if ($slotId > 0) {
+            try {
+                $slotStmt = $pdo->prepare('SELECT start_time, end_time FROM appointment_slots WHERE id = ? LIMIT 1');
+                $slotStmt->execute([$slotId]);
+                $slot = $slotStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                $slotStart = trim((string) ($slot['start_time'] ?? ''));
+                $slotEnd = trim((string) ($slot['end_time'] ?? ''));
+            } catch (Throwable $e) {
+                $slotStart = '';
+                $slotEnd = '';
+            }
+        }
+
         $patientName = trim((string) ($row['patient_name'] ?? 'Patient'));
         $note = trim((string) ($row['message'] ?? $row['notes'] ?? ''));
         $refLine = 'Follow-up reference #' . $followupId;
         $noteForEmail = $note !== '' ? ($note . "\n" . $refLine) : $refLine;
         $contact = trim((string) ($row['contact_number'] ?? ''));
 
-        $sent = sendFollowUpReminderEmail($email, $patientName, $date, $noteForEmail, $contact);
+        $sent = sendFollowUpReminderEmail($email, $patientName, $date, $noteForEmail, $contact, $slotStart);
         $ok = !empty($sent['success']);
         $mailMsg = trim((string) ($sent['message'] ?? ''));
 
@@ -1168,6 +1466,8 @@ final class BhwWorkflows
                 'followup_id' => $followupId,
                 'email' => $email,
                 'followup_date' => $date,
+                'slot_start_time' => $slotStart,
+                'slot_end_time' => $slotEnd,
                 'email_success' => $ok,
                 'email_message' => $mailMsg,
             ]

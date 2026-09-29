@@ -513,6 +513,10 @@ body.bhw-body .mc-chart-filters {
     margin-bottom: 8px !important;
   }
 
+  body.bhw-body .bhw-pl-toolbar-search input {
+    padding: 8px 12px 8px 40px !important;
+  }
+
   body.bhw-body .bhw-pl-table thead th,
   body.bhw-body .bhw-pl-table tbody td,
   body.bhw-body .bhw-activity-table thead th,

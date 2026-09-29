@@ -344,7 +344,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                         <button type="button" class="queue-btn uf-accept-btn" data-case-id="<?= (int) $ufCase['id'] ?>" data-start-video="0">Accept</button>
                                     </div>
                                 <?php else: ?>
-                                    <span class="queue-meta">In progress</span>
+                                    <span class="queue-meta">Ongoing</span>
                                 <?php endif; ?>
                             </td>
                         </tr>
@@ -486,7 +486,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             <div class="queue-feed-top">
                                 <div>
                                     <div class="queue-feed-name"><?= htmlspecialchars($case_name ?: 'Patient') ?></div>
-                                    <div class="queue-feed-time"><?= htmlspecialchars(date('M j, g:i A', strtotime($case['assessed_at']))) ?></div>
+                                    <div class="queue-feed-time"><?= htmlspecialchars(date('M j, Y', strtotime($case['assessed_at'])) . ' • ' . date('g:i A', strtotime($case['assessed_at']))) ?></div>
                                 </div>
                                 <span class="queue-badge <?= $urgent ? 'urgent' : 'routine' ?>"><?= $urgent ? 'Urgent' : 'Routine' ?></span>
                             </div>

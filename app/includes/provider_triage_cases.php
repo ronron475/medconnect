@@ -344,7 +344,7 @@ function provider_triage_cases_load(PDO $pdo, int $providerId): array
             'slot_available_for_patient' => $isWaitingSlot && $waitStatus === 'slot_available',
             'slot_waiting_since'    => (string) ($waitRow['waiting_since'] ?? ''),
             'slot_waiting_since_label' => !empty($waitRow['waiting_since'])
-                ? date('M j, Y g:i A', strtotime((string) $waitRow['waiting_since']))
+                ? date('M j, Y', strtotime((string) $waitRow['waiting_since'])) . ' • ' . date('g:i A', strtotime((string) $waitRow['waiting_since']))
                 : '',
             'assigned_provider_id'  => (int) ($t['assigned_provider_id'] ?? 0),
             'assigned_at'           => (string) ($t['assigned_at'] ?? ''),

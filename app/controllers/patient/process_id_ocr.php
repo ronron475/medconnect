@@ -839,12 +839,14 @@ function callOCRSpace(string $file_path, string $mime, int $engine): ?array {
         CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 60,
-        CURLOPT_SSL_VERIFYPEER => true,
-    ]);
+    ] + (class_exists('OcrFastApiClient') ? OcrFastApiClient::curlSslOptions() : []));
     $response = curl_exec($ch);
     $curl_err  = curl_error($ch);
     curl_close($ch);
-    if ($response === false || !empty($curl_err)) return null;
+    if ($response === false || !empty($curl_err)) {
+        error_log('OCR.Space request failed: ' . ($curl_err !== '' ? $curl_err : 'empty response'));
+        return null;
+    }
     $ocr = json_decode($response, true);
     return (json_last_error() === JSON_ERROR_NONE) ? $ocr : null;
 }

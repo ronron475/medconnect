@@ -1164,7 +1164,7 @@ function patient_slot_waitlist_dashboard_state(PDO $pdo, int $patientId): array
     if ($waitingSince !== '') {
         $ts = strtotime($waitingSince);
         if ($ts) {
-            $sinceLabel = date('M j, Y g:i A', $ts);
+            $sinceLabel = date('M j, Y', $ts) . ' • ' . date('g:i A', $ts);
         }
     }
 

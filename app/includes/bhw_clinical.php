@@ -259,7 +259,7 @@ function bhw_format_slot_label(string $slotDate, string $startTime): string
     if ($ts === false) {
         return date('g:i A', strtotime($startTime));
     }
-    return date('M j, Y g:i A', $ts);
+    return date('M j, Y', $ts) . ' • ' . date('g:i A', $ts);
 }
 
 function bhw_provider_active_weekdays(PDO $pdo, int $providerId): array

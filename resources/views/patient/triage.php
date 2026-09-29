@@ -205,12 +205,12 @@ $booking_future_label = '';
 if ($future_scheduled_consultation) {
     $booking_future_label = date('M j, Y', strtotime((string) $future_scheduled_consultation['consult_date']));
     if (!empty($future_scheduled_consultation['consult_time'])) {
-        $booking_future_label .= ' at ' . date('g:i A', strtotime((string) $future_scheduled_consultation['consult_time']));
+        $booking_future_label .= ' • ' . date('g:i A', strtotime((string) $future_scheduled_consultation['consult_time']));
     }
 } elseif ($booking_same_day_reschedule && !empty($active_consultation['consult_date'])) {
     $booking_future_label = date('M j, Y', strtotime((string) $active_consultation['consult_date']));
     if (!empty($active_consultation['consult_time'])) {
-        $booking_future_label .= ' at ' . date('g:i A', strtotime((string) $active_consultation['consult_time']));
+        $booking_future_label .= ' • ' . date('g:i A', strtotime((string) $active_consultation['consult_time']));
     }
 }
 $patient_has_scheduled_followup = patient_portal_has_scheduled_followup($pdo, (int) $uid);

@@ -135,7 +135,7 @@ function superadmin_dashboard_live_payload(PDO $pdo): array
             'user'   => trim(($a['first_name'] ?? '') . ' ' . ($a['last_name'] ?? '')) ?: 'System',
             'action' => (string) ($a['action'] ?? $a['action_type'] ?? ''),
             'module' => (string) ($a['module'] ?? 'system'),
-            'time'   => !empty($a['created_at']) ? date('M j, g:i A', strtotime((string) $a['created_at'])) : '—',
+            'time'   => !empty($a['created_at']) ? date('M j, Y', strtotime((string) $a['created_at'])) . ' • ' . date('g:i A', strtotime((string) $a['created_at'])) : '—',
         ];
     }
 
@@ -145,7 +145,7 @@ function superadmin_dashboard_live_payload(PDO $pdo): array
             'user' => trim(($l['first_name'] ?? '') . ' ' . ($l['last_name'] ?? '')),
             'role' => strtoupper((string) ($l['role'] ?? '')),
             'ip'   => (string) ($l['ip_address'] ?? '—'),
-            'time' => !empty($l['created_at']) ? date('M j, g:i A', strtotime((string) $l['created_at'])) : '—',
+            'time' => !empty($l['created_at']) ? date('M j, Y', strtotime((string) $l['created_at'])) . ' • ' . date('g:i A', strtotime((string) $l['created_at'])) : '—',
         ];
     }
 

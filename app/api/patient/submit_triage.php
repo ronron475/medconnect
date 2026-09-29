@@ -575,8 +575,8 @@ try {
     $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
     $hasTriageLink = in_array('triage_result_id', $consultCols, true);
     $existingSelect = $hasTriageLink
-        ? 'SELECT id, status, consult_date, consult_time, triage_result_id'
-        : 'SELECT id, status, consult_date, consult_time';
+        ? 'SELECT id, status, consult_date, consult_time, consult_type, triage_result_id'
+        : 'SELECT id, status, consult_date, consult_time, consult_type';
 
     $existing_stmt = $pdo->prepare("
         {$existingSelect}
@@ -601,6 +601,10 @@ try {
         if (strtolower((string) ($candidate['status'] ?? '')) === 'in_consultation') {
             $existing_consult = $candidate;
             break;
+        }
+        // A provider follow-up keeps its slot. Keep looking for a normal same-day visit.
+        if (patient_consultation_is_provider_followup($candidate)) {
+            continue;
         }
         if (patient_consultation_keeps_chief_complaint_locked($candidate)) {
             $existing_consult = $candidate;
@@ -856,7 +860,7 @@ try {
         error_log('submit_triage workflow: ' . $e->getMessage());
     }
 
-    $when = date('M j, Y', strtotime($consult_date)) . ' at ' . date('g:i A', strtotime($consult_time));
+    $when = date('M j, Y', strtotime($consult_date)) . ' • ' . date('g:i A', strtotime($consult_time));
     try {
         NotificationEvents::appointmentCreated($pdo, $consultation_id, $patient_id, $provider_id, $when, $patient_id);
         NotificationEvents::aiTriageCompleted($pdo, $patient_id, $label, $patient_id);

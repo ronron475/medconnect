@@ -214,7 +214,7 @@ function message_format_for_viewer(array $row, int $viewerUserId): ?array
         'is_deleted_for_everyone' => $deletedForEveryone,
         'deleted_at' => $row['deleted_at'] ?? null,
         'created_at' => $row['created_at'],
-        'time' => date('M j, g:i A', strtotime($row['created_at'])),
+        'time' => date('M j, Y', strtotime($row['created_at'])) . ' • ' . date('g:i A', strtotime($row['created_at'])),
         'can_delete_for_everyone' => message_can_delete_for_everyone($row, $viewerUserId),
         'can_delete_for_me' => message_can_delete_for_me($row, $viewerUserId),
     ];

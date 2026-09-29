@@ -22,7 +22,7 @@ if ($user_role === 'admin') {
 
 // Server-side seed for clock
 $today = date('F j, Y');
-$now   = date('h:i A');
+$now   = date('g:i A');
 $is_bhw_portal = $user_role === 'bhw';
 $is_admin_portal = ($user_role === 'admin') || ($user_role === 'superadmin');
 /* Admin/SuperAdmin/BHW: page title only — no role subtitle above the title. */

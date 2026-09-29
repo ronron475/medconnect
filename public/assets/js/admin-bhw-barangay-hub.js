@@ -381,7 +381,7 @@
     try {
       await loadSummary();
       if (selectedId) await loadDetail(selectedId);
-      setLive('Live · updated ' + new Date().toLocaleTimeString());
+      setLive('Live · updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
     } catch (e) {
       setLive('Could not refresh — retrying…');
     } finally {

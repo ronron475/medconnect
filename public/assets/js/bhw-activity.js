@@ -78,7 +78,7 @@
       cards.innerHTML = rows.map(function (r) {
         return '<div class="bhw-activity-card" data-id="' + r.id + '">' +
           '<strong>' + esc(r.action) + '</strong>' +
-          '<span>' + esc(r.date) + ' · ' + esc(r.time) + '</span>' +
+          '<span>' + esc(r.date) + ' • ' + esc(r.time) + '</span>' +
           '<span>' + esc(r.module) + (r.patient_name !== '—' ? ' · ' + esc(r.patient_name) : '') + '</span>' +
           '<span class="bhw-activity-status ' + statusClass(r.status) + '">' + esc(formatStatus(r.status)) + '</span>' +
           '</div>';

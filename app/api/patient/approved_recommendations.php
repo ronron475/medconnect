@@ -144,7 +144,7 @@ try {
                     'recommendations' => $list,
                     'approved_at' => $approvedAt,
                     'approved_at_label' => $approvedAt !== ''
-                        ? date('M j, Y g:i A', strtotime($approvedAt))
+                        ? date('M j, Y', strtotime($approvedAt)) . ' • ' . date('g:i A', strtotime($approvedAt))
                         : '',
                     'expires_at' => $expiresTs ? date('c', $expiresTs) : null,
                     'hours_remaining' => $hoursLeft,

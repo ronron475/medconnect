@@ -25,12 +25,6 @@ ob_start();
 
   var els = {
     search: document.getElementById('bhwPlSearch'),
-    purok: document.getElementById('bhwPlPurok'),
-    status: document.getElementById('bhwPlStatus'),
-    gender: document.getElementById('bhwPlGender'),
-    age: document.getElementById('bhwPlAge'),
-    sort: document.getElementById('bhwPlSort'),
-    reset: document.getElementById('bhwPlReset'),
     refresh: document.getElementById('bhwPlRefresh'),
     exportCsv: document.getElementById('bhwPlExportCsv'),
     exportPdf: document.getElementById('bhwPlExportPdf'),
@@ -61,11 +55,6 @@ ob_start();
       if (isNaN(d.getTime())) return v;
       return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     } catch (e) { return v; }
-  }
-
-  function isHighRisk(r) {
-    var u = (r || '').toLowerCase();
-    return u === 'high' || u.indexOf('urgent') >= 0;
   }
 
   function riskBadge(r) {
@@ -115,19 +104,14 @@ ob_start();
   }
 
   function actionLinks(id, stopProp) {
-    var q = '?patient_id=' + id;
     var stop = stopProp ? ' onclick="event.stopPropagation()"' : '';
     return '<div class="bhw-pl-row-actions"' + stop + '>' +
       '<button type="button" class="bhw-pl-btn-view" data-view="' + id + '">View</button>' +
       '<div class="bhw-pl-menu">' +
       '<button type="button" class="bhw-pl-menu-trigger" aria-haspopup="true" aria-expanded="false" aria-label="More actions for patient ' + id + '">Actions <span class="bhw-pl-menu-caret" aria-hidden="true">▾</span></button>' +
       '<div class="bhw-pl-menu-panel" hidden role="menu">' +
-      '<a role="menuitem" href="update.php' + q + '">Update contact</a>' +
       '<a role="menuitem" href="../records/index.php?patient_id=' + id + '">Medical records</a>' +
-      '<a role="menuitem" href="../consultations/index.php">Consultation center</a>' +
-      '<a role="menuitem" href="../consultations/index.php?filter=active">Assist video call</a>' +
-      '<a role="menuitem" href="../referral/status.php">View referrals</a>' +
-      '<button type="button" role="menuitem" class="bhw-pl-menu-print" data-print="' + id + '">Print profile</button>' +
+      '<a role="menuitem" href="../followup/track.php">Appointment history</a>' +
       '</div></div></div>';
   }
 
@@ -163,45 +147,10 @@ ob_start();
     panel.style.zIndex = '10070';
   }
 
-  function populatePurokFilter(rows) {
-    var puroks = {};
-    rows.forEach(function (p) {
-      var b = dash(p.barangay);
-      if (b !== '—') puroks[b] = true;
-    });
-    var opts = '<option value="">All Puroks</option>';
-    Object.keys(puroks).sort().forEach(function (k) {
-      opts += '<option value="' + esc(k) + '">' + esc(k) + '</option>';
-    });
-    els.purok.innerHTML = opts;
-  }
-
   function applyFilters() {
-    var purok = els.purok.value;
-    var status = els.status.value;
-    var gender = els.gender.value;
-    var ageGroup = els.age.value;
-    var sort = els.sort.value;
-
-    filtered = allPatients.filter(function (p) {
-      if (purok && dash(p.purok || p.barangay) !== purok) return false;
-      if (status === 'active' && !p.is_active) return false;
-      if (status === 'inactive' && p.is_active) return false;
-      if (gender && (p.gender || '').toLowerCase() !== gender) return false;
-      var age = parseInt(p.age, 10);
-      if (ageGroup === 'child' && (isNaN(age) || age >= 18)) return false;
-      if (ageGroup === 'adult' && (isNaN(age) || age < 18 || age >= 60)) return false;
-      if (ageGroup === 'senior' && (isNaN(age) || age < 60)) return false;
-      return true;
-    });
-
+    filtered = allPatients.slice();
     filtered.sort(function (a, b) {
-      if (sort === 'name') return (a.last_name + a.first_name).localeCompare(b.last_name + b.first_name);
-      if (sort === 'name-desc') return (b.last_name + b.first_name).localeCompare(a.last_name + a.first_name);
-      if (sort === 'registered') return String(b.created_at || '').localeCompare(String(a.created_at || ''));
-      if (sort === 'registered-asc') return String(a.created_at || '').localeCompare(String(b.created_at || ''));
-      if (sort === 'risk') return (isHighRisk(b.risk_level) ? 1 : 0) - (isHighRisk(a.risk_level) ? 1 : 0);
-      return 0;
+      return (a.last_name + a.first_name).localeCompare(b.last_name + b.first_name);
     });
 
     page = 1;
@@ -283,12 +232,10 @@ ob_start();
     if (!filtered.length) {
       els.empty.style.display = 'none';
       els.tableWrap.style.display = 'block';
-      els.tbody.innerHTML = '<tr><td colspan="9" class="text-muted text-center py-4">No patients match your filters. <button type="button" class="btn btn-link p-0" id="bhwPlResetInline">Reset filters</button></td></tr>';
+      els.tbody.innerHTML = '<tr><td colspan="9" class="text-muted text-center py-4">No patients match your search.</td></tr>';
       els.cards.innerHTML = '';
-      els.pageInfo.textContent = '0 patients match current filters';
+      els.pageInfo.textContent = '0 patients match this search';
       els.pagination.innerHTML = '';
-      var resetInline = document.getElementById('bhwPlResetInline');
-      if (resetInline) resetInline.onclick = function () { els.reset.click(); };
       return;
     }
     els.empty.style.display = 'none';
@@ -427,11 +374,7 @@ ob_start();
         '</dl></div>' +
         '<div class="bhw-pl-drawer-section"><h4>Medical Summary</h4><dl class="bhw-pl-drawer-dl">' +
         row('Conditions', p.existing_conditions) + row('Allergies', p.allergies) +
-        row('Medications', p.current_medications) + '</dl></div>' +
-        '<div class="bhw-pl-drawer-section bhw-pl-drawer-actions no-print"><h4>Quick Actions</h4><div class="d-flex flex-wrap gap-2">' +
-        '<a class="bhw-pl-btn bhw-pl-btn--outline" href="update.php?patient_id=' + id + '">Update</a>' +
-        '<a class="bhw-pl-btn bhw-pl-btn--outline" href="../referral/status.php">View referrals</a>' +
-        '</div></div>';
+        row('Medications', p.current_medications) + '</dl></div>';
       els.drawer.classList.add('is-open');
       els.drawerOverlay.classList.add('is-open');
     });
@@ -454,7 +397,6 @@ ob_start();
         return;
       }
       allPatients = r.patients || [];
-      populatePurokFilter(allPatients);
       applyFilters();
     });
   }
@@ -525,18 +467,6 @@ ob_start();
     clearTimeout(searchTimer);
     searchTimer = setTimeout(loadPatients, 250);
   });
-  [els.purok, els.status, els.gender, els.age, els.sort].forEach(function (el) {
-    el.addEventListener('change', applyFilters);
-  });
-  els.reset.addEventListener('click', function () {
-    els.search.value = '';
-    els.purok.value = '';
-    els.status.value = '';
-    els.gender.value = '';
-    els.age.value = '';
-    els.sort.value = 'name';
-    loadPatients();
-  });
   els.refresh.addEventListener('click', loadPatients);
   els.exportCsv.addEventListener('click', exportCsv);
   els.exportPdf.addEventListener('click', function () {
@@ -582,7 +512,7 @@ $bhw_inline_script = ob_get_clean();
       <span>City Health Office — Bago City</span>
     </div>
     <h1 class="bhw-pl-print-title"><?= htmlspecialchars($pl_print_title) ?></h1>
-    <p class="bhw-pl-print-sub" id="bhwPlPrintMeta">Brgy. <?= $barangay_label ?> · Generated <?= date('M j, Y g:i A') ?></p>
+    <p class="bhw-pl-print-sub" id="bhwPlPrintMeta">Brgy. <?= $barangay_label ?> · Generated <?= date('M j, Y') . ' • ' . date('g:i A') ?></p>
   </div>
 
   <header class="bhw-pl-header bhw-page-intro">
@@ -602,24 +532,6 @@ $bhw_inline_script = ob_get_clean();
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="search" id="bhwPlSearch" placeholder="Search patient name, email, contact, ID…" aria-label="Search patients">
     </div>
-    <select id="bhwPlPurok" aria-label="Filter by purok"><option value="">All Puroks</option></select>
-    <select id="bhwPlStatus" aria-label="Filter by status">
-      <option value="">All Status</option><option value="active">Active</option><option value="inactive">Inactive</option>
-    </select>
-    <select id="bhwPlGender" aria-label="Filter by gender">
-      <option value="">All Gender</option><option value="male">Male</option><option value="female">Female</option>
-    </select>
-    <select id="bhwPlAge" aria-label="Filter by age group">
-      <option value="">All Ages</option><option value="child">Children (&lt;18)</option><option value="adult">Adults (18–59)</option><option value="senior">Seniors (60+)</option>
-    </select>
-    <select id="bhwPlSort" aria-label="Sort by">
-      <option value="name">Sort: Name A–Z</option>
-      <option value="name-desc">Sort: Name Z–A</option>
-      <option value="registered">Sort: Newest</option>
-      <option value="registered-asc">Sort: Oldest</option>
-      <option value="risk">Sort: High Risk</option>
-    </select>
-    <button type="button" class="bhw-pl-btn bhw-pl-btn--ghost" id="bhwPlReset">Reset Filters</button>
   </div>
 
   <div id="bhwPlEmpty" class="bhw-pl-table-wrap bhw-pl-empty" style="display:none;">

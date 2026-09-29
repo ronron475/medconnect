@@ -650,7 +650,7 @@ function urgent_followup_book_appointment(PDO $pdo, int $patientId, int $caseId,
         'slot_id'         => $slotId,
     ]);
 
-    $when = date('M j, Y', strtotime($consult_date)) . ' at ' . date('g:i A', strtotime($consult_time));
+    $when = date('M j, Y', strtotime($consult_date)) . ' • ' . date('g:i A', strtotime($consult_time));
     try {
         NotificationEvents::appointmentCreated($pdo, $consultationId, $patientId, $providerId, $when, $patientId);
     } catch (Throwable $e) {

@@ -195,7 +195,7 @@ body.provider-body .provider-page-body .bubble-row.provider {
 }
 
 body.provider-body .provider-page-body .msg-bubble-stack {
-  min-width: 0;
+  width: fit-content;
   max-width: min(78%, 440px);
   display: flex;
   flex-direction: column;
@@ -228,14 +228,14 @@ body.provider-body .provider-page-body .bubble-row .pd-avatar {
 }
 
 body.provider-body .provider-page-body .bubble {
-  width: fit-content;
+  width: auto;
   max-width: 100%;
   padding: 10px 12px;
   border-radius: 14px;
   font-size: 13.5px;
   line-height: 1.5;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: break-word;
+  word-break: normal;
   box-sizing: border-box;
 }
 

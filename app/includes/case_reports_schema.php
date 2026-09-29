@@ -115,6 +115,11 @@ function case_report_valid_case_reasons(): array
 function case_report_valid_video_reasons(): array
 {
     return [
+        'abuse_harassment',
+        'inappropriate_behavior',
+        'fake_identity',
+        'spam',
+        'medical_misuse',
         'abusive_language',
         'harassment',
         'threatening_behavior',
@@ -153,6 +158,11 @@ function case_report_reason_label(string $reason): string
         'abusive_inappropriate' => 'Abusive / inappropriate content',
         'false_misleading' => 'False or misleading information',
         'repeated_suspicious' => 'Repeated suspicious submission',
+        'abuse_harassment' => 'Abuse / Harassment',
+        'inappropriate_behavior' => 'Inappropriate behavior',
+        'fake_identity' => 'Fake identity',
+        'spam' => 'Spam',
+        'medical_misuse' => 'Medical misuse',
         'abusive_language' => 'Abusive or offensive language',
         'harassment' => 'Harassment',
         'threatening_behavior' => 'Threatening behavior',

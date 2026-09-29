@@ -67,7 +67,7 @@ if (!function_exists('phs_render_assessment_pair')) {
             ? triage_urgency_display_label($finalKey)
             : 'Not recorded';
         $assessedAt = !empty($row['assessed_at'])
-            ? date('M j, Y g:i A', strtotime((string) $row['assessed_at']))
+            ? date('M j, Y', strtotime((string) $row['assessed_at'])) . ' • ' . date('g:i A', strtotime((string) $row['assessed_at']))
             : '';
         $finalizedBy = trim((string) ($row['finalized_by_name'] ?? $row['finalized_by'] ?? ''));
         $isEmergency = $showDoctor && $finalKey === 'emergency';
@@ -131,7 +131,7 @@ if (!function_exists('phs_render_assessment_pair')) {
       <div>
         <h2 class="phs-panel__title">Current assessment</h2>
         <p class="phs-panel__meta">
-          <?= !empty($latest_triage['assessed_at']) ? htmlspecialchars(date('M j, Y g:i A', strtotime((string) $latest_triage['assessed_at']))) : 'Most recent case' ?>
+          <?= !empty($latest_triage['assessed_at']) ? htmlspecialchars(date('M j, Y', strtotime((string) $latest_triage['assessed_at'])) . ' • ' . date('g:i A', strtotime((string) $latest_triage['assessed_at']))) : 'Most recent case' ?>
           <?php if (trim((string) ($latest_triage['chief_complaint'] ?? '')) !== ''): ?>
             · <?= htmlspecialchars((string) $latest_triage['chief_complaint']) ?>
           <?php endif; ?>

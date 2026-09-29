@@ -1544,7 +1544,7 @@ final class NotificationEvents
         bool $wasReassigned
     ): void {
         $confidenceLabel = number_format($confidence, 0) . '%';
-        $timestamp = date('M j, Y g:i A');
+        $timestamp = date('M j, Y') . ' • ' . date('g:i A');
         $reassignNote = $wasReassigned ? ' (reassigned — original doctor unavailable)' : '';
         $startNote = $canStartImmediately
             ? ' You may start a video consultation when ready.'
@@ -1586,7 +1586,7 @@ final class NotificationEvents
         float $confidence
     ): void {
         $confidenceLabel = number_format($confidence, 0) . '%';
-        $timestamp = date('M j, Y g:i A');
+        $timestamp = date('M j, Y') . ' • ' . date('g:i A');
 
         $message = implode("\n", [
             "Patient: {$patientName}",

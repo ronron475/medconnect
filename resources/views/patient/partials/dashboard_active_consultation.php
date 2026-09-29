@@ -32,7 +32,7 @@ $joinAccess = function_exists('consultation_patient_join_access')
 
 $isLive = $status === 'in_consultation' || (!empty($joinAccess['allowed']));
 $joinLabel = 'Join Consultation';
-$statusLabel = $isLive ? 'Ready to join' : ($status === 'in_consultation' ? 'In progress' : 'Scheduled');
+$statusLabel = $isLive ? 'Ready to join' : ($status === 'in_consultation' ? 'Ongoing' : 'Scheduled');
 $title = $isLive ? 'Your consultation is ready' : 'Consultation Scheduled';
 $chipClass = $isLive ? 'pdash-care__status-chip--ready' : 'pdash-care__status-chip--scheduled';
 
@@ -71,7 +71,7 @@ if ($providerName !== '') {
         <div class="pdash-care-doctor__body">
           <span class="pdash-care-doctor__eyebrow">Assigned doctor</span>
           <strong class="pdash-care-doctor__name">Dr. <?= htmlspecialchars($providerName !== '' ? $providerName : 'Provider') ?></strong>
-          <p class="pdash-care-doctor__note"><?= htmlspecialchars($schedDate) ?> · <?= htmlspecialchars($schedTime) ?></p>
+          <p class="pdash-care-doctor__note"><?= htmlspecialchars($schedDate) ?> • <?= htmlspecialchars($schedTime) ?></p>
         </div>
       </div>
 

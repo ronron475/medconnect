@@ -79,6 +79,7 @@
     T().syncColors();
     T().applyDefaults();
     var ds = T().lineDataset(series, color || T().colors.teal);
+    ds.label = 'Consulted';
     ds.pointRadius = 4;
     ds.pointHoverRadius = 6;
     ds.borderWidth = 2.5;
@@ -92,6 +93,15 @@
       options: T().cartesianOptions({
         plugins: Object.assign({}, T().basePlugins(), {
           legend: { display: false },
+          tooltip: Object.assign({}, T().basePlugins().tooltip, {
+            callbacks: {
+              label: function (ctx) {
+                var n = ctx.parsed && ctx.parsed.y != null ? ctx.parsed.y : ctx.raw;
+                var count = Number(n || 0);
+                return ' ' + count.toLocaleString() + (count === 1 ? ' patient consulted' : ' patients consulted');
+              },
+            },
+          }),
         }),
       }, T().suggestedMaxForSeries(series)),
     });
@@ -266,7 +276,7 @@
     if (!data || !T()) return;
     lastPayload = data;
 
-    var reg = data.registrations || {};
+    var consult = data.consultations || {};
     var overview = data.overview || {};
     var distribution = data.distribution || data.roles || [];
     var sys = data.system_status || {};
@@ -274,11 +284,11 @@
     var periodLabel = data.period_label || '1 Month';
     var regSub = document.getElementById('admChartRegSub');
     if (regSub) {
-      regSub.textContent = 'New user sign-ups — ' + periodLabel;
+      regSub.textContent = 'Patients who consulted — ' + periodLabel;
     }
 
     renderOverview(overview);
-    makeLineChart('admChartReg', reg.series || [], T().colors.teal);
+    makeLineChart('admChartReg', consult.series || [], T().colors.teal);
     makeHBarChart('admChartRoles', distribution);
     makeSysStatusChart('admChartSysStatus', sys.buckets || [], sys.operational_pct);
     renderSysStatusList(sys.buckets || []);

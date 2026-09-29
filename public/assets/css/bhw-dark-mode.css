@@ -135,6 +135,26 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-charts .mc-chart-filter
   border-color: #243347 !important;
 }
 
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-period__btn,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-period__menu {
+  background-color: #151F2E;
+  border-color: #243347;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-period__menu button {
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-period__menu button:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-period__menu button:focus-visible {
+  background: #0D1E30;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-period__menu button[aria-selected="true"] {
+  color: #93c5fd;
+}
+
 html[data-theme-resolved='dark'] body.bhw-body .bhw-dash-station-name {
   color: #5EEAD4 !important;
 }
@@ -556,6 +576,37 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-followup-empty {
   color: #8FAABF !important;
 }
 
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-tab {
+  background: #0D1E30;
+  border-color: #243347;
+  color: #d4d4d8;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-tab.is-active {
+  background: #0f766e;
+  border-color: #0f766e;
+  color: #fff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card__actions .bhw-btn-outline {
+  background: #0D1E30;
+  border-color: #243347;
+  color: #99f6e4;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-modal__panel {
+  background: #151F2E;
+  border-color: #243347;
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card__name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card__when,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-modal__head h2 {
+  color: #f4f4f5;
+}
+
 html[data-theme-resolved='dark'] body.bhw-body .bhw-followup-toolbar {
   background: #151F2E !important;
   border-bottom-color: #243347 !important;
@@ -945,6 +996,40 @@ html[data-theme-resolved='dark'] body.bhw-body textarea {
   color-scheme: dark;
 }
 
+/* [class*='form'] above paints .form-control the card color. Restore the input token. */
+html[data-theme-resolved='dark'] body.bhw-body .bhw-register-form .form-control,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-register-form select.form-control,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-register-form textarea.form-control,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-toolbar-search input,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-toolbar select {
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  background-image: none !important;
+  border-color: #243347 !important;
+  color: #ffffff !important;
+  color-scheme: dark;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-register-form .form-control::placeholder,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-toolbar-search input::placeholder {
+  color: #8FAABF !important;
+  opacity: 1;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-register-form select.form-control option {
+  background-color: #0D1E30;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-btn-view,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-menu-trigger,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-menu-trigger:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-menu.is-open .bhw-pl-menu-trigger {
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+  color: #ffffff !important;
+}
+
 html[data-theme-resolved='dark'] body.bhw-body canvas,
 html[data-theme-resolved='dark'] body.bhw-body [class*='chart-wrap'],
 html[data-theme-resolved='dark'] body.bhw-body [class*='canvas-wrap'] {
@@ -959,6 +1044,11 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-records-main,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-aside,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-search,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-modal__panel,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-modal__close,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-fields div,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-visit,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-section,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-form-actions,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-file-zone,
@@ -987,6 +1077,25 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-selected-patient-clear {
   background-image: none !important;
   border-color: #243347 !important;
   color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-search input,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-search-label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-card__body strong,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-modal__identity h2,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-modal__close,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-fields dd,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-visit p,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-tabs__btn.is-active {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-tabs {
+  border-bottom-color: #243347;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-tabs__btn.is-active {
+  background: rgba(13, 148, 136, 0.25);
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-header h2,
@@ -1099,6 +1208,15 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-checklist-icon {
 html[data-theme-resolved='dark'] body.bhw-body .bhw-checklist-item.is-done .bhw-checklist-icon {
   background: rgba(34, 197, 94, 0.15) !important;
   color: #86efac !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-status__label,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-status.is-done .bhw-reg-status__label {
+  color: #5eead4;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-status__detail {
+  color: #86efac;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-register-guidance {

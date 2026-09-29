@@ -59,7 +59,7 @@ function patient_chief_complaint_for_consultation(PDO $pdo, int $consultationId)
 
     return [
         'complaint'        => trim((string) ($row['complaint_text'] ?? '')),
-        'submitted_label'  => $submittedAt !== '' ? date('M j, Y g:i A', strtotime($submittedAt)) : '',
+        'submitted_label'  => $submittedAt !== '' ? date('M j, Y', strtotime($submittedAt)) . ' • ' . date('g:i A', strtotime($submittedAt)) : '',
         'source'           => (string) ($row['source'] ?? ''),
     ];
 }

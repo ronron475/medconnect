@@ -208,7 +208,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                             'ip_address'   => $log['ip_address'] ?? '—',
                             'user_agent'   => $log['user_agent'] ?? '',
                             'created_date' => $ts ? date('M j, Y', $ts) : '—',
-                            'created_time' => $ts ? date('g:i:s A', $ts) : '',
+                            'created_time' => $ts ? date('g:i A', $ts) : '',
                         ];
                         ?>
                         <button
@@ -222,7 +222,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                     </td>
                     <td data-label="Timestamp">
                         <div class="audit-logs-time__date"><?= $ts ? date('M j, Y', $ts) : '—' ?></div>
-                        <div class="audit-logs-time__clock"><?= $ts ? date('g:i:s A', $ts) : '' ?></div>
+                        <div class="audit-logs-time__clock"><?= $ts ? date('g:i A', $ts) : '' ?></div>
                     </td>
                 </tr>
                 <?php endforeach; ?>

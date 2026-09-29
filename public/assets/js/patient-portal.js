@@ -18,6 +18,111 @@
     return '';
   }
 
+  function escapeQueueText(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function paintQueueTimingHost(items) {
+    const host = document.querySelector('[data-queue-timing-host]');
+    if (!host) return;
+    let notice = null;
+    let consultId = 0;
+    if (Array.isArray(items)) {
+      items.forEach((item) => {
+        const candidate = item && item.queue_notice;
+        if (!candidate || !candidate.kind) return;
+        const rank = candidate.kind === 'early_offer' ? 3 : (candidate.kind === 'delayed' ? 2 : 1);
+        const current = !notice ? 0 : (notice.kind === 'early_offer' ? 3 : (notice.kind === 'delayed' ? 2 : 1));
+        if (rank >= current) {
+          notice = candidate;
+          consultId = parseInt(candidate.consultation_id || item.id || 0, 10) || 0;
+        }
+      });
+    }
+    if (!notice) {
+      host.hidden = true;
+      host.innerHTML = '';
+      host.removeAttribute('data-notice-key');
+      return;
+    }
+    const key = notice.kind + ':' + consultId + ':' + (notice.title || '') + ':' + (notice.message || '');
+    host.hidden = false;
+    if (host.getAttribute('data-notice-key') === key) return;
+    host.setAttribute('data-notice-key', key);
+    let actions = '';
+    if (notice.kind === 'early_offer' && consultId > 0) {
+      actions =
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;">' +
+        '<button type="button" data-early-choice="join_early" data-consult-id="' + consultId + '" style="min-height:44px;padding:8px 14px;border:0;border-radius:8px;background:#1d4ed8;color:#fff;font-weight:700;cursor:pointer;">Start Early</button>' +
+        '<button type="button" data-early-choice="keep_time" data-consult-id="' + consultId + '" style="min-height:44px;padding:8px 14px;border:1px solid #94a3b8;border-radius:8px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer;">Keep Scheduled Time</button>' +
+        '</div>';
+    }
+    host.innerHTML =
+      '<div role="status" style="margin:12px 0;padding:14px 16px;border:1px solid #bfdbfe;border-radius:12px;background:#eff6ff;color:#0f172a;">' +
+      '<strong>' + escapeQueueText(notice.title || '') + '</strong>' +
+      '<p style="margin:6px 0 0;">' + escapeQueueText(notice.message || '') + '</p>' +
+      actions +
+      '</div>';
+  }
+
+  window.mcPaintQueueNotice = paintQueueTimingHost;
+
+  document.addEventListener('click', function (ev) {
+    const btn = ev.target && ev.target.closest ? ev.target.closest('[data-early-choice]') : null;
+    if (!btn || btn.disabled) return;
+    const choice = btn.getAttribute('data-early-choice');
+    const consultId = btn.getAttribute('data-consult-id');
+    if (!choice || !consultId) return;
+    const host = document.querySelector('[data-queue-timing-host]');
+    const buttons = host ? host.querySelectorAll('[data-early-choice]') : [];
+    buttons.forEach((el) => { el.disabled = true; });
+    const body = new FormData();
+    body.set('consultation_id', consultId);
+    body.set('choice', choice);
+    const csrf = getCsrfToken();
+    if (csrf) body.set('csrf_token', csrf);
+    fetch(APP_BASE + '/app/api/patient/early_start_response.php', {
+      method: 'POST',
+      body,
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
+      .then((res) => res.json())
+      .then((json) => {
+        if (host) host.removeAttribute('data-notice-key');
+        if (typeof window.refreshConsultationStatus === 'function') {
+          window.refreshConsultationStatus();
+        } else {
+          refreshQueueTimingOnly();
+        }
+        if (!json || !json.success) {
+          buttons.forEach((el) => { el.disabled = false; });
+        }
+      })
+      .catch(() => {
+        buttons.forEach((el) => { el.disabled = false; });
+      });
+  });
+
+  async function refreshQueueTimingOnly() {
+    if (!document.querySelector('[data-queue-timing-host]')) return;
+    try {
+      const res = await fetch(APP_BASE + '/app/api/consultations/consultation_status.php?_=' + Date.now(), {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
+      });
+      const json = await res.json();
+      if (json && json.success && Array.isArray(json.items)) {
+        paintQueueTimingHost(json.items);
+      }
+    } catch (_) {}
+  }
+
   window.switchView = function switchView(viewId) {
     document.querySelectorAll('.view-container').forEach((v) => v.classList.remove('active'));
     const activeView = document.getElementById('view-' + viewId);
@@ -422,7 +527,7 @@
           }
         } else {
           const vLabel = vh.video_status_label
-            || (String(c.status || '').toLowerCase() === 'in_consultation' ? 'In progress' : 'Not started');
+            || (String(c.status || '').toLowerCase() === 'in_consultation' ? 'Ongoing' : 'Not started');
           extraMeta +=
             '<p class="psess-card__meta"><span>Video consultation</span> ' + escapeHtml(vLabel) + '</p>';
           if (c.duration_label) {
@@ -452,7 +557,7 @@
         '<p class="psess-card__type">' + typeLine + '</p>' +
         '<p class="psess-card__datetime">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/></svg>' +
-        dateLabel + (timeLabel ? (type === 'past' ? '</p><p class="psess-card__datetime psess-card__datetime--time">' + timeLabel : ' · ' + timeLabel) : '') +
+        dateLabel + (timeLabel ? (type === 'past' ? '</p><p class="psess-card__datetime psess-card__datetime--time">' + timeLabel : ' • ' + timeLabel) : '') +
         '</p>' +
         triageStack +
         (bucket === 'active' && (c.room_token || String(c.video_status || '').toLowerCase() === 'active')
@@ -647,12 +752,30 @@
       if (typeof window.filterSessions === 'function') {
         window.filterSessions(type);
       }
+      paintQueueTimingHost(json.items);
     } catch (_) {
       /* non-fatal */
     }
   }
 
   window.refreshConsultationStatus = refreshConsultationStatus;
+
+  if (document.querySelector('[data-queue-timing-host]') && !document.getElementById('sessions-list')) {
+    refreshQueueTimingOnly();
+    setInterval(function () {
+      if (document.hidden) return;
+      refreshQueueTimingOnly();
+    }, 5000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) refreshQueueTimingOnly();
+    });
+    document.addEventListener('medconnect:live-sync', function (ev) {
+      var changed = (ev.detail && ev.detail.changed) || [];
+      if (changed.indexOf('appointments') !== -1 || changed.indexOf('queue') !== -1) {
+        refreshQueueTimingOnly();
+      }
+    });
+  }
 
   // Live poll while waiting for provider to start the room.
   if (document.getElementById('sessions-list')) {
@@ -798,7 +921,9 @@
         const isBookable = isSlotBookable(slot);
         btn.className = 'booking-slot-btn' + (isBookable ? '' : ' is-past');
         const baseLabel = String(slot.label || '').replace(/\s*\(passed\)\s*$/i, '');
-        btn.textContent = isBookable ? baseLabel : baseLabel + ' (passed)';
+        const labelParts = baseLabel.split(' · ');
+        const rangeText = labelParts[0] + (isBookable ? '' : ' (passed)');
+        btn.textContent = labelParts.length > 1 ? rangeText + '\n' + labelParts.slice(1).join(' · ') : rangeText;
         btn.dataset.slotId = String(slot.id);
         btn.disabled = !isBookable;
         btn.setAttribute('aria-disabled', isBookable ? 'false' : 'true');

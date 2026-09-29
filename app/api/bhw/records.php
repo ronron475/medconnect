@@ -74,6 +74,125 @@ function bhw_residency_upload_stats(PDO $pdo, array $ctx): array
     ];
 }
 
+function bhw_records_text(array $row, string $key): string
+{
+    return trim((string) ($row[$key] ?? ''));
+}
+
+/**
+ * Fields the BHW patient profile already returns. Identity documents,
+ * consent, and OCR payloads stay off this view.
+ */
+function bhw_records_patient_summary(?array $patient): array
+{
+    if (!$patient) {
+        return [];
+    }
+    $blood = bhw_records_text($patient, 'blood_type');
+    if (strcasecmp($blood, 'unknown') === 0) {
+        $blood = '';
+    }
+
+    return [
+        'id' => (int) ($patient['id'] ?? 0),
+        'first_name' => bhw_records_text($patient, 'first_name'),
+        'middle_name' => bhw_records_text($patient, 'middle_name'),
+        'last_name' => bhw_records_text($patient, 'last_name'),
+        'suffix' => bhw_records_text($patient, 'suffix'),
+        'age' => bhw_records_text($patient, 'age'),
+        'gender' => bhw_records_text($patient, 'gender'),
+        'date_of_birth' => bhw_records_text($patient, 'date_of_birth'),
+        'contact_number' => bhw_records_text($patient, 'contact_number'),
+        'email' => bhw_records_text($patient, 'email'),
+        'barangay' => bhw_records_text($patient, 'barangay'),
+        'purok' => bhw_records_text($patient, 'purok'),
+        'city_municipality' => bhw_records_text($patient, 'city_municipality'),
+        'province' => bhw_records_text($patient, 'province'),
+        'address' => bhw_records_text($patient, 'address'),
+        'full_address' => bhw_records_text($patient, 'full_address'),
+        'allergies' => bhw_records_text($patient, 'allergies'),
+        'existing_conditions' => bhw_records_text($patient, 'existing_conditions'),
+        'current_medications' => bhw_records_text($patient, 'current_medications'),
+        'blood_type' => $blood,
+    ];
+}
+
+/**
+ * Consultation history already visible to BHW: schedule, provider, chief
+ * complaint, and the diagnosis/recommendation stored on the consultation.
+ * Doctor SOAP notes stay on clinical_notes and are not included.
+ *
+ * @return list<array<string, mixed>>
+ */
+function bhw_records_consultations(PDO $pdo, int $patientId): array
+{
+    $classSelect = "'' AS triage_classification";
+    try {
+        $triageCols = $pdo->query('SHOW COLUMNS FROM triage_results')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        if (in_array('triage_classification', $triageCols, true)) {
+            $classSelect = 'tr.triage_classification';
+        }
+    } catch (Throwable $e) {
+        $classSelect = "'' AS triage_classification";
+    }
+
+    $complaintFallback = "''";
+    try {
+        $hasRecorded = (bool) $pdo->query("SHOW TABLES LIKE 'consultation_recorded_data'")->rowCount();
+        if ($hasRecorded) {
+            $complaintFallback = "(SELECT crd.chief_complaint
+                FROM consultation_recorded_data crd
+                WHERE crd.consultation_id = c.id
+                  AND crd.patient_id = c.patient_id
+                  AND crd.chief_complaint IS NOT NULL
+                  AND TRIM(crd.chief_complaint) <> ''
+                ORDER BY crd.recorded_at DESC
+                LIMIT 1)";
+        }
+    } catch (Throwable $e) {
+        $complaintFallback = "''";
+    }
+
+    $sql = "
+        SELECT c.id, c.consult_date, c.consult_time, c.status,
+               c.diagnosis, c.recommendation,
+               TRIM(CONCAT(COALESCE(prv.first_name, ''), ' ', COALESCE(prv.last_name, ''))) AS provider_user_name,
+               COALESCE(c.provider_name, '') AS provider_name_stored,
+               COALESCE(NULLIF(TRIM(tr.chief_complaint), ''), {$complaintFallback}) AS chief_complaint,
+               tr.urgency_label,
+               {$classSelect}
+        FROM consultations c
+        LEFT JOIN users prv ON prv.id = c.provider_id
+        LEFT JOIN triage_results tr ON tr.id = c.triage_result_id AND tr.patient_id = c.patient_id
+        WHERE c.patient_id = ?
+        ORDER BY c.consult_date DESC, c.consult_time DESC, c.id DESC
+        LIMIT 100
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$patientId]);
+    $rows = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+        $provider = trim((string) ($row['provider_user_name'] ?? ''));
+        if ($provider === '') {
+            $provider = trim((string) ($row['provider_name_stored'] ?? ''));
+        }
+        $rows[] = [
+            'id' => (int) ($row['id'] ?? 0),
+            'consult_date' => trim((string) ($row['consult_date'] ?? '')),
+            'consult_time' => trim((string) ($row['consult_time'] ?? '')),
+            'status' => trim((string) ($row['status'] ?? '')),
+            'provider_name' => $provider,
+            'chief_complaint' => trim((string) ($row['chief_complaint'] ?? '')),
+            'urgency_label' => trim((string) ($row['urgency_label'] ?? '')),
+            'triage_classification' => trim((string) ($row['triage_classification'] ?? '')),
+            'diagnosis' => trim((string) ($row['diagnosis'] ?? '')),
+            'recommendation' => trim((string) ($row['recommendation'] ?? '')),
+        ];
+    }
+
+    return $rows;
+}
+
 const BHW_UPLOAD_MAX_BYTES = 10485760; // 10 MB
 
 $ctx = bhw_api_bootstrap($pdo, ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST');
@@ -98,16 +217,26 @@ try {
         unset($doc);
         $records['documents'] = $docs;
         // Dispensing fields only — the prescriber's private notes stay doctor-only.
-        $s = $pdo->prepare('SELECT id, medication_name, dosage, frequency, duration, created_at FROM prescriptions WHERE patient_id = ? ORDER BY created_at DESC LIMIT 20');
+        $s = $pdo->prepare('SELECT id, medication_name, dosage, frequency, duration, created_at FROM prescriptions WHERE patient_id = ? ORDER BY created_at DESC LIMIT 50');
         $s->execute([$patientId]);
         $records['prescriptions'] = $s->fetchAll(PDO::FETCH_ASSOC);
-        bhw_audit($pdo, $patientId, 'bhw_records_viewed', 'BHW viewed patient records.');
+        try {
+            $records['consultations'] = bhw_records_consultations($pdo, $patientId);
+        } catch (Throwable $e) {
+            $records['consultations'] = [];
+        }
+        $patient = bhw_records_patient_summary(BhwWorkflows::getPatient($pdo, $ctx, $patientId));
         $bhwId = (int) ($_SESSION['user_id'] ?? 0);
-        if ($bhwId > 0) {
-            bhw_nav_mark_records_read($pdo, $bhwId, $patientId);
+        $isRefresh = (($_GET['refresh'] ?? '') === '1');
+        if (!$isRefresh) {
+            bhw_audit($pdo, $patientId, 'bhw_records_viewed', 'BHW viewed patient records.');
+            if ($bhwId > 0) {
+                bhw_nav_mark_records_read($pdo, $bhwId, $patientId);
+            }
         }
         Api::success([
             'records' => $records,
+            'patient' => $patient,
             'bhw_records' => bhw_nav_records_unread_count($pdo, $bhwId, $ctx),
         ]);
     } elseif ($action === 'upload_stats') {
