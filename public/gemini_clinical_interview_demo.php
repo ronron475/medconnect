@@ -101,6 +101,11 @@ $assetBase = ASSET_BASE;
 
     <section class="gci-card" aria-labelledby="gci-debug-title">
       <h2 id="gci-debug-title" class="gci-card-title">5. Debug panel</h2>
+      <p class="gci-hint" id="gci-provider">
+        <span id="gci-provider-used">AI Provider Used: Unknown</span><br />
+        Primary Provider: Gemini Flash<br />
+        Fallback Provider: OpenRouter
+      </p>
       <details open>
         <summary>Structured Gemini output + engine result</summary>
         <pre id="gci-debug" class="gci-pre gci-pre--debug">{}</pre>
@@ -113,6 +118,6 @@ $assetBase = ASSET_BASE;
     </p>
   </main>
 
-  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/gemini_clinical_interview_demo.js?v=1.0" defer></script>
+  <script src="<?= htmlspecialchars($assetBase) ?>/assets/js/gemini_clinical_interview_demo.js?v=1.1" defer></script>
 </body>
 </html>
