@@ -1201,6 +1201,9 @@ final class GeminiClinicalInterviewDemo
         if ($resolved === '' || $resolved === $current) {
             return false;
         }
+        if (class_exists('HiligaynonLanguageDetector') && !HiligaynonLanguageDetector::hasLexicalEvidence($utterance)) {
+            return false;
+        }
         if (self::isContextualShortReply($utterance) || self::isLanguageNeutralUtterance($utterance)) {
             return false;
         }
@@ -3003,6 +3006,15 @@ COMMON-SENSE CONVERSATION (critical):
 - Ask only the single most clinically relevant missing question needed to understand the complaint.
 - Questions must be natural and context-aware.
 - If the complaint is already clinically obvious, do not ask unnecessary clarification — set interview_sufficient=true when appropriate.
+
+FOLLOW-UP LANGUAGE (next_question only):
+- The user message names the question language already detected from the patient. Write next_question only in that language.
+- Keep English, Hiligaynon/Ilonggo, Tagalog, mixed, informal, slang, and misspelled input in that same language. Do not translate it.
+- When that language is Hiligaynon/Ilonggo, write natural Hiligaynon/Ilonggo. Do not mix in Tagalog or English.
+- When it is Tagalog, write natural Tagalog. When it is English, write natural English.
+- Mixed wording may stay mixed only to the degree the patient already mixed it.
+- Use the full conversation and the latest answer. Ask only for clinically relevant information that is still missing.
+- Do not repeat information the patient already gave. Do not use an awkward literal translation.
 
 Short answers & discourse particles:
 - Interpret short replies such as affirmatives, negatives, and brief particles according to the CURRENT question's conversational context (they can be VALID).

@@ -155,6 +155,23 @@ final class HiligaynonLanguageDetector
         return $hilEx >= $tagEx ? 'hiligaynon' : 'tagalog';
     }
 
+    /**
+     * True when the text hits an existing language marker.
+     * Marker-free text is not evidence: detect() still labels it Hiligaynon.
+     */
+    public static function hasLexicalEvidence(string $text): bool
+    {
+        $normalized = mb_strtolower(trim($text));
+        if ($normalized === '') {
+            return false;
+        }
+
+        return self::countMarkers($normalized, self::HILIGAYNON_EXCLUSIVE) > 0
+            || self::countMarkers($normalized, self::TAGALOG_EXCLUSIVE) > 0
+            || self::countMarkers($normalized, self::SHARED_MARKERS) > 0
+            || self::countMarkers($normalized, self::ENGLISH_MARKERS) > 0;
+    }
+
     public static function primaryLanguage(string $text): string
     {
         return self::detect($text)['primary'];
