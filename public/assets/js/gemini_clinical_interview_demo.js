@@ -24,6 +24,7 @@
   var triageEl = document.getElementById('gci-triage');
   var triageReasonEl = document.getElementById('gci-triage-reason');
   var debugEl = document.getElementById('gci-debug');
+  var providerUsedEl = document.getElementById('gci-provider-used');
 
   var interviewContext = null;
   var busy = false;
@@ -94,7 +95,20 @@
     }
   }
 
+  function renderProvider(payload) {
+    if (!providerUsedEl) return;
+    var source = payload && payload.demo && typeof payload.demo.ai_provider_used === 'string'
+      ? payload.demo
+      : payload;
+    var used = source && typeof source.ai_provider_used === 'string' ? source.ai_provider_used : '';
+    if (used !== 'Gemini Flash' && used !== 'OpenRouter (Gemini quota fallback)') {
+      used = 'Unknown';
+    }
+    providerUsedEl.textContent = 'AI Provider Used: ' + used;
+  }
+
   function renderDebug(payload) {
+    renderProvider(payload);
     if (!debugEl) return;
     debugEl.textContent = JSON.stringify(payload && payload.debug ? payload.debug : payload || {}, null, 2);
   }
