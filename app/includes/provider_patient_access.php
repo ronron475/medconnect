@@ -343,6 +343,8 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
         return [];
     }
 
+    $rows = provider_patient_strip_hidden_bhw_clinical($pdo, $providerId, $rows);
+
     foreach ($rows as &$row) {
         $name = trim((string) ($row['name'] ?? ''));
         if ($name === '') {
@@ -375,6 +377,72 @@ function provider_triage_row_visibility_sql(string $trAlias = 'tr'): string
         AND UPPER(COALESCE({$tr}.assessment_status, '')) NOT IN ('CANCELLED', 'CANCELED')
         AND LOWER(COALESCE({$tr}.outcome, '')) NOT IN ('cancelled', 'canceled')
     )";
+}
+
+/**
+ * Drop BHW-authored clinical columns from caseload rows this doctor has not consulted.
+ *
+ * @param list<array<string, mixed>> $rows
+ * @return list<array<string, mixed>>
+ */
+function provider_patient_strip_hidden_bhw_clinical(PDO $pdo, int $providerId, array $rows): array
+{
+    if ($providerId <= 0 || $rows === []) {
+        return $rows;
+    }
+
+    $ids = [];
+    foreach ($rows as $row) {
+        $id = (int) ($row['id'] ?? 0);
+        if ($id > 0) {
+            $ids[$id] = $id;
+        }
+    }
+    if ($ids === []) {
+        return $rows;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    try {
+        $stmt = $pdo->prepare("
+            SELECT DISTINCT pr.user_id
+            FROM patient_registrations pr
+            INNER JOIN users author ON author.id = pr.medical_profile_updated_by AND author.role = 'bhw'
+            WHERE pr.user_id IN ({$placeholders})
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM consultations c
+                  WHERE c.patient_id = pr.user_id
+                    AND c.provider_id = ?
+              )
+        ");
+        $stmt->execute(array_merge(array_values($ids), [$providerId]));
+        $hidden = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $patientId) {
+            $hidden[(int) $patientId] = true;
+        }
+    } catch (PDOException $e) {
+        return $rows;
+    }
+
+    if ($hidden === []) {
+        return $rows;
+    }
+
+    foreach ($rows as &$row) {
+        $id = (int) ($row['id'] ?? 0);
+        if ($id <= 0 || empty($hidden[$id])) {
+            continue;
+        }
+        foreach (['blood_type', 'allergies', 'history', 'existing_conditions', 'medications', 'current_medications'] as $key) {
+            if (array_key_exists($key, $row)) {
+                $row[$key] = '';
+            }
+        }
+    }
+    unset($row);
+
+    return $rows;
 }
 
 /**

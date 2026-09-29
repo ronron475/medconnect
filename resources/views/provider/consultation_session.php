@@ -115,9 +115,17 @@ require __DIR__.'/partials/layout_open.php';
 
 $profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
 $health_summary = patient_health_summary_load($pdo, (int) $c['patient_id']);
-$bhw_activity = community_bhw_activity_load($pdo, (int) $c['patient_id']);
+$bhw_activity = community_bhw_activity_load_for_provider($pdo, (int) $_SESSION['user_id'], (int) $c['patient_id']);
 $bhw_activity_variant = 'provider';
-$external_healthcare_visits = patient_external_healthcare_visits_for_display($pdo, (int) $c['patient_id'], 30);
+$external_visit_access = patient_external_healthcare_visits_for_authorized_provider(
+    $pdo,
+    (int) $_SESSION['user_id'],
+    (int) $c['patient_id'],
+    $consultation_id
+);
+$external_healthcare_visits = !empty($external_visit_access['allowed'])
+    ? ($external_visit_access['visits'] ?? [])
+    : [];
 $recorded_data = consultation_recorded_data_for_doctor($pdo, $consultation_id, (int) $c['patient_id']);
 $recorded_data_history = !empty($recorded_data['available'])
     ? consultation_recorded_data_history($pdo, $consultation_id, (int) $c['patient_id'], 8)

@@ -4,7 +4,8 @@
  *
  * - Scheduled duration comes from appointment configuration (slot end − slot start).
  * - Actual duration is exact ended_at − started_at (never from rounded display times).
- * - Call deadline while live: started_at + scheduled_duration_seconds.
+ * - The slot window is the queue position. It is not a hard stop once the patient has joined.
+ * - Actual start/end are video_sessions.started_at and video_sessions.ended_at.
  */
 declare(strict_types=1);
 

@@ -285,7 +285,9 @@ function patient_external_healthcare_visit_dto(array $row): array
 }
 
 /**
- * Authorized provider read (IDOR: must own a consultation with this patient OR prior access relationship).
+ * Provider read of external-visit history.
+ * Requires consultation history with this patient. A consultation id, when
+ * supplied, must belong to this doctor and this patient.
  *
  * @return array{allowed: bool, message: string, visits?: list<array<string, mixed>>}
  */
@@ -296,8 +298,14 @@ function patient_external_healthcare_visits_for_authorized_provider(
     int $consultationId = 0
 ): array {
     require_once __DIR__ . '/provider_patient_access.php';
-    $access = provider_patient_assert_access($pdo, $providerId, $patientId, $consultationId);
-    if (empty($access['allowed'])) {
+    if ($consultationId > 0) {
+        $owned = $pdo->prepare('SELECT id FROM consultations WHERE id = ? AND provider_id = ? AND patient_id = ? LIMIT 1');
+        $owned->execute([$consultationId, $providerId, $patientId]);
+        if (!$owned->fetchColumn()) {
+            return ['allowed' => false, 'message' => 'Access denied.'];
+        }
+    }
+    if (!provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId)) {
         return ['allowed' => false, 'message' => 'Access denied.'];
     }
 

@@ -8,6 +8,7 @@ ob_start();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_queue_timing.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -38,8 +39,9 @@ if ($consultation_id <= 0) {
 try {
     $stmt = $pdo->prepare("
         SELECT c.id, c.patient_id, c.provider_id, c.consult_date, c.consult_time, c.status,
-               s.slot_date, s.start_time AS slot_start,
-               vs.room_token
+               c.early_start_response,
+               s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end,
+               vs.room_token, vs.patient_joined_at
         FROM consultations c
         LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
         LEFT JOIN video_sessions vs ON vs.consultation_id = c.id AND vs.status = 'active'
@@ -68,6 +70,8 @@ try {
         exit;
     }
 
+    consultation_timing_ensure_schema($pdo);
+    $consultation = consultation_timing_decorate_row($pdo, $consultation);
     $join = consultation_patient_join_access($consultation);
     if (!$join['allowed']) {
         ob_end_clean();
@@ -95,6 +99,7 @@ try {
     try {
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/consultation_video_lifecycle.php';
         consultation_patient_clear_temporarily_left($pdo, $token, $uid);
+        consultation_timing_mark_patient_joined($pdo, $consultation_id);
     } catch (Throwable $e) {
         error_log('join_video clear patient left: ' . $e->getMessage());
     }

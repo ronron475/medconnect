@@ -46,6 +46,30 @@ function community_bhw_activity_load(PDO $pdo, int $patientId): array
 }
 
 /**
+ * Provider read of the patient's BHW health-record activity.
+ * Requires a consultation between this doctor and this patient.
+ *
+ * @return array<string, mixed>
+ */
+function community_bhw_activity_load_for_provider(PDO $pdo, int $providerId, int $patientId): array
+{
+    require_once __DIR__ . '/provider_patient_access.php';
+    if (!provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId)) {
+        return [
+            'documents'       => [],
+            'visits'          => [],
+            'referrals'       => [],
+            'health_entries'  => [],
+            'external_visits' => [],
+            'barangay'        => '',
+            'total'           => 0,
+        ];
+    }
+
+    return community_bhw_activity_load($pdo, $patientId);
+}
+
+/**
  * Shared attribution block for patient/provider health activity UI.
  *
  * @return array{added_by: string, role: string, role_label: string, date_label: string, time_label: string, barangay_label: string, recorded_at: ?string}
