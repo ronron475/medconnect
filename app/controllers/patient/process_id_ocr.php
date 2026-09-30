@@ -443,18 +443,17 @@ function detectNationalIdCardRegion($img): array {
         return $empty;
     }
     $frame_ratio = max($w, $h) / $short;
-    if ($frame_ratio >= 1.45 && $frame_ratio <= 1.82) {
-        return [
-            'detected' => true,
-            'direct_photo' => true,
-            'x' => 0,
-            'y' => 0,
-            'width' => $w,
-            'height' => $h,
-            'orientation' => 'uploaded-frame',
-            'reason' => 'image aspect matches an ID card',
-        ];
-    }
+    $frame_is_card = $frame_ratio >= 1.45 && $frame_ratio <= 1.82;
+    $direct = [
+        'detected' => true,
+        'direct_photo' => true,
+        'x' => 0,
+        'y' => 0,
+        'width' => $w,
+        'height' => $h,
+        'orientation' => 'uploaded-frame',
+        'reason' => 'image aspect matches an ID card',
+    ];
 
     $max_side = 160;
     $scale = min(1.0, $max_side / max($w, $h));
@@ -471,6 +470,7 @@ function detectNationalIdCardRegion($img): array {
         }
     }
     imagedestroy($small);
+    $raw_mask = $mask;
     $dilated = $mask;
     for ($y = 1; $y < $sh - 1; $y++) {
         for ($x = 1; $x < $sw - 1; $x++) {
@@ -535,17 +535,23 @@ function detectNationalIdCardRegion($img): array {
                     'y' => $fy,
                     'width' => min($w - $fx, $fw),
                     'height' => min($h - $fy, $fh),
+                    'small' => [$min_x, $min_y, $max_x, $max_y],
                 ];
             }
         }
     }
+    // A card-shaped frame is either a screenshot with a card on a plain page, or the card itself.
+    // Inside a real card, regions like the portrait are surrounded by card texture, not page background.
+    if ($best !== null && $frame_is_card && ocrRingDensity($raw_mask, $sw, $sh, $best['small']) > 0.3) {
+        $best = null;
+    }
     if ($best === null) {
-        return $empty;
+        return $frame_is_card ? $direct : $empty;
     }
     $box = ocrTrimCardBox($img, $best['x'], $best['y'], $best['width'], $best['height']);
     $box = ocrDropSeparatedCaption($img, $box['x'], $box['y'], $box['width'], $box['height']);
     if ($box['width'] < 40 || $box['height'] < 40) {
-        return $empty;
+        return $frame_is_card ? $direct : $empty;
     }
     return [
         'detected' => true,
@@ -557,6 +563,22 @@ function detectNationalIdCardRegion($img): array {
         'orientation' => 'exif',
         'reason' => 'card-like region inside the upload',
     ];
+}
+
+function ocrRingDensity(array $mask, int $sw, int $sh, array $small_box, int $gap = 3): float {
+    [$x0, $y0, $x1, $y1] = $small_box;
+    $n = 0;
+    $hit = 0;
+    for ($y = max(0, $y0 - $gap); $y <= min($sh - 1, $y1 + $gap); $y++) {
+        for ($x = max(0, $x0 - $gap); $x <= min($sw - 1, $x1 + $gap); $x++) {
+            if ($x >= $x0 && $x <= $x1 && $y >= $y0 && $y <= $y1) {
+                continue;
+            }
+            $n++;
+            $hit += $mask[$y * $sw + $x];
+        }
+    }
+    return $n > 0 ? $hit / $n : 1.0;
 }
 
 function ocrRowDensity($img, int $x, int $y, int $w, int $h): float {
@@ -950,7 +972,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
                     $card_detection['width'],
                     $card_detection['height']
                 );
-                $saved_crop = saveGdOcrJpeg($crop, 'card-crop', 'color', false);
+                $saved_crop = saveGdOcrJpeg($crop, 'card-crop', 'color', true, 1200);
                 imagedestroy($crop);
                 if ($saved_crop) {
                     $source_path = $saved_crop['path'];
