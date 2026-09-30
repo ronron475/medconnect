@@ -16,12 +16,55 @@ const MEDCONNECT_RAILWAY_EMAIL_URL = 'https://medconnect-production-f2b7.up.rail
 
 function medconnect_mail_env(string $key): string
 {
-    $value = getenv($key);
-    if ($value === false || $value === '') {
-        $value = $_ENV[$key] ?? '';
+    $candidates = [getenv($key), $_ENV[$key] ?? null, $_SERVER[$key] ?? null];
+    if ($key === 'MEDCONNECT_AI_SERVICE_TOKEN' && defined('MEDCONNECT_AI_SERVICE_TOKEN')) {
+        $candidates[] = MEDCONNECT_AI_SERVICE_TOKEN;
+    }
+    foreach ($candidates as $candidate) {
+        if ($candidate !== false && $candidate !== null && trim((string) $candidate) !== '') {
+            return trim((string) $candidate);
+        }
     }
 
-    return trim((string) $value);
+    return medconnect_mail_env_from_file($key);
+}
+
+function medconnect_mail_env_from_file(string $key): string
+{
+    $path = dirname(__DIR__, 2) . '/.env';
+    if (!is_readable($path)) {
+        return '';
+    }
+    $lines = file($path, FILE_IGNORE_NEW_LINES);
+    if ($lines === false) {
+        return '';
+    }
+    foreach ($lines as $line) {
+        $line = trim(ltrim($line, "\xEF\xBB\xBF"));
+        if ($line === '' || str_starts_with($line, '#')) {
+            continue;
+        }
+        if (str_starts_with($line, 'export ')) {
+            $line = trim(substr($line, 7));
+        }
+        if (!str_contains($line, '=')) {
+            continue;
+        }
+        [$name, $value] = explode('=', $line, 2);
+        if (trim($name) !== $key) {
+            continue;
+        }
+        $value = trim($value);
+        if (
+            (str_starts_with($value, '"') && str_ends_with($value, '"'))
+            || (str_starts_with($value, "'") && str_ends_with($value, "'"))
+        ) {
+            $value = substr($value, 1, -1);
+        }
+        return trim($value);
+    }
+
+    return '';
 }
 
 class MedConnectRailwayMailer
@@ -64,27 +107,7 @@ class MedConnectRailwayMailer
             $payload['text'] = $text;
         }
 
-        $ch = curl_init(MEDCONNECT_RAILWAY_EMAIL_URL);
-        if ($ch === false) {
-            error_log('Railway email API failed: HTTP 0');
-            throw new Exception('Email could not be sent.');
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_POST => true,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 20,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->token,
-                'X-Email-Api-Key: ' . $this->emailKey,
-            ],
-            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-        ]);
-        $raw = curl_exec($ch);
-        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        [$status, $raw] = $this->postJson((string) json_encode($payload, JSON_UNESCAPED_UNICODE));
         $decoded = is_string($raw) ? json_decode($raw, true) : null;
         $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
         if (!$ok) {
@@ -94,15 +117,56 @@ class MedConnectRailwayMailer
 
         return true;
     }
+
+    /** @return array{0:int,1:string} */
+    private function postJson(string $body): array
+    {
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->token,
+            'X-Email-Api-Key: ' . $this->emailKey,
+        ];
+        if (function_exists('curl_init')) {
+            $ch = curl_init(MEDCONNECT_RAILWAY_EMAIL_URL);
+            if ($ch === false) {
+                return [0, ''];
+            }
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 20,
+                CURLOPT_CONNECTTIMEOUT => 5,
+                CURLOPT_HTTPHEADER => $headers,
+                CURLOPT_POSTFIELDS => $body,
+            ]);
+            $raw = curl_exec($ch);
+            $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            return [$status, is_string($raw) ? $raw : ''];
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => implode("\r\n", $headers),
+                'content' => $body,
+                'timeout' => 20,
+                'ignore_errors' => true,
+            ],
+        ]);
+        $raw = @file_get_contents(MEDCONNECT_RAILWAY_EMAIL_URL, false, $context);
+        $status = 0;
+        foreach ($http_response_header ?? [] as $headerLine) {
+            if (preg_match('#HTTP/\S+\s+(\d+)#', $headerLine, $match) === 1) {
+                $status = (int) $match[1];
+            }
+        }
+        return [$status, is_string($raw) ? $raw : ''];
+    }
 }
 
 function initMailer(): ?MedConnectRailwayMailer
 {
-    if (!function_exists('curl_init')) {
-        error_log('Mailer init failed: curl is not available.');
-        return null;
-    }
-
     $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
     $emailKey = medconnect_mail_env('EMAIL_API_KEY');
     $missing = [];
