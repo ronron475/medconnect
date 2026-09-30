@@ -430,12 +430,32 @@ def extract_field_by_label(raw_text: str, labels: list[str]) -> str:
     return ""
 
 
+def _years_in_text(raw_text: str) -> set[str]:
+    return set(re.findall(r"\b(?:19|20)\d{2}\b", raw_text))
+
+
+def _drop_dob_year_prefix(candidates: dict[str, dict[str, Any]], raw_text: str) -> dict[str, dict[str, Any]]:
+    """Birth year sitting above the ID must not become the first four digits."""
+    years = _years_in_text(raw_text)
+    if not years or len(candidates) < 2:
+        return candidates
+    kept = {
+        digits: meta
+        for digits, meta in candidates.items()
+        if digits[:4] not in years
+        or not any(other != digits and other[:4] not in years for other in candidates)
+    }
+    return kept or candidates
+
+
 def extract_national_id(raw_text: str) -> dict[str, Any]:
     empty = {"value": "", "confidence": 0.0, "source": "none"}
     candidates: dict[str, dict[str, Any]] = {}
     sanitized = sanitize_ocr_id(raw_text)
+    # Spaces and dashes only. A newline must not join the birth year to the ID number.
+    grouped = re.compile(r"(?=(\d{4})[ \t\-.](\d{4})[ \t\-.](\d{4})[ \t\-.](\d{4}))")
     for src in (raw_text, sanitized):
-        for m in re.finditer(r"(\d{4})[\s\-.](\d{4})[\s\-.](\d{4})[\s\-.](\d{4})", src):
+        for m in grouped.finditer(src):
             digits = "".join(m.groups())
             candidates.setdefault(digits, {"confidence": 0.95, "source": "grouped_4x4"})
         m16 = re.search(r"\d{16}", src)
@@ -455,7 +475,12 @@ def extract_national_id(raw_text: str) -> dict[str, Any]:
             candidates.setdefault(c, {"confidence": 0.65, "source": "sliding_window"})
     if not candidates:
         return empty
-    best_digits = max(candidates, key=lambda d: candidates[d]["confidence"])
+    candidates = _drop_dob_year_prefix(candidates, raw_text)
+    years = _years_in_text(raw_text)
+    best_digits = max(
+        candidates,
+        key=lambda d: (candidates[d]["confidence"], 0 if d[:4] in years else 1),
+    )
     best = candidates[best_digits]
     return {
         "value": format_national_id(best_digits),
