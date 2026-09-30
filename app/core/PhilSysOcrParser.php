@@ -421,7 +421,20 @@ final class PhilSysOcrParser
             $result[$field . '_source'] = 'philsys_block_gap';
         }
 
-        // 4) Fallback: three uppercase name tokens (PhilID prints values in caps)
+        // 4) Hologram OCR garbles "Apelyido / Mga Pangalan / Gitnang Apelyido" but keeps the name lines.
+        if ($result['last'] === '' || $result['first'] === '') {
+            $stack = self::extractPhilSysNameStack($lines);
+            foreach (['last', 'first', 'middle'] as $field) {
+                if ($result[$field] !== '' || ($stack[$field] ?? '') === '') {
+                    continue;
+                }
+                $result[$field] = $stack[$field];
+                $result[$field . '_confidence'] = 0.91;
+                $result[$field . '_source'] = 'philsys_stack';
+            }
+        }
+
+        // 5) Fallback: three uppercase name tokens (PhilID prints values in caps)
         if ($result['last'] === '' && $result['first'] === '') {
             $nameLines = self::extractUppercaseNameCandidates($lines, $labelMap);
             if (count($nameLines) >= 2) {
@@ -457,7 +470,8 @@ final class PhilSysOcrParser
         // 6) OCR sometimes merges given + middle on one line ("ANGEL BRILLO")
         if ($result['middle'] === '' && $result['first'] !== '') {
             $parts = preg_split('/\s+/', trim($result['first']), -1, PREG_SPLIT_NO_EMPTY) ?: [];
-            if (count($parts) >= 2) {
+            $lead = strtolower(rtrim((string) ($parts[0] ?? ''), '.'));
+            if (count($parts) >= 2 && !in_array($lead, ['ma', 'sta', 'sto'], true)) {
                 $firstOnly = self::formatPersonName($parts[0]);
                 $rest = self::formatPersonName(implode(' ', array_slice($parts, 1)));
                 if ($firstOnly !== '' && $rest !== '' && self::looksLikeNameToken($rest)) {
@@ -491,8 +505,8 @@ final class PhilSysOcrParser
     {
         return [
             'last' => ['LAST NAME', 'SURNAME', 'FAMILY NAME', 'APELYIDO'],
-            'first' => ['GIVEN NAMES / FIRST NAME', 'GIVEN NAMES', 'GIVEN NAME', 'FIRST NAME', 'PANGALAN'],
-            'middle' => ['MIDDLE NAME', 'MIDDLE INITIAL', 'GITNANG PANGALAN'],
+            'first' => ['GIVEN NAMES / FIRST NAME', 'GIVEN NAMES', 'GIVEN NAME', 'FIRST NAME', 'MGA PANGALAN', 'PANGALAN'],
+            'middle' => ['MIDDLE NAME', 'MIDDLE INITIAL', 'GITNANG APELYIDO', 'GITNANG PANGALAN'],
         ];
     }
 
@@ -541,9 +555,91 @@ final class PhilSysOcrParser
         return null;
     }
 
+    /**
+     * @param array<int, string> $lines
+     * @return array{last: string, first: string, middle: string}
+     */
+    private static function extractPhilSysNameStack(array $lines): array
+    {
+        $empty = ['last' => '', 'first' => '', 'middle' => ''];
+        $idIdx = null;
+        $dobIdx = null;
+        foreach ($lines as $i => $line) {
+            if ($idIdx === null && preg_match('/\d{4}[\s\-.]\d{4}[\s\-.]\d{4}[\s\-.]\d{4}/', $line)) {
+                $idIdx = $i;
+            }
+            if ($dobIdx === null && preg_match('/\b[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}\b/', $line) && self::parseDateString($line)) {
+                $dobIdx = $i;
+            }
+        }
+        if ($idIdx === null) {
+            return $empty;
+        }
+        $from = max(0, $idIdx - 6);
+        $to = min(count($lines) - 1, $idIdx + 12);
+        if ($dobIdx !== null) {
+            $from = min($from, max(0, $dobIdx - 6));
+            $to = max($to, min(count($lines) - 1, $dobIdx + 2));
+        }
+        $names = [];
+        for ($i = $from; $i <= $to; $i++) {
+            if ($i === $idIdx) {
+                continue;
+            }
+            if (!self::isNameValueLine($lines[$i])) {
+                continue;
+            }
+            $name = self::formatPersonName($lines[$i]);
+            if ($name !== '' && !in_array($name, $names, true)) {
+                $names[] = $name;
+            }
+            if (count($names) >= 3) {
+                break;
+            }
+        }
+        if (count($names) < 2) {
+            return $empty;
+        }
+        $out = $empty;
+        $out['last'] = $names[0];
+        $out['first'] = $names[1];
+        if (isset($names[2])) {
+            $out['middle'] = $names[2];
+        }
+        return $out;
+    }
+
+    private static function isLabelishLine(string $line): bool
+    {
+        if (str_contains($line, '/')) {
+            return true;
+        }
+        if (preg_match('/name|nome|pangalan|apelyido|apellid|apollid|middle|middl|given|birth|petsa|kapangan|date|tirahan|address|republika|pilipinas|pambansang|pagkakakilanlan|ambansang|republic|philsys|identification/i', $line)) {
+            return true;
+        }
+        return preg_match_all('/[A-Za-z]+/', $line) >= 4;
+    }
+
+    private static function isNameValueLine(string $line): bool
+    {
+        $line = trim($line);
+        if ($line === '' || self::isLabelishLine($line) || preg_match('/\d/', $line)) {
+            return false;
+        }
+        $first = strtolower((string) preg_replace('/[^A-Za-z]/', '', explode(' ', $line)[0]));
+        if (isset(self::$monthMap[$first])) {
+            return false;
+        }
+        $name = self::formatPersonName($line);
+        return $name !== '' && self::looksLikeNameToken($name) && !self::isReservedNameLabel($name);
+    }
+
     private static function lineContainsNameLabel(string $lineUp, string $label): bool
     {
         $label = strtoupper(trim($label));
+        if (in_array($label, ['APELYIDO', 'PANGALAN'], true) && str_contains($lineUp, 'GITNANG')) {
+            return false;
+        }
         if ($lineUp === $label) {
             return true;
         }
@@ -698,6 +794,20 @@ final class PhilSysOcrParser
         $empty = ['value' => '', 'confidence' => 0.0, 'source' => 'none'];
         $labels = ['date of birth', 'birth date', 'birthdate', 'petsa ng kapanganakan'];
         $norm   = strtolower(preg_replace('/\s+/', ' ', $rawText));
+        $birthLines = preg_split('/\r?\n/', $rawText) ?: [];
+        foreach ($birthLines as $li => $line) {
+            $low = strtolower($line);
+            if (!preg_match('/birth|petsa|kapangan/', $low)) {
+                continue;
+            }
+            $limit = min($li + 2, count($birthLines) - 1);
+            for ($nxt = $li; $nxt <= $limit; $nxt++) {
+                $parsed = self::parseDateString($birthLines[$nxt]);
+                if ($parsed) {
+                    return ['value' => $parsed, 'confidence' => 0.9, 'source' => 'birth_label'];
+                }
+            }
+        }
 
         foreach ($labels as $label) {
             $pos = stripos($norm, $label);
@@ -743,7 +853,8 @@ final class PhilSysOcrParser
             }
             $candidate = self::parseDateString(strtolower(implode(' ', array_slice($m, 1))));
             if ($candidate) {
-                return ['value' => $candidate, 'confidence' => 0.72, 'source' => 'pattern'];
+                $confidence = preg_match('/^[A-Za-z]/', $m[1]) ? 0.9 : 0.72;
+                return ['value' => $candidate, 'confidence' => $confidence, 'source' => 'pattern'];
             }
         }
 
@@ -787,12 +898,29 @@ final class PhilSysOcrParser
         }
 
         if (empty($candidates)) {
-            $all = preg_replace('/[^0-9]/', '', $sanitized);
-            for ($i = 0; $i <= strlen($all) - 16; $i++) {
-                $c = substr($all, $i, 16);
-                if (!isset($candidates[$c])) {
-                    $candidates[$c] = ['confidence' => 0.65, 'source' => 'sliding_window'];
+            $buf = '';
+            $take = static function (string $digits) use (&$candidates): void {
+                for ($i = 0; $i <= strlen($digits) - 16; $i++) {
+                    $c = substr($digits, $i, 16);
+                    if (!isset($candidates[$c])) {
+                        $candidates[$c] = ['confidence' => 0.65, 'source' => 'sliding_window'];
+                    }
                 }
+            };
+            foreach (preg_split('/\r?\n/', $sanitized) ?: [] as $line) {
+                $letters = preg_replace('/[^A-Za-z]/', '', $line);
+                $digits = preg_replace('/[^0-9]/', '', $line);
+                if ($digits !== '' && strlen($letters) <= 2) {
+                    $buf .= $digits;
+                    continue;
+                }
+                if ($buf !== '') {
+                    $take($buf);
+                    $buf = '';
+                }
+            }
+            if ($buf !== '') {
+                $take($buf);
             }
         }
 
@@ -899,6 +1027,7 @@ final class PhilSysOcrParser
 
     public static function formatPersonName(string $value): string
     {
+        $value = str_replace(['Ñ', 'ñ', 'Ń', 'ń'], ['N', 'n', 'N', 'n'], $value);
         if (function_exists('iconv')) {
             $value = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value) ?: $value;
         }

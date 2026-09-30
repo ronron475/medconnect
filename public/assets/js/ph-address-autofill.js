@@ -270,6 +270,7 @@
     if (!s) return '';
 
     s = s.replace(/\bcity\s+oe\s+bago\b/gi, 'CITY OF BAGO');
+    s = s.replace(/\b[odc]ity\s+of\s+bago\b/gi, 'CITY OF BAGO');
     s = s.replace(/\bc1ty\s+of\s+bago\b/gi, 'CITY OF BAGO');
     s = s.replace(/\bbago\s+city\b/gi, 'CITY OF BAGO');
     s = s.replace(/\bcity\s+of\s+bago\b/gi, 'CITY OF BAGO');

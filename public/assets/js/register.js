@@ -1784,16 +1784,12 @@ step2Form.addEventListener('submit', async e => {
       ocrApi.stopProgress();
       showProgress(false);
 
-      if (!data.success) {
-        showStatus(data.message || "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
-        showErrorCard(data.message || 'Please upload a clearer image or manually complete the missing fields.');
-        if (retryBtn) retryBtn.hidden = false;
-        if (ocrApi) ocrApi.unlockOcrFields();
-        return;
-      }
+      const extractedFields = data.extracted || {};
+      const identityRead = ['first_name', 'last_name', 'date_of_birth', 'national_id']
+        .filter((key) => String(extractedFields[key] && extractedFields[key].value || '').trim() !== '').length;
 
-      if (data.low_confidence || !data.confidence_ok) {
-        showStatus(data.message || 'We could not read your National ID with enough confidence. Please upload a clearer photo.', 'error');
+      if (!data.success || identityRead < 3) {
+        showStatus(data.message || "We couldn't accurately read your National ID. Please upload a clearer photo taken in good lighting.", 'error');
         showErrorCard(data.message || 'Please upload a clearer image or manually complete the missing fields.');
         if (retryBtn) retryBtn.hidden = false;
         if (ocrApi) ocrApi.unlockOcrFields();

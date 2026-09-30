@@ -141,6 +141,7 @@
     try {
       const fd = new FormData();
       fd.append('ocr_mode', 'extract');
+      if (options.force) fd.append('ocr_force', '1');
       // Send the original image — server handles EXIF, rotation, and multi-pass OCR.
       fd.append('national_id_image', file, file.name);
 

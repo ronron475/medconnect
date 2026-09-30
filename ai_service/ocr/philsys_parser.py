@@ -24,9 +24,10 @@ MONTH_MAP = {
 LABEL_MAP = {
     "last": ["LAST NAME", "SURNAME", "FAMILY NAME", "APELYIDO"],
     "first": [
-        "GIVEN NAMES / FIRST NAME", "GIVEN NAMES", "GIVEN NAME", "FIRST NAME", "PANGALAN",
+        "GIVEN NAMES / FIRST NAME", "GIVEN NAMES", "GIVEN NAME", "FIRST NAME",
+        "MGA PANGALAN", "PANGALAN",
     ],
-    "middle": ["MIDDLE NAME", "MIDDLE INITIAL", "GITNANG PANGALAN"],
+    "middle": ["MIDDLE NAME", "MIDDLE INITIAL", "GITNANG APELYIDO", "GITNANG PANGALAN"],
 }
 
 RESERVED_NAME_LABELS = {
@@ -52,6 +53,12 @@ def _field(value: str, confidence: float, source: str) -> dict[str, Any]:
 
 
 def format_person_name(value: str) -> str:
+    value = (
+        value.replace("Ñ", "N")
+        .replace("ñ", "n")
+        .replace("Ń", "N")
+        .replace("ń", "n")
+    )
     value = re.sub(r"[^A-Za-z\s\-']", " ", value)
     value = re.sub(r"\s+", " ", value.strip())
     if not value:
@@ -113,6 +120,9 @@ def _is_reserved_name_label(value: str) -> bool:
 
 def _line_contains_name_label(line_up: str, label: str) -> bool:
     label = label.upper().strip()
+    # "Gitnang Apelyido" is the middle-name label, not the surname label.
+    if label in ("APELYIDO", "PANGALAN") and "GITNANG" in line_up:
+        return False
     if line_up == label:
         return True
     if line_up.startswith(label):
@@ -260,6 +270,76 @@ def _value_after_label(
     return ""
 
 
+_LABELISH = re.compile(
+    r"name|nome|pangalan|apelyido|apellid|apollid|middle|middl|given|birth|petsa|"
+    r"kapangan|date|tirahan|address|republika|pilipinas|pambansang|pagkakakilanlan|"
+    r"ambansang|republic|philsys|identification",
+    re.I,
+)
+
+
+def _is_labelish_line(line: str) -> bool:
+    if "/" in line or _LABELISH.search(line):
+        return True
+    words = re.findall(r"[A-Za-z]+", line)
+    return len(words) >= 4
+
+
+def _is_name_value_line(line: str) -> bool:
+    line = line.strip()
+    if not line or _is_labelish_line(line) or re.search(r"\d", line):
+        return False
+    first = re.sub(r"[^A-Za-z]", "", line.split()[0]).lower()
+    if first in MONTH_MAP:
+        return False
+    name = format_person_name(line)
+    return bool(name and _looks_like_name_token(name) and not _is_reserved_name_label(name))
+
+
+def _extract_philsys_name_stack(lines: list[str]) -> dict[str, str]:
+    """Names printed under garbled bilingual labels, between the ID number and the birth date.
+
+    PhilID holograms often turn "Mga Pangalan/Given Names" into unreadable label text while
+    the uppercase name lines (surname, given name, middle name) stay intact.
+    """
+    empty = {"last": "", "first": "", "middle": ""}
+    id_idx = None
+    dob_idx = None
+    id_re = re.compile(r"\d{4}[\s\-.]\d{4}[\s\-.]\d{4}[\s\-.]\d{4}")
+    for i, line in enumerate(lines):
+        if id_idx is None and id_re.search(line):
+            id_idx = i
+        if dob_idx is None and re.search(r"\b[A-Za-z]{3,9}\s+\d{1,2},?\s+\d{4}\b", line):
+            if parse_date_string(line):
+                dob_idx = i
+    if id_idx is None:
+        return empty
+    start = max(0, id_idx - 6)
+    end = min(len(lines), id_idx + 12)
+    if dob_idx is not None:
+        start = min(start, max(0, dob_idx - 6))
+        end = max(end, min(len(lines), dob_idx + 3))
+    names: list[str] = []
+    for i, line in enumerate(lines[start:end]):
+        if start + i == id_idx:
+            continue
+        if not _is_name_value_line(line):
+            continue
+        name = format_person_name(line)
+        if name and name not in names:
+            names.append(name)
+        if len(names) >= 3:
+            break
+    if len(names) < 2:
+        return empty
+    out = dict(empty)
+    out["last"] = names[0]
+    out["first"] = names[1]
+    if len(names) >= 3:
+        out["middle"] = names[2]
+    return out
+
+
 def extract_name_fields(raw_text: str) -> dict[str, Any]:
     result = {
         "first": "", "middle": "", "last": "",
@@ -304,6 +384,15 @@ def extract_name_fields(raw_text: str) -> dict[str, Any]:
             result[f"{field}_confidence"] = 0.88
             result[f"{field}_source"] = "philsys_block_gap"
 
+    if not result["last"] or not result["first"]:
+        stack = _extract_philsys_name_stack(lines)
+        for field in ("last", "first", "middle"):
+            if result[field] or not stack.get(field):
+                continue
+            result[field] = stack[field]
+            result[f"{field}_confidence"] = 0.91
+            result[f"{field}_source"] = "philsys_stack"
+
     if not result["last"] and not result["first"]:
         name_lines = _extract_uppercase_name_candidates(lines, LABEL_MAP)
         if len(name_lines) >= 2:
@@ -334,7 +423,7 @@ def extract_name_fields(raw_text: str) -> dict[str, Any]:
 
     if not result["middle"] and result["first"]:
         parts = result["first"].split()
-        if len(parts) >= 2:
+        if len(parts) >= 2 and parts[0].lower().rstrip(".") not in ("ma", "sta", "sto"):
             first_only = format_person_name(parts[0])
             rest = format_person_name(" ".join(parts[1:]))
             if first_only and rest and _looks_like_name_token(rest):
@@ -384,6 +473,14 @@ def extract_date_of_birth(raw_text: str) -> dict[str, Any]:
     labels = ["date of birth", "birth date", "birthdate", "petsa ng kapanganakan"]
     norm = re.sub(r"\s+", " ", raw_text.lower())
     lines = re.split(r"\r?\n", raw_text)
+    for li, line in enumerate(lines):
+        low = line.lower()
+        if not any(token in low for token in ("birth", "petsa", "kapangan")):
+            continue
+        for nxt in range(li, min(li + 3, len(lines))):
+            parsed = parse_date_string(lines[nxt])
+            if parsed:
+                return {"value": parsed, "confidence": 0.9, "source": "birth_label"}
     for label in labels:
         pos = norm.find(label)
         if pos >= 0:
@@ -413,7 +510,9 @@ def extract_date_of_birth(raw_text: str) -> dict[str, Any]:
             continue
         candidate = parse_date_string(" ".join(m.groups()).lower())
         if candidate:
-            return {"value": candidate, "confidence": 0.72, "source": "pattern"}
+            # A spelled-out month on a PhilID is the date of birth.
+            confidence = 0.9 if re.match(r"^[A-Za-z]", m.group(1)) else 0.72
+            return {"value": candidate, "confidence": confidence, "source": "pattern"}
     return empty
 
 
@@ -469,10 +568,21 @@ def extract_national_id(raw_text: str) -> dict[str, Any]:
         if len(digits) == 16:
             candidates[digits] = {"confidence": 0.9, "source": "label"}
     if not candidates:
-        all_digits = re.sub(r"[^0-9]", "", sanitized)
-        for i in range(max(0, len(all_digits) - 15)):
-            c = all_digits[i:i + 16]
-            candidates.setdefault(c, {"confidence": 0.65, "source": "sliding_window"})
+        buf = ""
+        def _take(digits: str) -> None:
+            for i in range(max(0, len(digits) - 15)):
+                candidates.setdefault(digits[i:i + 16], {"confidence": 0.65, "source": "sliding_window"})
+        for line in re.split(r"\r?\n", sanitized):
+            letters = re.sub(r"[^A-Za-z]", "", line)
+            digits = re.sub(r"[^0-9]", "", line)
+            if digits and len(letters) <= 2:
+                buf += digits
+                continue
+            if buf:
+                _take(buf)
+                buf = ""
+        if buf:
+            _take(buf)
     if not candidates:
         return empty
     candidates = _drop_dob_year_prefix(candidates, raw_text)

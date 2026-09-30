@@ -14,7 +14,7 @@ Variant = Tuple[str, str, str]
 
 def _fit_width(img: Image.Image) -> tuple[Image.Image, str]:
     w, h = img.size
-    target_w = 1000 if w < 1000 else (1800 if w > 1800 else w)
+    target_w = 1600 if w < 1600 else (1800 if w > 1800 else w)
     if target_w == w:
         return img, ""
     new_h = int(h * (target_w / w))
@@ -69,20 +69,19 @@ def preprocess_variants(file_path: str, mime_type: str) -> List[Variant]:
     try:
         with Image.open(file_path) as raw:
             img = ImageOps.exif_transpose(raw.convert("RGB"))
-            w, h = img.size
-            angles = [0]
-            if h > int(w * 1.05):
-                angles.extend([90, 270])
-
-            for angle in angles:
+            colors: List[Variant] = []
+            gray: Variant | None = None
+            for angle in (0, 90, 180, 270):
                 working = img.rotate(-angle, expand=True) if angle else img
                 label = "exif" if angle == 0 else f"rot{angle}"
                 color = _save_color_variant(working, label)
                 if color:
-                    variants.append(color)
-                variant = _save_variant(working, label)
-                if variant:
-                    variants.append(variant)
+                    colors.append(color)
+                if angle == 0 and gray is None:
+                    gray = _save_variant(working, label)
+            variants.extend(colors)
+            if gray:
+                variants.append(gray)
     except Exception:
         return [(file_path, mime_type, "none")]
 
