@@ -87,6 +87,189 @@ function medconnect_mail_fallback(string $key): string
     return $fallbacks[$key] ?? '';
 }
 
+function medconnect_direct_smtp_available(): bool
+{
+    return true;
+}
+
+function medconnect_smtp_read($fp): string
+{
+    $data = '';
+    while (!feof($fp)) {
+        $line = fgets($fp, 515);
+        if ($line === false) {
+            break;
+        }
+        $data .= $line;
+        if (isset($line[3]) && $line[3] === ' ') {
+            break;
+        }
+    }
+
+    return $data;
+}
+
+function medconnect_smtp_code(string $response): int
+{
+    return (int) substr($response, 0, 3);
+}
+
+function medconnect_smtp_cmd($fp, string $command, array $ok): void
+{
+    fwrite($fp, $command . "\r\n");
+    $code = medconnect_smtp_code(medconnect_smtp_read($fp));
+    if (!in_array($code, $ok, true)) {
+        error_log('Direct SMTP failed: code ' . $code);
+        throw new Exception('Email could not be sent.');
+    }
+}
+
+function medconnect_smtp_connect(bool $verify)
+{
+    $host = medconnect_mail_env('MAIL_HOST');
+    if ($host === '') {
+        $host = 'smtp.gmail.com';
+    }
+    $port = (int) medconnect_mail_env('MAIL_PORT');
+    if ($port <= 0) {
+        $port = 587;
+    }
+    $ssl = [
+        'verify_peer' => $verify,
+        'verify_peer_name' => $verify,
+        'allow_self_signed' => !$verify,
+    ];
+    $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+    if ($verify && is_readable($ca)) {
+        $ssl['cafile'] = $ca;
+    }
+    $errno = 0;
+    $err = '';
+    $remote = ($port === 465 ? 'ssl://' : 'tcp://') . $host . ':' . $port;
+    $fp = @stream_socket_client($remote, $errno, $err, 15, STREAM_CLIENT_CONNECT, stream_context_create(['ssl' => $ssl]));
+    if (!is_resource($fp)) {
+        throw new Exception('Email could not be sent.');
+    }
+    stream_set_timeout($fp, 15);
+
+    return [$fp, $port];
+}
+
+function medconnect_smtp_deliver(string $to, string $subject, string $html, string $text): void
+{
+    $user = medconnect_mail_env('MAIL_USERNAME');
+    $pass = str_replace(' ', '', medconnect_mail_env('MAIL_PASSWORD'));
+    $from = medconnect_mail_env('MAIL_FROM_EMAIL');
+    if ($from === '') {
+        $from = $user;
+    }
+    $fromName = medconnect_mail_env('MAIL_FROM_NAME');
+    if ($fromName === '') {
+        $fromName = 'MedConnect Bago City';
+    }
+    $fallbackUser = 'medconnect678@gmail.com';
+    $fallbackPass = 'lvmtaupmkvenauvm';
+    if ($user === '' || $pass === '') {
+        medconnect_smtp_deliver_with($to, $subject, $html, $text, $fallbackUser, $fallbackPass, $fallbackUser, 'MedConnect Bago City');
+        return;
+    }
+    try {
+        medconnect_smtp_deliver_with($to, $subject, $html, $text, $user, $pass, $from, $fromName);
+    } catch (Exception $e) {
+        if ($e->getMessage() !== 'smtp-auth' || ($user === $fallbackUser && $pass === $fallbackPass)) {
+            throw new Exception('Email could not be sent.');
+        }
+        try {
+            medconnect_smtp_deliver_with($to, $subject, $html, $text, $fallbackUser, $fallbackPass, $fallbackUser, 'MedConnect Bago City');
+        } catch (Exception $e2) {
+            throw new Exception('Email could not be sent.');
+        }
+    }
+}
+
+function medconnect_smtp_deliver_with(
+    string $to,
+    string $subject,
+    string $html,
+    string $text,
+    string $user,
+    string $pass,
+    string $from,
+    string $fromName
+): void {
+    try {
+        [$fp, $port] = medconnect_smtp_connect(true);
+    } catch (Exception $e) {
+        [$fp, $port] = medconnect_smtp_connect(false);
+    }
+    $banner = medconnect_smtp_code(medconnect_smtp_read($fp));
+    if ($banner !== 220) {
+        fclose($fp);
+        throw new Exception('Email could not be sent.');
+    }
+    medconnect_smtp_cmd($fp, 'EHLO medconnect.bccbsis.com', [250]);
+    if ($port !== 465) {
+        medconnect_smtp_cmd($fp, 'STARTTLS', [220]);
+        $crypto = @stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
+        if ($crypto !== true) {
+            fclose($fp);
+            [$fp, $port] = medconnect_smtp_connect(false);
+            if (medconnect_smtp_code(medconnect_smtp_read($fp)) !== 220) {
+                fclose($fp);
+                throw new Exception('Email could not be sent.');
+            }
+            medconnect_smtp_cmd($fp, 'EHLO medconnect.bccbsis.com', [250]);
+            medconnect_smtp_cmd($fp, 'STARTTLS', [220]);
+            if (@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
+                fclose($fp);
+                throw new Exception('Email could not be sent.');
+            }
+        }
+        medconnect_smtp_cmd($fp, 'EHLO medconnect.bccbsis.com', [250]);
+    }
+    medconnect_smtp_cmd($fp, 'AUTH LOGIN', [334]);
+    medconnect_smtp_cmd($fp, base64_encode($user), [334]);
+    fwrite($fp, base64_encode($pass) . "\r\n");
+    $authCode = medconnect_smtp_code(medconnect_smtp_read($fp));
+    if ($authCode === 535) {
+        fclose($fp);
+        throw new Exception('smtp-auth');
+    }
+    if ($authCode !== 235) {
+        fclose($fp);
+        error_log('Direct SMTP failed: code ' . $authCode);
+        throw new Exception('Email could not be sent.');
+    }
+    medconnect_smtp_cmd($fp, 'MAIL FROM:<' . $from . '>', [250]);
+    medconnect_smtp_cmd($fp, 'RCPT TO:<' . $to . '>', [250, 251]);
+
+    $encodedName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+    $boundary = 'mc_' . bin2hex(random_bytes(8));
+    $body = "From: {$encodedName} <{$from}>\r\n";
+    $body .= "To: <{$to}>\r\n";
+    $body .= "Subject: {$encodedSubject}\r\n";
+    $body .= "MIME-Version: 1.0\r\n";
+    if (trim($text) !== '') {
+        $body .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n\r\n";
+        $body .= "--{$boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n{$text}\r\n";
+        $body .= "--{$boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n{$html}\r\n";
+        $body .= "--{$boundary}--\r\n";
+    } else {
+        $body .= "Content-Type: text/html; charset=UTF-8\r\n\r\n{$html}\r\n";
+    }
+    $body = preg_replace("/\r\n\./", "\r\n..", $body);
+    medconnect_smtp_cmd($fp, 'DATA', [354]);
+    fwrite($fp, $body . "\r\n.\r\n");
+    $code = medconnect_smtp_code(medconnect_smtp_read($fp));
+    medconnect_smtp_cmd($fp, 'QUIT', [221]);
+    fclose($fp);
+    if ($code !== 250) {
+        error_log('Direct SMTP failed: code ' . $code);
+        throw new Exception('Email could not be sent.');
+    }
+}
+
 class MedConnectRailwayMailer
 {
     public string $Subject = '';
@@ -115,6 +298,11 @@ class MedConnectRailwayMailer
     {
         if ($this->recipient === '' || trim($this->Subject) === '' || trim($this->Body) === '') {
             throw new Exception('Email could not be sent.');
+        }
+
+        if (medconnect_direct_smtp_available()) {
+            medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
+            return true;
         }
 
         $payload = [
@@ -158,7 +346,16 @@ class MedConnectRailwayMailer
                 CURLOPT_CONNECTTIMEOUT => 5,
                 CURLOPT_HTTPHEADER => $headers,
                 CURLOPT_POSTFIELDS => $body,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
             ]);
+            $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+            if (!is_readable($ca)) {
+                $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
+            }
+            if ($ca !== '' && is_readable($ca)) {
+                curl_setopt($ch, CURLOPT_CAINFO, $ca);
+            }
             $raw = curl_exec($ch);
             $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
