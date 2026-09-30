@@ -408,6 +408,7 @@ body.bhw-body .bhw-afu-card__actions .bhw-btn-outline {
   position: absolute;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
+  animation: bhw-afu-modal-fade 180ms ease;
 }
 
 .bhw-afu-modal__panel {
@@ -418,6 +419,32 @@ body.bhw-body .bhw-afu-card__actions .bhw-btn-outline {
   padding: 16px;
   border-radius: 12px;
   background: #fff;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.2);
+  transform-origin: center bottom;
+  animation: bhw-afu-modal-pop 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes bhw-afu-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bhw-afu-modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bhw-afu-modal__backdrop,
+  .bhw-afu-modal__panel {
+    animation: none;
+  }
 }
 
 .bhw-afu-modal__head {
@@ -545,6 +572,10 @@ body.bhw-body .bhw-afu-card__actions .bhw-btn-outline {
 @media (min-width: 768px) {
   .bhw-afu-modal {
     align-items: center;
+  }
+
+  .bhw-afu-modal__panel {
+    transform-origin: center center;
   }
 }
 
