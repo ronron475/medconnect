@@ -79,8 +79,8 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'confidence_ok' => true,
             'preprocessing_used' => $extract_result['stage'] ?? 'none',
             'parsed_text' => OCR_DEBUG ? $parsed_text : null,
-            'diagnostics' => $extract_result['diagnostics'] ?? [],
-            'card_detection' => $extract_result['card_detection'] ?? null,
+            'diagnostics' => OCR_DEBUG ? ($extract_result['diagnostics'] ?? []) : null,
+            'card_detection' => OCR_DEBUG ? ($extract_result['card_detection'] ?? null) : null,
             'cached' => false,
             'message' => 'National ID information extracted successfully. Please review the auto-filled fields.',
         ];
@@ -117,20 +117,27 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             'confidence_ok' => !$low_confidence,
             'preprocessing_used' => $extract_result['stage'] ?? 'none',
             'parsed_text' => OCR_DEBUG ? $parsed_text : null,
-            'diagnostics' => $extract_result['diagnostics'] ?? [],
-            'card_detection' => $extract_result['card_detection'] ?? null,
+            'diagnostics' => OCR_DEBUG ? ($extract_result['diagnostics'] ?? []) : null,
+            'card_detection' => OCR_DEBUG ? ($extract_result['card_detection'] ?? null) : null,
             'cached' => false,
             'message' => $low_confidence
                 ? 'Please review the auto-filled fields. A few characters may need correction.'
                 : 'National ID information extracted successfully. Please review the auto-filled fields.',
         ];
     } else {
+        $failure_code = $extract_result['failure_code'] ?? 'not_recognized';
+        error_log(sprintf(
+            'OCR extract failed failure_code=%s filled_identity=%d/4 text_len=%d',
+            $failure_code,
+            $filled_identity,
+            strlen($parsed_text)
+        ));
         ob_clean(); echo json_encode([
             'success' => false,
             'message' => $extract_result['error'] ?: OCR_MSG_NOT_RECOGNIZED,
-            'failure_code' => $extract_result['failure_code'] ?? 'not_recognized',
-            'diagnostics' => $extract_result['diagnostics'] ?? [],
-            'card_detection' => $extract_result['card_detection'] ?? null,
+            'failure_code' => $failure_code,
+            'diagnostics' => OCR_DEBUG ? ($extract_result['diagnostics'] ?? []) : null,
+            'card_detection' => OCR_DEBUG ? ($extract_result['card_detection'] ?? null) : null,
             'preprocessing_used' => $extract_result['stage'] ?? 'none',
         ]);
         exit;
@@ -705,21 +712,70 @@ function ocrTextIsOnlyPageChrome(string $text): bool {
     return $mentions_page && !ocrTextHasPhilIdSignal($text);
 }
 
-function logOcrExtractAttempt(array $variant, int $engine, ?array $ocr, string $text, string $reason): void {
-    $preview = preg_replace('/\s+/', ' ', substr($text, 0, 160)) ?? '';
+function ocrSpaceLastHttpStatus(?int $set = null): int {
+    static $status = 0;
+    if ($set !== null) {
+        $status = $set;
+    }
+    return $status;
+}
+
+function ocrTextHasIdPattern(string $text): bool {
+    return (bool) preg_match('/(?<!\d)\d{4}[\s\-.]{0,3}\d{4}[\s\-.]{0,3}\d{4}[\s\-.]{0,3}\d{4}(?!\d)/', $text);
+}
+
+function ocrCardMode(array $card_detection): string {
+    if (empty($card_detection['detected'])) {
+        return 'not_detected';
+    }
+    return !empty($card_detection['direct_photo']) ? 'direct_photo' : 'cropped';
+}
+
+// Log lines carry only sizes, codes and counts. OCR text, names, DOB, address and ID digits stay out of logs.
+function logOcrExtractAttempt(array $attempt, array $card_detection): void {
     error_log(sprintf(
-        'OCR.space variant=%s angle=%d %dx%d bytes=%d engine=%d exit=%s errored=%s text_len=%d reason=%s preview=%s',
-        (string) ($variant['stage'] ?? ''),
-        (int) ($variant['angle'] ?? 0),
-        (int) ($variant['width'] ?? 0),
-        (int) ($variant['height'] ?? 0),
-        (int) ($variant['bytes'] ?? 0),
-        $engine,
-        is_array($ocr) ? (string) ($ocr['OCRExitCode'] ?? '') : '',
-        is_array($ocr) ? (!empty($ocr['IsErroredOnProcessing']) ? '1' : '0') : '',
-        strlen($text),
-        $reason,
-        $preview
+        'OCR.space attempt=%d card=%dx%d mode=%s variant=%s angle=%d sent=%dx%d bytes=%d engine=%d http=%d exit=%s errored=%s text_len=%d score=%s id_pattern=%s reason=%s',
+        (int) ($attempt['attempt'] ?? 0),
+        (int) ($card_detection['width'] ?? 0),
+        (int) ($card_detection['height'] ?? 0),
+        ocrCardMode($card_detection),
+        (string) ($attempt['stage'] ?? ''),
+        (int) ($attempt['angle'] ?? 0),
+        (int) ($attempt['width'] ?? 0),
+        (int) ($attempt['height'] ?? 0),
+        (int) ($attempt['bytes'] ?? 0),
+        (int) ($attempt['engine'] ?? 0),
+        (int) ($attempt['http_status'] ?? 0),
+        (string) ($attempt['exit_code'] ?? ''),
+        $attempt['errored'] === null ? '' : ($attempt['errored'] ? '1' : '0'),
+        (int) ($attempt['text_len'] ?? 0),
+        $attempt['score'] === null ? '-' : sprintf('%.3f', $attempt['score']),
+        !empty($attempt['id_pattern']) ? 'true' : 'false',
+        (string) ($attempt['reason'] ?? '')
+    ));
+}
+
+function logOcrExtractSummary(array $result): void {
+    $card = is_array($result['card_detection'] ?? null) ? $result['card_detection'] : [];
+    $attempts = $result['diagnostics'] ?? [];
+    $best_score = null;
+    $id_pattern = false;
+    foreach ($attempts as $row) {
+        if ($row['score'] !== null && ($best_score === null || $row['score'] > $best_score)) {
+            $best_score = $row['score'];
+        }
+        $id_pattern = $id_pattern || !empty($row['id_pattern']);
+    }
+    error_log(sprintf(
+        'OCR.space summary card=%dx%d mode=%s attempts=%d best=%s best_score=%s id_pattern_any=%s failure_code=%s',
+        (int) ($card['width'] ?? 0),
+        (int) ($card['height'] ?? 0),
+        ocrCardMode($card),
+        count($attempts),
+        (string) ($result['stage'] ?? 'none'),
+        $best_score === null ? '-' : sprintf('%.3f', $best_score),
+        $id_pattern ? 'true' : 'false',
+        (string) ($result['failure_code'] ?? (($result['error'] ?? null) !== null ? 'service_unreachable' : 'none'))
     ));
 }
 
@@ -873,10 +929,10 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
                         OCR_MIN_CARD_SHORT_PX
                     );
                     imagedestroy($loaded);
-                    error_log('OCR.space skipped: ' . $card_detection['reason']);
                     $result['card_detection'] = $card_detection;
                     $result['failure_code'] = 'low_resolution';
                     $result['error'] = OCR_MSG_TOO_SMALL;
+                    logOcrExtractSummary($result);
                     return $result;
                 }
                 $card_detection['too_small'] = false;
@@ -911,6 +967,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
     $best_score = -1.0;
     $had_ocr_response = false;
     $all_texts = [];
+    $attempt_no = 0;
 
     foreach ($variants as $variant) {
         if (!empty($variant['temp'])) {
@@ -919,6 +976,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
         $engines = $variant['engines'] ?? [2, 1];
         foreach ($engines as $engine) {
             $engine = (int) $engine;
+            $attempt_no++;
             $ocr = callOCRSpace(
                 $variant['path'],
                 $variant['mime'],
@@ -942,34 +1000,40 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
                     }
                 }
             }
-            logOcrExtractAttempt($variant, $engine, $ocr, $text, $reason);
             $raw_len = strlen($text);
-            $preview = preg_replace('/\s+/', ' ', substr($text, 0, 180)) ?? '';
+            $id_pattern = $text !== '' && ocrTextHasIdPattern($text);
             if ($reason === 'page_chrome') {
                 $text = '';
             }
             $attempt = [
+                'attempt' => $attempt_no,
                 'stage' => (string) ($variant['stage'] ?? ''),
                 'angle' => (int) ($variant['angle'] ?? 0),
                 'width' => (int) ($variant['width'] ?? 0),
                 'height' => (int) ($variant['height'] ?? 0),
                 'bytes' => (int) ($variant['bytes'] ?? 0),
                 'engine' => $engine,
+                'http_status' => ocrSpaceLastHttpStatus(),
                 'exit_code' => is_array($ocr) ? ($ocr['OCRExitCode'] ?? null) : null,
                 'errored' => is_array($ocr) ? !empty($ocr['IsErroredOnProcessing']) : null,
                 'processing_ms' => is_array($ocr) ? ($ocr['ProcessingTimeInMilliseconds'] ?? null) : null,
                 'text_len' => $raw_len,
-                'text_preview' => $preview,
+                'score' => null,
+                'id_pattern' => $id_pattern,
                 'reason' => $reason,
                 'selected' => false,
             ];
             $result['diagnostics'][] = $attempt;
+            $attempt_index = array_key_last($result['diagnostics']);
             if ($text === '') {
+                logOcrExtractAttempt($attempt, $card_detection);
                 continue;
             }
             $all_texts[] = $text;
             $extraction = PhilSysOcrParser::extractAll($text);
             $score = scorePhilSysExtraction($extraction);
+            $result['diagnostics'][$attempt_index]['score'] = round($score, 3);
+            logOcrExtractAttempt($result['diagnostics'][$attempt_index], $card_detection);
             if ($score > $best_score) {
                 $best_score = $score;
                 $result['text'] = $text;
@@ -1002,6 +1066,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
     }
 
     if ($result['text'] !== '') {
+        logOcrExtractSummary($result);
         return $result;
     }
 
@@ -1011,6 +1076,7 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
         $result['error'] = OCR_MSG_NOT_RECOGNIZED;
         $result['failure_code'] = 'not_recognized';
     }
+    logOcrExtractSummary($result);
     return $result;
 }
 
@@ -1338,6 +1404,7 @@ function ocrSpaceTextFromResponse(array $ocr): string {
 }
 
 function callOCRSpace(string $file_path, string $mime, int $engine, bool $detectOrientation = false): ?array {
+    ocrSpaceLastHttpStatus(0);
     if (!is_readable($file_path)) return null;
 
     $filetype = 'JPG';
@@ -1371,6 +1438,7 @@ function callOCRSpace(string $file_path, string $mime, int $engine, bool $detect
     ] + (class_exists('OcrFastApiClient') ? OcrFastApiClient::curlSslOptions() : []));
     $response = curl_exec($ch);
     $curl_err  = curl_error($ch);
+    ocrSpaceLastHttpStatus((int) curl_getinfo($ch, CURLINFO_HTTP_CODE));
     curl_close($ch);
     if ($response === false || !empty($curl_err)) {
         error_log('OCR.Space request failed: ' . ($curl_err !== '' ? $curl_err : 'empty response'));
