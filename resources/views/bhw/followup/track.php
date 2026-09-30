@@ -243,13 +243,6 @@ ob_start();
       var when = f.followup_datetime_label || f.followup_date || 'Date TBD';
       var doctor = f.provider_name ? ('Dr. ' + String(f.provider_name).replace(/^dr\.?\s+/i, '')) : '—';
       var reason = String(f.message || f.notes || '').trim();
-      var visits = Array.isArray(r.visits) ? r.visits : [];
-      var visitHtml = visits.length
-        ? '<ul class="bhw-afu-visits">' + visits.map(function (v) {
-            return '<li>' + esc(v.visit_date || '—') + ' · ' + esc(v.visit_type || 'visit') +
-              (v.patient_status ? ' · ' + esc(v.patient_status) : '') + '</li>';
-          }).join('') + '</ul>'
-        : '<p class="bhw-afu-detail__line">No home visits yet</p>';
       if (!detailBody) return;
       var statusKey = String(f.display_status || statusLabel || 'unknown').toLowerCase().replace(/\s+/g, '_');
       detailBody.innerHTML =
@@ -268,8 +261,7 @@ ob_start();
           detailItem('Consultation #', f.consultation_id ? ('#' + f.consultation_id) : '—') +
           detailItem('Ref #', '#' + (f.id || followupId)) +
           detailItem('Reason/Instructions', reason || '—', true) +
-        '</div>' +
-        '<h3 class="bhw-afu-detail__visits">Home visits</h3>' + visitHtml;
+        '</div>';
     }).catch(function () {
       if (detailBody) {
         detailBody.innerHTML = '<p class="bhw-followup-empty bhw-followup-empty--error">Could not open this follow-up.</p>';

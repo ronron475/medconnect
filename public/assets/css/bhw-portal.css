@@ -532,20 +532,6 @@ body.bhw-body .bhw-afu-card__actions .bhw-btn-outline {
   color: #b91c1c;
 }
 
-.bhw-afu-visits {
-  margin: 14px 0 0;
-  padding-left: 18px;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-}
-
-.bhw-afu-detail__visits {
-  margin: 16px 0 0;
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 800;
-}
-
 @media (max-width: 767.98px) {
   .bhw-afu-card,
   .bhw-afu-detail__grid {
