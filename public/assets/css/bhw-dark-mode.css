@@ -1016,6 +1016,10 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-pl-toolbar-search input::pla
   opacity: 1;
 }
 
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-select__chevron {
+  color: #cbd5e1;
+}
+
 html[data-theme-resolved='dark'] body.bhw-body .bhw-register-form select.form-control option {
   background-color: #0D1E30;
   color: #ffffff;
