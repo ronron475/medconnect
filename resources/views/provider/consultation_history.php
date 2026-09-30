@@ -122,9 +122,10 @@ function pch_filter_url(string $filter): string
           $vhCompleted = !empty($vh['show_completed_details']);
           $consultation_id = (int) ($row['id'] ?? 0);
           $recUrl = consultation_video_recording_view_url($consultation_id);
-          $recordingLabel = $recUrl !== ''
-              ? (string) ($vh['recording_label'] ?? 'Available')
-              : 'Not available';
+          $recordingLabel = trim((string) ($vh['recording_label'] ?? ''));
+          if ($recordingLabel === '') {
+              $recordingLabel = $recUrl !== '' ? 'Available' : 'Not available';
+          }
         ?>
         <article class="pch-consult-card">
           <div class="pch-consult-card__head">
@@ -231,10 +232,13 @@ function pch_filter_url(string $filter): string
                 ?>
                 <div class="pch-kv__row">
                   <dt>Segment <?= $segIdx > 0 ? $segIdx : 1 ?></dt>
-                  <dd>
-                    <?= htmlspecialchars($timeBits !== '' ? $timeBits : 'Ready') ?>
+                  <dd class="pch-seg">
+                    <span class="pch-seg__time"><?= htmlspecialchars($timeBits !== '' ? $timeBits : 'Ready') ?></span>
                     <?php if ($segUrl !== ''): ?>
-                    · <a href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">Play</a>
+                    <a class="pch-seg-play" href="<?= htmlspecialchars($segUrl) ?>" target="_blank" rel="noopener">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.04-6.86a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z"/></svg>
+                      Play
+                    </a>
                     <?php endif; ?>
                   </dd>
                 </div>
@@ -257,17 +261,10 @@ function pch_filter_url(string $filter): string
                   <dd><?= htmlspecialchars((string) $vh['actual_duration_label']) ?></dd>
                 </div>
                 <?php endif; ?>
-                <?php if ($recUrl !== ''): ?>
                 <div class="pch-kv__row">
                   <dt>Video recording</dt>
-                  <dd><?= htmlspecialchars((string) ($vh['recording_label'] ?? 'Available')) ?></dd>
+                  <dd><?= htmlspecialchars($recordingLabel) ?></dd>
                 </div>
-                <?php else: ?>
-                <div class="pch-kv__row">
-                  <dt>Video recording</dt>
-                  <dd>Not available</dd>
-                </div>
-                <?php endif; ?>
                 <?php endif; ?>
               </dl>
             </div>

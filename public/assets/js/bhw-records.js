@@ -149,7 +149,8 @@
     }
 
     function setTab(name) {
-      viewRoot.querySelectorAll('[data-records-tab]').forEach(function (btn) {
+      var tabRoot = modal || viewRoot;
+      tabRoot.querySelectorAll('[data-records-tab]').forEach(function (btn) {
         var on = btn.getAttribute('data-records-tab') === name;
         btn.classList.toggle('is-active', on);
         btn.setAttribute('aria-selected', on ? 'true' : 'false');
@@ -161,6 +162,8 @@
         panels[key].hidden = !on;
         panels[key].classList.toggle('is-active', on);
       });
+      var body = tabRoot.querySelector('.bhw-records-modal__body');
+      if (body) body.scrollTop = 0;
     }
 
     function renderPatientList(patients) {

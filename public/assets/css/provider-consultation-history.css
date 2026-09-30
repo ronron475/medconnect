@@ -566,6 +566,57 @@ body.provider-body .provider-page-body .pch-search input[type='search']::-webkit
   text-decoration: underline;
 }
 
+.pch-seg {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pch-seg__time {
+  color: inherit;
+  white-space: nowrap;
+}
+
+.pch-seg-play {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: #0f766e;
+  border: 1px solid #0f766e;
+  color: #fff !important;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-decoration: none !important;
+  box-shadow: 0 1px 2px rgba(15, 118, 110, 0.28);
+  white-space: nowrap;
+}
+
+.pch-seg-play svg {
+  width: 9px;
+  height: 9px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+.pch-seg-play:hover,
+.pch-seg-play:focus-visible {
+  background: #115e59;
+  border-color: #115e59;
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+.pch-seg-play:focus-visible {
+  outline: 2px solid #99f6e4;
+  outline-offset: 2px;
+}
+
 .pch-session-badge {
   display: inline-flex;
   align-items: center;
@@ -1017,6 +1068,14 @@ html[data-theme-resolved='dark'] body.provider-body .pch-session-badge {
 
 html[data-theme-resolved='dark'] body.provider-body .pch-session-badge--done {
   color: #6ee7b7 !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .pch-seg-play,
+html[data-theme-resolved='dark'] body.provider-body .pch-seg-play:hover,
+html[data-theme-resolved='dark'] body.provider-body .pch-seg-play:focus-visible {
+  background: #0f766e;
+  border-color: #14b8a6;
+  color: #fff !important;
 }
 
 /* Status chips: light palettes are unreadable once dark mode forces white span text */

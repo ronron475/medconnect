@@ -29,7 +29,7 @@ if ($recordingLabel === '') {
 }
 ?>
 <?php if ($recordingViewUrl === ''): ?>
-<div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val">Not available</span></div>
+<div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val"><?= htmlspecialchars($recordingLabel !== '' ? $recordingLabel : 'Not available') ?></span></div>
 <?php else: ?>
 <div class="info-row" style="margin-top:10px;"><span class="info-key">Video recording</span><span class="info-val"><?= htmlspecialchars($recordingLabel) ?></span></div>
 <?php if (count($recordingPlayable) > 1): ?>

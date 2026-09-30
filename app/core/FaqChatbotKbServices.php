@@ -425,10 +425,10 @@ final class FaqChatbotKbServices
             ],
             'bhw_help' => [
                 'en' => [
-                    '<p>A <strong>Barangay Health Worker (BHW)</strong> in medConnect can help register or assist an existing patient, update contact details, help with appointment/triage intake, and make emergency referrals. BHWs <strong>cannot diagnose</strong>, prescribe, or override AI triage. Ask your barangay BHW or City Health if you need in-person help.</p>',
+                    '<p>A <strong>Barangay Health Worker (BHW)</strong> in medConnect can help register a patient in the assigned barangay, update contact details, and view patient records and appointment history. The patient completes their own clinical triage and consultation booking. BHWs <strong>cannot diagnose</strong> or prescribe. Ask your barangay BHW or City Health if you need in-person help.</p>',
                 ],
-                'fil' => ['<p>Ang <strong>BHW</strong> ay makakatulong magrehistro o tulungan ang existing patient, appointment/triage intake, at emergency referral. <strong>Hindi sila nagda-diagnose</strong> at hindi nila mababago ang AI triage.</p>'],
-                'hil' => ['<p>Ang <strong>BHW</strong> makabulig magrehistro ukon magbulig sa existing patient, appointment/triage, kag emergency referral. <strong>Indi sila nagadiagnose</strong> kag indi nila mabag-o ang AI triage.</p>'],
+                'fil' => ['<p>Ang <strong>BHW</strong> ay makakatulong magrehistro ng pasyente sa nakatalagang barangay, i-update ang contact details, at tingnan ang records at appointment history. Ang pasyente mismo ang gumagawa ng clinical triage at booking. <strong>Hindi sila nagda-diagnose</strong> o nagrereseta.</p>'],
+                'hil' => ['<p>Ang <strong>BHW</strong> makabulig magrehistro sang pasyente sa gin-assign nga barangay, mag-update sang contact, kag magtan-aw sang records kag appointment history. Ang pasyente mismo ang nagakompleto sang clinical triage kag booking. <strong>Indi sila nagadiagnose</strong> ukon nagaprescribe.</p>'],
             ],
             'technical_support' => [
                 'en' => [

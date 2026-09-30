@@ -285,6 +285,11 @@ function consultation_video_history_summary(
         $summary['actual_duration_label'] = (string) ($durationSnap['actual_duration_label'] ?? '');
         $summary['ended_early'] = !empty($durationSnap['ended_early']);
         $summary['status_label'] = (string) ($durationSnap['status_label'] ?? '');
+        if ($playableCount <= 0) {
+            $summary['recording_label'] = !empty($durationSnap['ended_early'])
+                ? 'Not recorded (ended early)'
+                : 'Not recorded';
+        }
         $summary['date_label'] = date('M j, Y', strtotime($startedAt) ?: time());
         $summary['started_label'] = (string) ($durationSnap['started_label'] ?? consultation_format_clock_time($startedAt));
         $summary['ended_label'] = (string) ($durationSnap['ended_label'] ?? consultation_format_clock_time($endedAt));

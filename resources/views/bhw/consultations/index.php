@@ -95,8 +95,8 @@ require __DIR__ . '/../partials/layout_open.php';
     <article class="bhw-cons-help__card">
       <span class="bhw-cons-help__step">1</span>
       <div class="bhw-cons-help__body">
-        <h3 class="bhw-cons-help__title">Book via Triage</h3>
-        <p class="bhw-cons-help__text">Select a patient, record symptoms, capture consent, and book a provider slot.</p>
+        <h3 class="bhw-cons-help__title">Patient Triage &amp; Consultation</h3>
+        <p class="bhw-cons-help__text">Patients complete their own clinical triage and consultation booking. BHWs can assist with registration, records, and appointment follow-up.</p>
       </div>
     </article>
     <article class="bhw-cons-help__card">

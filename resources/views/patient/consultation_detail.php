@@ -283,7 +283,13 @@ $patient_page_stylesheets = [
           <?php endif; ?>
         </div>
         <?php else: ?>
-        <p class="pmh-detail-card__hint">Video recording not available for this consultation.</p>
+        <p class="pmh-detail-card__hint"><?php
+          $missingRecording = trim((string) ($videoHistory['recording_label'] ?? ''));
+          if ($missingRecording === '' || $missingRecording === 'Not available') {
+              $missingRecording = 'Video recording not available for this consultation.';
+          }
+          echo htmlspecialchars($missingRecording);
+        ?></p>
         <?php endif; ?>
       </div>
     </section>
