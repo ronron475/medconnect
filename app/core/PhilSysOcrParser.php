@@ -761,10 +761,12 @@ final class PhilSysOcrParser
         $sanitized = self::sanitizeOcrId($rawText);
 
         foreach ([$rawText, $sanitized] as $src) {
-            if (preg_match_all('/(\d{4})[\s\-\.](\d{4})[\s\-\.](\d{4})[\s\-\.](\d{4})/', $src, $m, PREG_SET_ORDER)) {
+            if (preg_match_all('/(?=(\d{4})[ \t\-\.](\d{4})[ \t\-\.](\d{4})[ \t\-\.](\d{4}))/', $src, $m, PREG_SET_ORDER)) {
                 foreach ($m as $match) {
                     $digits = $match[1] . $match[2] . $match[3] . $match[4];
-                    $candidates[$digits] = ['confidence' => 0.95, 'source' => 'grouped_4x4'];
+                    if (!isset($candidates[$digits])) {
+                        $candidates[$digits] = ['confidence' => 0.95, 'source' => 'grouped_4x4'];
+                    }
                 }
             }
             if (preg_match('/\d{16}/', $src, $m)) {
@@ -796,6 +798,33 @@ final class PhilSysOcrParser
 
         if (empty($candidates)) {
             return $empty;
+        }
+
+        $years = [];
+        if (preg_match_all('/\b(?:19|20)\d{2}\b/', $rawText, $yearMatches)) {
+            $years = array_fill_keys($yearMatches[0], true);
+        }
+        if (count($candidates) > 1 && $years !== []) {
+            $kept = [];
+            foreach ($candidates as $digits => $meta) {
+                $startsWithYear = isset($years[substr($digits, 0, 4)]);
+                $hasPlain = false;
+                if ($startsWithYear) {
+                    foreach ($candidates as $other => $_meta) {
+                        if ($other !== $digits && !isset($years[substr((string) $other, 0, 4)])) {
+                            $hasPlain = true;
+                            break;
+                        }
+                    }
+                }
+                if ($startsWithYear && $hasPlain) {
+                    continue;
+                }
+                $kept[$digits] = $meta;
+            }
+            if ($kept !== []) {
+                $candidates = $kept;
+            }
         }
 
         uasort($candidates, fn($a, $b) => $b['confidence'] <=> $a['confidence']);

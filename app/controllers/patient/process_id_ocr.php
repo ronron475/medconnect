@@ -288,7 +288,7 @@ function loadGdImageFromFile(string $src_path, string $mime_type) {
     return $img;
 }
 
-function saveGdOcrJpeg($img, string $stage_label): ?array {
+function saveGdOcrJpeg($img, string $stage_label, bool $grayscale = true): ?array {
     $orig_w = imagesx($img);
     $orig_h = imagesy($img);
     if ($orig_w < 1 || $orig_h < 1) {
@@ -315,9 +315,11 @@ function saveGdOcrJpeg($img, string $stage_label): ?array {
     $out = imagecreatetruecolor($new_w, $new_h);
     imagecopy($out, $base, 0, 0, 0, 0, $new_w, $new_h);
     imagedestroy($base);
-    imagefilter($out, IMG_FILTER_GRAYSCALE);
-    imagefilter($out, IMG_FILTER_CONTRAST, -30);
-    imagefilter($out, IMG_FILTER_BRIGHTNESS, 4);
+    if ($grayscale) {
+        imagefilter($out, IMG_FILTER_GRAYSCALE);
+        imagefilter($out, IMG_FILTER_CONTRAST, -30);
+        imagefilter($out, IMG_FILTER_BRIGHTNESS, 4);
+    }
 
     $path = tempnam(sys_get_temp_dir(), 'ocr_') . '.jpg';
     $saved = false;
@@ -334,7 +336,7 @@ function saveGdOcrJpeg($img, string $stage_label): ?array {
         return null;
     }
 
-    $stage = implode('+', array_filter([$scale_stage, $stage_label, 'gray-contrast']));
+    $stage = implode('+', array_filter([$scale_stage, $stage_label, $grayscale ? 'gray-contrast' : 'color']));
     return ['path' => $path, 'mime' => 'image/jpeg', 'stage' => $stage, 'temp' => true];
 }
 
@@ -371,6 +373,10 @@ function buildOcrExtractVariants(string $src_path, string $mime_type): array {
             $rotated = true;
         }
 
+        $color = saveGdOcrJpeg($working, ($angle === 0 ? 'exif' : ('rot' . $angle)) . '-color', false);
+        if ($color) {
+            $variants[] = $color;
+        }
         $variant = saveGdOcrJpeg($working, $angle === 0 ? 'exif' : ('rot' . $angle));
         if ($variant) {
             $variants[] = $variant;
