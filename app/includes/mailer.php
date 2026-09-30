@@ -12,96 +12,112 @@ if (!defined('BASE_PATH')) {
     require_once dirname(__DIR__, 2) . '/bootstrap/app.php';
 }
 
-$composerAutoload = BASE_PATH . '/vendor/autoload.php';
-if (is_readable($composerAutoload)) {
-    require_once $composerAutoload;
+const MEDCONNECT_RAILWAY_EMAIL_URL = 'https://medconnect-production-f2b7.up.railway.app/email/send';
+
+function medconnect_mail_env(string $key): string
+{
+    $value = getenv($key);
+    if ($value === false || $value === '') {
+        $value = $_ENV[$key] ?? '';
+    }
+
+    return trim((string) $value);
 }
 
-use PHPMailer\PHPMailer\Exception;
-use PHPMailer\PHPMailer\PHPMailer;
+class MedConnectRailwayMailer
+{
+    public string $Subject = '';
+    public string $Body = '';
+    public string $AltBody = '';
+    private string $recipient = '';
+    private string $token;
+    private string $emailKey;
 
-if (!defined('MAIL_HOST')) {
-    $mailEnv = static function (string $key, string $default = ''): string {
-        $value = getenv($key);
-        if ($value === false || $value === '') {
-            $value = $_ENV[$key] ?? $default;
+    public function __construct(string $token, string $emailKey)
+    {
+        $this->token = $token;
+        $this->emailKey = $emailKey;
+    }
+
+    public function addAddress(string $address, string $name = ''): void
+    {
+        $this->recipient = trim($address);
+    }
+
+    public function isHTML(bool $isHtml = true): void
+    {
+    }
+
+    public function send(): bool
+    {
+        if ($this->recipient === '' || trim($this->Subject) === '' || trim($this->Body) === '') {
+            throw new Exception('Email could not be sent.');
         }
 
-        return trim((string) $value);
-    };
-    $mailUser = $mailEnv('MAIL_USERNAME');
-    define('MAIL_HOST', $mailEnv('MAIL_HOST', 'smtp.gmail.com'));
-    define('MAIL_PORT', (int) ($mailEnv('MAIL_PORT', '587') ?: '587'));
-    define('MAIL_SMTP_SECURE', $mailEnv('MAIL_SMTP_SECURE', 'tls'));
-    define('MAIL_SMTP_AUTH', true);
-    define('MAIL_USERNAME', $mailUser);
-    define('MAIL_PASSWORD', $mailEnv('MAIL_PASSWORD'));
-    define('MAIL_FROM_EMAIL', $mailEnv('MAIL_FROM_EMAIL', $mailUser));
-    define('MAIL_FROM_NAME', $mailEnv('MAIL_FROM_NAME', 'MedConnect Bago City'));
-    define('MAIL_DEBUG_MODE', false);
-    define('MAIL_CHARSET', 'UTF-8');
+        $payload = [
+            'recipient' => $this->recipient,
+            'subject' => $this->Subject,
+            'html' => $this->Body,
+        ];
+        $text = trim($this->AltBody);
+        if ($text !== '') {
+            $payload['text'] = $text;
+        }
+
+        $ch = curl_init(MEDCONNECT_RAILWAY_EMAIL_URL);
+        if ($ch === false) {
+            error_log('Railway email API failed: HTTP 0');
+            throw new Exception('Email could not be sent.');
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->token,
+                'X-Email-Api-Key: ' . $this->emailKey,
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+        ]);
+        $raw = curl_exec($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        $decoded = is_string($raw) ? json_decode($raw, true) : null;
+        $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
+        if (!$ok) {
+            error_log('Railway email API failed: HTTP ' . $status);
+            throw new Exception('Email could not be sent.');
+        }
+
+        return true;
+    }
 }
 
-function initMailer() {
-    if (!class_exists(PHPMailer::class)) {
-        error_log('Mailer init failed: PHPMailer is not installed (vendor/autoload.php).');
+function initMailer(): ?MedConnectRailwayMailer
+{
+    if (!function_exists('curl_init')) {
+        error_log('Mailer init failed: curl is not available.');
         return null;
     }
 
+    $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
+    $emailKey = medconnect_mail_env('EMAIL_API_KEY');
     $missing = [];
-    foreach (['MAIL_HOST', 'MAIL_USERNAME', 'MAIL_PASSWORD', 'MAIL_FROM_EMAIL'] as $key) {
-        if (!defined($key) || trim((string) constant($key)) === '') {
-            $missing[] = $key;
-        }
+    if ($token === '') {
+        $missing[] = 'MEDCONNECT_AI_SERVICE_TOKEN';
+    }
+    if ($emailKey === '') {
+        $missing[] = 'EMAIL_API_KEY';
     }
     if ($missing !== []) {
         error_log('Mailer init failed: missing environment variables: ' . implode(', ', $missing));
         return null;
     }
 
-    try {
-        $mail = new PHPMailer(true);
-        $mail->isSMTP();
-        $mail->Host       = MAIL_HOST;
-        $mail->SMTPAuth   = MAIL_SMTP_AUTH;
-        $mail->Username   = MAIL_USERNAME;
-        $mail->Password   = MAIL_PASSWORD;
-        $mail->SMTPSecure = MAIL_SMTP_SECURE;
-        $mail->Port       = MAIL_PORT;
-        $mail->setFrom(MAIL_FROM_EMAIL, MAIL_FROM_NAME);
-        $mail->CharSet    = MAIL_CHARSET;
-        $mail->isHTML(true);
-        // Fail faster on stuck SMTP instead of hanging the OTP request.
-        $mail->Timeout = 12;
-        $mail->SMTPKeepAlive = false;
-
-        $verifySsl = true;
-        $sslFlag = getenv('AI_SSL_VERIFY');
-        if ($sslFlag === false || $sslFlag === '') {
-            $sslFlag = $_ENV['AI_SSL_VERIFY'] ?? 'true';
-        }
-        if (in_array(strtolower(trim((string) $sslFlag)), ['0', 'false', 'no', 'off'], true)) {
-            $verifySsl = false;
-        }
-        $caFile = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
-        if (!is_readable($caFile)) {
-            $caFile = (string) (ini_get('openssl.cafile') ?: ini_get('curl.cainfo') ?: '');
-        }
-        $ssl = [
-            'verify_peer' => $verifySsl,
-            'verify_peer_name' => $verifySsl,
-            'allow_self_signed' => !$verifySsl,
-        ];
-        if ($caFile !== '' && is_readable($caFile)) {
-            $ssl['cafile'] = $caFile;
-        }
-        $mail->SMTPOptions = ['ssl' => $ssl];
-
-        return $mail;
-    } catch (Throwable $e) {
-        error_log('Mailer init failed: ' . $e->getMessage());
-        return null;
-    }
+    return new MedConnectRailwayMailer($token, $emailKey);
 }
 
 function sendVerificationEmail($to, $verificationToken, $fullName) {
