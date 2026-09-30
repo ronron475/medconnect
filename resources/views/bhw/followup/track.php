@@ -148,18 +148,16 @@ ob_start();
         (sending[id] ? ' disabled' : '') + '>' + (sending[id] ? 'Sending…' : 'Send Reminder') + '</button>'
       : '';
     return '<article class="bhw-afu-card" data-followup-id="' + id + '">' +
-      '<div class="bhw-afu-card__top">' +
+      '<div class="bhw-afu-card__main">' +
         '<div class="bhw-afu-card__who">' +
           '<h3 class="bhw-afu-card__name">' + esc(row.patient_name || '—') + '</h3>' +
-          '<p class="bhw-afu-card__kind">Doctor Follow-Up</p>' +
+          '<p class="bhw-afu-card__kind">Follow-up #' + esc(id || '—') + '</p>' +
         '</div>' +
-        statusBadge(row) +
+        '<p class="bhw-afu-card__meta"><span>When</span>' + esc(row.when_label || row.appointment_date || 'Date TBD') + '</p>' +
+        '<p class="bhw-afu-card__meta"><span>Doctor</span>' + esc(doctorLine) + '</p>' +
+        '<p class="bhw-afu-card__meta bhw-afu-card__meta--status"><span>Status</span>' + statusBadge(row) + '</p>' +
       '</div>' +
-      '<p class="bhw-afu-card__when">' + esc(row.when_label || row.appointment_date || 'Date TBD') + '</p>' +
-      '<p class="bhw-afu-card__line"><span>Doctor:</span> ' + esc(doctorLine) + '</p>' +
-      '<p class="bhw-afu-card__line"><span>Status:</span> ' + esc(row.status || '—') + '</p>' +
-      '<p class="bhw-afu-card__line"><span>Reason/Instructions:</span> ' + esc(reason || '—') + '</p>' +
-      '<p class="bhw-afu-card__ref">Ref #' + esc(id || '—') + '</p>' +
+      (reason ? '<p class="bhw-afu-card__reason">' + esc(reason) + '</p>' : '') +
       '<div class="bhw-afu-card__actions">' +
         '<button type="button" class="bhw-btn-outline bhw-afu-view" data-followup-id="' + id + '">View Details</button>' +
         remindBtn +
@@ -217,8 +215,11 @@ ob_start();
     detailEl.hidden = true;
   }
 
-  function detailLine(label, value) {
-    return '<p class="bhw-afu-detail__line"><span>' + esc(label) + '</span> ' + esc(value || '—') + '</p>';
+  function detailItem(label, value, wide, valueClass) {
+    return '<div class="bhw-afu-detail__item' + (wide ? ' bhw-afu-detail__item--wide' : '') + '">' +
+      '<span class="bhw-afu-detail__label">' + esc(label) + '</span>' +
+      '<span class="bhw-afu-detail__value' + (valueClass ? ' ' + valueClass : '') + '">' + esc(value || '—') + '</span>' +
+    '</div>';
   }
 
   function openDetail(followupId) {
@@ -250,14 +251,24 @@ ob_start();
           }).join('') + '</ul>'
         : '<p class="bhw-afu-detail__line">No home visits yet</p>';
       if (!detailBody) return;
+      var statusKey = String(f.display_status || statusLabel || 'unknown').toLowerCase().replace(/\s+/g, '_');
       detailBody.innerHTML =
-        detailLine('Follow-up', '#' + (f.id || followupId)) +
-        detailLine('Patient', f.patient_name) +
-        detailLine('Doctor', doctor) +
-        detailLine('When', when) +
-        detailLine('Status', statusLabel) +
-        detailLine('Reason/Instructions', reason || '—') +
-        detailLine('Consultation', f.consultation_id ? ('#' + f.consultation_id) : '—') +
+        '<div class="bhw-afu-detail__hero">' +
+          '<div>' +
+            '<h3 class="bhw-afu-detail__name">' + esc(f.patient_name || '—') + '</h3>' +
+            '<p class="bhw-afu-detail__chip">Follow-up #' + esc(f.id || followupId) + '</p>' +
+          '</div>' +
+          '<span class="bhw-fu-status bhw-fu-status--' + esc(statusKey) + '">' + esc(statusLabel) + '</span>' +
+        '</div>' +
+        '<div class="bhw-afu-detail__grid">' +
+          detailItem('Patient', f.patient_name) +
+          detailItem('Doctor', doctor) +
+          detailItem('When', when) +
+          detailItem('Status', statusLabel, false, statusKey === 'missed' ? 'is-missed' : '') +
+          detailItem('Consultation #', f.consultation_id ? ('#' + f.consultation_id) : '—') +
+          detailItem('Ref #', '#' + (f.id || followupId)) +
+          detailItem('Reason/Instructions', reason || '—', true) +
+        '</div>' +
         '<h3 class="bhw-afu-detail__visits">Home visits</h3>' + visitHtml;
     }).catch(function () {
       if (detailBody) {

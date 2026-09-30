@@ -11,6 +11,15 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'provider'
     exit;
 }
 
+if (!is_readable(icd10_order_file())) {
+    echo json_encode([
+        'success' => false,
+        'message' => 'ICD-10 diagnosis list is unavailable.',
+        'results' => [],
+    ]);
+    exit;
+}
+
 $q = trim((string) ($_GET['q'] ?? ''));
 echo json_encode([
     'success' => true,

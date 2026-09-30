@@ -602,9 +602,16 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-modal__panel {
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card__name,
-html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card__when,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-card__meta,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-detail__name,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-detail__value,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-modal__head h2 {
   color: #f4f4f5;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-detail__hero,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-detail__item {
+  background: #0D1E30;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-followup-toolbar {

@@ -2610,9 +2610,28 @@ body.provider-body:has(.video-shell.is-call-active) .messages-fab {
     font: inherit;
     color: #0f172a;
 }
+.icd-search.is-open { z-index: 40; }
 .icd-search__list button:hover,
 .icd-search__list button:focus { background: #ecfeff; }
 .icd-search__code { font-weight: 800; margin-right: 6px; }
+.icd-search__status {
+    padding: 8px 10px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.4;
+}
+.soap-sign__error {
+    margin: 8px 0 0;
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+.soap-sign__error:empty { display: none; }
+#soapFinalizeBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 .soap-sign__doctor {
     margin: 0 0 8px;
     font-size: 15px;
@@ -5614,6 +5633,7 @@ const soapSignerNames = <?= json_encode([
 
 let soapUiReady = false;
 let soapSignaturePad = null;
+let soapFinalizeBusy = false;
 
 function syncSoapSignatureFields() {
     const name = String(soapSignerNames.full || '').trim();
@@ -5628,11 +5648,16 @@ function syncSoapSignatureFields() {
 function soapClientValidationMessage() {
     const form = document.getElementById('soapForm');
     if (!form) return 'SOAP form is missing.';
-    const required = ['subjective', 'objective', 'assessment', 'plan'];
+    const required = [
+        ['subjective', 'Subjective is required.'],
+        ['objective', 'Objective is required.'],
+        ['assessment', 'Assessment is required.'],
+        ['plan', 'Plan is required.']
+    ];
     for (let i = 0; i < required.length; i++) {
-        const field = form.querySelector('[name="' + required[i] + '"]');
+        const field = form.querySelector('[name="' + required[i][0] + '"]');
         if (!field || !String(field.value || '').trim()) {
-            return 'Please complete all SOAP sections (Subjective, Objective, Assessment, and Plan) before finalizing.';
+            return required[i][1];
         }
     }
     const diagnosis = document.getElementById('icdDiagnosis');
@@ -5656,9 +5681,13 @@ function soapClientValidationMessage() {
 function updateSoapFinalizeReady() {
     const btn = document.getElementById('soapFinalizeBtn');
     const err = document.getElementById('soapSignError');
+    if (soapFinalizeBusy) {
+        if (btn) btn.disabled = true;
+        return;
+    }
     const msg = soapClientValidationMessage();
     if (btn) btn.disabled = msg !== '';
-    if (err && msg === '') err.textContent = '';
+    if (err) err.textContent = msg;
 }
 
 function openSoapFinalizeModal() {
@@ -5832,13 +5861,29 @@ function initIcdSearch() {
     const input = document.getElementById('icdSearchInput');
     const list = document.getElementById('icdSearchList');
     const hidden = document.getElementById('icdDiagnosis');
+    const wrap = document.getElementById('icdSearch');
     if (!input || !list || !hidden) return;
     let timer = 0;
+    let requestSeq = 0;
     if (hidden.value) input.value = hidden.value;
 
+    function setOpen(open) {
+        list.hidden = !open;
+        input.setAttribute('aria-expanded', open ? 'true' : 'false');
+        if (wrap) wrap.classList.toggle('is-open', open);
+    }
+
     function closeList() {
-        list.hidden = true;
-        input.setAttribute('aria-expanded', 'false');
+        setOpen(false);
+    }
+
+    function showStatus(text) {
+        list.innerHTML = '';
+        const li = document.createElement('li');
+        li.className = 'icd-search__status';
+        li.textContent = text;
+        list.appendChild(li);
+        setOpen(true);
     }
 
     function choose(label) {
@@ -5848,42 +5893,84 @@ function initIcdSearch() {
         updateSoapFinalizeReady();
     }
 
-    input.addEventListener('input', function () {
+    function renderRows(rows) {
+        list.innerHTML = '';
+        rows.forEach(function (row) {
+            const li = document.createElement('li');
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.setAttribute('role', 'option');
+            const code = document.createElement('span');
+            code.className = 'icd-search__code';
+            code.textContent = row.code || '';
+            const desc = document.createElement('span');
+            desc.textContent = row.description || '';
+            btn.appendChild(code);
+            btn.appendChild(desc);
+            btn.addEventListener('mousedown', function (event) {
+                event.preventDefault();
+            });
+            btn.addEventListener('click', function () { choose(row.label || ''); });
+            li.appendChild(btn);
+            list.appendChild(li);
+        });
+        setOpen(true);
+    }
+
+    function runSearch(q) {
+        const seq = ++requestSeq;
+        showStatus('Searching ICD-10…');
+        fetch('<?= ASSET_BASE ?>/app/api/provider/icd10_search.php?q=' + encodeURIComponent(q), {
+            credentials: 'same-origin',
+            headers: { Accept: 'application/json' }
+        }).then(function (res) {
+            return res.json().then(function (data) {
+                return { ok: res.ok, data: data };
+            });
+        }).then(function (payload) {
+            if (seq !== requestSeq) return;
+            const data = payload.data || {};
+            if (!payload.ok || data.success === false) {
+                showStatus(data.message || 'Could not load the ICD-10 list.');
+                return;
+            }
+            const rows = data.results || [];
+            if (!rows.length) {
+                showStatus('No matching ICD-10 codes.');
+                return;
+            }
+            renderRows(rows);
+        }).catch(function () {
+            if (seq !== requestSeq) return;
+            showStatus('Could not load the ICD-10 list.');
+        });
+    }
+
+    function queueSearch() {
         if (input.value.trim() !== hidden.value) hidden.value = '';
         window.clearTimeout(timer);
         const q = input.value.trim();
         if (q.length < 2) {
-            closeList();
+            showStatus('Type at least 2 characters to search ICD-10 codes and descriptions.');
             updateSoapFinalizeReady();
             return;
         }
-        timer = window.setTimeout(function () {
-            fetch('<?= ASSET_BASE ?>/app/api/provider/icd10_search.php?q=' + encodeURIComponent(q), {
-                credentials: 'same-origin',
-                headers: { Accept: 'application/json' }
-            }).then(function (res) { return res.json(); }).then(function (data) {
-                const rows = (data && data.results) || [];
-                list.innerHTML = '';
-                if (!rows.length) {
-                    closeList();
-                    return;
-                }
-                rows.forEach(function (row) {
-                    const li = document.createElement('li');
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.innerHTML = '<span class="icd-search__code"></span><span></span>';
-                    btn.querySelector('.icd-search__code').textContent = row.code || '';
-                    btn.querySelector('span:last-child').textContent = row.description || '';
-                    btn.addEventListener('click', function () { choose(row.label || ''); });
-                    li.appendChild(btn);
-                    list.appendChild(li);
-                });
-                list.hidden = false;
-                input.setAttribute('aria-expanded', 'true');
-            }).catch(function () { closeList(); });
-        }, 220);
+        timer = window.setTimeout(function () { runSearch(q); }, 220);
         updateSoapFinalizeReady();
+    }
+
+    input.addEventListener('input', queueSearch);
+    input.addEventListener('focus', queueSearch);
+    input.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeList();
+            return;
+        }
+        if (event.key !== 'Enter') return;
+        const first = list.querySelector('button');
+        if (!first || list.hidden) return;
+        event.preventDefault();
+        first.click();
     });
 
     document.addEventListener('click', function (event) {
@@ -5899,6 +5986,7 @@ if (document.readyState === 'loading') {
 
 // FINALIZE CONSULTATION
 async function finalizeConsultation() {
+    if (soapFinalizeBusy) return;
     const err = document.getElementById('soapSignError');
     const msg = soapClientValidationMessage();
     if (msg) {
@@ -5914,6 +6002,7 @@ async function finalizeConsultation() {
     }
     const confirmBtn = document.getElementById('soapFinalizeConfirm');
     const finalizeBtn = document.getElementById('soapFinalizeBtn');
+    soapFinalizeBusy = true;
     if (confirmBtn) {
         confirmBtn.disabled = true;
         confirmBtn.dataset.label = confirmBtn.dataset.label || confirmBtn.textContent;
@@ -5943,10 +6032,11 @@ async function finalizeConsultation() {
         }
         return;
     }
+    soapFinalizeBusy = false;
     if (finalizeBtn) {
-        finalizeBtn.disabled = false;
         finalizeBtn.textContent = finalizeBtn.dataset.label || 'Finalize SOAP Note';
     }
+    updateSoapFinalizeReady();
     const failMsg = (data && data.message) ? data.message : 'Could not finalize consultation.';
     if (err) {
         err.textContent = failMsg;
