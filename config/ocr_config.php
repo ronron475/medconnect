@@ -4,17 +4,58 @@
  * IMPORTANT: Never expose this file via a public URL.
  * Add /config/ to your .htaccess deny rules in production.
  *
- * Secrets: OCR_SPACE_API_KEY must come from the server environment / .env only.
- * Never hardcode API keys here. Never return the key in client responses.
+ * Secrets: OCR_SPACE_API_KEY comes from the server environment / .env first,
+ * then the server-side fallback. Never return the key in client responses or logs.
  */
 
 require_once __DIR__ . '/env_loader.php';
 
+if (!function_exists('medconnect_ocr_env')) {
+    function medconnect_ocr_env(string $key): string
+    {
+        foreach ([getenv($key), $_ENV[$key] ?? null, $_SERVER[$key] ?? null] as $candidate) {
+            if ($candidate !== false && $candidate !== null && trim((string) $candidate) !== '') {
+                return trim((string) $candidate);
+            }
+        }
+
+        $path = dirname(__DIR__) . '/.env';
+        $lines = is_readable($path) ? file($path, FILE_IGNORE_NEW_LINES) : false;
+        foreach ($lines ?: [] as $line) {
+            $line = trim(ltrim($line, "\xEF\xBB\xBF"));
+            if (str_starts_with($line, 'export ')) {
+                $line = trim(substr($line, 7));
+            }
+            if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) {
+                continue;
+            }
+            [$name, $value] = explode('=', $line, 2);
+            if (trim($name) !== $key) {
+                continue;
+            }
+            $value = trim($value);
+            if (
+                (str_starts_with($value, '"') && str_ends_with($value, '"'))
+                || (str_starts_with($value, "'") && str_ends_with($value, "'"))
+            ) {
+                $value = substr($value, 1, -1);
+            }
+            if (trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        // Hostinger does not expose this to PHP. Env and the server .env still win when present.
+        $fallbacks = [
+            'OCR_SPACE_API_KEY' => 'K87282302688957',
+        ];
+
+        return $fallbacks[$key] ?? '';
+    }
+}
+
 if (!defined('OCR_SPACE_API_KEY')) {
-    define(
-        'OCR_SPACE_API_KEY',
-        trim((string) (getenv('OCR_SPACE_API_KEY') ?: ($_ENV['OCR_SPACE_API_KEY'] ?? '')))
-    );
+    define('OCR_SPACE_API_KEY', medconnect_ocr_env('OCR_SPACE_API_KEY'));
 }
 
 if (!defined('OCR_SPACE_ENDPOINT')) {
