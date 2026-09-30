@@ -174,6 +174,31 @@ class EmailSendTests(unittest.TestCase):
         self.assertNotIn(MAIL_PASSWORD, response.text)
         self.assertNotIn(MAIL_PASSWORD, "\n".join(logs.output))
 
+    def test_port_465_uses_ssl_without_starttls(self) -> None:
+        os.environ["MAIL_PORT"] = "465"
+
+        class SSLClient(_FakeSMTP):
+            starttls_called = False
+
+            def starttls(self):
+                SSLClient.starttls_called = True
+                raise AssertionError("starttls must not run on port 465")
+
+        class PlainSMTP:
+            def __init__(self, *args, **kwargs):
+                raise AssertionError("plain SMTP must not be used on port 465")
+
+        with patch("app.routers.email.smtplib.SMTP_SSL", SSLClient), patch(
+            "app.routers.email.smtplib.SMTP", PlainSMTP
+        ):
+            response = self.client.post("/email/send", json=self._body(), headers=self._headers())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertFalse(SSLClient.starttls_called)
+        self.assertEqual(_FakeSMTP.login_user, "sender@gmail.com")
+        self.assertNotIn(MAIL_PASSWORD, response.text)
+        self.assertNotIn(EMAIL_KEY, response.text)
+
     def test_gemini_generate_still_rejects_empty_payload(self) -> None:
         response = self.client.post(
             "/gemini/generate",

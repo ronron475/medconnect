@@ -111,10 +111,15 @@ def _deliver(
     else:
         message.set_content(html, subtype="html")
 
-    with smtplib.SMTP(host, port, timeout=12) as smtp:
+    if port == 465:
+        smtp_client = smtplib.SMTP_SSL(host, port, timeout=12)
+    else:
+        smtp_client = smtplib.SMTP(host, port, timeout=12)
+    with smtp_client as smtp:
         smtp.ehlo()
-        smtp.starttls()
-        smtp.ehlo()
+        if port != 465:
+            smtp.starttls()
+            smtp.ehlo()
         smtp.login(username, password)
         smtp.send_message(message)
 
