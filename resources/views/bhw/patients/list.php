@@ -103,50 +103,6 @@ ob_start();
     return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
   }
 
-  function actionLinks(id, stopProp) {
-    var stop = stopProp ? ' onclick="event.stopPropagation()"' : '';
-    return '<div class="bhw-pl-row-actions"' + stop + '>' +
-      '<button type="button" class="bhw-pl-btn-view" data-view="' + id + '">View</button>' +
-      '<div class="bhw-pl-menu">' +
-      '<button type="button" class="bhw-pl-menu-trigger" aria-haspopup="true" aria-expanded="false" aria-label="More actions for patient ' + id + '">Actions <span class="bhw-pl-menu-caret" aria-hidden="true">▾</span></button>' +
-      '<div class="bhw-pl-menu-panel" hidden role="menu">' +
-      '<a role="menuitem" href="../records/index.php?patient_id=' + id + '">Medical records</a>' +
-      '<a role="menuitem" href="../followup/track.php">Appointment history</a>' +
-      '</div></div></div>';
-  }
-
-  function closeAllMenus() {
-    document.querySelectorAll('.bhw-pl-menu.is-open').forEach(function (menu) {
-      menu.classList.remove('is-open');
-      var panel = menu.querySelector('.bhw-pl-menu-panel');
-      var trigger = menu.querySelector('.bhw-pl-menu-trigger');
-      if (panel) {
-        panel.hidden = true;
-        panel.style.position = '';
-        panel.style.top = '';
-        panel.style.right = '';
-        panel.style.left = '';
-        panel.style.minWidth = '';
-        panel.style.zIndex = '';
-      }
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
-    });
-    if (els.tableWrap) els.tableWrap.classList.remove('has-open-menu');
-  }
-
-  function positionMenuPanel(menu) {
-    var trigger = menu.querySelector('.bhw-pl-menu-trigger');
-    var panel = menu.querySelector('.bhw-pl-menu-panel');
-    if (!trigger || !panel) return;
-    var rect = trigger.getBoundingClientRect();
-    panel.style.position = 'fixed';
-    panel.style.top = Math.round(rect.bottom + 4) + 'px';
-    panel.style.right = Math.round(window.innerWidth - rect.right) + 'px';
-    panel.style.left = 'auto';
-    panel.style.minWidth = '188px';
-    panel.style.zIndex = '10070';
-  }
-
   function applyFilters() {
     filtered = allPatients.slice();
     filtered.sort(function (a, b) {
@@ -173,8 +129,7 @@ ob_start();
         '<td class="bhw-pl-col-status">' + riskBadge(p.risk_level) + '</td>' +
         '<td class="bhw-pl-col-status bhw-pl-col-workflow">' + workflowBadge(p.workflow_status) + '</td>' +
         '<td class="bhw-pl-col-status">' + statusBadge(p.is_active) + '</td>' +
-        '<td class="bhw-pl-col-date">' + esc(fmtDate(p.created_at)) + '</td>' +
-        '<td class="bhw-pl-col-actions">' + actionLinks(p.id, true) + '</td></tr>';
+        '<td class="bhw-pl-col-date">' + esc(fmtDate(p.created_at)) + '</td></tr>';
     }).join('');
   }
 
@@ -190,7 +145,7 @@ ob_start();
         '<div><dt>Contact</dt><dd>' + esc(dash(p.contact_number)) + '</dd></div>' +
         '<div><dt>Risk</dt><dd>' + esc(dash(p.risk_level)) + '</dd></div>' +
         '<div><dt>Workflow</dt><dd>' + esc(WORKFLOW_LABELS[(p.workflow_status || 'registered').toLowerCase()] || dash(p.workflow_status)) + '</dd></div>' +
-        '</dl>' + actionLinks(p.id, true) + '</article>';
+        '</dl></article>';
     }).join('');
   }
 
@@ -232,7 +187,7 @@ ob_start();
     if (!filtered.length) {
       els.empty.style.display = 'none';
       els.tableWrap.style.display = 'block';
-      els.tbody.innerHTML = '<tr><td colspan="9" class="text-muted text-center py-4">No patients match your search.</td></tr>';
+      els.tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center py-4">No patients match your search.</td></tr>';
       els.cards.innerHTML = '';
       els.pageInfo.textContent = '0 patients match this search';
       els.pagination.innerHTML = '';
@@ -249,54 +204,13 @@ ob_start();
 
   function bindRowEvents() {
     document.querySelectorAll('#bhwPlTable tbody tr[data-id]').forEach(function (tr) {
-      tr.onclick = function (e) {
-        if (e.target.closest('.bhw-pl-row-actions')) return;
+      tr.onclick = function () {
         openDrawer(parseInt(tr.dataset.id, 10));
       };
     });
     document.querySelectorAll('.bhw-pl-card[data-id]').forEach(function (card) {
-      card.onclick = function (e) {
-        if (e.target.closest('.bhw-pl-row-actions')) return;
+      card.onclick = function () {
         openDrawer(parseInt(card.dataset.id, 10));
-      };
-    });
-    document.querySelectorAll('.bhw-pl-btn-view[data-view]').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeAllMenus();
-        openDrawer(parseInt(btn.dataset.view, 10));
-      };
-    });
-    document.querySelectorAll('.bhw-pl-menu-trigger').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var menu = btn.closest('.bhw-pl-menu');
-        var panel = menu.querySelector('.bhw-pl-menu-panel');
-        var isOpen = menu.classList.contains('is-open');
-        closeAllMenus();
-        if (!isOpen) {
-          menu.classList.add('is-open');
-          panel.hidden = false;
-          btn.setAttribute('aria-expanded', 'true');
-          if (els.tableWrap) els.tableWrap.classList.add('has-open-menu');
-          positionMenuPanel(menu);
-        }
-      };
-    });
-    document.querySelectorAll('.bhw-pl-menu-panel a, .bhw-pl-menu-panel .bhw-pl-menu-print').forEach(function (item) {
-      item.onclick = function (e) {
-        e.stopPropagation();
-        closeAllMenus();
-      };
-    });
-    document.querySelectorAll('.bhw-pl-menu-print[data-print]').forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        closeAllMenus();
-        openDrawer(parseInt(btn.dataset.print, 10), { printAfter: true });
       };
     });
   }
@@ -393,7 +307,7 @@ ob_start();
     var q = (els.search.value || '').trim();
     BhwPortal.get('patients.php', { action: 'list', q: q }).then(function (r) {
       if (!r.success) {
-        els.tbody.innerHTML = '<tr><td colspan="12">' + esc(r.message || 'Failed to load') + '</td></tr>';
+        els.tbody.innerHTML = '<tr><td colspan="8">' + esc(r.message || 'Failed to load') + '</td></tr>';
         return;
       }
       allPatients = r.patients || [];
@@ -484,19 +398,8 @@ ob_start();
   document.getElementById('bhwPlDrawerClose').addEventListener('click', closeDrawer);
   els.drawerOverlay.addEventListener('click', closeDrawer);
   document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-      closeDrawer();
-      closeAllMenus();
-    }
+    if (e.key === 'Escape') closeDrawer();
   });
-
-  document.addEventListener('click', function (e) {
-    if (e.target.closest('.bhw-pl-menu')) return;
-    closeAllMenus();
-  });
-
-  window.addEventListener('resize', closeAllMenus);
-  window.addEventListener('scroll', closeAllMenus, true);
 
   loadPatients();
 })();
@@ -555,7 +458,6 @@ $bhw_inline_script = ob_get_clean();
             <th scope="col" class="bhw-pl-col-workflow">Workflow</th>
             <th scope="col">Account</th>
             <th scope="col">Registered</th>
-            <th scope="col" class="bhw-pl-col-actions">Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
