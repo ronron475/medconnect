@@ -615,8 +615,31 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-detail__item {
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-followup-toolbar {
-  background: #151F2E !important;
+  background: transparent !important;
   border-bottom-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-followups {
+  border-top-color: #243347;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-search input {
+  background: #0D1E30;
+  border-color: #243347;
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-search input::placeholder {
+  color: #64748B;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-search input:focus {
+  border-color: #0D9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.2);
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-afu-search svg {
+  color: #8FAABF;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-followup-table thead th {
