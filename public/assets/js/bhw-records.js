@@ -87,7 +87,6 @@
     var panels = {
       profile: document.getElementById('bhwRecordsPanelProfile'),
       health: document.getElementById('bhwRecordsPanelHealth'),
-      consults: document.getElementById('bhwRecordsPanelConsults'),
       rx: document.getElementById('bhwRecordsPanelRx'),
       docs: document.getElementById('bhwRecordsPanelDocs')
     };
@@ -166,6 +165,49 @@
       if (body) body.scrollTop = 0;
     }
 
+    var WORKFLOW_LABELS = {
+      registered: 'Registered',
+      awaiting_complaint: 'Awaiting complaint',
+      ai_processing: 'AI processing',
+      emergency: 'Emergency',
+      urgent: 'Urgent',
+      non_urgent: 'Non-urgent',
+      appointment_scheduled: 'Appointment scheduled',
+      referral_generated: 'Referral generated',
+      consultation_completed: 'Consultation done',
+      follow_up_monitoring: 'Follow-up'
+    };
+
+    function pill(text, kind) {
+      return '<span class="bhw-records-pill bhw-records-pill--' + kind + '">' + escapeHtml(text) + '</span>';
+    }
+
+    function riskPill(level) {
+      var text = String(level || '').trim();
+      if (!text) return pill('None', 'none');
+      var key = text.toLowerCase();
+      var kind = 'risk';
+      if (key.indexOf('emergency') >= 0 || (key.indexOf('urgent') >= 0 && key.indexOf('non-urgent') < 0 && key.indexOf('non urgent') < 0)) {
+        kind = 'alert';
+      }
+      return pill(text, kind);
+    }
+
+    function workflowPill(status) {
+      var key = String(status || 'registered').toLowerCase();
+      var label = WORKFLOW_LABELS[key] || key.replace(/_/g, ' ');
+      var kind = 'none';
+      if (key === 'consultation_completed' || key === 'follow_up_monitoring') kind = 'workflow';
+      else if (key === 'emergency' || key === 'urgent') kind = 'alert';
+      else if (key === 'appointment_scheduled' || key === 'referral_generated' || key === 'non_urgent') kind = 'workflow';
+      return pill(label, kind);
+    }
+
+    function accountPill(active) {
+      var on = active === true || active === 1 || active === '1';
+      return pill(on ? 'Active' : 'Inactive', on ? 'account' : 'alert');
+    }
+
     function renderPatientList(patients) {
       if (!resultsEl) return;
       if (!patients.length) {
@@ -174,18 +216,29 @@
         return;
       }
       if (metaEl) metaEl.textContent = patients.length + (patients.length === 1 ? ' patient' : ' patients') + ' in your barangay';
-      resultsEl.innerHTML = patients.map(function (p) {
+      var rows = patients.map(function (p) {
         var name = patientName(p) || 'Patient';
-        var detail = [p.age ? ('Age ' + p.age) : '', formatSex(p.gender), p.contact_number || ''].filter(Boolean).join(' · ');
-        return '<button type="button" class="bhw-records-card" data-patient-id="' + escapeHtml(p.id) + '">' +
-          '<span class="bhw-records-card__avatar" aria-hidden="true">' + escapeHtml(initials(p)) + '</span>' +
-          '<span class="bhw-records-card__body">' +
-            '<strong>' + escapeHtml(name) + '</strong>' +
-            '<span>' + escapeHtml(detail || '—') + '</span>' +
-            '<span>' + escapeHtml(p.barangay ? ('Brgy. ' + p.barangay) : (p.email || '')) + '</span>' +
-          '</span>' +
-        '</button>';
+        var barangay = p.barangay ? ('Brgy. ' + p.barangay) : (p.email || '—');
+        return '<tr class="bhw-records-dir__row" data-patient-id="' + escapeHtml(p.id) + '" tabindex="0" role="button">' +
+          '<td><div class="bhw-records-dir__patient">' +
+            '<span class="bhw-records-dir__avatar" aria-hidden="true">' + escapeHtml(initials(p)) + '</span>' +
+            '<span><strong>' + escapeHtml(name) + '</strong><span>' + escapeHtml(barangay) + '</span></span>' +
+          '</div></td>' +
+          '<td>' + escapeHtml(dash(p.age)) + '</td>' +
+          '<td>' + escapeHtml(formatSex(p.gender)) + '</td>' +
+          '<td>' + escapeHtml(dash(p.contact_number)) + '</td>' +
+          '<td>' + escapeHtml(dash(p.barangay)) + '</td>' +
+          '<td>' + riskPill(p.risk_level) + '</td>' +
+          '<td>' + workflowPill(p.workflow_status) + '</td>' +
+          '<td>' + accountPill(p.is_active) + '</td>' +
+          '<td>' + escapeHtml(formatDate(p.created_at)) + '</td>' +
+        '</tr>';
       }).join('');
+      resultsEl.innerHTML = '<div class="bhw-records-dir-wrap"><table class="bhw-records-dir">' +
+        '<thead><tr>' +
+          '<th>Patient</th><th>Age</th><th>Gender</th><th>Contact</th><th>Brgy.</th>' +
+          '<th>Risk</th><th>Workflow</th><th>Account</th><th>Registered</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
 
     function loadPatients() {
@@ -227,16 +280,8 @@
         ]);
       }
       if (panels.health) {
-        panels.health.innerHTML = fieldGrid([
-          ['Allergies', p.allergies],
-          ['Medical conditions', p.existing_conditions],
-          ['Current medications', p.current_medications],
-          ['Blood type', p.blood_type]
-        ]);
-      }
-      if (panels.consults) {
         var visits = rec.consultations || [];
-        panels.consults.innerHTML = visits.length ? visits.map(function (c) {
+        var visitHtml = visits.length ? visits.map(function (c) {
           var assessment = c.diagnosis || '';
           var note = c.recommendation || '';
           var triage = [c.urgency_label, c.triage_classification].filter(Boolean).join(' · ');
@@ -250,6 +295,14 @@
             (triage ? '<p><span>Triage</span> ' + escapeHtml(triage) + '</p>' : '') +
             '</article>';
         }).join('') : '<div class="bhw-records-empty"><strong>No consultations yet</strong><span>Appointments and completed visits for this patient will appear here.</span></div>';
+        panels.health.innerHTML = '<div class="bhw-records-history">' +
+          fieldGrid([
+            ['Allergies', p.allergies],
+            ['Medical conditions', p.existing_conditions],
+            ['Current medications', p.current_medications],
+            ['Blood type', p.blood_type]
+          ]) +
+          '<div class="bhw-records-history__visits">' + visitHtml + '</div></div>';
       }
       if (panels.rx) panels.rx.innerHTML = renderPrescriptions(rec.prescriptions || []);
       if (panels.docs) panels.docs.innerHTML = renderDocuments(rec.documents || []);
@@ -310,10 +363,19 @@
     }
 
     if (resultsEl) {
+      function openFromRow(row) {
+        if (!row) return;
+        openRecord(parseInt(row.getAttribute('data-patient-id'), 10) || 0, row);
+      }
       resultsEl.addEventListener('click', function (e) {
-        var card = e.target.closest('[data-patient-id]');
-        if (!card) return;
-        openRecord(parseInt(card.getAttribute('data-patient-id'), 10) || 0, card);
+        openFromRow(e.target.closest('[data-patient-id]'));
+      });
+      resultsEl.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var row = e.target.closest('[data-patient-id]');
+        if (!row) return;
+        e.preventDefault();
+        openFromRow(row);
       });
     }
 

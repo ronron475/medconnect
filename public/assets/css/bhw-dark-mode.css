@@ -1044,6 +1044,7 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-records-main,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-aside,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-empty,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-card,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-dir-wrap,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-search,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-modal__panel,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-modal__close,
@@ -1123,6 +1124,25 @@ html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item:hover,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item.is-highlighted,
 html[data-theme-resolved='dark'] body.bhw-body .bhw-patient-picker-item.is-selected {
   background: rgba(13, 148, 136, 0.14) !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-dir th {
+  background: #111827 !important;
+  color: #94a3b8 !important;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-dir td {
+  border-top-color: #243044;
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-dir__row:hover,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-dir__row:focus-visible {
+  background: #1b2838;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-records-dir__patient strong {
+  color: #f8fafc;
 }
 
 html[data-theme-resolved='dark'] body.bhw-body .bhw-records-table th {
