@@ -59,10 +59,6 @@
         row.style.display = row.dataset.pending === 'true' ? '' : 'none';
         return;
       }
-      if (activeFilter === 'tips') {
-        row.style.display = row.dataset.tipsPending === 'true' ? '' : 'none';
-        return;
-      }
       row.style.display = row.dataset.urgency === activeFilter ? '' : 'none';
     });
   }
@@ -159,11 +155,9 @@
     var urgentEl = document.getElementById('triageStatUrgent');
     var routineEl = document.getElementById('triageStatRoutine');
     var reviewedEl = document.getElementById('triageStatReviewed');
-    var tipsEl = document.getElementById('triageStatTips');
     if (urgentEl) urgentEl.textContent = stats.urgent;
     if (routineEl) routineEl.textContent = stats.non_urgent;
     if (reviewedEl) reviewedEl.textContent = stats.reviewed;
-    if (tipsEl) tipsEl.textContent = stats.tips_pending != null ? stats.tips_pending : 0;
 
     document.querySelectorAll('.triage-tab[data-filter]').forEach(function (tab) {
       var filter = tab.dataset.filter;
@@ -173,15 +167,12 @@
       else if (filter === 'urgent') countEl.textContent = stats.urgent;
       else if (filter === 'non-urgent') countEl.textContent = stats.non_urgent;
       else if (filter === 'pending') countEl.textContent = stats.pending;
-      else if (filter === 'tips') countEl.textContent = stats.tips_pending != null ? stats.tips_pending : 0;
       else if (filter === 'reviewed') countEl.textContent = stats.reviewed;
     });
 
     var summaryEl = document.getElementById('triageTableSummary');
     if (summaryEl) {
-      var tips = stats.tips_pending != null ? Number(stats.tips_pending) : 0;
-      summaryEl.textContent = (stats.total || 0) + ' total · ' + (stats.pending || 0) + ' pending review'
-        + (tips ? ' · ' + tips + ' tips pending' : '');
+      summaryEl.textContent = (stats.total || 0) + ' total · ' + (stats.pending || 0) + ' pending review';
     }
 
     // Sidebar "Active Triage Review" = cases still needing a decision, not booked-but-reviewed.
