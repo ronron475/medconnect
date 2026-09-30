@@ -82,12 +82,17 @@ putenv('OCR_DEBUG');
 unset($_ENV['OCR_DEBUG']);
 // Isolate: load config in a subprocess with clean env for default
 $php = PHP_BINARY;
+// Copy the config without the project .env so only the server-side fallback can supply the key.
+$isolated = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'ocrcfg_' . bin2hex(random_bytes(4));
+@mkdir($isolated . DIRECTORY_SEPARATOR . 'config', 0700, true);
+copy($root . '/config/ocr_config.php', $isolated . '/config/ocr_config.php');
+copy($root . '/config/env_loader.php', $isolated . '/config/env_loader.php');
 $probeDefault = <<<'PHP'
 <?php
 putenv('OCR_DEBUG');
-unset($_ENV['OCR_DEBUG']);
+unset($_ENV['OCR_DEBUG'], $_SERVER['OCR_DEBUG']);
 putenv('OCR_SPACE_API_KEY');
-unset($_ENV['OCR_SPACE_API_KEY']);
+unset($_ENV['OCR_SPACE_API_KEY'], $_SERVER['OCR_SPACE_API_KEY']);
 require $argv[1];
 echo OCR_DEBUG ? '1' : '0';
 echo "\n";
@@ -95,22 +100,26 @@ echo OCR_SPACE_API_KEY === '' ? 'empty' : 'set';
 PHP;
 $tmp = tempnam(sys_get_temp_dir(), 'ocrprobe');
 file_put_contents($tmp, $probeDefault);
-$cmd = escapeshellarg($php) . ' ' . escapeshellarg($tmp) . ' ' . escapeshellarg($root . '/config/ocr_config.php');
+$cmd = escapeshellarg($php) . ' ' . escapeshellarg($tmp) . ' ' . escapeshellarg($isolated . '/config/ocr_config.php');
 $out = [];
 exec($cmd . ' 2>&1', $out, $code);
 @unlink($tmp);
+@unlink($isolated . '/config/ocr_config.php');
+@unlink($isolated . '/config/env_loader.php');
+@rmdir($isolated . '/config');
+@rmdir($isolated);
 $lines = array_values(array_filter(array_map('trim', $out), static fn ($l) => $l !== ''));
 $debugDefault = $lines[0] ?? '';
 $keyDefault = $lines[1] ?? '';
 if ($code === 0 && $debugDefault === '0') {
     pass('OCR_DEBUG defaults to false');
 } else {
-    fail('OCR_DEBUG defaults to false', 'got debug=' . $debugDefault . ' exit=' . $code . ' out=' . implode('|', $lines));
+    fail('OCR_DEBUG defaults to false', 'got debug=' . $debugDefault . ' exit=' . $code);
 }
-if ($code === 0 && $keyDefault === 'empty') {
-    pass('OCR_SPACE_API_KEY empty when unset in environment');
+if ($code === 0 && $keyDefault === 'set') {
+    pass('OCR_SPACE_API_KEY uses the server-side fallback when env and .env are missing');
 } else {
-    fail('OCR_SPACE_API_KEY empty when unset', 'got=' . $keyDefault);
+    fail('OCR_SPACE_API_KEY server-side fallback', 'got=' . $keyDefault);
 }
 
 // ── 4) Env override works ─────────────────────────────────────
@@ -173,6 +182,53 @@ foreach ($iterator as $file) {
 }
 if (!$extraHardcode) {
     pass('no OCR_SPACE_API_KEY string literals under config/');
+}
+
+// ── 7) The resolved key stays inside config/ and the OCR.space request ──
+$probeKey = <<<'PHP'
+<?php
+require $argv[1];
+echo OCR_SPACE_API_KEY;
+PHP;
+$tmp = tempnam(sys_get_temp_dir(), 'ocrprobe');
+file_put_contents($tmp, $probeKey);
+$out = [];
+exec(escapeshellarg($php) . ' ' . escapeshellarg($tmp) . ' ' . escapeshellarg($root . '/config/ocr_config.php') . ' 2>&1', $out, $code);
+@unlink($tmp);
+$resolvedKey = trim(implode('', $out));
+if ($code !== 0 || $resolvedKey === '') {
+    fail('resolve OCR_SPACE_API_KEY for leak scan');
+} else {
+    $leakFiles = [];
+    foreach (['app', 'public', 'resources', 'api', 'ai_service', 'scripts', 'docs'] as $dir) {
+        if (!is_dir($root . '/' . $dir)) {
+            continue;
+        }
+        $files = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($root . '/' . $dir, FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($files as $file) {
+            /** @var SplFileInfo $file */
+            if (!$file->isFile() || !in_array(strtolower($file->getExtension()), ['php', 'js', 'html', 'css', 'json', 'py', 'md'], true)) {
+                continue;
+            }
+            if (str_contains((string) file_get_contents($file->getPathname()), $resolvedKey)) {
+                $leakFiles[] = str_replace($root . DIRECTORY_SEPARATOR, '', $file->getPathname());
+            }
+        }
+    }
+    if ($leakFiles === []) {
+        pass('OCR key value appears only under config/ (not in views, JS, controllers, or docs)');
+    } else {
+        fail('OCR key value found outside config/', implode(', ', $leakFiles));
+    }
+}
+
+$keyUses = preg_match_all('/OCR_SPACE_API_KEY/', $ctrl);
+if ($keyUses === 1 && preg_match("/'apikey'\\s*=>\\s*OCR_SPACE_API_KEY\\s*,/", $ctrl)) {
+    pass('process_id_ocr.php uses OCR_SPACE_API_KEY only in the OCR.space request body');
+} else {
+    fail('process_id_ocr.php must use OCR_SPACE_API_KEY only as the OCR.space apikey field', 'uses=' . $keyUses);
 }
 
 echo "\n";
