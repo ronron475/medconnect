@@ -2853,11 +2853,13 @@ PROMPT;
     {
         self::ensureAiProviders();
         $last = null;
-        // Prefer no thinkingConfig first (matches working FAQ Gemini path; avoids empty MAX_TOKENS).
-        // Then one more attempt after backoff for Gemini 503 / high-demand.
-        foreach ([false, false, false] as $i => $_unused) {
+        // Gemini 3.5 Flash thinks by default. Thought tokens share maxOutputTokens, so a
+        // short budget returns finishReason=MAX_TOKENS and an empty candidate. The demo
+        // then reports that empty body as invalid JSON. Ask for minimal thinking first.
+        // If the model rejects thinkingConfig, retry once with a larger output budget.
+        foreach ([true, false] as $i => $withThinkingConfig) {
             try {
-                $res = self::generate(self::requestPayload($userPrompt, false));
+                $res = self::generate(self::requestPayload($userPrompt, $withThinkingConfig));
                 if ($res !== '') {
                     return $res;
                 }
@@ -2874,11 +2876,11 @@ PROMPT;
                     || str_contains($msg, 'railway gemini failed')
                     || str_contains($msg, 'timeout')
                     || str_contains($msg, 'timed out');
-                if ($i < 2 && $retryable) {
-                    usleep(1500000 * ($i + 1));
+                if ($i < 1 && $retryable) {
+                    usleep(1500000);
                     continue;
                 }
-                if ($i < 2) {
+                if ($i < 1) {
                     usleep(500000);
                     continue;
                 }
@@ -2899,11 +2901,14 @@ PROMPT;
     {
         $config = [
             'temperature' => 0.1,
-            'maxOutputTokens' => 1024,
+            // Room for the interview schema after any residual thoughts.
+            'maxOutputTokens' => $withThinkingConfig ? 4096 : 8192,
             'responseMimeType' => 'application/json',
         ];
         if ($withThinkingConfig) {
-            $config['thinkingConfig'] = ['thinkingBudget' => 0];
+            // Gemini 3.x: thinkingBudget 0 can hang. thinkingLevel MINIMAL keeps thoughts at 0
+            // so the candidate is the JSON object instead of an empty MAX_TOKENS body.
+            $config['thinkingConfig'] = ['thinkingLevel' => 'MINIMAL'];
         }
 
         return [
@@ -3107,14 +3112,24 @@ PROMPT;
         $out = '';
         if (is_array($parts)) {
             foreach ($parts as $part) {
-                if (is_array($part) && isset($part['text'])) {
-                    $out .= (string) $part['text'];
+                if (!is_array($part) || !isset($part['text'])) {
+                    continue;
                 }
+                // Thought text is not the JSON schema. Concatenating it makes json_decode fail.
+                if (!empty($part['thought'])) {
+                    continue;
+                }
+                $out .= (string) $part['text'];
             }
         }
         $out = trim($out);
         if ($out === '') {
-            throw new RuntimeException('empty Gemini response');
+            $finish = strtoupper((string) ($data['candidates'][0]['finishReason'] ?? ''));
+            throw new RuntimeException(
+                $finish === 'MAX_TOKENS'
+                    ? 'empty Gemini response (MAX_TOKENS)'
+                    : 'empty Gemini response'
+            );
         }
 
         return $out;
@@ -3141,7 +3156,9 @@ PROMPT;
         $timeout = self::TIMEOUT;
         $envTimeout = (int) (getenv('AI_TIMEOUT') ?: ($_ENV['AI_TIMEOUT'] ?? 0));
         if ($envTimeout > 0) {
-            $timeout = max(5, min(60, $envTimeout));
+            // AI_TIMEOUT is shared with short FAQ calls (often 20s). This interview
+            // schema needs the longer demo budget; do not shrink below TIMEOUT.
+            $timeout = max(self::TIMEOUT, min(60, $envTimeout));
         }
         $ch = curl_init($url);
         if ($ch === false) {
@@ -3174,7 +3191,14 @@ PROMPT;
         }
         $data = json_decode((string) $raw, true);
         if (!is_array($data) || $code >= 400) {
-            throw new RuntimeException('Gemini HTTP ' . $code);
+            $detail = '';
+            if (is_array($data)) {
+                $detail = trim((string) ($data['error']['status'] ?? $data['error']['message'] ?? ''));
+                $detail = preg_replace('/AQ\.[A-Za-z0-9_-]+/', '[KEY]', $detail) ?? $detail;
+                $detail = preg_replace('/AIza[A-Za-z0-9_-]+/', '[KEY]', $detail) ?? $detail;
+                $detail = mb_substr($detail, 0, 180);
+            }
+            throw new RuntimeException('Gemini HTTP ' . $code . ($detail !== '' ? ': ' . $detail : ''));
         }
 
         return $data;
