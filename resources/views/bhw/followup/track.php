@@ -32,7 +32,7 @@ require __DIR__ . '/../partials/layout_open.php';
         <button type="button" class="bhw-afu-tab" data-afu-tab="appointments" role="tab" aria-selected="false">Appointments</button>
         <button type="button" class="bhw-afu-tab" data-afu-tab="followups" role="tab" aria-selected="false">Follow-Ups</button>
       </div>
-      <div class="bhw-dash-search bhw-afu-search">
+      <div class="bhw-afu-search">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="search" id="bhwAfuSearch" placeholder="Search patient..." aria-label="Search patient">
       </div>
