@@ -16,7 +16,6 @@ if ($module_tab === 'active') {
 
 $urgent_count     = count(array_filter($display_cases, fn($t) => $t['urgency'] === 'Urgent'));
 $non_urgent_count = count(array_filter($display_cases, fn($t) => $t['urgency'] === 'Non-Urgent'));
-$tips_pending_count = count(array_filter($display_cases, fn($t) => !empty($t['needs_tips_approval'])));
 $reviewed_count   = count(array_filter($display_cases, fn($t) => !empty($t['reviewed']) && empty($t['needs_tips_approval'])));
 $pending_count    = count(array_filter($display_cases, fn($t) => empty($t['reviewed'])));
 $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['slot_waiting']) || !empty($t['slot_available_for_patient'])));
@@ -57,21 +56,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
       <div class="triage-stat-label">Reviewed</div>
     </div>
   </div>
-  <div class="triage-stat-card triage-stat-card--urgent">
-    <div class="triage-stat-icon"><?= icon('file') ?></div>
-    <div>
-      <div class="triage-stat-value" id="triageStatTips"><?= $tips_pending_count ?></div>
-      <div class="triage-stat-label">Tips Pending</div>
-    </div>
-  </div>
 </div>
-
-<?php if ($tips_pending_count > 0 && $module_tab === 'active'): ?>
-<div class="triage-banner" style="margin-top:0;">
-  <?= icon_col('alert', '#b45309') ?>
-  <span><strong><?= (int) $tips_pending_count ?></strong> case(s) need a review decision. Open the case and choose <strong>Approve for Patient</strong> or <strong>Withhold Guidance</strong>.</span>
-</div>
-<?php endif; ?>
 
 <?php if ($slot_waiting_count > 0 && $module_tab === 'active'): ?>
 <div class="triage-banner" style="margin-top:0;">
@@ -93,9 +78,6 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
   <button type="button" class="triage-tab" data-filter="pending">
     Pending <span class="triage-tab-count"><?= $pending_count ?></span>
   </button>
-  <button type="button" class="triage-tab" data-filter="tips">
-    Tips Pending <span class="triage-tab-count"><?= $tips_pending_count ?></span>
-  </button>
   <button type="button" class="triage-tab" data-filter="reviewed">
     Reviewed <span class="triage-tab-count"><?= $reviewed_count ?></span>
   </button>
@@ -104,7 +86,7 @@ $slot_waiting_count = count(array_filter($display_cases, fn($t) => !empty($t['sl
 <div class="mc-card" style="padding: 0; overflow: hidden;">
   <div class="mc-card-header" style="padding: 16px 20px; border-bottom: 1px solid var(--mc-border-thin);">
     <h3 class="text-h3" style="margin: 0;"><?= icon('activity') ?> AI Triage Case Review</h3>
-    <span class="text-xs text-muted" id="triageTableSummary"><?= count($display_cases) ?> total Â· <?= $pending_count ?> pending review<?= $tips_pending_count ? ' Â· ' . (int) $tips_pending_count . ' tips pending' : '' ?></span>
+    <span class="text-xs text-muted" id="triageTableSummary"><?= count($display_cases) ?> total Â· <?= $pending_count ?> pending review</span>
     <span class="text-xs text-muted" id="triageRefreshStatus" style="margin-left: 12px;">Auto-refresh on</span>
   </div>
 
