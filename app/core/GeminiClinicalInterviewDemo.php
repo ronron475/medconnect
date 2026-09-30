@@ -345,7 +345,6 @@ final class GeminiClinicalInterviewDemo
         }
 
         $context['clinical_facts'] = $merged;
-        $context['missing_information'] = self::stringList($gemini['missing_information'] ?? []);
         $context['last_gemini'] = $gemini;
         $context['last_answer_status'] = $status;
         $context['gemini_called'] = true;
@@ -376,46 +375,43 @@ final class GeminiClinicalInterviewDemo
             return self::pack($context, $context['status_note'], $gemini);
         }
 
+        // Patient wording is the source of truth: keep every stated fact, including "no / wala / indi / hindi".
+        if (!$isStart && $latestPatient !== '') {
+            $context['clinical_facts'] = self::absorbDirectAnswer(
+                $context['clinical_facts'],
+                (string) ($context['awaiting_question'] ?? ''),
+                $latestPatient
+            );
+        }
+        $context['clinical_facts'] = self::sanitizeClinicalFacts(self::harvestStatedFacts(
+            $context['clinical_facts'],
+            self::patientEvidenceCorpus($context)
+        ));
+
         $sufficient = !empty($gemini['interview_sufficient']) || empty($gemini['question_needed']);
         $nextQ = self::stripAcuityLanguage(trim((string) ($gemini['next_question'] ?? '')));
+        $reconciled = self::reconcileFollowUp($context, $nextQ, $sufficient);
+        $context = $reconciled['context'];
+        $sufficient = $reconciled['sufficient'];
+        $nextQ = $reconciled['next_question'];
         $gemini['next_question'] = $nextQ;
-
-        // Do not re-ask what the conversation / facts already answered.
-        if (!$sufficient && $nextQ !== '' && self::questionTargetsAlreadyKnownFact($nextQ, $context['clinical_facts'], $context)) {
-            if (self::hasClinicallyUsefulFacts($context['clinical_facts'])) {
-                $sufficient = true;
-                $nextQ = '';
-                $gemini['question_needed'] = false;
-                $gemini['interview_sufficient'] = true;
-                $gemini['next_question'] = '';
-            } else {
-                $nextQ = self::neutralMissingFactQuestion($context, $context['clinical_facts']);
-                $gemini['next_question'] = $nextQ;
-            }
-        }
-
-        // Pain score only when pain is patient-stated and still missing — not a blind checklist.
-        if (!$sufficient && self::needsPainScore($context['clinical_facts'], $context)) {
-            $hasPainQ = $nextQ !== '' && (bool) preg_match('/\b(1\s*(to|tubtob|-|–)\s*10|1\-10|pain\s*score|gaano\s*kasakit|pila\s*ka\s*grabe)\b/ui', $nextQ);
-            if (!$hasPainQ && ($nextQ === '' || self::questionTargetsAlreadyKnownFact($nextQ, $context['clinical_facts'], $context))) {
-                $lang = self::detectLanguageHint($context);
-                $nextQ = match ($lang) {
-                    'hiligaynon' => 'Pila ka grabe ang imo kasakit, halin 1 tubtob 10?',
-                    'tagalog' => 'Gaano kasakit ito, mula 1 hanggang 10?',
-                    default => 'On a scale of 1 to 10, how severe is your pain?',
-                };
-                $gemini['next_question'] = $nextQ;
-                $gemini['question_needed'] = true;
-                $gemini['interview_sufficient'] = false;
-                $sufficient = false;
-                if (!in_array('pain_score', $context['missing_information'], true)) {
-                    $context['missing_information'][] = 'pain_score';
-                }
-            }
+        $gemini['missing_information'] = $context['missing_information'];
+        $gemini['question_needed'] = !$sufficient && $nextQ !== '';
+        $gemini['interview_sufficient'] = $sufficient;
+        if (!empty($reconciled['replaced_slot'])) {
+            $gemini['targeted_findings'] = [(string) $reconciled['replaced_slot']];
         }
 
         if (!$sufficient && $nextQ !== '') {
-            $nextQ = self::alignFollowUpQuestionLanguage($nextQ, $context);
+            $lang = self::detectLanguageHint($context);
+            if (!self::followUpMatchesLanguage($nextQ, $lang)) {
+                $slot = self::questionFactSlot($nextQ);
+                if ($slot === '' || !in_array($slot, $context['missing_information'], true)) {
+                    $slot = (string) ($context['missing_information'][0] ?? 'symptom');
+                }
+                $nextQ = self::simpleQuestionForSlot($slot, $context);
+                $gemini['targeted_findings'] = [$slot];
+            }
             $gemini['next_question'] = $nextQ;
         }
 
@@ -882,10 +878,39 @@ final class GeminiClinicalInterviewDemo
                 continue;
             }
             $val = $incoming[$key];
-            if ($val === null || $val === '') {
+            if ($val === null || $val === '' || !is_scalar($val)) {
                 continue;
             }
-            $base[$key] = is_scalar($val) ? trim((string) $val) : $base[$key];
+            $incomingVal = trim((string) $val);
+            if ($incomingVal === '' || self::isNonClinicalDiscourseLabel($incomingVal)) {
+                // Bare "wala" is Hiligaynon for left when it is stored as laterality.
+                if (!($key === 'laterality' && self::isLateralityToken($incomingVal))) {
+                    continue;
+                }
+            }
+            $existing = trim((string) ($base[$key] ?? ''));
+            if ($existing === '') {
+                $base[$key] = $incomingVal;
+                continue;
+            }
+            if (self::sameClinicalLabel($existing, $incomingVal)) {
+                continue;
+            }
+            // A second complaint or site must be kept, not written over the first.
+            if ($key === 'symptom') {
+                $assoc = self::stringList($base['associated_symptoms'] ?? []);
+                if (!self::listHasLabel($assoc, $incomingVal)) {
+                    $assoc[] = $incomingVal;
+                    $base['associated_symptoms'] = $assoc;
+                }
+                continue;
+            }
+            $note = 'also ' . $key . ': ' . $incomingVal;
+            $notes = self::stringList($base['notes'] ?? []);
+            if (!in_array($note, $notes, true)) {
+                $notes[] = $note;
+                $base['notes'] = $notes;
+            }
         }
 
         if (array_key_exists('pain_score', $incoming) && $incoming['pain_score'] !== null && $incoming['pain_score'] !== '') {
@@ -1277,11 +1302,12 @@ final class GeminiClinicalInterviewDemo
         $name = self::questionLanguageName($lang);
 
         return "QUESTION LANGUAGE: {$name}.\n"
-            . "Write next_question entirely in {$name}. Do not mix another language into the question.\n"
-            . "This language was detected from the patient's own words by the existing language detector. "
-            . "Keep using it on later questions unless QUESTION LANGUAGE itself changes because the patient clearly switched.\n"
+            . "The patient's latest message sets this language. Write next_question only in {$name}.\n"
+            . "Use simple everyday words a patient can answer easily. Do not translate word-for-word from English.\n"
+            . "Do not use deep, technical, or formal wording. Sound like a real person asking one short question.\n"
+            . "Keep this language on later questions unless the patient clearly switches language.\n"
             . "Do not translate or rewrite the patient's complaint or answers. Only next_question is phrased in {$name}.\n"
-            . "Preserve the clinical meaning of the question. Do not add findings. Do not output EMERGENCY, URGENT, or NON-URGENT.\n\n";
+            . "Preserve the patient's own wording in clinical_facts. Do not add findings. Do not output EMERGENCY, URGENT, or NON-URGENT.\n\n";
     }
 
     /**
@@ -1290,9 +1316,9 @@ final class GeminiClinicalInterviewDemo
     private static function neutralRetryQuestion(array $context): string
     {
         return match (self::detectLanguageHint($context)) {
-            'hiligaynon' => 'Palihog sabat sa klinikal nga pamangkot gamit ang imo kaugalingon nga tinaga.',
-            'tagalog' => 'Pakisagot ang klinikal na tanong gamit ang sarili mong salita.',
-            default => 'Please answer the previous clinical question in your own words.',
+            'hiligaynon' => 'Palihog sabat liwat sa pamangkot.',
+            'tagalog' => 'Pakisagot ulit ang tanong.',
+            default => 'Please answer the question again.',
         };
     }
 
@@ -1694,7 +1720,11 @@ final class GeminiClinicalInterviewDemo
         $out = self::blankFacts();
         foreach (['symptom', 'location', 'laterality', 'onset', 'duration', 'frequency'] as $key) {
             $val = trim((string) ($facts[$key] ?? ''));
-            if ($val === '' || self::isNonClinicalDiscourseLabel($val)) {
+            if ($val === '') {
+                $out[$key] = null;
+                continue;
+            }
+            if (self::isNonClinicalDiscourseLabel($val) && !($key === 'laterality' && self::isLateralityToken($val))) {
                 $out[$key] = null;
                 continue;
             }
@@ -2197,6 +2227,709 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
+     * Keep the next question on a fact that is still missing. One question per turn.
+     *
+     * @param array<string, mixed> $context
+     * @return array{context: array<string, mixed>, sufficient: bool, next_question: string, replaced_slot: string}
+     */
+    private static function reconcileFollowUp(array $context, string $nextQ, bool $sufficient): array
+    {
+        $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
+        $missing = self::genuinelyMissingSlots($facts, $context);
+        $context['clinical_facts'] = $facts;
+        $context['missing_information'] = $missing;
+
+        if ($missing === [] && self::hasClinicallyUsefulFacts($facts)) {
+            return [
+                'context' => $context,
+                'sufficient' => true,
+                'next_question' => '',
+                'replaced_slot' => '',
+            ];
+        }
+
+        $asked = self::questionFactSlot($nextQ);
+        $replaced = '';
+        if ($missing !== []) {
+            $sufficient = false;
+            if ($nextQ === '' || $asked === '' || !in_array($asked, $missing, true)) {
+                $nextQ = self::simpleQuestionForSlot($missing[0], $context);
+                $replaced = $missing[0];
+            }
+        }
+
+        return [
+            'context' => $context,
+            'sufficient' => $sufficient,
+            'next_question' => $nextQ,
+            'replaced_slot' => $replaced,
+        ];
+    }
+
+    /**
+     * Slots still empty after every patient answer has been merged.
+     * This is the only list allowed into missing_information.
+     *
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $context
+     * @return list<string>
+     */
+    private static function genuinelyMissingSlots(array $facts, array $context): array
+    {
+        if (!self::hasClinicallyUsefulFacts($facts)) {
+            return ['symptom'];
+        }
+
+        $missing = [];
+        if (!self::slotAddressed('location', $facts) && self::locationIsUseful($facts, $context)) {
+            $missing[] = 'location';
+        }
+        if (!self::slotAddressed('laterality', $facts) && self::lateralityIsUseful($facts)) {
+            $missing[] = 'laterality';
+        }
+        if (!self::slotAddressed('onset', $facts)) {
+            $missing[] = 'onset';
+        }
+        if (!self::slotAddressed('duration', $facts) && !self::onsetCoversDuration($facts)) {
+            $missing[] = 'duration';
+        }
+        if (!self::slotAddressed('pain_score', $facts) && self::needsPainScore($facts, $context)) {
+            $missing[] = 'pain_score';
+        }
+        if (!self::slotAddressed('trauma', $facts) && self::traumaIsUseful($facts, $context)) {
+            $missing[] = 'trauma';
+        }
+        if (self::associatedNeedsDetail($facts)) {
+            $missing[] = 'associated_detail';
+        } elseif (!self::associatedAddressed($facts, $context)) {
+            $missing[] = 'associated_symptoms';
+        }
+
+        return $missing;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function slotAddressed(string $slot, array $facts): bool
+    {
+        if ($slot === 'pain_score') {
+            $score = $facts['pain_score'] ?? null;
+            if ($score !== null && $score !== '' && is_numeric($score)) {
+                $n = (int) $score;
+                if ($n >= 1 && $n <= 10) {
+                    return true;
+                }
+            }
+        } elseif (in_array($slot, ['symptom', 'location', 'laterality', 'onset', 'duration', 'frequency'], true)) {
+            if (trim((string) ($facts[$slot] ?? '')) !== '') {
+                return true;
+            }
+        }
+
+        $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        foreach ([$slot, $slot === 'associated_symptoms' ? 'has_other_symptoms' : $slot] as $key) {
+            $value = (string) ($status[$key] ?? '');
+            if (in_array($value, ['positive', 'negative', 'uncertain'], true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $context
+     */
+    private static function locationIsUseful(array $facts, array $context): bool
+    {
+        if (self::needsPainScore($facts, $context)) {
+            return true;
+        }
+        $hay = mb_strtolower(self::patientEvidenceCorpus($context));
+
+        return (bool) preg_match(
+            '/\b(tiil|siki|kamot|ulo|dughan|tiyan|mata|likod|binti|paa|dibdib|chest|head|stomach|arm|leg|foot)\b/u',
+            $hay
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function lateralityIsUseful(array $facts): bool
+    {
+        $hay = mb_strtolower(trim(
+            (string) ($facts['location'] ?? '') . ' '
+            . (string) ($facts['symptom'] ?? '') . ' '
+            . implode(' ', self::stringList($facts['associated_symptoms'] ?? []))
+        ));
+
+        return (bool) preg_match(
+            '/\b(eye|ear|arm|hand|leg|foot|knee|ankle|shoulder|hip|breast|chest|'
+            . 'mata|dulunggan|tenga|kamot|kamay|tiil|siki|batiis|paa|binti|tuhod|abaga|balikat|dughan|dibdib)\b/u',
+            $hay
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $context
+     */
+    private static function traumaIsUseful(array $facts, array $context): bool
+    {
+        return self::needsPainScore($facts, $context) || self::slotAddressed('location', $facts);
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function onsetCoversDuration(array $facts): bool
+    {
+        $onset = trim((string) ($facts['onset'] ?? ''));
+        if ($onset === '' || !class_exists('ClinicalFeatureExtractors')) {
+            return false;
+        }
+        $duration = ClinicalFeatureExtractors::extractDuration($onset);
+
+        return trim((string) ($duration['raw'] ?? '')) !== '' || trim((string) ($duration['label'] ?? '')) !== '';
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     */
+    private static function associatedNeedsDetail(array $facts): bool
+    {
+        $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        $flag = (string) (($status['associated_symptoms'] ?? '') ?: ($status['has_other_symptoms'] ?? ''));
+
+        return $flag === 'positive' && self::stringList($facts['associated_symptoms'] ?? []) === [];
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @param array<string, mixed> $context
+     */
+    private static function associatedAddressed(array $facts, array $context): bool
+    {
+        if (self::associatedNeedsDetail($facts)) {
+            return false;
+        }
+        if (self::slotAddressed('associated_symptoms', $facts) || self::slotAddressed('has_other_symptoms', $facts)) {
+            return true;
+        }
+        $hay = self::patientEvidenceCorpus($context);
+
+        return class_exists('ClinicalFeatureExtractors')
+            && ClinicalFeatureExtractors::deniedAssociatedSymptoms($hay);
+    }
+
+    /**
+     * Which stored fact a follow-up is asking for. Empty when it is not a fact question.
+     */
+    private static function questionFactSlot(string $question): string
+    {
+        $q = mb_strtolower(trim($question));
+        if ($q === '') {
+            return '';
+        }
+        if (preg_match('/\b(ano pa|what else)\b/u', $q)) {
+            return 'associated_detail';
+        }
+        if (preg_match('/\b(1\s*(to|tubtob|hanggang|-|–)\s*10|pain\s*score|gaano\s*kasakit|pila\s*ka\s*grabe|how\s+(bad|severe))\b/u', $q)) {
+            return 'pain_score';
+        }
+        if (preg_match('/\b(left|right|both sides|kaliwa|kanan|tuo|laterality|which\s+side)\b/u', $q)
+            || preg_match('/wala\s+ukon\s+tuo/u', $q)
+        ) {
+            return 'laterality';
+        }
+        if (preg_match('/\b(fall|fell|injury|injured|accident|trauma|nahulog|nabunggo|nabungguan|naaksidente|pilas|samad)\b/u', $q)) {
+            return 'trauma';
+        }
+        if (preg_match('/\b(anything else|other symptom|iban|iba pa|iba pang|associated)\b/u', $q)) {
+            return 'associated_symptoms';
+        }
+        if (preg_match('/\b(how\s+often|frequency|pirmi|palagi|paminsan)\b/u', $q)) {
+            return 'frequency';
+        }
+        if (preg_match('/\b(how\s+long|gaano\s+(na\s+)?katagal|pila\s+na\s+ka|duration|tagal|dugay)\b/u', $q)
+            && !preg_match('/\b(nagsugod|nagsimula|start)\b/u', $q)
+        ) {
+            return 'duration';
+        }
+        if (preg_match('/\b(when|san-o|kailan|nagsugod|nagsimula|start|onset|began)\b/u', $q)) {
+            return 'onset';
+        }
+        if (preg_match('/\b(where|diin|saan|which\s+part|ano\s+nga\s+parte|location|asa)\b/u', $q)) {
+            return 'location';
+        }
+        if (preg_match('/\b(what are you feeling|what do you feel|ano ang imo nabatyagan|ano po ang nararamdaman|nararamdaman)\b/u', $q)) {
+            return 'symptom';
+        }
+
+        return '';
+    }
+
+    /**
+     * One short question for the missing fact, in the patient's current language.
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function simpleQuestionForSlot(string $slot, array $context): string
+    {
+        $lang = self::detectLanguageHint($context);
+        $questions = [
+            'hiligaynon' => [
+                'symptom' => 'Ano ang imo nabatyagan?',
+                'location' => 'Diin ini masakit?',
+                'laterality' => 'Wala ukon tuo nga bahin?',
+                'onset' => 'San-o ini nagsugod?',
+                'duration' => 'Pila na ka adlaw ukon oras ini?',
+                'pain_score' => 'Pila ka grabe, halin 1 tubtob 10?',
+                'trauma' => 'May nabungguan ka ukon nahulog antes ini?',
+                'associated_symptoms' => 'May ara pa iban nga nabatyagan?',
+                'associated_detail' => 'Ano pa ang imo nabatyagan?',
+                'frequency' => 'Pirme ini ukon kung kaisa lang?',
+            ],
+            'tagalog' => [
+                'symptom' => 'Ano po ang nararamdaman mo?',
+                'location' => 'Saan po masakit?',
+                'laterality' => 'Kaliwa po o kanan?',
+                'onset' => 'Kailan ito nagsimula?',
+                'duration' => 'Gaano na katagal ito?',
+                'pain_score' => 'Gaano kasakit, mula 1 hanggang 10?',
+                'trauma' => 'May nabunggo po ba o nahulog bago ito?',
+                'associated_symptoms' => 'May iba pa po bang nararamdaman?',
+                'associated_detail' => 'Ano pa po ang nararamdaman mo?',
+                'frequency' => 'Palagi po ba ito o paminsan-minsan lang?',
+            ],
+            'english' => [
+                'symptom' => 'What are you feeling?',
+                'location' => 'Where does it hurt?',
+                'laterality' => 'Is it the left side or the right side?',
+                'onset' => 'When did it start?',
+                'duration' => 'How long has this been going on?',
+                'pain_score' => 'How bad is the pain, from 1 to 10?',
+                'trauma' => 'Did you get hit or fall before this started?',
+                'associated_symptoms' => 'Is there anything else you are feeling?',
+                'associated_detail' => 'What else are you feeling?',
+                'frequency' => 'Does this happen all the time or only sometimes?',
+            ],
+        ];
+        $pack = $questions[$lang] ?? $questions['english'];
+
+        return $pack[$slot] ?? ($pack['symptom'] ?? '');
+    }
+
+    /**
+     * Store the patient's own answer on the fact the question asked. Do not invent a value.
+     *
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function absorbDirectAnswer(array $facts, string $question, string $answer): array
+    {
+        $answer = trim($answer);
+        if ($answer === '') {
+            return $facts;
+        }
+        $facts = self::harvestStatedFacts($facts, $answer);
+        $slot = self::questionFactSlot($question);
+        if ($slot === '' || $slot === 'associated_detail') {
+            $slot = $slot === 'associated_detail' ? 'associated_symptoms' : $slot;
+        }
+        if ($slot === '') {
+            return $facts;
+        }
+
+        $uncertain = class_exists('ClinicalFeatureExtractors')
+            && ClinicalFeatureExtractors::looksPatientUncertain($answer);
+        $yn = class_exists('ClinicalFeatureExtractors')
+            ? ClinicalFeatureExtractors::extractYesNo($answer)
+            : null;
+        $bare = self::isBarePolarityAnswer($answer);
+
+        if ($slot === 'laterality' && self::isLateralityToken($answer)) {
+            if (trim((string) ($facts['laterality'] ?? '')) === '') {
+                $facts['laterality'] = mb_strtolower(trim((string) preg_replace('/[.!?…]+$/u', '', $answer)));
+            }
+
+            return self::markSlot($facts, 'laterality', 'positive');
+        }
+
+        if ($slot === 'pain_score') {
+            $score = null;
+            if (class_exists('ClinicalFeatureExtractors')) {
+                $score = ClinicalFeatureExtractors::extractStandalonePainScore($answer, true);
+                if ($score === null) {
+                    $parsed = ClinicalFeatureExtractors::extractPainScale($answer);
+                    $score = $parsed['score'] ?? null;
+                }
+            }
+            if ($score !== null && (int) $score >= 1 && (int) $score <= 10) {
+                $facts['pain_score'] = (int) $score;
+
+                return self::markSlot($facts, 'pain_score', 'positive');
+            }
+            if ($uncertain) {
+                return self::markSlot($facts, 'pain_score', 'uncertain');
+            }
+            if ($bare && $yn === false) {
+                return self::markSlot($facts, 'pain_score', 'negative');
+            }
+
+            return $facts;
+        }
+
+        if ($uncertain) {
+            return self::markSlot($facts, $slot, 'uncertain');
+        }
+        if ($bare && $yn === false) {
+            return self::markSlot($facts, $slot, 'negative');
+        }
+        if ($bare && $yn === true) {
+            if ($slot === 'associated_symptoms' || $slot === 'trauma') {
+                return self::markSlot($facts, $slot, 'positive');
+            }
+
+            return $facts;
+        }
+
+        if (in_array($slot, ['symptom', 'location', 'onset', 'duration', 'frequency', 'laterality'], true)) {
+            if (trim((string) ($facts[$slot] ?? '')) === '') {
+                $facts[$slot] = $answer;
+            }
+
+            return self::markSlot($facts, $slot, 'positive');
+        }
+        if ($slot === 'trauma') {
+            $notes = self::stringList($facts['notes'] ?? []);
+            $note = 'trauma: ' . $answer;
+            if (!in_array($note, $notes, true)) {
+                $notes[] = $note;
+            }
+            $facts['notes'] = $notes;
+
+            return self::markSlot($facts, 'trauma', 'positive');
+        }
+        if ($slot === 'associated_symptoms') {
+            $assoc = self::stringList($facts['associated_symptoms'] ?? []);
+            if (!self::listHasLabel($assoc, $answer)) {
+                $assoc[] = $answer;
+            }
+            $facts['associated_symptoms'] = $assoc;
+
+            return self::markSlot($facts, 'associated_symptoms', 'positive');
+        }
+
+        return $facts;
+    }
+
+    /**
+     * Pull only facts the patient actually said. Never overwrite a stored fact.
+     *
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function harvestStatedFacts(array $facts, string $text): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return $facts;
+        }
+
+        if (class_exists('ClinicalFeatureExtractors')) {
+            $duration = ClinicalFeatureExtractors::extractDuration($text);
+            $raw = trim((string) ($duration['raw'] ?? ''));
+            if ($raw !== '') {
+                if (trim((string) ($facts['onset'] ?? '')) === '') {
+                    $facts['onset'] = $raw;
+                }
+                if (trim((string) ($facts['duration'] ?? '')) === '') {
+                    $facts['duration'] = $raw;
+                }
+            }
+            $character = ClinicalFeatureExtractors::extractOnset($text);
+            if ($character !== '' && trim((string) ($facts['onset'] ?? '')) === '') {
+                $facts['onset'] = $character;
+            }
+            $pain = ClinicalFeatureExtractors::extractPainScale($text);
+            if (($facts['pain_score'] ?? null) === null && isset($pain['score']) && is_numeric($pain['score'])) {
+                $score = (int) $pain['score'];
+                if ($score >= 1 && $score <= 10) {
+                    $facts['pain_score'] = $score;
+                }
+            }
+        }
+
+        $side = self::statedLaterality($text);
+        if ($side !== '' && trim((string) ($facts['laterality'] ?? '')) === '') {
+            $facts['laterality'] = $side;
+        }
+
+        $facts = self::harvestTraumaMention($facts, $text);
+        $facts = self::harvestSymptomsFromText($facts, $text);
+
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::deniedAssociatedSymptoms($text)) {
+            $facts = self::markSlot($facts, 'associated_symptoms', 'negative');
+        }
+
+        return $facts;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function harvestSymptomsFromText(array $facts, string $text): array
+    {
+        $nlp = self::collectLocalNlpEvidence($text);
+        $symptoms = self::preferSpecificSymptoms(self::stringList($nlp['symptoms'] ?? []));
+        foreach ($symptoms as $symptom) {
+            $facts = self::keepSymptom($facts, $symptom);
+        }
+        $locals = [];
+        foreach (is_array($nlp['location_mappings'] ?? null) ? $nlp['location_mappings'] : [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $alias = trim((string) ($row['local'] ?? ''));
+            $english = trim((string) ($row['english'] ?? ''));
+            $label = $english !== '' ? $english : $alias;
+            if ($alias !== '' && !str_contains($alias, ' ') && !self::listHasLabel($symptoms, $alias)) {
+                $label = $alias;
+            }
+            if ($label !== '' && !self::listHasLabel($locals, $label)) {
+                $locals[] = $label;
+            }
+        }
+        if ($locals === []) {
+            $locals = self::stringList($nlp['locations'] ?? []);
+        }
+        if ($locals === []) {
+            return $facts;
+        }
+        if (trim((string) ($facts['location'] ?? '')) === '') {
+            $facts['location'] = $locals[0];
+            $locals = array_slice($locals, 1);
+        }
+        $notes = self::stringList($facts['notes'] ?? []);
+        foreach ($locals as $extra) {
+            if (self::sameClinicalLabel((string) ($facts['location'] ?? ''), $extra)) {
+                continue;
+            }
+            $note = 'also location: ' . $extra;
+            if (!in_array($note, $notes, true)) {
+                $notes[] = $note;
+            }
+        }
+        $facts['notes'] = $notes;
+
+        return $facts;
+    }
+
+    /**
+     * Drop generic pain labels when the patient named a specific complaint.
+     * "Chronic Pain" is not stored unless the patient said it was chronic.
+     *
+     * @param list<string> $symptoms
+     * @return list<string>
+     */
+    private static function preferSpecificSymptoms(array $symptoms): array
+    {
+        $specific = [];
+        $generic = [];
+        foreach ($symptoms as $symptom) {
+            if (self::isGenericPainLabel($symptom)) {
+                if (mb_strtolower(trim($symptom)) === 'pain' && !in_array('Pain', $generic, true)) {
+                    $generic[] = 'Pain';
+                }
+                continue;
+            }
+            if (!in_array($symptom, $specific, true)) {
+                $specific[] = $symptom;
+            }
+        }
+
+        return $specific !== [] ? $specific : $generic;
+    }
+
+    private static function isGenericPainLabel(string $symptom): bool
+    {
+        return in_array(mb_strtolower(trim($symptom)), ['pain', 'chronic pain', 'sakit'], true);
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function keepSymptom(array $facts, string $symptom): array
+    {
+        $symptom = trim($symptom);
+        if ($symptom === '' || self::isNonClinicalDiscourseLabel($symptom)) {
+            return $facts;
+        }
+        $current = trim((string) ($facts['symptom'] ?? ''));
+        if ($current === '' || (self::isGenericPainLabel($current) && !self::isGenericPainLabel($symptom))) {
+            $facts['symptom'] = $symptom;
+            if ($current !== '' && !self::sameClinicalLabel($current, $symptom)) {
+                $assoc = self::stringList($facts['associated_symptoms'] ?? []);
+                $assoc = array_values(array_filter(
+                    $assoc,
+                    static fn (string $item): bool => !self::isGenericPainLabel($item)
+                ));
+                $facts['associated_symptoms'] = $assoc;
+            }
+
+            return $facts;
+        }
+        if (self::sameClinicalLabel($current, $symptom) || self::isGenericPainLabel($symptom)) {
+            return $facts;
+        }
+        $assoc = self::stringList($facts['associated_symptoms'] ?? []);
+        if (!self::listHasLabel($assoc, $symptom)) {
+            $assoc[] = $symptom;
+            $facts['associated_symptoms'] = $assoc;
+        }
+
+        return $facts;
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function harvestTraumaMention(array $facts, string $text): array
+    {
+        if (self::slotAddressed('trauma', $facts)) {
+            return $facts;
+        }
+        $low = mb_strtolower($text);
+        $injury = 'nahulog|nabunggo|nabungguan|naaksidente|naigo|pilas|samad|nabalian|accident|injury|injured|fell|fall';
+        $neg = 'no|wala|walang|indi|hindi|dili';
+        if (preg_match('/\b(?:' . $neg . ')\b.{0,24}\b(?:' . $injury . ')\b/u', $low)
+            || preg_match('/\b(?:' . $injury . ')\b.{0,16}\b(?:' . $neg . ')\b/u', $low)
+        ) {
+            return self::markSlot($facts, 'trauma', 'negative');
+        }
+        if (preg_match('/\b(' . $injury . ')\b/u', $low, $m)) {
+            $notes = self::stringList($facts['notes'] ?? []);
+            $note = 'trauma: ' . $m[0];
+            if (!in_array($note, $notes, true)) {
+                $notes[] = $note;
+            }
+            $facts['notes'] = $notes;
+
+            return self::markSlot($facts, 'trauma', 'positive');
+        }
+
+        return $facts;
+    }
+
+    private static function statedLaterality(string $text): string
+    {
+        $low = mb_strtolower(trim($text));
+        if ($low === '') {
+            return '';
+        }
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksLateralityWala($low)) {
+            return 'wala';
+        }
+        if (preg_match('/\b(kaliwa|left)\b/u', $low)) {
+            return 'left';
+        }
+        if (preg_match('/\b(kanan|right|tuo)\b/u', $low)) {
+            return 'right';
+        }
+        if (preg_match('/\b(both sides|both|pareho)\b/u', $low)) {
+            return 'both';
+        }
+
+        return '';
+    }
+
+    private static function isLateralityToken(string $value): bool
+    {
+        $value = mb_strtolower(trim($value));
+        $value = trim((string) preg_replace('/[.!?…]+$/u', '', $value));
+
+        return in_array($value, ['wala', 'tuo', 'left', 'right', 'both', 'kaliwa', 'kanan', 'pareho'], true);
+    }
+
+    private static function isBarePolarityAnswer(string $answer): bool
+    {
+        $a = mb_strtolower(trim($answer));
+        $a = trim((string) preg_replace('/[.!?…]+$/u', '', $a));
+
+        return (bool) preg_match(
+            '/^(oo|opo|o+|yes|yeah|yep|no|nope|indi|di|hindi|wala(\s+man)?|walang)(\s+(gid|lang|man|po))?$/ui',
+            $a
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private static function markSlot(array $facts, string $slot, string $polarity): array
+    {
+        if (!in_array($polarity, ['positive', 'negative', 'uncertain'], true)) {
+            return $facts;
+        }
+        $status = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        $status[$slot] = $polarity;
+        if ($slot === 'associated_symptoms') {
+            $status['has_other_symptoms'] = $polarity;
+        }
+        $facts['finding_status'] = $status;
+        if ($polarity === 'uncertain') {
+            $facts['patient_uncertain'] = true;
+        }
+        if ($polarity === 'negative') {
+            $label = str_replace('_', ' ', $slot);
+            $neg = self::stringList($facts['relevant_negatives'] ?? []);
+            if (!self::listHasLabel($neg, $label)) {
+                $neg[] = $label;
+            }
+            $facts['relevant_negatives'] = $neg;
+            $negSym = self::stringList($facts['negative_symptoms'] ?? []);
+            if (!self::listHasLabel($negSym, $label)) {
+                $negSym[] = $label;
+            }
+            $facts['negative_symptoms'] = $negSym;
+        }
+
+        return $facts;
+    }
+
+    private static function sameClinicalLabel(string $a, string $b): bool
+    {
+        $a = mb_strtolower(trim($a));
+        $b = mb_strtolower(trim($b));
+        if ($a === '' || $b === '') {
+            return false;
+        }
+
+        return $a === $b || str_contains($a, $b) || str_contains($b, $a);
+    }
+
+    /**
+     * @param list<string> $list
+     */
+    private static function listHasLabel(array $list, string $label): bool
+    {
+        foreach ($list as $item) {
+            if (self::sameClinicalLabel((string) $item, $label)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Short yes/no/negation/particle replies that answer the current question conversationally.
      */
     private static function isContextualShortReply(string $answer): bool
@@ -2217,44 +2950,20 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
-     * True when the proposed follow-up asks for something already known from facts/conversation.
+     * True when the proposed follow-up asks for a fact the patient already gave.
+     * Onset and duration are separate. A time span such as "kahapon" fills both.
      *
      * @param array<string, mixed> $facts
      * @param array<string, mixed> $context
      */
     private static function questionTargetsAlreadyKnownFact(string $question, array $facts, array $context): bool
     {
-        $q = mb_strtolower(trim($question));
-        if ($q === '') {
+        $slot = self::questionFactSlot($question);
+        if ($slot === '') {
             return false;
         }
 
-        if (preg_match('/\b(when|san-o|kailan|nagsugod|nagsimula|start|onset|how\s+long|duration|gaano\s+katagal|pila\s+ka\s+(adlaw|oras))\b/u', $q)) {
-            if (trim((string) ($facts['onset'] ?? '')) !== '' || trim((string) ($facts['duration'] ?? '')) !== '') {
-                return true;
-            }
-        }
-        if (preg_match('/\b(where|diin|saan|which\s+part|ano\s+nga\s+parte|location|asa)\b/u', $q)) {
-            if (trim((string) ($facts['location'] ?? '')) !== '') {
-                return true;
-            }
-        }
-        if (preg_match('/\b(1\s*(to|tubtob|-|–)\s*10|pain\s*score|gaano\s*kasakit|pila\s*ka\s*grabe|severity)\b/u', $q)) {
-            if (($facts['pain_score'] ?? null) !== null) {
-                return true;
-            }
-        }
-        if (preg_match('/\b(what\s+(is|are)\s+(your|the)\s+(symptom|complaint)|ano\s+ang\s+(imong\s+)?(sakit|sintomas)|describe\s+(your\s+)?(symptom|pain))\b/u', $q)) {
-            if (self::hasClinicallyUsefulFacts($facts)) {
-                return true;
-            }
-        }
-        // Asking to clarify a particle/filler already in the transcript is never useful.
-        if (preg_match('/\b(really|only|gid|lang)\b/u', $q) && self::hasClinicallyUsefulFacts($facts)) {
-            return true;
-        }
-
-        return false;
+        return !in_array($slot, self::genuinelyMissingSlots($facts, $context), true);
     }
 
     /**
@@ -2311,7 +3020,7 @@ final class GeminiClinicalInterviewDemo
     private static function factsFromNlpEvidence(array $evidence): array
     {
         $facts = self::blankFacts();
-        $symptoms = self::stringList($evidence['symptoms'] ?? []);
+        $symptoms = self::preferSpecificSymptoms(self::stringList($evidence['symptoms'] ?? []));
         if ($symptoms !== []) {
             $facts['symptom'] = $symptoms[0];
             if (count($symptoms) > 1) {
@@ -2519,8 +3228,14 @@ final class GeminiClinicalInterviewDemo
         // --- laterality ---
         $side = trim((string) ($incoming['laterality'] ?? ''));
         if ($side !== '') {
-            if (self::scalarSupportedByPatient($side, $hay)) {
-                $facts['laterality'] = $side;
+            $lowSide = mb_strtolower($side);
+            $bareNegation = in_array($lowSide, ['no', 'none', 'indi', 'hindi', 'wala', 'walang'], true);
+            $statedLeft = $bareNegation
+                && $lowSide === 'wala'
+                && class_exists('ClinicalFeatureExtractors')
+                && ClinicalFeatureExtractors::looksLateralityWala($hay);
+            if ($statedLeft || (!$bareNegation && self::scalarSupportedByPatient($side, $hay))) {
+                $facts['laterality'] = $statedLeft ? 'wala' : $side;
             } else {
                 $dropped[] = 'laterality:' . $side;
             }
@@ -2815,21 +3530,12 @@ final class GeminiClinicalInterviewDemo
      */
     private static function neutralMissingFactQuestion(array $context, array $facts): string
     {
-        $lang = self::detectLanguageHint($context);
-        $symptom = trim((string) ($facts['symptom'] ?? ''));
-        if ($symptom === '') {
-            return match ($lang) {
-                'hiligaynon' => 'Pwede mo mas klaro nga isaysay kung ano ang imo nabatyagan?',
-                'tagalog' => 'Pwede mo bang ilarawan nang mas malinaw ang nararamdaman mo?',
-                default => 'Can you describe more clearly what you are feeling?',
-            };
+        $missing = self::genuinelyMissingSlots($facts, $context);
+        if ($missing === []) {
+            return '';
         }
 
-        return match ($lang) {
-            'hiligaynon' => 'San-o ini nagsugod?',
-            'tagalog' => 'Kailan ito nagsimula?',
-            default => 'When did this start?',
-        };
+        return self::simpleQuestionForSlot($missing[0], $context);
     }
 
     /**
@@ -2978,20 +3684,25 @@ final class GeminiClinicalInterviewDemo
                 . "If the complaint is about an animal, pet, livestock, wildlife, or any non-human subject — even when symptoms sound medical — "
                 . "classification=NON_HEALTH_RELATED, patient_subject=NON_HUMAN, empty clinical_facts, do not start interview. "
                 . "Do not reinterpret an animal complaint as a human complaint. "
-                . "If HEALTH_RELATED: patient_subject must be HUMAN; extract ONLY genuine clinical facts for the human patient. "
-                . "Ask at most ONE natural, context-aware next_question for the single most clinically relevant missing detail — not a checklist. "
-                . "If the complaint is already clinically obvious, do not ask unnecessary clarification. "
-                . "Never output EMERGENCY, URGENT, or NON-URGENT.";
+                . "If HEALTH_RELATED: patient_subject must be HUMAN; extract ONLY facts the patient actually said. "
+                . "clinical_facts must include every fact in this message (all complaints, not just the first). "
+                . "missing_information lists only facts that are still absent. "
+                . "Ask exactly ONE simple next_question for one still-missing fact, in QUESTION LANGUAGE. "
+                . "If onset, location, laterality, pain score, duration, trauma, or any other fact is already present, do not ask for it. "
+                . "Never output EMERGENCY, URGENT, or NON-URGENT. Do not diagnose.";
         }
 
         return $languageBlock
             . "MODE: INTERPRET_ANSWER\n"
-            . "Use COMMON-SENSE clinical conversation over the FULL conversation + current answer.\n"
-            . "Do NOT ask a question whose answer is already clearly implied or known.\n"
-            . "Do NOT ask repetitive, unnatural, or irrelevant questions.\n"
-            . "Interpret short replies (yes/no/negation/particles) by conversational context — they are often VALID answers, not new symptoms.\n"
-            . "Never treat discourse particles/fillers/intensifiers (or English glosses like intensifier words) as medical symptoms.\n"
-            . "Final acuity is NOT your job.\n\n"
+            . "Read the FULL conversation. The accumulated clinical_facts are the source of truth for this turn.\n"
+            . "Merge every new fact from the latest answer into clinical_facts. Do not drop facts from earlier turns.\n"
+            . "Keep every complaint the patient named, with the facts that belong to it.\n"
+            . "no, wala, indi, and hindi are valid answers. Store them. Do not ask that fact again.\n"
+            . "Do not assume, infer, or invent any fact the patient did not say.\n"
+            . "missing_information must list only facts that are still empty in clinical_facts.\n"
+            . "Ask exactly ONE simple next_question for one item in missing_information, in QUESTION LANGUAGE.\n"
+            . "If nothing important is missing, set interview_sufficient=true and next_question=\"\".\n"
+            . "Do not diagnose. Final acuity is NOT your job.\n\n"
             . "Original patient complaint (preserve exactly):\n"
             . (string) ($context['chief_complaint'] ?? '') . "\n\n"
             . "Current question the patient was answering:\n"
@@ -3002,10 +3713,11 @@ final class GeminiClinicalInterviewDemo
             . $nlpBlock . "\n"
             . "Already collected clinical_facts (JSON):\n" . $factsJson . "\n\n"
             . "Previously listed missing_information (JSON):\n" . $missingJson . "\n\n"
-            . "Update clinical_facts ONLY with newly supported genuine clinical information. "
-            . "Apply short-answer meaning to the CURRENT question (e.g. negation → relevant_negatives or confirmed absence). "
-            . "Ask at most ONE natural next_question for the most important remaining clinical gap, or set interview_sufficient=true if enough is known. "
-            . "If ambiguous, answer_status=UNCLEAR and clarify — never guess. Never output EMERGENCY, URGENT, or NON-URGENT.";
+            . "Return the full accumulated clinical_facts, not only the new answer. "
+            . "Apply a short yes/no to the CURRENT question only. "
+            . "next_question must follow the patient's latest language and ask one missing fact in everyday words. "
+            . "Do not translate the question word-for-word. If ambiguous, answer_status=UNCLEAR and do not guess. "
+            . "Never output EMERGENCY, URGENT, or NON-URGENT.";
     }
 
     private static function systemPrompt(): string
@@ -3018,23 +3730,20 @@ Patient input → existing NLP/domain validation → Gemini Flash semantic inter
 
 You MUST NEVER determine clinical acuity. You MUST NEVER output, assign, recommend, or infer EMERGENCY, URGENT, or NON-URGENT. You do not diagnose. You do not prescribe. ClinicalTriageEngine alone decides final triage later.
 
-COMMON-SENSE CONVERSATION (critical):
-- Read the COMPLETE conversation and the current answer before choosing the next question.
-- Do not blindly fill schema fields one by one like a checklist.
-- Do not ask a question when the answer is already clearly implied or already known.
-- Do not ask repetitive, unnatural, or irrelevant questions.
-- Ask only the single most clinically relevant missing question needed to understand the complaint.
-- Questions must be natural and context-aware.
-- If the complaint is already clinically obvious, do not ask unnecessary clarification — set interview_sufficient=true when appropriate.
+CUMULATIVE FACTS (critical):
+- clinical_facts is the running record of the whole interview. Every turn must keep prior facts and add only what this answer newly states.
+- Preserve every complaint, not only the first. Do not delete a symptom, place, time, score, or denial from an earlier turn.
+- Patient answers are the source of truth. Do not assume, infer, or invent symptom, location, laterality, onset, duration, frequency, pain score, trauma, or associated symptoms.
+- "no", "wala", "indi", and "hindi" are real answers. Store the denial. Never ask that same fact again.
+- missing_information may contain only facts that are still empty. If onset is filled, onset must not be listed. Same for location, laterality, pain score, duration, trauma, and every other stored fact.
+- next_question must be chosen from the current clinical_facts. Ask exactly one missing fact. If nothing important is missing, stop.
 
 FOLLOW-UP LANGUAGE (next_question only):
-- The user message names the question language already detected from the patient. Write next_question only in that language.
-- Keep English, Hiligaynon/Ilonggo, Tagalog, mixed, informal, slang, and misspelled input in that same language. Do not translate it.
-- When that language is Hiligaynon/Ilonggo, write natural Hiligaynon/Ilonggo. Do not mix in Tagalog or English.
-- When it is Tagalog, write natural Tagalog. When it is English, write natural English.
-- Mixed wording may stay mixed only to the degree the patient already mixed it.
-- Use the full conversation and the latest answer. Ask only for clinically relevant information that is still missing.
-- Do not repeat information the patient already gave. Do not use an awkward literal translation.
+- Detect the language of the patient's latest message. The user message names that language. Write next_question only in it.
+- Hiligaynon/Ilonggo in, simple Hiligaynon/Ilonggo out. Tagalog in, simple Tagalog out. English in, simple English out.
+- Mixed language: follow the patient's dominant language. Do not switch language unless the patient switches.
+- Use everyday words a patient can answer. Do not translate word-for-word from English. Do not use technical or formal wording.
+- Keep the patient's own words in clinical_facts. Do not rewrite the complaint.
 
 Short answers & discourse particles:
 - Interpret short replies such as affirmatives, negatives, and brief particles according to the CURRENT question's conversational context (they can be VALID).
@@ -3066,9 +3775,9 @@ Clinical jobs (only when HEALTH_RELATED):
 1) Understand complaint/answers semantically using original wording + conversation context.
 2) Prefer validated NLP mappings when provided; use Gemini as semantic fallback only when meaning is reliable.
 3) Extract structured clinical facts ONLY when patient-supported (and/or validated NLP). Preserve original wording in conversation.
-4) Ask exactly ONE natural follow-up from confirmed facts + genuinely missing information — or stop when sufficient.
-5) Stop when clinically sufficient (interview_sufficient=true, question_needed=false).
-6) Write next_question only in the QUESTION LANGUAGE from the user prompt (English, Hiligaynon/Ilonggo, or Tagalog). That language is already detected from the patient's words. Do not switch it yourself. Do not translate the patient's complaint or answers. Preserve the clinical meaning of the question.
+4) Ask exactly ONE simple follow-up for one genuinely missing fact — or stop when those facts are present. Do not decide EMERGENCY, URGENT, or NON-URGENT.
+5) Stop when the accumulated facts are enough for ClinicalTriageEngine (interview_sufficient=true, question_needed=false). You do not choose acuity.
+6) Write next_question only in the QUESTION LANGUAGE from the user prompt. Use simple spoken language, not a word-for-word translation. Do not switch language unless the patient did.
 
 STRICT anti-hallucination:
 - NEVER invent symptom, location, severity, duration, frequency, laterality, associated symptom, warning sign, or diagnosis.
