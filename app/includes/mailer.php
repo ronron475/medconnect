@@ -26,7 +26,12 @@ function medconnect_mail_env(string $key): string
         }
     }
 
-    return medconnect_mail_env_from_file($key);
+    $fromFile = medconnect_mail_env_from_file($key);
+    if ($fromFile !== '') {
+        return $fromFile;
+    }
+
+    return medconnect_mail_fallback($key);
 }
 
 function medconnect_mail_env_from_file(string $key): string
@@ -61,10 +66,25 @@ function medconnect_mail_env_from_file(string $key): string
         ) {
             $value = substr($value, 1, -1);
         }
-        return trim($value);
+        $value = trim($value);
+        if ($value === '') {
+            continue;
+        }
+        return $value;
     }
 
     return '';
+}
+
+function medconnect_mail_fallback(string $key): string
+{
+    // Hostinger does not expose these to PHP. Env and the server .env still win when present.
+    $fallbacks = [
+        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
+        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
+    ];
+
+    return $fallbacks[$key] ?? '';
 }
 
 class MedConnectRailwayMailer
