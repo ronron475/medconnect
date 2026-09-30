@@ -71,6 +71,7 @@ $barangay_label = htmlspecialchars($bhw_barangay_name);
       <section class="bhw-reg-section">
         <label class="bhw-reg-section__head" for="bhwRegBlood"><span>5</span> Blood type</label>
         <div class="bhw-reg-section__body">
+          <div class="bhw-reg-select">
           <select class="form-control bhw-reg-blood" id="bhwRegBlood" name="blood_type">
             <option value="Unknown">Unknown</option>
             <option value="A+">A+</option>
@@ -82,6 +83,10 @@ $barangay_label = htmlspecialchars($bhw_barangay_name);
             <option value="O+">O+</option>
             <option value="O-">O-</option>
           </select>
+          <span class="bhw-reg-select__chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </span>
+          </div>
         </div>
       </section>
 

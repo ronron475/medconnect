@@ -265,7 +265,8 @@
       if (modalTitle) modalTitle.textContent = name;
       if (modalAvatar) modalAvatar.textContent = initials(p);
       if (modalMeta) {
-        modalMeta.textContent = [p.age ? ('Age ' + p.age) : '', formatSex(p.gender), p.contact_number || ''].filter(Boolean).join(' · ') || 'Patient record';
+        modalMeta.textContent = '';
+        modalMeta.hidden = true;
       }
       if (panels.profile) {
         panels.profile.innerHTML = fieldGrid([
@@ -274,8 +275,6 @@
           ['Sex', formatSex(p.gender)],
           ['Phone number', p.contact_number],
           ['Email', p.email],
-          ['Barangay', p.barangay],
-          ['Purok', p.purok],
           ['Address', addressLine(p)]
         ]);
       }
