@@ -76,7 +76,9 @@ final class GeminiClinicalInterviewDemo
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
             $message = $quota
                 ? 'Gemini is unavailable because the Gemini quota was exceeded. Interview not started.'
-                : 'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail;
+                : (self::isRailwayApplicationMissing(self::$lastError)
+                    ? 'The Railway AI service was not running (Application not found). Interview not started.' . $detail
+                    : 'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail);
 
             // NLP already confirmed health: still cannot interview without Gemini questions — fail closed.
             return self::rejectNonHealth(
@@ -203,7 +205,9 @@ final class GeminiClinicalInterviewDemo
             $quota = self::isGeminiQuotaError(self::$lastError);
             $message = $quota
                 ? 'Gemini is unavailable because the Gemini quota was exceeded. No facts were updated.'
-                : 'Gemini unavailable or returned invalid JSON for this answer. No facts were updated.' . $detail;
+                : (self::isRailwayApplicationMissing(self::$lastError)
+                    ? 'The Railway AI service was not running (Application not found). No facts were updated.' . $detail
+                    : 'Gemini unavailable or returned invalid JSON for this answer. No facts were updated.' . $detail);
 
             return self::errorResult($context, $message, [
                 'raw_error' => self::$lastError,
@@ -274,6 +278,16 @@ final class GeminiClinicalInterviewDemo
         $msg = strtolower($message);
 
         return str_contains($msg, '429') || str_contains($msg, 'quota');
+    }
+
+    /**
+     * Railway's edge returns this JSON when the public host has no running deployment.
+     */
+    private static function isRailwayApplicationMissing(string $message): bool
+    {
+        $msg = strtolower($message);
+
+        return str_contains($msg, 'application not found');
     }
 
     public static function lastError(): string

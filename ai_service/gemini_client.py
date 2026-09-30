@@ -54,7 +54,7 @@ def _extract_gemini_text(data: dict[str, Any]) -> str:
     for cand in data.get("candidates") or []:
         content = cand.get("content") or {}
         for part in content.get("parts") or []:
-            if not isinstance(part, dict):
+            if not isinstance(part, dict) or part.get("thought"):
                 continue
             piece = str(part.get("text") or "").strip()
             if piece:
@@ -87,8 +87,10 @@ def _ping_gemini() -> tuple[str, str]:
     timeout = max(5, int(_env("AI_TIMEOUT") or "15"))
     generation: dict[str, Any] = {
         "temperature": 0,
-        "maxOutputTokens": 64,
-        "thinkingConfig": {"thinkingBudget": 0},
+        "maxOutputTokens": 256,
+        # Gemini 3.5 Flash spends maxOutputTokens on hidden thoughts. thinkingBudget 0
+        # can hang until the read times out. MINIMAL leaves the reply as plain text.
+        "thinkingConfig": {"thinkingLevel": "MINIMAL"},
     }
     payload: dict[str, Any] = {
         "contents": [{"role": "user", "parts": [{"text": "Reply only with the two letters OK"}]}],
@@ -395,16 +397,16 @@ def generate_content(
 
     text = _extract_gemini_text(data)
     if not text:
-        # Flash can return empty candidates with finishReason=MAX_TOKENS when thinking
-        # config/token budget interferes — retry once without thinking + more room.
+        # Empty candidate is usually thoughts consuming maxOutputTokens. Ask for
+        # minimal thinking and enough room for the JSON body.
         gen = body.get("generationConfig")
         if isinstance(gen, dict):
             gen2 = dict(gen)
-            gen2.pop("thinkingConfig", None)
+            gen2["thinkingConfig"] = {"thinkingLevel": "MINIMAL"}
             try:
-                gen2["maxOutputTokens"] = max(int(gen2.get("maxOutputTokens") or 0), 1024)
+                gen2["maxOutputTokens"] = max(int(gen2.get("maxOutputTokens") or 0), 4096)
             except (TypeError, ValueError):
-                gen2["maxOutputTokens"] = 1024
+                gen2["maxOutputTokens"] = 4096
             body2 = dict(body)
             body2["generationConfig"] = gen2
             try:
