@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import base64
 import os
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -49,18 +49,39 @@ def friendly_error(ocr: dict[str, Any]) -> str:
     return "The OCR service could not read the uploaded ID. Please try again with a clearer photo."
 
 
-def call_ocr_space(file_path: str, mime: str, engine: int = 1) -> dict[str, Any] | None:
+def _ssl_verify() -> bool | str:
+    """Use the project CA bundle. Windows Python often lacks the system store."""
+    ca = Path(__file__).resolve().parents[2] / "config" / "ssl" / "cacert.pem"
+    if ca.is_file():
+        return str(ca)
+    return True
+
+
+def _filetype(mime: str) -> str:
+    if mime == "image/png":
+        return "PNG"
+    if mime == "application/pdf":
+        return "PDF"
+    return "JPG"
+
+
+def call_ocr_space(
+    file_path: str,
+    mime: str,
+    engine: int = 1,
+    *,
+    detect_orientation: bool = False,
+) -> dict[str, Any] | None:
+    """Multipart upload. Base64 inflates the file past the free-tier 1 MB limit."""
     api_key = _api_key()
     if not api_key:
         return {"IsErroredOnProcessing": True, "ErrorMessage": ["OCR_SPACE_API_KEY not configured"]}
 
-    with open(file_path, "rb") as fh:
-        raw = fh.read()
-    b64 = base64.b64encode(raw).decode("ascii")
-    data_url = f"data:{mime};base64,{b64}"
-
+    filename = "national-id" + (".pdf" if mime == "application/pdf" else ".jpg")
     try:
-        with httpx.Client(timeout=60.0) as client:
+        with open(file_path, "rb") as fh:
+            raw = fh.read()
+        with httpx.Client(timeout=60.0, verify=_ssl_verify()) as client:
             resp = client.post(
                 OCR_SPACE_ENDPOINT,
                 data={
@@ -68,15 +89,26 @@ def call_ocr_space(file_path: str, mime: str, engine: int = 1) -> dict[str, Any]
                     "language": "eng",
                     "OCREngine": str(engine),
                     "scale": "true",
-                    "isOverlayRequired": "false",
-                    "detectOrientation": "true",
+                    "isOverlayRequired": "true",
+                    "detectOrientation": "true" if detect_orientation else "false",
                     "isTable": "false",
-                    "base64Image": data_url,
+                    "filetype": _filetype(mime),
                 },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                files={"file": (filename, raw, mime or "image/jpeg")},
             )
             resp.raise_for_status()
-            return resp.json()
+            payload = resp.json()
+            results = payload.get("ParsedResults") or []
+            if results and not str(results[0].get("ParsedText") or "").strip():
+                lines = []
+                for line in ((results[0].get("TextOverlay") or {}).get("Lines") or []):
+                    words = [str(w.get("WordText") or "") for w in (line.get("Words") or [])]
+                    joined = " ".join(w for w in words if w).strip()
+                    if joined:
+                        lines.append(joined)
+                if lines:
+                    results[0]["ParsedText"] = "\n".join(lines)
+            return payload
     except Exception:
         return None
 
