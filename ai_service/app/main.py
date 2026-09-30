@@ -15,6 +15,7 @@ from app.middleware.security import SecurityHeadersMiddleware
 from app.routers import (
     care_tips,
     consultation,
+    email,
     faq_chatbot,
     fuzzy,
     health,
@@ -84,6 +85,7 @@ def create_app() -> FastAPI:
     app.include_router(ocr.router)
     app.include_router(faq_chatbot.router)
     app.include_router(nlp_demo.router)
+    app.include_router(email.router)
     app.include_router(care_tips.router)
 
     return app
