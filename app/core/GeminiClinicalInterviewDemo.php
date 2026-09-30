@@ -2252,10 +2252,11 @@ final class GeminiClinicalInterviewDemo
         $replaced = '';
         if ($missing !== []) {
             $sufficient = false;
-            if ($nextQ === '' || $asked === '' || !in_array($asked, $missing, true)) {
-                $nextQ = self::simpleQuestionForSlot($missing[0], $context);
-                $replaced = $missing[0];
-            }
+            $slotToAsk = ($asked !== '' && in_array($asked, $missing, true)) ? $asked : $missing[0];
+            // Always compose the patient question. A model phrase that names the right
+            // fact can still be a fragment or can omit which complaint it means.
+            $nextQ = self::simpleQuestionForSlot($slotToAsk, $context);
+            $replaced = $slotToAsk;
         }
 
         return [
@@ -2448,7 +2449,7 @@ final class GeminiClinicalInterviewDemo
         if (preg_match('/\b(fall|fell|injury|injured|accident|trauma|nahulog|nabunggo|nabungguan|naaksidente|pilas|samad)\b/u', $q)) {
             return 'trauma';
         }
-        if (preg_match('/\b(anything else|other symptom|iban|iba pa|iba pang|associated)\b/u', $q)) {
+        if (preg_match('/\b(anything else|other symptom|iban|iba pa|iba pang|bukod|maliban|besides|associated)\b/u', $q)) {
             return 'associated_symptoms';
         }
         if (preg_match('/\b(how\s+often|frequency|pirmi|palagi|paminsan)\b/u', $q)) {
@@ -2473,54 +2474,376 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
-     * One short question for the missing fact, in the patient's current language.
+     * One complete question for the missing fact, in the patient's language,
+     * naming the complaint they already used when we have their words.
      *
      * @param array<string, mixed> $context
      */
     private static function simpleQuestionForSlot(string $slot, array $context): string
     {
         $lang = self::detectLanguageHint($context);
-        $questions = [
-            'hiligaynon' => [
-                'symptom' => 'Ano ang imo nabatyagan?',
-                'location' => 'Diin ini masakit?',
-                'laterality' => 'Wala ukon tuo nga bahin?',
-                'onset' => 'San-o ini nagsugod?',
-                'duration' => 'Pila na ka adlaw ukon oras ini?',
-                'pain_score' => 'Pila ka grabe, halin 1 tubtob 10?',
-                'trauma' => 'May nabungguan ka ukon nahulog antes ini?',
-                'associated_symptoms' => 'May ara pa iban nga nabatyagan?',
-                'associated_detail' => 'Ano pa ang imo nabatyagan?',
-                'frequency' => 'Pirme ini ukon kung kaisa lang?',
-            ],
-            'tagalog' => [
-                'symptom' => 'Ano po ang nararamdaman mo?',
-                'location' => 'Saan po masakit?',
-                'laterality' => 'Kaliwa po o kanan?',
-                'onset' => 'Kailan ito nagsimula?',
-                'duration' => 'Gaano na katagal ito?',
-                'pain_score' => 'Gaano kasakit, mula 1 hanggang 10?',
-                'trauma' => 'May nabunggo po ba o nahulog bago ito?',
-                'associated_symptoms' => 'May iba pa po bang nararamdaman?',
-                'associated_detail' => 'Ano pa po ang nararamdaman mo?',
-                'frequency' => 'Palagi po ba ito o paminsan-minsan lang?',
-            ],
-            'english' => [
-                'symptom' => 'What are you feeling?',
-                'location' => 'Where does it hurt?',
-                'laterality' => 'Is it the left side or the right side?',
+        $focus = self::followUpSubject($context, $slot, $lang);
+
+        return self::composePatientQuestion($lang, $slot, $focus['phrase'], $focus['kind']);
+    }
+
+    /**
+     * The complaint this question is about, in the patient's own words.
+     * Body-part questions use the place they named. Other questions use one complaint
+     * when several were given, so the patient can tell which one is being asked.
+     *
+     * @param array<string, mixed> $context
+     * @return array{phrase:string, kind:string}
+     */
+    private static function followUpSubject(array $context, string $slot, string $lang): array
+    {
+        $empty = ['phrase' => '', 'kind' => 'complaint'];
+        $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
+        $text = self::patientEvidenceCorpus($context);
+        $places = self::patientSpokenPlaces($text);
+        $complaints = self::patientSpokenComplaints($text);
+
+        $storedPlace = mb_strtolower(trim((string) ($facts['location'] ?? '')));
+        $place = '';
+        foreach ($places as $row) {
+            $candidate = self::asNounPhrase($row['phrase']);
+            if ($candidate === '' || !self::subjectFitsQuestion($candidate, $lang, $text)) {
+                continue;
+            }
+            if ($storedPlace !== '' && (
+                $storedPlace === $row['english']
+                || $storedPlace === $candidate
+                || self::sameClinicalLabel($storedPlace, $row['english'])
+                || self::sameClinicalLabel($storedPlace, $candidate)
+            )) {
+                $place = $candidate;
+                break;
+            }
+            if ($place === '') {
+                $place = $candidate;
+            }
+        }
+
+        $storedSymptom = mb_strtolower(trim((string) ($facts['symptom'] ?? '')));
+        $complaint = '';
+        foreach ($complaints as $row) {
+            $candidate = self::asNounPhrase($row['phrase']);
+            if ($candidate === '' || !self::subjectFitsQuestion($candidate, $lang, $text)) {
+                continue;
+            }
+            if ($storedSymptom !== '' && (
+                self::sameClinicalLabel($storedSymptom, $row['english'])
+                || self::sameClinicalLabel($storedSymptom, $candidate)
+            )) {
+                $complaint = $candidate;
+                break;
+            }
+            if ($complaint === '') {
+                $complaint = $candidate;
+            }
+        }
+
+        if ($slot === 'location') {
+            return $complaint !== '' ? ['phrase' => $complaint, 'kind' => 'complaint'] : $empty;
+        }
+        if (in_array($slot, ['laterality', 'pain_score', 'trauma'], true)) {
+            if ($place !== '') {
+                return ['phrase' => $place, 'kind' => 'place'];
+            }
+            if ($complaint !== '') {
+                return ['phrase' => $complaint, 'kind' => 'complaint'];
+            }
+
+            return $empty;
+        }
+        if ($complaint !== '') {
+            return ['phrase' => $complaint, 'kind' => 'complaint'];
+        }
+        if ($place !== '') {
+            return ['phrase' => $place, 'kind' => 'place'];
+        }
+
+        return $empty;
+    }
+
+    /**
+     * A short noun the question can name. Full clauses are not used as the subject.
+     */
+    private static function asNounPhrase(string $phrase): string
+    {
+        $phrase = self::spokenFocus($phrase);
+        $phrase = trim((string) preg_replace('/\s+(ko|mo|ka|akon|ako|ninyo|niyo|po)$/ui', '', $phrase));
+        if ($phrase === '' || self::isLateralityToken($phrase) || self::isNonClinicalDiscourseLabel($phrase)) {
+            return '';
+        }
+        if (preg_match('/\b(ang|ng|na|nga|sang|the|my|your|yung|ung)\b/ui', $phrase)) {
+            return '';
+        }
+        $words = preg_split('/\s+/u', $phrase) ?: [];
+        if (count($words) > 4) {
+            return '';
+        }
+
+        return $phrase;
+    }
+
+    /**
+     * @return list<array{phrase:string, english:string}>
+     */
+    private static function patientSpokenPlaces(string $text): array
+    {
+        $nlp = self::collectLocalNlpEvidence($text);
+        $out = [];
+        foreach (is_array($nlp['location_mappings'] ?? null) ? $nlp['location_mappings'] : [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $phrase = self::spokenFocus((string) ($row['local'] ?? ''));
+            $english = mb_strtolower(trim((string) ($row['english'] ?? '')));
+            if ($phrase === '' || self::isLateralityToken($phrase) || !self::appearsInPatientText($phrase, $text)) {
+                continue;
+            }
+            $key = mb_strtolower($phrase);
+            if (isset($out[$key])) {
+                continue;
+            }
+            $out[$key] = ['phrase' => $phrase, 'english' => $english];
+        }
+
+        return array_values($out);
+    }
+
+    /**
+     * @return list<array{phrase:string, english:string}>
+     */
+    private static function patientSpokenComplaints(string $text): array
+    {
+        $nlp = self::collectLocalNlpEvidence($text);
+        $out = [];
+        foreach (is_array($nlp['symptom_mappings'] ?? null) ? $nlp['symptom_mappings'] : [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $english = trim((string) ($row['english'] ?? ''));
+            if ($english === '' || self::isGenericPainLabel($english)) {
+                continue;
+            }
+            $phrase = self::spokenFocus((string) ($row['local'] ?? ''));
+            if ($phrase === '' || !self::appearsInPatientText($phrase, $text)) {
+                $phrase = self::complaintClauseAround((string) ($row['local'] ?? ''), $text);
+            }
+            if ($phrase === '' || self::isLateralityToken($phrase)) {
+                continue;
+            }
+            $key = mb_strtolower($phrase);
+            if (isset($out[$key])) {
+                continue;
+            }
+            $out[$key] = ['phrase' => $phrase, 'english' => mb_strtolower($english)];
+        }
+        if ($out === []) {
+            foreach (self::patientComplaintClauses($text) as $clause) {
+                $key = mb_strtolower($clause);
+                $out[$key] = ['phrase' => $clause, 'english' => ''];
+            }
+        }
+
+        return array_values($out);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function patientComplaintClauses(string $text): array
+    {
+        $parts = preg_split('/\b(kag|ug|and|at)\b|,/u', $text) ?: [];
+        $out = [];
+        foreach ($parts as $part) {
+            $part = self::spokenFocus(trim((string) $part));
+            if ($part === '' || mb_strlen($part) < 3 || mb_strlen($part) > 48) {
+                continue;
+            }
+            if (self::isNonClinicalDiscourseLabel($part) || self::isLateralityToken($part)) {
+                continue;
+            }
+            if (class_exists('ClinicalFeatureExtractors')) {
+                $duration = ClinicalFeatureExtractors::extractDuration($part);
+                $raw = trim((string) ($duration['raw'] ?? ''));
+                if ($raw !== '' && self::sameClinicalLabel($raw, $part)) {
+                    continue;
+                }
+            }
+            $out[] = $part;
+        }
+
+        return $out;
+    }
+
+    private static function complaintClauseAround(string $local, string $text): string
+    {
+        $local = self::spokenFocus($local);
+        if ($local === '' || !self::appearsInPatientText($local, $text)) {
+            return '';
+        }
+        foreach (self::patientComplaintClauses($text) as $clause) {
+            if (self::appearsInPatientText($local, $clause) || self::appearsInPatientText($clause, $local)) {
+                return $clause;
+            }
+        }
+
+        return $local;
+    }
+
+    private static function spokenFocus(string $phrase): string
+    {
+        $phrase = trim($phrase);
+        $phrase = trim((string) preg_replace('/[.!?,;:]+$/u', '', $phrase));
+        $phrase = trim((string) preg_replace(
+            '/^(akon|ako|ko|imo|mo|ang|sang|sa|nga|gid|the|my|your|yung|ung)\s+/ui',
+            '',
+            $phrase
+        ));
+
+        return trim($phrase);
+    }
+
+    private static function appearsInPatientText(string $term, string $text): bool
+    {
+        $term = mb_strtolower(trim($term));
+        $text = mb_strtolower($text);
+        if ($term === '' || $text === '' || mb_strlen($term) < 3) {
+            return false;
+        }
+
+        return preg_match('/(?<!\p{L})' . preg_quote($term, '/') . '(?!\p{L})/u', $text) === 1;
+    }
+
+    private static function subjectFitsQuestion(string $subject, string $lang, string $patientText): bool
+    {
+        if (!self::appearsInPatientText($subject, $patientText)) {
+            return false;
+        }
+        if ($lang === 'english') {
+            return self::resolveQuestionLanguage($subject) === 'english';
+        }
+        $subjectLang = self::resolveQuestionLanguage($subject);
+        if ($subjectLang === 'english' && self::englishLexiconOnly($subject)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Build one grammatical question. A body-part subject is named as the place of the pain.
+     * A complaint subject is the patient's own short phrase.
+     */
+    private static function composePatientQuestion(string $lang, string $slot, string $subject, string $kind): string
+    {
+        $subject = trim($subject);
+        $hasSubject = $subject !== '';
+        $place = $hasSubject && $kind === 'place';
+
+        if ($lang === 'hiligaynon') {
+            if (!$hasSubject) {
+                return match ($slot) {
+                    'location' => 'Diin mo ini nabatyagan?',
+                    'laterality' => 'Diin nga kilid ang masakit, sa wala ukon sa tuo?',
+                    'onset' => 'San-o ini nagsugod?',
+                    'duration' => 'Pila na ka adlaw ukon oras ini nga ara?',
+                    'pain_score' => 'Pila ka grabe ang kasakit, halin 1 tubtob 10?',
+                    'trauma' => 'May nabungguan ka ukon nahulog ka antes ini nagsugod?',
+                    'associated_symptoms' => 'May ara pa iban nga nabatyagan mo?',
+                    'associated_detail' => 'Ano pa ang imo nabatyagan?',
+                    'frequency' => 'Pirme ini, ukon kung kaisa lang?',
+                    default => 'Ano ang imo nabatyagan?',
+                };
+            }
+            $about = $place ? "sakit sa imo {$subject}" : "{$subject} mo";
+
+            return match ($slot) {
+                'location' => "Diin mo nabatyagan ang {$subject}?",
+                'laterality' => "Sa imo {$subject}, wala ukon tuo ang masakit?",
+                'onset' => "San-o nagsugod ang {$about}?",
+                'duration' => "Pila na ka adlaw ukon oras ang {$about}?",
+                'pain_score' => $place
+                    ? "Pila ka grabe ang kasakit sa imo {$subject}, halin 1 tubtob 10?"
+                    : "Pila ka grabe ang {$subject} mo, halin 1 tubtob 10?",
+                'trauma' => "May nabungguan ka ukon nahulog ka bago nagsugod ang {$about}?",
+                'associated_symptoms' => "Bukod sa {$about}, may ara pa iban nga nabatyagan mo?",
+                'associated_detail' => "Ano pa ang imo nabatyagan bukod sa {$about}?",
+                'frequency' => "Pirme bala ang {$about}, ukon kung kaisa lang?",
+                default => "Ano ang imo nabatyagan sa {$subject}?",
+            };
+        }
+
+        if ($lang === 'tagalog') {
+            if (!$hasSubject) {
+                return match ($slot) {
+                    'location' => 'Saan mo ito nararamdaman?',
+                    'laterality' => 'Alin ang masakit, kaliwa o kanan?',
+                    'onset' => 'Kailan ito nagsimula?',
+                    'duration' => 'Gaano na katagal ito?',
+                    'pain_score' => 'Gaano kasakit ito, mula 1 hanggang 10?',
+                    'trauma' => 'May nabunggo ka ba o nahulog bago ito nagsimula?',
+                    'associated_symptoms' => 'May iba ka pa bang nararamdaman?',
+                    'associated_detail' => 'Ano pa ang nararamdaman mo?',
+                    'frequency' => 'Palagi ba ito, o paminsan-minsan lang?',
+                    default => 'Ano ang nararamdaman mo?',
+                };
+            }
+            $about = $place ? "sakit sa {$subject} mo" : "{$subject} mo";
+
+            return match ($slot) {
+                'location' => "Saan mo nararamdaman ang {$subject}?",
+                'laterality' => "Sa {$subject} mo, kaliwa o kanan ang masakit?",
+                'onset' => "Kailan nagsimula ang {$about}?",
+                'duration' => "Gaano na katagal ang {$about}?",
+                'pain_score' => $place
+                    ? "Gaano kasakit sa {$subject} mo, mula 1 hanggang 10?"
+                    : "Gaano kasakit ang {$subject} mo, mula 1 hanggang 10?",
+                'trauma' => "May nabunggo ka ba o nahulog bago nagsimula ang {$about}?",
+                'associated_symptoms' => "Maliban sa {$about}, may iba ka pa bang nararamdaman?",
+                'associated_detail' => "Ano pa ang nararamdaman mo maliban sa {$about}?",
+                'frequency' => "Palagi ba ang {$about}, o paminsan-minsan lang?",
+                default => "Ano ang nararamdaman mo sa {$subject}?",
+            };
+        }
+
+        if (!$hasSubject) {
+            return match ($slot) {
+                'location' => 'Where do you feel it?',
+                'laterality' => 'Is it on the left side or the right side?',
                 'onset' => 'When did it start?',
                 'duration' => 'How long has this been going on?',
                 'pain_score' => 'How bad is the pain, from 1 to 10?',
                 'trauma' => 'Did you get hit or fall before this started?',
-                'associated_symptoms' => 'Is there anything else you are feeling?',
-                'associated_detail' => 'What else are you feeling?',
-                'frequency' => 'Does this happen all the time or only sometimes?',
-            ],
-        ];
-        $pack = $questions[$lang] ?? $questions['english'];
+                'associated_symptoms' => 'Do you feel anything else?',
+                'associated_detail' => 'What else do you feel?',
+                'frequency' => 'Does this happen all the time, or only sometimes?',
+                default => 'What are you feeling?',
+            };
+        }
+        $about = $place ? "the pain in your {$subject}" : "your {$subject}";
 
-        return $pack[$slot] ?? ($pack['symptom'] ?? '');
+        return match ($slot) {
+            'location' => "Where do you feel your {$subject}?",
+            'laterality' => "Is the pain in your {$subject} on the left side or the right side?",
+            'onset' => "When did {$about} start?",
+            'duration' => $place
+                ? "How long have you had the pain in your {$subject}?"
+                : "How long have you had your {$subject}?",
+            'pain_score' => $place
+                ? "How bad is the pain in your {$subject}, from 1 to 10?"
+                : "How bad is your {$subject}, from 1 to 10?",
+            'trauma' => "Did you get hit or fall before {$about} started?",
+            'associated_symptoms' => "Besides {$about}, do you feel anything else?",
+            'associated_detail' => "What else do you feel besides {$about}?",
+            'frequency' => $place
+                ? "Does the pain in your {$subject} happen all the time, or only sometimes?"
+                : "Does your {$subject} happen all the time, or only sometimes?",
+            default => "What are you feeling in your {$subject}?",
+        };
     }
 
     /**
