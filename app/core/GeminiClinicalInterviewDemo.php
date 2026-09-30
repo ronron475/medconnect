@@ -73,12 +73,18 @@ final class GeminiClinicalInterviewDemo
         $gemini = self::callGemini('start', $context, '');
         if ($gemini === null) {
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
+            $quota = self::isGeminiQuotaError(self::$lastError);
+            $message = $quota
+                ? 'Gemini is unavailable because the Gemini quota was exceeded. Interview not started.'
+                : (self::isRailwayApplicationMissing(self::$lastError)
+                    ? 'The Railway AI service was not running (Application not found). Interview not started.' . $detail
+                    : 'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail);
 
             // NLP already confirmed health: still cannot interview without Gemini questions — fail closed.
             return self::rejectNonHealth(
                 $context,
                 self::CLASS_UNCLEAR,
-                'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail,
+                $message,
                 [
                     'raw_error' => self::$lastError,
                     'nlp_precheck' => $nlpPrecheck,
@@ -87,7 +93,7 @@ final class GeminiClinicalInterviewDemo
                         'confidence' => null,
                         'normalized_health_concern' => '',
                         'passed' => false,
-                        'error' => 'gemini_unavailable_or_invalid_json',
+                        'error' => $quota ? 'gemini_quota_exceeded' : 'gemini_unavailable_or_invalid_json',
                     ],
                 ]
             );
@@ -195,7 +201,14 @@ final class GeminiClinicalInterviewDemo
             array_pop($context['conversation']);
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
 
-            return self::errorResult($context, 'Gemini unavailable or returned invalid JSON for this answer. No facts were updated.' . $detail, [
+            $quota = self::isGeminiQuotaError(self::$lastError);
+            $message = $quota
+                ? 'Gemini is unavailable because the Gemini quota was exceeded. No facts were updated.'
+                : (self::isRailwayApplicationMissing(self::$lastError)
+                    ? 'The Railway AI service was not running (Application not found). No facts were updated.' . $detail
+                    : 'Gemini unavailable or returned invalid JSON for this answer. No facts were updated.' . $detail);
+
+            return self::errorResult($context, $message, [
                 'raw_error' => self::$lastError,
             ]);
         }
@@ -239,6 +252,16 @@ final class GeminiClinicalInterviewDemo
         $msg = strtolower($message);
 
         return str_contains($msg, '429') || str_contains($msg, 'quota');
+    }
+
+    /**
+     * Railway's edge returns this JSON when the public host has no running deployment.
+     */
+    private static function isRailwayApplicationMissing(string $message): bool
+    {
+        $msg = strtolower($message);
+
+        return str_contains($msg, 'application not found');
     }
 
     /**
