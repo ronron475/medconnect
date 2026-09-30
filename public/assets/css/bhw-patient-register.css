@@ -1,0 +1,204 @@
+/* BHW patient registration — numbered sheet layout */
+
+.bhw-register-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bhw-reg-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: #e8f3fb;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bhw-reg-banner__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #fff;
+  color: #2563eb;
+}
+
+.bhw-reg-sheet {
+  overflow: hidden;
+  border: 1px solid #e3edf5;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.bhw-reg-section__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 18px;
+  background: #f3f8fc;
+  color: #0f2744;
+  font-size: 1.02rem;
+  font-weight: 750;
+  line-height: 1.3;
+  cursor: default;
+}
+
+.bhw-reg-section + .bhw-reg-section .bhw-reg-section__head {
+  border-top: 1px solid #e6eef6;
+}
+
+.bhw-reg-section__head span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.bhw-reg-section__body {
+  padding: 14px 18px 16px;
+}
+
+.bhw-register-page .form-label {
+  display: block;
+  margin: 0 0 6px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bhw-register-page .bhw-req {
+  color: #dc2626;
+}
+
+.bhw-reg-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 20px;
+  margin-top: 14px;
+}
+
+.bhw-register-page .bhw-reg-sheet .form-control {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid #d7e2ec;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.bhw-register-page .bhw-reg-sheet .form-control:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+.bhw-reg-area {
+  position: relative;
+}
+
+.bhw-register-page .bhw-reg-area textarea.form-control {
+  min-height: 118px;
+  padding-bottom: 28px;
+  resize: vertical;
+}
+
+.bhw-reg-count {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.bhw-reg-blood {
+  max-width: 280px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.bhw-reg-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 18px 18px;
+}
+
+.bhw-register-page .bhw-reg-actions .bhw-btn-teal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bhw-register-page .bhw-reg-actions .bhw-btn-teal:hover {
+  background: #1d4ed8;
+}
+
+.bhw-register-page .bhw-field-error {
+  margin: 0 18px 8px;
+}
+
+@media (max-width: 768px) {
+  .bhw-reg-split {
+    grid-template-columns: 1fr;
+  }
+
+  .bhw-reg-blood,
+  .bhw-register-page .bhw-reg-actions .bhw-btn-teal {
+    max-width: none;
+    width: 100%;
+  }
+
+  .bhw-reg-actions {
+    justify-content: stretch;
+  }
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-banner,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-section__head {
+  background: #0D1E30;
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-sheet,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-banner__icon,
+html[data-theme-resolved='dark'] body.bhw-body .bhw-register-page .bhw-reg-sheet .form-control {
+  background: #151F2E;
+  border-color: #243347;
+  color: #e2e8f0;
+}
+
+html[data-theme-resolved='dark'] body.bhw-body .bhw-reg-section + .bhw-reg-section .bhw-reg-section__head {
+  border-top-color: #243347;
+}
