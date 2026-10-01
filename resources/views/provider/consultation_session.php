@@ -208,10 +208,17 @@ if ($booked_slot && !empty($booked_slot['end_time'])) {
 }
 
 // Check for active video session
-$v_stmt = $pdo->prepare("SELECT room_token FROM video_sessions WHERE consultation_id = ? AND status = 'active' LIMIT 1");
+$v_stmt = $pdo->prepare("SELECT room_token, started_at FROM video_sessions WHERE consultation_id = ? AND status = 'active' LIMIT 1");
 $v_stmt->execute([$consultation_id]);
 $v_session = $v_stmt->fetch();
 $room_token = $v_session ? $v_session['room_token'] : '';
+$video_elapsed_seconds = 0;
+if ($v_session && !empty($v_session['started_at'])) {
+    $video_started_ts = strtotime((string) $v_session['started_at']);
+    if ($video_started_ts) {
+        $video_elapsed_seconds = max(0, time() - $video_started_ts);
+    }
+}
 $video_doctor_name = trim((string) ($_SESSION['first_name'] ?? '') . ' ' . (string) ($_SESSION['last_name'] ?? ''));
 if ($video_doctor_name === '') {
     $video_doctor_name = trim((string) ($c['provider_name'] ?? 'Healthcare Provider'));
@@ -3921,7 +3928,8 @@ body.final-assessment-modal-open {
 <script src="<?= ASSET_BASE ?>/assets/js/soap-signature.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/soap-signature.js') ?>"></script>
 <script>
 // SESSION TIMER
-let seconds = 0;
+let seconds = <?= (int) $video_elapsed_seconds ?>;
+let sessionTimerAnchorMs = seconds > 0 ? Date.now() - seconds * 1000 : null;
 let timerActive = false;
 let mobileCallFullscreen = false;
 let desktopVideoExpanded = false;
@@ -5230,7 +5238,8 @@ function scrollToClinicalSupport() {
 
 setInterval(() => {
     if (!timerActive) return;
-    seconds++;
+    if (sessionTimerAnchorMs === null) sessionTimerAnchorMs = Date.now() - seconds * 1000;
+    seconds = Math.max(0, Math.floor((Date.now() - sessionTimerAnchorMs) / 1000));
     let hrs = Math.floor(seconds / 3600);
     let mins = Math.floor((seconds % 3600) / 60);
     let secs = seconds % 60;
