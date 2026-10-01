@@ -663,10 +663,16 @@ final class GisDashboardService
                   AND vc.status IN ('scheduled','in_consultation','pending'))";
             $selectParams[] = $providerId;
         }
-        if ($providerId > 0 && $this->tableExists('triage_results') && $this->columnExists('triage_results', 'assigned_provider_id')) {
-            $pendingReviewSql = "(SELECT COUNT(*) FROM triage_results prw
-                WHERE prw.patient_id = u.id AND prw.assigned_provider_id = ?
-                  AND prw.recommendation_status = 'pending_approval')";
+        if (
+            $providerId > 0
+            && $this->tableExists('triage_results')
+            && $this->columnExists('triage_results', 'assigned_provider_id')
+            && $this->tableExists('consultations')
+            && function_exists('triage_sql_current_pending_care_tips_review')
+        ) {
+            $pendingReviewSql = '(SELECT COUNT(*) FROM triage_results prw
+                WHERE prw.patient_id = u.id
+                  AND ' . triage_sql_current_pending_care_tips_review('prw') . ')';
             $selectParams[] = $providerId;
         }
         $params = array_merge($selectParams, $params);
@@ -1669,6 +1675,8 @@ final class GisDashboardService
 
     /**
      * Human-readable operational status for GIS popups (not a new triage class).
+     * "Pending Care tips review" uses pending_review from
+     * triage_sql_current_pending_care_tips_review() — current actionable review only.
      *
      * @param array<string, mixed> $row
      */
