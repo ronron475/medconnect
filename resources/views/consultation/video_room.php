@@ -912,16 +912,49 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     }
     .violation-modal {
       z-index: 100300;
+      align-items: flex-start;
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
     }
+    /* overflow stays visible so the reason menu is not clipped; the backdrop scrolls instead of the body shrinking under the actions. */
     .violation-dialog {
       overflow: visible;
       position: relative;
       z-index: 2;
+      flex-shrink: 0;
+      max-height: none;
+      margin: auto;
     }
     .violation-dialog__body {
+      flex: 0 0 auto;
       overflow: visible;
+    }
+    @media (max-width: 480px) {
+      .violation-dialog {
+        margin: auto 0 0;
+        max-height: none;
+      }
+    }
+    @media (max-height: 560px) {
+      .violation-dialog__head {
+        padding-top: 14px;
+      }
+      .violation-dialog__head p {
+        margin-bottom: 10px;
+      }
+      .violation-field {
+        margin-bottom: 10px;
+      }
+      .violation-dialog textarea {
+        min-height: 60px;
+      }
+      .violation-actions {
+        padding-top: 10px;
+        padding-bottom: 12px;
+      }
+      .violation-actions button {
+        min-height: 40px;
+      }
     }
     .violation-reason {
       position: relative;

@@ -132,7 +132,7 @@
     }
 
     const trimmed = normalizeComplaint((els().textarea && els().textarea.value) || '');
-    if (!trimmed) {
+    if (!trimmed && els().textarea) {
       submitHint.textContent = 'Patient complaint is optional. You can submit your registration without entering symptoms.';
       submitHint.classList.add('is-ready');
       return;
