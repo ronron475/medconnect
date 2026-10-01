@@ -640,20 +640,6 @@ function validateStep2Form() {
     }
   }
 
-  const recaptchaToken = getRecaptchaToken();
-  const recaptchaErr = document.getElementById('recaptcha-error');
-  if (!recaptchaToken) {
-    const recaptchaMsg = 'Please confirm you are not a robot.';
-    if (recaptchaErr) recaptchaErr.textContent = recaptchaMsg;
-    valid = false;
-    if (!firstError) {
-      firstError = recaptchaMsg;
-      firstInvalidEl = document.getElementById('reg-recaptcha-wrap');
-    }
-  } else if (recaptchaErr) {
-    recaptchaErr.textContent = '';
-  }
-
   return { valid, firstError, firstInvalidEl };
 }
 
@@ -704,7 +690,6 @@ function goToStep2() {
   stepDot2.classList.add('active');
   stepDot2.setAttribute('aria-current', 'step');
   window.scrollTo({ top: 0, behavior: 'smooth' });
-  scheduleRecaptchaRender();
 }
 
 function goToStep1() {
@@ -792,60 +777,6 @@ function syncMedicalYesNoFields() {
   if (allergiesInput) allergiesInput.value = allergyYes && allergyYes.checked ? 'Yes' : 'No';
   if (medsInput) medsInput.value = medsYes && medsYes.checked ? 'Yes' : 'No';
   if (conditionsInput) conditionsInput.value = conditionsYes && conditionsYes.checked ? 'Yes' : 'No';
-}
-
-function recaptchaSiteKey() {
-  const host = document.getElementById('reg-recaptcha');
-  const fromDom = host ? String(host.getAttribute('data-sitekey') || '').trim() : '';
-  const fromWindow = String(window.MEDCONNECT_RECAPTCHA_SITE_KEY || '').trim();
-  return fromDom || fromWindow;
-}
-
-window.medconnectRenderRecaptcha = function medconnectRenderRecaptcha() {
-  const host = document.getElementById('reg-recaptcha');
-  const key = recaptchaSiteKey();
-  if (!host || !key) return true;
-  if (step2Panel && step2Panel.hasAttribute('hidden')) return false;
-  if (!window.grecaptcha || typeof window.grecaptcha.render !== 'function') return false;
-  if (window.medconnectRecaptchaWidgetId !== null && window.medconnectRecaptchaWidgetId !== undefined) {
-    return true;
-  }
-  try {
-    window.medconnectRecaptchaWidgetId = window.grecaptcha.render(host, { sitekey: key });
-    return true;
-  } catch (_) {
-    return host.querySelector('iframe') !== null;
-  }
-};
-
-function scheduleRecaptchaRender() {
-  if (window.medconnectRenderRecaptcha()) return;
-  let tries = 0;
-  const timer = setInterval(function () {
-    tries += 1;
-    if (window.medconnectRenderRecaptcha() || tries > 25) {
-      clearInterval(timer);
-    }
-  }, 200);
-}
-
-function getRecaptchaToken() {
-  let token = '';
-  if (window.grecaptcha && typeof window.grecaptcha.getResponse === 'function') {
-    try {
-      const widgetId = window.medconnectRecaptchaWidgetId;
-      token = String(
-        widgetId !== null && widgetId !== undefined
-          ? window.grecaptcha.getResponse(widgetId)
-          : window.grecaptcha.getResponse() || ''
-      );
-    } catch (_) { /* ignore */ }
-  }
-  if (!token) {
-    const field = document.querySelector('#step2-form [name="g-recaptcha-response"]');
-    token = field ? String(field.value || '') : '';
-  }
-  return token.trim();
 }
 
 function updateChiefComplaintCount() {
@@ -1155,7 +1086,6 @@ step2Form.addEventListener('submit', async e => {
     syncStep1HiddenFields();
     const fd = new FormData(step2Form);
     fd.set('csrf_token', window.CSRF_TOKEN || '');
-    fd.set('g-recaptcha-response', getRecaptchaToken());
 
     if (nlp && typeof nlp.isComplaintSkipped === 'function' && nlp.isComplaintSkipped()) {
       fd.append('chief_complaint_skipped', '1');

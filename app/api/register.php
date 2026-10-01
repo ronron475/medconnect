@@ -11,7 +11,6 @@ require_once dirname(dirname(__DIR__)) . '/config/db.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/login_security.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/security_throttle.php';
 require_once dirname(dirname(__DIR__)) . '/app/includes/patient_account_security.php';
-require_once dirname(dirname(__DIR__)) . '/app/includes/recaptcha.php';
 
 patient_registration_ensure_schema($pdo);
 
@@ -28,24 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $csrf = (string) ($_POST['csrf_token'] ?? '');
 if ($csrf === '' || !hash_equals((string) ($_SESSION['csrf_token'] ?? ''), $csrf)) {
     echo json_encode(['success' => false, 'message' => 'Invalid CSRF token. Please refresh and try again.']);
-    exit;
-}
-
-$captchaRemoteIp = '';
-try {
-    $captchaRemoteIp = login_security_ip();
-} catch (Throwable $e) {
-    $captchaRemoteIp = '';
-}
-$captcha = medconnect_recaptcha_verify(
-    (string) ($_POST['g-recaptcha-response'] ?? ''),
-    $captchaRemoteIp
-);
-if (empty($captcha['ok'])) {
-    echo json_encode([
-        'success' => false,
-        'message' => (string) ($captcha['message'] ?? 'Please confirm you are not a robot.'),
-    ]);
     exit;
 }
 

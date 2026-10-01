@@ -723,20 +723,6 @@
             </div>
           </section>
 
-          <?php
-            require_once BASE_PATH . '/app/includes/recaptcha.php';
-            $recaptchaSiteKey = medconnect_recaptcha_site_key();
-          ?>
-          <div class="reg-recaptcha" id="reg-recaptcha-wrap">
-            <p class="reg-recaptcha__label">Confirm you are not a robot</p>
-            <?php if ($recaptchaSiteKey !== ''): ?>
-            <div id="reg-recaptcha" data-sitekey="<?= htmlspecialchars($recaptchaSiteKey, ENT_QUOTES, 'UTF-8') ?>"></div>
-            <?php else: ?>
-            <p class="reg-recaptcha__missing">Security check is not available. Refresh the page or try again later.</p>
-            <?php endif; ?>
-            <span class="field-error" id="recaptcha-error" role="alert"></span>
-          </div>
-
         </div><!-- /intake-sections -->
 
         <div class="step2-actions">
@@ -778,18 +764,7 @@
 <script>
   window.APP_BASE = <?= json_encode($b) ?>;
   window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
-  window.MEDCONNECT_RECAPTCHA_SITE_KEY = <?= json_encode($recaptchaSiteKey) ?>;
-  window.medconnectRecaptchaWidgetId = null;
-  window.onMedconnectRecaptchaLoad = function () {
-    window.medconnectRecaptchaReady = true;
-    if (typeof window.medconnectRenderRecaptcha === 'function') {
-      window.medconnectRenderRecaptcha();
-    }
-  };
 </script>
-<?php if (!empty($recaptchaSiteKey)): ?>
-<script src="https://www.google.com/recaptcha/api.js?onload=onMedconnectRecaptchaLoad&render=explicit" async defer></script>
-<?php endif; ?>
 <script src="<?= $b ?>/assets/js/ph-address-autofill.js?v=20260930ocr5"></script>
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260930ocr5"></script>
