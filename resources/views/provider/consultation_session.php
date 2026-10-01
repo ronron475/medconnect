@@ -465,9 +465,17 @@ $videoEndedPendingFinal = !$soap_finalized
 .video-shell.is-call-active .video-pre-call {
     display: none !important;
 }
-.video-shell.is-call-active .video-shell-tools,
 .video-shell.is-call-active .session-status {
     display: none !important;
+}
+/* Keep Expand/Restore on the live tile so the provider can check clinical info
+   without leaving the docked iframe. iframe stays underneath (z-index). */
+.video-shell.is-call-active .video-shell-tools {
+    display: flex !important;
+    z-index: 500;
+    pointer-events: auto;
+    top: 10px;
+    right: 10px;
 }
 @media (min-width: 769px) {
     .session-page {
@@ -487,9 +495,6 @@ $videoEndedPendingFinal = !$soap_finalized
     .video-shell.is-call-active {
         max-width: min(100%, 680px);
         max-height: min(44dvh, 380px);
-    }
-    .video-shell.is-call-active .video-shell-tools {
-        display: none !important;
     }
 }
 
@@ -2162,37 +2167,49 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         min-height: 0;
         flex: 1 1 auto;
     }
-    /* Live mobile call: fill remaining viewport below the provider header.
-       aspect-ratio and leftover min-height on the page were painting the
-       large white band under a short iframe. */
-    .video-shell.is-call-active {
-        position: fixed;
-        top: var(--mc-header-offset, var(--provider-header-h, 64px));
-        right: 0;
-        left: 0;
+    /* Restored live tile: compact docked iframe, consultation info stays reachable.
+       Full-bleed viewing uses consultation-mobile-call-fullscreen / is-mobile-fullscreen. */
+    .video-shell.is-call-active:not(.is-mobile-fullscreen) {
+        position: relative;
+        top: auto;
+        right: auto;
+        left: auto;
         bottom: auto;
         width: 100%;
         max-width: 100%;
-        height: calc(100vh - var(--mc-header-offset, var(--provider-header-h, 64px)));
-        height: calc(100dvh - var(--mc-header-offset, var(--provider-header-h, 64px)));
-        min-height: 0;
-        max-height: none;
-        aspect-ratio: unset;
-        border-radius: 0;
+        height: auto;
+        min-height: clamp(180px, 32dvh, 240px);
+        max-height: min(42dvh, 280px);
+        aspect-ratio: 16 / 9;
+        border-radius: 12px;
         overflow: hidden;
-        z-index: 400;
+        z-index: 4;
         background: #0b1220;
-        box-shadow: none;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
         box-sizing: border-box;
     }
-    body.provider-body:has(.video-shell.is-call-active) {
+    body.provider-body:has(.video-shell.is-call-active):not(.consultation-mobile-call-fullscreen):not(.consultation-true-fullscreen):not(.consultation-call-ended) {
+        height: auto;
+        max-height: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: auto;
+    }
+    body.provider-body:has(.video-shell.is-call-active):not(.consultation-mobile-call-fullscreen):not(.consultation-true-fullscreen) .provider-page-body,
+    body.provider-body:has(.video-shell.is-call-active):not(.consultation-mobile-call-fullscreen):not(.consultation-true-fullscreen) .main-content.provider-main,
+    body.provider-body:has(.video-shell.is-call-active):not(.consultation-mobile-call-fullscreen):not(.consultation-true-fullscreen) .session-page {
+        height: auto;
+        max-height: none;
+        overflow: visible;
+    }
+    body.provider-body.consultation-mobile-call-fullscreen:has(.video-shell.is-call-active) {
         overflow: hidden;
         background: #0b1220;
         overscroll-behavior: none;
     }
-    body.provider-body:has(.video-shell.is-call-active) .provider-page-body,
-    body.provider-body:has(.video-shell.is-call-active) .main-content.provider-main,
-    body.provider-body:has(.video-shell.is-call-active) .session-page {
+    body.provider-body.consultation-mobile-call-fullscreen:has(.video-shell.is-call-active) .provider-page-body,
+    body.provider-body.consultation-mobile-call-fullscreen:has(.video-shell.is-call-active) .main-content.provider-main,
+    body.provider-body.consultation-mobile-call-fullscreen:has(.video-shell.is-call-active) .session-page {
         min-height: 0;
         height: 100dvh;
         max-height: 100dvh;
@@ -2200,17 +2217,6 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
         margin: 0;
         overflow: hidden;
         background: #0b1220;
-    }
-    body.provider-body:has(.video-shell.is-call-active) .session-side,
-    body.provider-body:has(.video-shell.is-call-active) .session-left > .session-card,
-    body.provider-body:has(.video-shell.is-call-active) .video-pre-call-help,
-    body.provider-body:has(.video-shell.is-call-active) .video-demo-link,
-    body.provider-body:has(.video-shell.is-call-active) .scroll-ai-btn,
-    body.provider-body:has(.video-shell.is-call-active) #floatingScrollAiBtn,
-    body.provider-body:has(.video-shell.is-call-active) .portal-mobile-nav,
-    body.provider-body:has(.video-shell.is-call-active) .mc-messages-fab,
-    body.provider-body:has(.video-shell.is-call-active) .messages-fab {
-        display: none !important;
     }
     .video-shell.is-call-active .active-call,
     .video-shell.is-call-active .mc-provider-video-dock,
@@ -2577,7 +2583,6 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
 }
 body.provider-body:has(.video-shell.is-call-active) .pd-hamburger,
 body.provider-body:has(.video-shell.is-call-active) .mc-theme-toggle,
-body.provider-body:has(.video-shell.is-call-active) #toggleVideoSizeBtn,
 body.provider-body:has(.video-shell.is-call-active) #mobileCallExpandBtn,
 body.provider-body:has(.video-shell.is-call-active) .mc-messages-fab,
 body.provider-body:has(.video-shell.is-call-active) .messages-fab {
@@ -2869,11 +2874,6 @@ body.final-assessment-modal-open {
         <!-- VIDEO INTERFACE -->
         <div class="video-panel" id="videoPanel">
         <div class="video-shell" id="videoInterface">
-            <div class="video-shell-tools">
-                <button type="button" class="video-size-btn" id="toggleVideoSizeBtn" onclick="toggleVideoShellSize()" aria-label="Expand video">Expand video</button>
-                <button type="button" class="video-size-btn" id="scrollToAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
-            </div>
-
             <div id="videoPreCall" class="video-pre-call">
                 <div class="video-pre-call__inner">
                     <div class="video-pre-call__icon"><?= icon('video') ?></div>
@@ -2899,6 +2899,11 @@ body.final-assessment-modal-open {
             <div id="activeCallUI" class="active-call">
                 <div id="mcProviderVideoDock" class="mc-provider-video-dock" aria-label="Live video consultation"></div>
                 <iframe id="videoFrame" src="" hidden allow="camera; microphone; display-capture; autoplay; fullscreen" allowfullscreen></iframe>
+            </div>
+
+            <div class="video-shell-tools">
+                <button type="button" class="video-size-btn" id="toggleVideoSizeBtn" onclick="toggleVideoShellSize()" aria-label="Expand video">Expand video</button>
+                <button type="button" class="video-size-btn" id="scrollToAiBtn" onclick="scrollToClinicalSupport()">Clinical Support</button>
             </div>
 
             <button type="button" id="mobileCallExpandBtn" class="mobile-call-expand-btn" hidden aria-label="Expand video" onclick="toggleMobileCallFullscreen()">
@@ -3951,12 +3956,22 @@ function updateMobileExpandBtn() {
     btn.setAttribute('aria-label', mobileCallFullscreen ? 'Exit fullscreen' : 'Expand video');
 }
 
+function keepProviderVideoDocked() {
+    const dock = document.getElementById('mcProviderVideoDock');
+    if (window.McSessionVideoShell && McSessionVideoShell.isActive() && dock) {
+        McSessionVideoShell.dock(dock);
+    }
+}
+
 function enterMobileCallFullscreen() {
     const shell = document.getElementById('videoInterface');
     if (!shell || !shell.classList.contains('is-call-active')) return;
     mobileCallFullscreen = true;
     document.body.classList.add('consultation-mobile-call-fullscreen');
     shell.classList.add('is-mobile-fullscreen');
+    keepProviderVideoDocked();
+    const floatingBtn = document.getElementById('floatingScrollAiBtn');
+    if (floatingBtn) floatingBtn.classList.remove('show');
     /* CSS-only: native Fullscreen API needs a parent user-gesture and exiting
        OS fullscreen was tearing down the in-app call layout. */
     syncVideoExpandedToFrame(true);
@@ -3976,6 +3991,11 @@ function exitMobileCallFullscreen() {
     if (document.fullscreenElement || document.webkitFullscreenElement) {
         const exit = document.exitFullscreen || document.webkitExitFullscreen;
         if (exit) exit.call(document).catch(function () {});
+    }
+    keepProviderVideoDocked();
+    const floatingBtn = document.getElementById('floatingScrollAiBtn');
+    if (floatingBtn) {
+        floatingBtn.classList.toggle('show', !!(shell && shell.classList.contains('is-call-active')));
     }
     syncVideoExpandedToFrame(false);
     updateExpandButtons();
@@ -4077,10 +4097,7 @@ function enterDesktopVideoExpanded() {
     }
     desktopVideoExpanded = true;
     document.body.classList.add('consultation-desktop-video-expanded');
-    const dock = document.getElementById('mcProviderVideoDock');
-    if (window.McSessionVideoShell && McSessionVideoShell.isActive() && dock) {
-        McSessionVideoShell.dock(dock);
-    }
+    keepProviderVideoDocked();
     const floatingBtn = document.getElementById('floatingScrollAiBtn');
     if (floatingBtn) floatingBtn.classList.remove('show');
     syncVideoExpandedToFrame(true);
@@ -4090,10 +4107,7 @@ function enterDesktopVideoExpanded() {
 function exitDesktopVideoExpanded() {
     desktopVideoExpanded = false;
     document.body.classList.remove('consultation-desktop-video-expanded');
-    const dock = document.getElementById('mcProviderVideoDock');
-    if (window.McSessionVideoShell && McSessionVideoShell.isActive() && dock) {
-        McSessionVideoShell.dock(dock);
-    }
+    keepProviderVideoDocked();
     const shell = document.getElementById('videoInterface');
     const floatingBtn = document.getElementById('floatingScrollAiBtn');
     if (floatingBtn) {
@@ -5230,10 +5244,13 @@ function initFloatingVideoShell(shell) {
 }
 
 function scrollToClinicalSupport() {
+    if (mobileCallFullscreen) exitMobileCallFullscreen();
+    if (desktopVideoExpanded) exitDesktopVideoExpanded();
     const card = document.querySelector('.csp-card');
-    if (card) {
+    if (!card) return;
+    window.setTimeout(function () {
         card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    }, 60);
 }
 
 setInterval(() => {
