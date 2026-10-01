@@ -46,6 +46,24 @@ try {
     }
 
     $consultationId = (int) ($row['consultation_id'] ?? 0);
+    if (!empty($_GET['status_only'])) {
+        echo json_encode([
+            'success' => true,
+            'consultation_id' => $consultationId,
+            'consultation_status' => (string) ($row['consult_status'] ?? ''),
+            'video_status' => strtolower(trim((string) ($row['video_status'] ?? ''))),
+        ]);
+        exit;
+    }
+    if ($userId === (int) ($row['patient_id'] ?? 0)
+        && $userId !== (int) ($row['provider_id'] ?? 0)
+        && strtolower(trim((string) ($row['video_status'] ?? ''))) === 'active') {
+        try {
+            consultation_timing_mark_patient_joined($pdo, $consultationId);
+        } catch (Throwable $e) {
+            error_log('session_timer mark patient joined: ' . $e->getMessage());
+        }
+    }
     $scheduledSeconds = consultation_scheduled_duration_seconds(
         isset($row['slot_start']) ? (string) $row['slot_start'] : null,
         isset($row['slot_end']) ? (string) $row['slot_end'] : null,
