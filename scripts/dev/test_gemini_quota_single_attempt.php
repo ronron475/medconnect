@@ -1,7 +1,7 @@
 <?php
 /**
- * One demo interview start must make at most one Gemini generateContent attempt
- * when Google returns HTTP 429. No live Gemini call is made.
+ * Demo interview start: Gemini 3.5 then Gemini 3.8 once on HTTP 429, then stop.
+ * No live Gemini call is made.
  *
  * Usage: php scripts/dev/test_gemini_quota_single_attempt.php
  */
@@ -34,8 +34,12 @@ try {
 }
 
 echo "Gemini calls observed: $calls\n";
-ok('at most one Gemini generate attempt', $calls <= 1, (string) $calls);
-ok('exactly one Gemini generate attempt', $calls === 1, (string) $calls);
+ok('no Gemini 3.8 retry loop (at most primary + one fallback)', $calls <= 2, (string) $calls);
+ok(
+    'php client posts once on Railway wrapper, or twice on local 3.5 then 3.8',
+    $calls === 1 || $calls === 2,
+    (string) $calls
+);
 ok(
     'quota result code',
     ($started['code'] ?? '') === 'gemini_quota_exceeded',
@@ -54,12 +58,13 @@ import urllib.error
 from unittest.mock import patch
 import gemini_client
 
-calls = {"n": 0}
+calls = {"n": 0, "models": []}
 
 def fake_post(payload, model, key, timeout):
     calls["n"] += 1
+    calls["models"].append(model)
     raise urllib.error.HTTPError(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
         429,
         "Too Many Requests",
         hdrs=None,
@@ -76,6 +81,7 @@ with patch.object(gemini_client, "gemini_api_key", return_value="not-a-real-key"
             print("PYTHON_RAISED=1")
             print("PYTHON_HAS_429=" + ("1" if "429" in text else "0"))
 print("PYTHON_POSTS=" + str(calls["n"]))
+print("PYTHON_MODELS=" + ",".join(calls["models"]))
 PY;
 
 $tmp = tempnam(sys_get_temp_dir(), 'mc429');
@@ -102,7 +108,12 @@ if ($tmp === false) {
         $posts = (int) $m[1];
     }
     echo "Railway generate_content posts observed: " . ($posts === null ? 'none' : (string) $posts) . "\n";
-    ok('railway generateContent not retried on 429', $posts === 1, $text);
+    ok('railway tries Gemini 3.5 then Gemini 3.8 once on 429', $posts === 2, $text);
+    ok(
+        'railway model order is 3.5 then 3.8',
+        str_contains($text, 'PYTHON_MODELS=gemini-3.5-flash,gemini-3.8-flash'),
+        $text
+    );
 }
 
 echo "\n$pass passed, $fail failed\n";

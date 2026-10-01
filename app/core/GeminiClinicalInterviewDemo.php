@@ -26,6 +26,8 @@ final class GeminiClinicalInterviewDemo
     public const CLASS_UNCLEAR = 'UNCLEAR';
 
     private const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent';
+    /** Second Gemini model after primary HTTP 429/quota. Not a replacement for gemini-3.5-flash. */
+    private const GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash';
     private const MAX_TURNS = 12;
     private const TIMEOUT = 45;
     /** Minimum Gemini extraction confidence to accept semantic fallback when NLP has no mapping. */
@@ -226,6 +228,9 @@ final class GeminiClinicalInterviewDemo
     /** Test-only: count generateContent attempts and stop before a live Google/Railway call. */
     private static bool $geminiQuotaProbe = false;
 
+    /** Test-only. When quota-probing, return this text for gemini-3.8-flash instead of HTTP 429. */
+    private static ?string $geminiFallbackSuccessTextForTest = null;
+
     /** Test-only. When set, generate() does not call Gemini and treats the call as HTTP 429. */
     private static bool $openRouterQuotaProbe = false;
 
@@ -249,10 +254,11 @@ final class GeminiClinicalInterviewDemo
 
     private static int $directGeminiAttempts = 0;
 
-    public static function beginGeminiQuotaProbeForTest(): void
+    public static function beginGeminiQuotaProbeForTest(?string $fallbackSuccessText = null): void
     {
         self::$geminiQuotaProbe = true;
         self::$directGeminiAttempts = 0;
+        self::$geminiFallbackSuccessTextForTest = $fallbackSuccessText;
         if (class_exists('AiServiceClient')) {
             AiServiceClient::beginGeminiQuotaProbeForTest();
         }
@@ -261,6 +267,7 @@ final class GeminiClinicalInterviewDemo
     public static function endGeminiQuotaProbeForTest(): void
     {
         self::$geminiQuotaProbe = false;
+        self::$geminiFallbackSuccessTextForTest = null;
         if (class_exists('AiServiceClient')) {
             AiServiceClient::endGeminiQuotaProbeForTest();
         }
@@ -6551,6 +6558,10 @@ PROMPT;
                 'x-goog-api-key: ' . $key,
             ]);
         } catch (RuntimeException $e) {
+            $fallbackText = self::tryGeminiFallbackModelOnce($e, $payload, $model, $key);
+            if (is_string($fallbackText) && $fallbackText !== '') {
+                return $fallbackText;
+            }
             $recovered = self::recoverDemoQuotaWithOpenRouter($e, $payload);
             if (is_string($recovered)) {
                 return $recovered;
@@ -6565,6 +6576,54 @@ PROMPT;
         }
 
         $text = self::extractCandidateText($data);
+        self::$aiProviderUsed = 'gemini';
+
+        return $text;
+    }
+
+    /**
+     * Local/direct Google path. After primary Gemini HTTP 429/quota, try gemini-3.8-flash once.
+     * Success returns its text. Failure returns null so the existing OpenRouter fallback can run.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private static function tryGeminiFallbackModelOnce(
+        RuntimeException $e,
+        array $payload,
+        string $primaryModel,
+        string $key
+    ): ?string {
+        if (!self::isGeminiQuotaError($e->getMessage())) {
+            return null;
+        }
+        $fallback = self::GEMINI_FALLBACK_MODEL;
+        if ($fallback === '' || $primaryModel === $fallback) {
+            return null;
+        }
+        $url = sprintf(self::ENDPOINT, rawurlencode($fallback));
+        $body = $payload;
+        if (isset($body['generationConfig']) && is_array($body['generationConfig'])
+            && array_key_exists('thinkingConfig', $body['generationConfig'])
+        ) {
+            $gen = $body['generationConfig'];
+            unset($gen['thinkingConfig']);
+            $body['generationConfig'] = $gen;
+        }
+        try {
+            $data = self::httpPostJson($url, $body, [
+                'x-goog-api-key: ' . $key,
+            ]);
+        } catch (RuntimeException) {
+            return null;
+        }
+        try {
+            $text = self::extractCandidateText($data);
+        } catch (RuntimeException) {
+            return null;
+        }
+        if ($text === '') {
+            return null;
+        }
         self::$aiProviderUsed = 'gemini';
 
         return $text;
@@ -6729,6 +6788,16 @@ PROMPT;
         }
         if (self::$geminiQuotaProbe && str_contains($url, ':generateContent')) {
             self::$directGeminiAttempts++;
+            if (
+                self::$geminiFallbackSuccessTextForTest !== null
+                && str_contains($url, self::GEMINI_FALLBACK_MODEL)
+            ) {
+                return [
+                    'candidates' => [
+                        ['content' => ['parts' => [['text' => self::$geminiFallbackSuccessTextForTest]]]],
+                    ],
+                ];
+            }
             throw new RuntimeException('Gemini HTTP 429: You exceeded your current quota');
         }
         $ch = curl_init($url);
