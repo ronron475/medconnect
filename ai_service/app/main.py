@@ -23,6 +23,7 @@ from app.routers import (
     ml,
     nlp_demo,
     ocr,
+    openrouter_test,  # TEMPORARY: remove with app/routers/openrouter_test.py
     profile,
     root,
     symptoms,
@@ -87,6 +88,7 @@ def create_app() -> FastAPI:
     app.include_router(nlp_demo.router)
     app.include_router(email.router)
     app.include_router(care_tips.router)
+    app.include_router(openrouter_test.router)  # TEMPORARY
 
     return app
 
