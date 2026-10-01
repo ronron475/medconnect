@@ -28,6 +28,7 @@ final class GeminiPatientInterview
 
     /**
      * Patient API/UI mapping only. Interview itself is GeminiClinicalInterviewDemo::start/answer.
+     * $checkboxSymptoms are for last-resort PHP ClinicalInterviewEngine only — never Gemini input.
      *
      * @param array<string, mixed> $pack
      * @param array<string, mixed> $demoPrior

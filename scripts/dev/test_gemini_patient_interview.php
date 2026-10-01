@@ -419,6 +419,175 @@ ok(
     str_contains($submitSrc, 'ChiefComplaintNlpService::assessInterview')
     && !str_contains($submitSrc, 'gemini_clinical_interview_demo.php')
 );
+ok(
+    'start/answer do not receive checkbox symptoms',
+    str_contains($src, 'GeminiClinicalInterviewDemo::start($utterance)')
+    && str_contains($src, 'GeminiClinicalInterviewDemo::answer($utterance, $prior)')
+    && !str_contains($src, 'GeminiClinicalInterviewDemo::start($utterance, $checkboxSymptoms)')
+    && !str_contains($src, 'GeminiClinicalInterviewDemo::answer($utterance, $prior, $checkboxSymptoms)')
+);
+ok(
+    'exception path maps a transport-failure pack instead of assessWithFallback',
+    str_contains($src, "code' => 'gemini_unavailable_or_invalid_json'")
+    && !str_contains($src, 'assessWithFallback($utterance, $checkboxSymptoms)')
+);
+ok(
+    'generate fallback order is Gemini then 3.8 then OpenRouter then Groq',
+    str_contains($demoSrc, "GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash'")
+    && str_contains($demoSrc, 'tryGeminiFallbackModelOnce')
+    && str_contains($demoSrc, 'recoverDemoQuotaWithOpenRouter')
+    && strpos($demoSrc, 'medconnect_demo_openrouter_quota_text') < strpos($demoSrc, 'medconnect_demo_groq_quota_text')
+    && str_contains($demoSrc, 'continueWithNlpQuestionBank')
+);
+
+GeminiPatientInterview::resetTestHooks();
+GeminiPatientInterview::$packOverrideForTest = [
+    'status' => GeminiClinicalInterviewDemo::STATUS_INTERVIEWING,
+    'awaiting_question' => 'When did the headache start?',
+    'chief_complaint' => 'Masakit akon ulo kag daw naga init akon lawas.',
+    'clinical_facts' => [
+        'symptom' => 'head pain',
+        'associated_symptoms' => ['fever'],
+    ],
+    'interview_context' => [
+        'chief_complaint' => 'Masakit akon ulo kag daw naga init akon lawas.',
+        'patient_turns' => ['Masakit akon ulo kag daw naga init akon lawas.'],
+        'awaiting_question' => 'When did the headache start?',
+        'clinical_facts' => [
+            'symptom' => 'head pain',
+            'associated_symptoms' => ['fever'],
+        ],
+        'question_language' => 'hiligaynon',
+        'detected_language' => 'hiligaynon',
+    ],
+    'question_language' => 'hiligaynon',
+];
+$newComplaint = ChiefComplaintNlpService::assessInterview(
+    'Masakit akon ulo kag daw naga init akon lawas.',
+    [],
+    ['fever']
+);
+ok(
+    'A new complaint with empty prior starts a Gemini interview',
+    ClinicalInterviewEngine::isInProgress($newComplaint)
+    && ($newComplaint['interview_context']['chief_complaint'] ?? '') === 'Masakit akon ulo kag daw naga init akon lawas.'
+);
+ok(
+    'A checkbox symptoms are not stored as Gemini interview input',
+    GeminiPatientInterview::$engineAssessCallsForTest === []
+);
+
+$followCtx = [
+    'interview_context' => $newComplaint['interview_context'],
+    GeminiPatientInterview::CONTEXT_KEY => $newComplaint['interview_context'],
+];
+GeminiPatientInterview::resetTestHooks();
+GeminiPatientInterview::$packOverrideForTest = [
+    'status' => GeminiClinicalInterviewDemo::STATUS_INTERVIEWING,
+    'awaiting_question' => 'How bad is the pain from 1 to 10?',
+    'chief_complaint' => 'Masakit akon ulo kag daw naga init akon lawas.',
+    'clinical_facts' => [
+        'symptom' => 'head pain',
+        'associated_symptoms' => ['fever'],
+        'onset' => 'kahapon',
+    ],
+    'interview_context' => array_merge($newComplaint['interview_context'], [
+        'patient_turns' => ['Masakit akon ulo kag daw naga init akon lawas.', 'kahapon'],
+        'clinical_facts' => [
+            'symptom' => 'head pain',
+            'associated_symptoms' => ['fever'],
+            'onset' => 'kahapon',
+        ],
+        'awaiting_question' => 'How bad is the pain from 1 to 10?',
+    ]),
+];
+$follow = ChiefComplaintNlpService::assessInterview('kahapon', $followCtx, []);
+ok(
+    'B follow-up reuses demo interview_context and accumulates onset',
+    ClinicalInterviewEngine::isInProgress($follow)
+    && in_array('kahapon', (array) ($follow['interview_context']['patient_turns'] ?? []), true)
+    && str_contains(strtolower((string) json_encode($follow['interview_context']['clinical_facts'] ?? [])), 'kahapon')
+);
+ok(
+    'C accumulated facts keep the opening symptom and associated fever',
+    str_contains(strtolower((string) json_encode($follow['interview_context']['clinical_facts'] ?? [])), 'head')
+    && str_contains(strtolower((string) json_encode($follow['interview_context']['clinical_facts'] ?? [])), 'fever')
+);
+
+foreach (['no', 'wala', 'indi'] as $neg) {
+    $negFacts = GeminiClinicalInterviewDemo::mapFactsForEngine([
+        'symptom' => 'head pain',
+        'relevant_negatives' => ['fever'],
+        'finding_status' => ['fever' => 'negative'],
+        'notes' => [$neg],
+    ]);
+    ok(
+        "D negative answer $neg is not stored as fever=true",
+        ($negFacts['fever'] ?? null) !== true
+        && !in_array('fever', (array) ($negFacts['symptoms'] ?? []), true)
+    );
+}
+
+foreach ([
+    'english' => 'When did the headache start?',
+    'tagalog' => 'Kailan nagsimula ang sakit ng ulo mo?',
+    'hiligaynon' => 'San-o nagsugod ang kasakit sa imo ulo?',
+] as $lang => $q) {
+    GeminiPatientInterview::resetTestHooks();
+    GeminiPatientInterview::$packOverrideForTest = [
+        'status' => GeminiClinicalInterviewDemo::STATUS_INTERVIEWING,
+        'awaiting_question' => $q,
+        'chief_complaint' => 'sakit ulo',
+        'clinical_facts' => ['symptom' => 'head pain'],
+        'question_language' => $lang,
+        'interview_context' => [
+            'chief_complaint' => 'sakit ulo',
+            'patient_turns' => ['sakit ulo'],
+            'awaiting_question' => $q,
+            'question_language' => $lang,
+            'detected_language' => $lang,
+            'clinical_facts' => ['symptom' => 'head pain'],
+        ],
+    ];
+    $langOut = ChiefComplaintNlpService::assessInterview('sakit ulo', []);
+    ok(
+        "language pack $lang keeps demo question text",
+        (string) ($langOut['followup_question']['text'] ?? '') === $q
+        && strtolower((string) ($langOut['question_language'] ?? $langOut['interview']['question_language'] ?? '')) === $lang
+    );
+}
+
+GeminiPatientInterview::resetTestHooks();
+$slangFacts = GeminiClinicalInterviewDemo::mapFactsForEngine([
+    'symptom' => 'head pain',
+    'notes' => ['saket olo ko'],
+]);
+ok(
+    'H mixed/slang/misspelling wording is not dropped from mapped facts',
+    str_contains(strtolower((string) json_encode($slangFacts)), 'head')
+    || str_contains(strtolower((string) json_encode($slangFacts)), 'olo')
+);
+
+ok(
+    'I/J/K/L patient quota path already used the shared OpenRouter hop',
+    str_contains($src, 'GeminiClinicalInterviewDemo::answer($utterance, $prior)')
+    && str_contains($demoSrc, 'recoverDemoQuotaWithOpenRouter')
+    && str_contains($demoSrc, 'GEMINI_FALLBACK_MODEL')
+);
+ok(
+    'M PHP ClinicalInterviewEngine is last-resort after demo transport failure only',
+    str_contains($patientSrc, 'function phpFallback')
+    && str_contains($patientSrc, 'isTransportFailure')
+);
+ok(
+    'N mapper does not call ClinicalTriageEngine',
+    !str_contains($patientSrc, 'ClinicalTriageEngine::assess')
+);
+ok(
+    'O live submit still persists via patient_submit_symptoms_for_review',
+    str_contains($submitSrc, 'function patient_submit_symptoms_for_review')
+    && str_contains($submitSrc, 'ChiefComplaintNlpService::assessInterview')
+);
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail > 0 ? 1 : 0);

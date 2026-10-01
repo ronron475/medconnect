@@ -204,6 +204,7 @@ final class ChiefComplaintNlpService
             $prior = class_exists('GeminiPatientInterview')
                 ? GeminiPatientInterview::demoInterviewContext($priorContext)
                 : [];
+            // Same methods as the demo API. Do not pass checkbox symptoms into start/answer.
             $pack = (class_exists('GeminiPatientInterview') && is_array(GeminiPatientInterview::$packOverrideForTest))
                 ? GeminiPatientInterview::$packOverrideForTest
                 : ($prior === []
@@ -214,20 +215,22 @@ final class ChiefComplaintNlpService
                 return GeminiPatientInterview::mapPack($pack, $utterance, $prior, $checkboxSymptoms);
             }
 
-            return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
+            return $pack;
         } catch (Throwable $e) {
             error_log('ChiefComplaintNlpService interview fallback: ' . $e->getMessage());
-            $base = self::assessWithFallback($utterance, $checkboxSymptoms);
-            $base['assessment_status'] = ClinicalInterviewEngine::STATUS_COMPLETED;
-            $display = strtoupper(str_replace('_', '-', (string) ($base['triage']['triage_display'] ?? 'NON-URGENT')));
-            if (!in_array($display, ['NON-URGENT', 'URGENT', 'EMERGENCY'], true)) {
-                $display = 'NON-URGENT';
-                $base['triage']['triage_display'] = $display;
-                $base['triage']['triage_classification'] = 'NON_URGENT';
-            }
-            $base['patient_message'] = ClinicalInterviewEngine::patientMessage($display);
+            if (class_exists('GeminiPatientInterview') && class_exists('GeminiClinicalInterviewDemo')) {
+                $prior = GeminiPatientInterview::demoInterviewContext($priorContext);
 
-            return $base;
+                return GeminiPatientInterview::mapPack([
+                    'error' => true,
+                    'status' => GeminiClinicalInterviewDemo::STATUS_ERROR,
+                    'code' => 'gemini_unavailable_or_invalid_json',
+                    'message' => $e->getMessage(),
+                    'interview_context' => $prior,
+                ], $utterance, $prior, $checkboxSymptoms);
+            }
+
+            return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
         }
     }
 
