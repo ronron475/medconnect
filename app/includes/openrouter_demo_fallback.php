@@ -155,12 +155,18 @@ function medconnect_demo_openrouter_request_from_gemini(array $geminiPayload): ?
         ? (int) $gen['maxOutputTokens']
         : 1024;
 
-    return [
+    $body = [
         'model' => MEDCONNECT_OPENROUTER_DEMO_MODEL,
         'temperature' => $temperature,
         'max_tokens' => max(64, min(4096, $maxTokens)),
         'messages' => $messages,
     ];
+    if (strtolower(trim((string) ($gen['responseMimeType'] ?? ''))) === 'application/json') {
+        $body['response_format'] = ['type' => 'json_object'];
+        $body['max_tokens'] = max((int) $body['max_tokens'], 2048);
+    }
+
+    return $body;
 }
 
 /**
@@ -259,7 +265,214 @@ function medconnect_demo_openrouter_http_complete(array $body): ?string
     if (!is_array($decoded)) {
         return null;
     }
-    $text = trim((string) ($decoded['choices'][0]['message']['content'] ?? ''));
+    $text = medconnect_demo_openrouter_choice_text($decoded);
+
+    return $text !== '' ? $text : null;
+}
+
+/**
+ * @param mixed $content
+ */
+function medconnect_demo_openrouter_content_text($content): string
+{
+    if (is_string($content)) {
+        return trim($content);
+    }
+    if (!is_array($content)) {
+        return '';
+    }
+    $chunks = [];
+    foreach ($content as $item) {
+        if (is_string($item) && trim($item) !== '') {
+            $chunks[] = trim($item);
+        } elseif (is_array($item)) {
+            $piece = trim((string) ($item['text'] ?? ''));
+            if ($piece !== '') {
+                $chunks[] = $piece;
+            }
+        }
+    }
+
+    return implode("\n", $chunks);
+}
+
+function medconnect_demo_openrouter_json_object(string $text): string
+{
+    $text = trim($text);
+    if ($text !== '' && str_starts_with($text, '{') && str_ends_with($text, '}')) {
+        return $text;
+    }
+    $start = strpos($text, '{');
+    $end = strrpos($text, '}');
+    if ($start === false || $end === false || $end <= $start) {
+        return '';
+    }
+
+    return trim(substr($text, $start, $end - $start + 1));
+}
+
+/**
+ * @param array<string, mixed> $decoded
+ */
+function medconnect_demo_openrouter_choice_text(array $decoded): string
+{
+    $message = $decoded['choices'][0]['message'] ?? null;
+    if (!is_array($message)) {
+        return '';
+    }
+    $text = medconnect_demo_openrouter_content_text($message['content'] ?? '');
+    if ($text !== '') {
+        return $text;
+    }
+
+    return medconnect_demo_openrouter_json_object(
+        medconnect_demo_openrouter_content_text($message['reasoning'] ?? '')
+    );
+}
+
+function medconnect_demo_groq_api_key(): string
+{
+    if (defined('GROQ_API_KEY')) {
+        $fromConst = trim((string) GROQ_API_KEY);
+        if ($fromConst !== '') {
+            return $fromConst;
+        }
+    }
+    foreach (['GROQ_API_KEY', 'MEDCONNECT_GROQ_API_KEY'] as $name) {
+        $val = getenv($name);
+        if ($val === false || $val === '') {
+            $val = $_ENV[$name] ?? '';
+        }
+        $val = trim((string) $val);
+        if ($val !== '') {
+            return $val;
+        }
+    }
+
+    return '';
+}
+
+function medconnect_demo_groq_model(): string
+{
+    if (defined('GROQ_MODEL')) {
+        $fromConst = trim((string) GROQ_MODEL);
+        if ($fromConst !== '') {
+            return $fromConst;
+        }
+    }
+    $raw = trim((string) (getenv('MEDCONNECT_GROQ_MODEL') ?: ($_ENV['MEDCONNECT_GROQ_MODEL'] ?? getenv('GROQ_MODEL') ?: ($_ENV['GROQ_MODEL'] ?? ''))));
+    if ($raw === 'llama-3.1-8b-instant' || $raw === 'llama-3.3-70b-versatile') {
+        return 'openai/gpt-oss-120b';
+    }
+
+    return $raw !== '' ? $raw : 'openai/gpt-oss-120b';
+}
+
+/**
+ * One Groq completion after OpenRouter miss. Same Gemini payload. Does not set triage.
+ *
+ * @param array<string, mixed> $geminiPayload
+ * @param (callable(array<string, mixed>): ?string)|null $transport
+ */
+function medconnect_demo_groq_quota_text(
+    string $geminiError,
+    array $geminiPayload,
+    ?callable $transport = null
+): ?string {
+    if (!medconnect_demo_gemini_error_is_quota($geminiError)) {
+        return null;
+    }
+    if ($transport === null && medconnect_demo_groq_api_key() === '') {
+        return null;
+    }
+
+    $body = medconnect_demo_openrouter_request_from_gemini($geminiPayload);
+    if ($body === null) {
+        return null;
+    }
+    $body['model'] = medconnect_demo_groq_model();
+
+    $text = $transport !== null
+        ? $transport($body)
+        : medconnect_demo_groq_http_complete($body);
+    if (!is_string($text)) {
+        return null;
+    }
+    $text = trim($text);
+
+    return $text !== '' ? $text : null;
+}
+
+/**
+ * @param array<string, mixed> $body
+ */
+function medconnect_demo_groq_http_complete(array $body): ?string
+{
+    $apiKey = medconnect_demo_groq_api_key();
+    if ($apiKey === '' || !function_exists('curl_init')) {
+        return null;
+    }
+
+    $timeout = 30;
+    $envTimeout = getenv('AI_TIMEOUT');
+    if ($envTimeout === false || $envTimeout === '') {
+        $envTimeout = $_ENV['AI_TIMEOUT'] ?? '';
+    }
+    $envTimeout = (int) $envTimeout;
+    if ($envTimeout > 0) {
+        $timeout = max(5, min(60, $envTimeout));
+    }
+
+    $verifySsl = true;
+    $rawSsl = getenv('AI_SSL_VERIFY');
+    if ($rawSsl === false || $rawSsl === '') {
+        $rawSsl = $_ENV['AI_SSL_VERIFY'] ?? null;
+    }
+    if ($rawSsl !== null && $rawSsl !== '') {
+        $verifySsl = !in_array(strtolower(trim((string) $rawSsl)), ['0', 'false', 'no', 'off'], true);
+    }
+
+    $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+    if ($ch === false) {
+        return null;
+    }
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ],
+        CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_CONNECTTIMEOUT => min(8, $timeout),
+        CURLOPT_SSL_VERIFYPEER => $verifySsl,
+        CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
+    ]);
+    if ($verifySsl) {
+        $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+        if (!is_readable($ca)) {
+            $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
+        }
+        if ($ca !== '' && is_readable($ca)) {
+            curl_setopt($ch, CURLOPT_CAINFO, $ca);
+        }
+    }
+    $raw = curl_exec($ch);
+    $errno = curl_errno($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($raw === false || $errno !== 0 || $code < 200 || $code >= 300) {
+        error_log('Groq demo quota fallback unavailable: http ' . $code);
+
+        return null;
+    }
+    $decoded = json_decode((string) $raw, true);
+    if (!is_array($decoded)) {
+        return null;
+    }
+    $text = medconnect_demo_openrouter_choice_text($decoded);
 
     return $text !== '' ? $text : null;
 }

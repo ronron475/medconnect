@@ -67,9 +67,13 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         os.environ["AI_API_KEY"] = GEMINI_KEY
         os.environ["OPENROUTER_API_KEY"] = OPENROUTER_KEY
         self.payload = _gemini_payload()
+        self._groq_none = patch.object(gemini_client, "_groq_http_complete", return_value=None)
+        self._groq_none.start()
 
     def tearDown(self) -> None:
         os.environ.pop("OPENROUTER_API_KEY", None)
+        os.environ.pop("AI_MODEL", None)
+        self._groq_none.stop()
 
     def _assert_no_keys(self, blob: str) -> None:
         self.assertNotIn(GEMINI_KEY, blob)
@@ -84,6 +88,24 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
             return result
 
         return _post
+
+    def test_railway_ai_model_overrides_php_default_flash(self) -> None:
+        os.environ["AI_MODEL"] = "gemini-3.5-flash-lite"
+        models: list[str] = []
+        with patch.object(
+            gemini_client,
+            "_post_generate",
+            side_effect=self._post_record(models, {"gemini-3.5-flash-lite": _gemini_ok()}),
+        ), patch.object(gemini_client, "_openrouter_http_complete") as openrouter:
+            pack = gemini_client.generate_content(self.payload, model="gemini-3.5-flash", timeout=15)
+
+        self.assertEqual(models, ["gemini-3.5-flash-lite"])
+        openrouter.assert_not_called()
+        self.assertEqual(pack["model"], "gemini-3.5-flash-lite")
+
+    def test_quoted_ai_model_env_is_stripped(self) -> None:
+        os.environ["AI_MODEL"] = '"gemini-3.5-flash-lite"'
+        self.assertEqual(gemini_client.gemini_model_name(), "gemini-3.5-flash-lite")
 
     def test_gemini_success_does_not_call_fallback_or_openrouter(self) -> None:
         models: list[str] = []
@@ -341,6 +363,42 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         self.assertEqual(models, ["gemini-3.5-flash", gemini_client.GEMINI_FALLBACK_MODEL])
         self.assertIn("429", str(caught.exception))
         self._assert_no_keys(str(caught.exception))
+
+    def test_http_429_openrouter_miss_uses_groq(self) -> None:
+        groq_text = '{"classification":"HEALTH_RELATED","clinical_facts":{"symptom":"from-groq"}}'
+        models: list[str] = []
+        with patch.object(
+            gemini_client,
+            "_post_generate",
+            side_effect=self._post_record(models, {}),
+        ), patch.object(gemini_client, "_openrouter_http_complete", return_value=None) as openrouter, patch.object(
+            gemini_client, "_groq_http_complete", return_value=groq_text
+        ) as groq:
+            pack = gemini_client.generate_content(self.payload, model="gemini-3.5-flash", timeout=15)
+
+        openrouter.assert_called_once()
+        groq.assert_called_once()
+        self.assertEqual(models, ["gemini-3.5-flash", gemini_client.GEMINI_FALLBACK_MODEL])
+        self.assertEqual(pack["text"], groq_text)
+        self.assertNotEqual(pack["model"], gemini_client.OPENROUTER_DEMO_MODEL)
+        self.assertEqual(
+            pack["response"]["candidates"][0]["content"]["parts"][0]["text"],
+            groq_text,
+        )
+        self._assert_no_keys(json.dumps(pack))
+
+    def test_http_429_openrouter_success_skips_groq(self) -> None:
+        models: list[str] = []
+        with patch.object(
+            gemini_client,
+            "_post_generate",
+            side_effect=self._post_record(models, {}),
+        ), patch.object(gemini_client, "_openrouter_http_complete", return_value=OPENROUTER_TEXT):
+            pack = gemini_client.generate_content(self.payload, model="gemini-3.5-flash", timeout=15)
+
+        gemini_client._groq_http_complete.assert_not_called()
+        self.assertEqual(pack["model"], gemini_client.OPENROUTER_DEMO_MODEL)
+        self.assertEqual(pack["text"], OPENROUTER_TEXT)
 
     def test_existing_route_returns_php_data_shape(self) -> None:
         try:

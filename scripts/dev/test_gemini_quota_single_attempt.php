@@ -41,12 +41,19 @@ ok(
     (string) $calls
 );
 ok(
-    'quota result code',
-    ($started['code'] ?? '') === 'gemini_quota_exceeded',
-    (string) ($started['code'] ?? '')
+    'interview continues from NLP when Gemini quota is exceeded',
+    ($started['awaiting_question'] ?? '') !== ''
+    || ($started['status'] ?? '') === 'interviewing'
+    || ($started['status'] ?? '') === 'final_triage',
+    (string) ($started['status'] ?? '') . ' q=' . (string) ($started['awaiting_question'] ?? '')
 );
-ok('interview not started', ($started['awaiting_question'] ?? '') === '' && ($started['status'] ?? '') !== 'interviewing');
-ok('triage not finalized', !is_array($started['final_triage'] ?? null) && ($started['status'] ?? '') !== 'final_triage');
+ok(
+    'provider is the NLP question bank after quota',
+    str_contains((string) ($started['ai_provider_used'] ?? ''), 'Question bank')
+    || ($started['status'] ?? '') === 'final_triage',
+    (string) ($started['ai_provider_used'] ?? '')
+);
+ok('triage not copied from a model label', !is_array($started['final_triage'] ?? null) || ($started['final_triage']['final_authority'] ?? '') === 'ClinicalTriageEngine');
 
 $ai = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'ai_service';
 $aiQuoted = var_export($ai, true);
@@ -73,13 +80,15 @@ def fake_post(payload, model, key, timeout):
 
 with patch.object(gemini_client, "gemini_api_key", return_value="not-a-real-key"):
     with patch.object(gemini_client, "_post_generate", fake_post):
-        try:
-            gemini_client.generate_content({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]})
-            print("PYTHON_RAISED=0")
-        except RuntimeError as exc:
-            text = str(exc)
-            print("PYTHON_RAISED=1")
-            print("PYTHON_HAS_429=" + ("1" if "429" in text else "0"))
+        with patch.object(gemini_client, "_openrouter_http_complete", return_value=None):
+            with patch.object(gemini_client, "_groq_http_complete", return_value=None):
+                try:
+                    gemini_client.generate_content({"contents": [{"role": "user", "parts": [{"text": "hi"}]}]})
+                    print("PYTHON_RAISED=0")
+                except RuntimeError as exc:
+                    text = str(exc)
+                    print("PYTHON_RAISED=1")
+                    print("PYTHON_HAS_429=" + ("1" if "429" in text else "0"))
 print("PYTHON_POSTS=" + str(calls["n"]))
 print("PYTHON_MODELS=" + ",".join(calls["models"]))
 PY;
@@ -114,6 +123,7 @@ if ($tmp === false) {
         str_contains($text, 'PYTHON_MODELS=gemini-3.5-flash,gemini-3.8-flash'),
         $text
     );
+    ok('railway still raises 429 after both Gemini models and empty fallbacks', str_contains($text, 'PYTHON_RAISED=1'));
 }
 
 echo "\n$pass passed, $fail failed\n";

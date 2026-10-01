@@ -101,7 +101,12 @@
       ? payload.demo
       : payload;
     var used = source && typeof source.ai_provider_used === 'string' ? source.ai_provider_used : '';
-    if (used !== 'Gemini Flash' && used !== 'OpenRouter (Gemini quota fallback)') {
+    if (
+      used !== 'Gemini Flash'
+      && used !== 'OpenRouter (Gemini quota fallback)'
+      && used !== 'Groq (Gemini quota fallback)'
+      && used !== 'Question bank (Gemini quota fallback)'
+    ) {
       used = 'Unknown';
     }
     providerUsedEl.textContent = 'AI Provider Used: ' + used;

@@ -34,9 +34,17 @@ def gemini_api_key() -> str:
     return _env("AI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY")
 
 
+def _normalize_gemini_model(name: str) -> str:
+    """Strip quotes some env UIs store in the value. Empty if not a Gemini id."""
+    model = (name or "").strip().strip('"').strip("'")
+    if model.lower().startswith("gemini"):
+        return model
+    return ""
+
+
 def gemini_model_name() -> str:
-    model = _env("AI_MODEL")
-    if model.startswith("gemini"):
+    model = _normalize_gemini_model(_env("AI_MODEL"))
+    if model:
         return model
     return DEFAULT_GEMINI_MODEL
 
@@ -352,13 +360,9 @@ def _openrouter_http_complete(payload: dict[str, Any], timeout: int) -> str | No
     return text or None
 
 
-def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any] | None:
-    """Gemini HTTP 429 only. Same pack shape as a successful generate_content call."""
-    text = _openrouter_http_complete(payload, timeout)
-    if not text:
-        return None
+def _fallback_text_pack(model: str, text: str) -> dict[str, Any]:
     return {
-        "model": OPENROUTER_DEMO_MODEL,
+        "model": model,
         "text": text,
         "response": {
             "candidates": [
@@ -366,6 +370,70 @@ def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any
             ],
         },
     }
+
+
+def _groq_model_id() -> str:
+    try:
+        from ai_interpreter_config import GROQ_MODEL
+
+        model = str(GROQ_MODEL or "").strip()
+        if model:
+            return model
+    except Exception:
+        pass
+    return "openai/gpt-oss-120b"
+
+
+def _groq_http_complete(payload: dict[str, Any], timeout: int) -> str | None:
+    """One Groq completion after OpenRouter miss. Returns model text, or None."""
+    _ = timeout
+    try:
+        from ai_interpreter_config import GROQ_API_KEY
+    except Exception:
+        return None
+    if not GROQ_API_KEY:
+        return None
+    body = _openrouter_body_from_gemini(payload)
+    if body is None:
+        return None
+    messages = body.get("messages")
+    if not isinstance(messages, list) or not messages:
+        return None
+    json_mode = str(
+        ((payload.get("generationConfig") or {}) if isinstance(payload.get("generationConfig"), dict) else {}).get(
+            "responseMimeType"
+        )
+        or ""
+    ).strip().lower() == "application/json"
+    try:
+        temperature = float(body.get("temperature") or 0.1)
+    except (TypeError, ValueError):
+        temperature = 0.1
+    try:
+        from groq_client import groq_chat_completion
+
+        text, _model = groq_chat_completion(
+            messages,
+            json_mode=json_mode,
+            temperature=temperature,
+        )
+    except Exception:
+        logger.warning("Groq demo quota fallback unavailable")
+        return None
+    text = (text or "").strip()
+    return text or None
+
+
+def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any] | None:
+    """Gemini HTTP 429 only. OpenRouter first, then Groq. Same pack shape as generate_content."""
+    text = _openrouter_http_complete(payload, timeout)
+    if text:
+        return _fallback_text_pack(OPENROUTER_DEMO_MODEL, text)
+    text = _groq_http_complete(payload, timeout)
+    if text:
+        logger.info("Gemini HTTP 429; Groq quota fallback returned text")
+        return _fallback_text_pack(_groq_model_id(), text)
+    return None
 
 
 def _payload_for_secondary_gemini(payload: dict[str, Any]) -> dict[str, Any]:
@@ -421,9 +489,11 @@ def generate_content(
     if not key:
         raise RuntimeError("Gemini API key not configured — set AI_API_KEY on Railway")
 
-    use_model = (model or "").strip() or gemini_model_name()
-    if not use_model.startswith("gemini"):
-        use_model = gemini_model_name()
+    # Railway AI_MODEL is the production primary. Hostinger PHP often still sends
+    # the old default gemini-3.5-flash, which would ignore a Lite switch on Railway.
+    env_model = _normalize_gemini_model(_env("AI_MODEL"))
+    requested = _normalize_gemini_model(model or "")
+    use_model = env_model or requested or DEFAULT_GEMINI_MODEL
     # Demo interview prompts need headroom; Google 503 "high demand" also needs retries.
     wait = max(5, min(60, int(timeout if timeout is not None else (_env("AI_TIMEOUT") or "30"))))
 
@@ -443,7 +513,8 @@ def generate_content(
                 return recovered
             recovered = _quota_fallback_pack(body, wait)
             if recovered is not None:
-                logger.info("Gemini HTTP 429; OpenRouter demo fallback returned text")
+                used = str(recovered.get("model") or "")
+                logger.info("Gemini HTTP 429; quota fallback returned text model=%s", used)
                 return recovered
             raise RuntimeError(f"Gemini HTTP 429: {err_body or exc.reason}") from exc
         # Retry without thinkingConfig when the model rejects it (same as PHP demo path).

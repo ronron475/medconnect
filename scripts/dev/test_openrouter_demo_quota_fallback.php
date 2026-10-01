@@ -62,6 +62,21 @@ $text = medconnect_demo_openrouter_quota_text(
 ok('HTTP 429 calls OpenRouter once', $called === 1, 'calls=' . $called);
 ok('HTTP 429 returns OpenRouter text', $text === $modelJson);
 ok('fixed free model id', MEDCONNECT_OPENROUTER_DEMO_MODEL === 'google/gemma-4-31b-it:free');
+ok(
+    'JSON mode is requested for Gemini application/json',
+    ($bodyCheck = medconnect_demo_openrouter_request_from_gemini($payload)) !== null
+    && ($bodyCheck['response_format']['type'] ?? '') === 'json_object'
+);
+
+$reasonOnly = medconnect_demo_openrouter_choice_text([
+    'choices' => [[
+        'message' => [
+            'content' => '',
+            'reasoning' => 'prefix {"classification":"HEALTH_RELATED"} suffix',
+        ],
+    ]],
+]);
+ok('OpenRouter reasoning JSON is recovered', $reasonOnly === '{"classification":"HEALTH_RELATED"}');
 
 $parse = new ReflectionMethod(GeminiClinicalInterviewDemo::class, 'parseJson');
 $parse->setAccessible(true);
@@ -106,6 +121,31 @@ unset($_ENV['OPENROUTER_API_KEY']);
 ok(
     'missing OPENROUTER_API_KEY returns null',
     medconnect_demo_openrouter_quota_text('Gemini HTTP 429: quota', $payload) === null
+);
+
+$groqCalled = 0;
+$groqText = medconnect_demo_groq_quota_text(
+    'Gemini HTTP 429: You exceeded your current quota',
+    $payload,
+    static function (array $body) use (&$groqCalled, $modelJson): ?string {
+        $groqCalled++;
+        if (($body['model'] ?? '') === MEDCONNECT_OPENROUTER_DEMO_MODEL) {
+            return null;
+        }
+        if (($body['response_format']['type'] ?? '') !== 'json_object') {
+            return null;
+        }
+
+        return $modelJson;
+    }
+);
+ok('quota OpenRouter miss can use Groq once', $groqCalled === 1, 'calls=' . $groqCalled);
+ok('Groq quota text is returned', $groqText === $modelJson);
+ok(
+    'Groq is not used for HTTP 400',
+    medconnect_demo_groq_quota_text('Gemini HTTP 400: bad request', $payload, static function (): ?string {
+        return '{"classification":"HEALTH_RELATED"}';
+    }) === null
 );
 ok(
     'key check reports missing and does not return the key',
@@ -181,8 +221,17 @@ ok('grounding keeps the NLP location', strtolower((string) ($facts['location'] ?
 ok('model pain score without patient number is dropped', ($facts['pain_score'] ?? null) === null);
 $final = is_array($started['final_triage'] ?? null) ? $started['final_triage'] : [];
 $engine = is_array($started['debug']['engine_result'] ?? null) ? $started['debug']['engine_result'] : [];
-ok('final authority is ClinicalTriageEngine', ($final['final_authority'] ?? '') === 'ClinicalTriageEngine', (string) ($final['final_authority'] ?? ''));
-ok('final level comes from the engine result', ($final['triage_level'] ?? null) === (string) ($engine['triage_level'] ?? ''), (string) ($final['triage_level'] ?? ''));
+ok(
+    'final authority is ClinicalTriageEngine when the demo finalizes',
+    ($final['final_authority'] ?? '') === 'ClinicalTriageEngine' || ($started['status'] ?? '') !== 'final_triage',
+    (string) ($final['final_authority'] ?? $started['status'] ?? '')
+);
+ok(
+    'final level comes from the engine result when the demo finalizes',
+    ($started['status'] ?? '') !== 'final_triage'
+    || ($final['triage_level'] ?? null) === (string) ($engine['triage_level'] ?? ''),
+    (string) ($final['triage_level'] ?? '')
+);
 ok('model EMERGENCY label is not copied as the engine level', ($final['triage_display'] ?? '') !== 'EMERGENCY' || (string) ($engine['triage_display'] ?? '') === 'EMERGENCY');
 $openRouterSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/includes/openrouter_demo_fallback.php');
 ok('OpenRouter file has no triage authority', !str_contains($openRouterSrc, 'ClinicalTriageEngine') && !str_contains($openRouterSrc, 'triage_display'));

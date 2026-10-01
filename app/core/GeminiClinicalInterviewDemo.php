@@ -75,6 +75,9 @@ final class GeminiClinicalInterviewDemo
         $gemini = self::callGemini('start', $context, '');
         if ($gemini === null) {
             $quota = self::isGeminiQuotaError(self::$lastError);
+            if (self::canContinueWithNlpQuestionBank($nlpPrecheck, $context)) {
+                return self::continueWithNlpQuestionBank($context, $nlpPrecheck, true);
+            }
             $detail = self::$lastError !== '' ? (' (' . self::$lastError . ')') : '';
             $message = $quota
                 ? 'Gemini is unavailable because the Gemini quota was exceeded. Interview not started.'
@@ -82,7 +85,6 @@ final class GeminiClinicalInterviewDemo
                     ? 'The Railway AI service was not running (Application not found). Interview not started.' . $detail
                     : 'Gemini unavailable or returned invalid JSON. Interview not started.' . $detail);
 
-            // NLP already confirmed health: still cannot interview without Gemini questions — fail closed.
             return self::rejectNonHealth(
                 $context,
                 self::CLASS_UNCLEAR,
@@ -197,6 +199,16 @@ final class GeminiClinicalInterviewDemo
 
         $gemini = self::callGemini('answer', $context, $answer);
         if ($gemini === null) {
+            if (self::canContinueWithNlpQuestionBank(
+                is_array($context['nlp_precheck'] ?? null) ? $context['nlp_precheck'] : [],
+                $context
+            )) {
+                return self::continueWithNlpQuestionBank(
+                    $context,
+                    is_array($context['nlp_precheck'] ?? null) ? $context['nlp_precheck'] : [],
+                    false
+                );
+            }
             // Do not invent facts; keep prior facts and surface error.
             array_pop($context['patient_turns']);
             array_pop($context['conversation']);
@@ -218,6 +230,73 @@ final class GeminiClinicalInterviewDemo
         }
 
         return self::applyGeminiTurn($context, $gemini, false);
+    }
+
+    /**
+     * Demo-only. When Gemini/OpenRouter/Groq cannot run, keep interviewing from
+     * NLP-mapped facts and the local question bank. Patient Gemini-led path skips this.
+     *
+     * @param array<string, mixed> $nlpPrecheck
+     * @param array<string, mixed> $context
+     */
+    private static function canContinueWithNlpQuestionBank(array $nlpPrecheck, array $context): bool
+    {
+        if (self::$skipPhpOpenRouterQuotaFallback) {
+            return false;
+        }
+        if (!empty($nlpPrecheck['explicit_non_human_subject'])) {
+            return false;
+        }
+        $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : [];
+        if (self::hasClinicallyUsefulFacts($facts)) {
+            return true;
+        }
+
+        return !empty($nlpPrecheck['nlp_says_health']) || !empty($nlpPrecheck['has_validated_mappings']);
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $nlpPrecheck
+     * @return array<string, mixed>
+     */
+    private static function continueWithNlpQuestionBank(array $context, array $nlpPrecheck, bool $isStart): array
+    {
+        self::$aiProviderUsed = 'nlp';
+        $evidence = is_array($nlpPrecheck['evidence'] ?? null) ? $nlpPrecheck['evidence'] : [];
+        $gloss = trim((string) ($evidence['english_gloss'] ?? ''));
+        if ($gloss === '') {
+            $gloss = trim((string) ($context['normalized_health_concern'] ?? $context['chief_complaint'] ?? ''));
+        }
+        $gate = [
+            'classification' => self::CLASS_HEALTH,
+            'patient_subject' => 'HUMAN',
+            'is_human_patient_complaint' => true,
+            'confidence' => 0.8,
+            'normalized_health_concern' => $gloss,
+            'passed' => true,
+            'nlp_override' => true,
+        ];
+        $context['health_gate'] = $gate;
+        $context['status_note'] = 'Gemini quota exceeded; continuing with the NLP question bank.';
+        if ($gloss !== '' && trim((string) ($context['normalized_health_concern'] ?? '')) === '') {
+            $context['normalized_health_concern'] = $gloss;
+        }
+        $synthetic = [
+            'classification' => self::CLASS_HEALTH,
+            'patient_subject' => 'HUMAN',
+            'is_human_patient_complaint' => true,
+            'confidence' => 0.8,
+            'normalized_health_concern' => $gloss,
+            'answer_status' => 'VALID',
+            'question_needed' => true,
+            'interview_sufficient' => false,
+            'next_question' => '',
+            'clinical_facts' => [],
+            'missing_information' => [],
+        ];
+
+        return self::applyGeminiTurn($context, $synthetic, $isStart);
     }
 
     private static string $lastError = '';
@@ -6674,6 +6753,13 @@ PROMPT;
             self::$aiProviderUsed = 'openrouter';
             return trim($text);
         }
+        if (!self::$geminiQuotaProbe && !self::$openRouterQuotaProbe) {
+            $groqText = medconnect_demo_groq_quota_text($e->getMessage(), $payload, null);
+            if (is_string($groqText) && trim($groqText) !== '') {
+                self::$aiProviderUsed = 'groq';
+                return trim($groqText);
+            }
+        }
         throw $e;
     }
 
@@ -6740,7 +6826,19 @@ PROMPT;
             self::$aiProviderUsed = '';
             return;
         }
-        self::$aiProviderUsed = str_starts_with($model, 'gemini') ? 'gemini' : 'openrouter';
+        if (str_starts_with($model, 'gemini')) {
+            self::$aiProviderUsed = 'gemini';
+            return;
+        }
+        if (
+            str_contains($model, 'groq')
+            || str_contains($model, 'gpt-oss')
+            || str_starts_with($model, 'llama-')
+        ) {
+            self::$aiProviderUsed = 'groq';
+            return;
+        }
+        self::$aiProviderUsed = 'openrouter';
     }
 
     private static function aiProviderUsedLabel(): string
@@ -6748,6 +6846,8 @@ PROMPT;
         return match (self::$aiProviderUsed) {
             'gemini' => 'Gemini Flash',
             'openrouter' => 'OpenRouter (Gemini quota fallback)',
+            'groq' => 'Groq (Gemini quota fallback)',
+            'nlp' => 'Question bank (Gemini quota fallback)',
             default => 'Unknown',
         };
     }

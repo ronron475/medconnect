@@ -54,7 +54,7 @@ function medconnect_gemini_model(): string
     if ($model === false || $model === '') {
         $model = $_ENV['AI_MODEL'] ?? '';
     }
-    $model = trim((string) $model);
+    $model = trim((string) $model, " \t\n\r\0\x0B\"'");
     if ($model !== '' && str_starts_with(strtolower($model), 'gemini')) {
         return $model;
     }

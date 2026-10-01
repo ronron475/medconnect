@@ -193,6 +193,11 @@ ok('Railway OpenRouter model remains nemotron', str_contains($py, 'nvidia/nemotr
 ok('Railway OpenRouter JSON response_format preserved', str_contains($py, '"response_format"') && str_contains($py, 'json_object'));
 ok('Railway OpenRouter reasoning helper preserved', str_contains($py, 'def _openrouter_choice_text') && str_contains($py, 'reasoning'));
 ok('3.8 still runs before OpenRouter pack', strpos($py, '_try_secondary_gemini_model(body, use_model, key, wait)') < strpos($py, '_quota_fallback_pack(body, wait)'));
+ok(
+    'Railway quota pack tries Groq after OpenRouter miss',
+    str_contains($py, 'def _groq_http_complete')
+    && strpos($py, '_openrouter_http_complete(payload, timeout)') < strpos($py, '_groq_http_complete(payload, timeout)')
+);
 
 echo "\n$pass passed, $fail failed\n";
 exit($fail > 0 ? 1 : 0);
