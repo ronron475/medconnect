@@ -1150,11 +1150,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <button type="button" class="mc-vc-btn mc-vc-btn--mobile-only mc-vc-btn--speaker mc-vc-btn--overflow-menu" id="mcVcSpeakerBtn" title="Speaker on or off" aria-label="Toggle speaker">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           </button>
-          <?php if (!$is_patient): ?>
-          <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="<?= !empty($_GET['embedded']) ? 'Expand video' : 'Enter fullscreen' ?>" aria-label="<?= !empty($_GET['embedded']) ? 'Maximize video consultation' : 'Enter fullscreen' ?>">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          <?php if ($is_patient && !empty($_GET['embedded'])): ?>
+          <button type="button" class="mc-vc-btn" id="mcVcPatientMinimizeBtn" title="Minimize call" aria-label="Minimize video consultation">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="7" height="5" rx="1"/></svg>
           </button>
           <?php endif; ?>
+          <button type="button" class="mc-vc-btn" id="mcVcFullscreenBtn" title="<?= !empty($_GET['embedded']) && !$is_patient ? 'Expand video' : 'Enter fullscreen' ?>" aria-label="<?= !empty($_GET['embedded']) && !$is_patient ? 'Maximize video consultation' : 'Enter fullscreen' ?>">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          </button>
           <?php if (!$is_patient): ?>
           <button type="button" class="mc-vc-btn mc-vc-btn--desktop-only" id="mcVcMinimizeBtn" title="Minimize call" aria-label="Minimize call">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V5a1 1 0 0 1 1-1h4M18 9V5a1 1 0 0 0-1-1h-4M6 15v4a1 1 0 0 0 1 1h4M18 15v4a1 1 0 0 1-1 1h-4"/></svg>
@@ -3806,6 +3809,22 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     bindMediaPermissionButtons();
     setupSessionNavigationUi();
     initConsultationUi();
+    const patientMinimizeBtn = document.getElementById('mcVcPatientMinimizeBtn');
+    if (patientMinimizeBtn && embeddedInSession) {
+      patientMinimizeBtn.addEventListener('click', () => {
+        const minimize = () => notifyParent({ type: 'medconnect:minimize-video', token: roomToken });
+        const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+        const exitFs = document.exitFullscreen || document.webkitExitFullscreen;
+        if (fsEl && exitFs) {
+          Promise.resolve(exitFs.call(document)).catch(() => {}).then(minimize);
+          return;
+        }
+        if (document.body.classList.contains('mc-true-fullscreen') && consultUi && typeof consultUi.setMobileFullscreen === 'function') {
+          consultUi.setMobileFullscreen(false);
+        }
+        minimize();
+      });
+    }
     function bindLeaveButton(el) {
       if (!el || el.dataset.leaveBound) return;
       el.dataset.leaveBound = '1';
