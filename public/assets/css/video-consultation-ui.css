@@ -1936,6 +1936,12 @@ body.role-patient .mc-vc-more-item:focus-visible {
   background: rgba(13, 148, 136, 0.22);
 }
 
+@media (max-width: 480px) {
+  body.role-patient #mcVcFullscreenBtn {
+    display: none;
+  }
+}
+
 @media (min-width: 769px) {
   body.role-patient #mcVcFullscreenBtn {
     display: flex !important;
