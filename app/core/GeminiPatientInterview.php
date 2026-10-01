@@ -1,12 +1,9 @@
 <?php
 /**
- * Logged-in patient Gemini-led interview adapter.
- *
- * Reuses GeminiClinicalInterviewDemo::start/answer (same generate path as the
- * working demo): Gemini Flash → gemini-3.8-flash → OpenRouter → Groq → NLP
- * question bank. Does not use the demo browser/API or debug UI.
- * Persist gemini_led_context inside assessment_payload.
- * Only after that chain cannot continue → ClinicalInterviewEngine (PHP/NLP).
+ * Maps GeminiClinicalInterviewDemo packs onto the existing patient API/UI
+ * payload. Does not run a separate interview: start/answer live in
+ * GeminiClinicalInterviewDemo (same methods as the demo page).
+ * Persist interview_context inside assessment_payload as gemini_led_context.
  * ClinicalTriageEngine remains the only acuity authority.
  */
 final class GeminiPatientInterview
@@ -30,32 +27,21 @@ final class GeminiPatientInterview
     }
 
     /**
+     * Patient API/UI mapping only. Interview itself is GeminiClinicalInterviewDemo::start/answer.
+     *
+     * @param array<string, mixed> $pack
+     * @param array<string, mixed> $demoPrior
      * @param list<string> $checkboxSymptoms
-     * @param array<string, mixed> $priorContext
-     * @return array<string, mixed>|null Null = caller should use ClinicalInterviewEngine unchanged.
+     * @return array<string, mixed>
      */
-    public static function assess(string $utterance, array $priorContext = [], array $checkboxSymptoms = []): ?array
+    public static function mapPack(array $pack, string $utterance, array $demoPrior = [], array $checkboxSymptoms = []): array
     {
-        if (self::shouldUsePhpEngine($priorContext)) {
-            return null;
-        }
-        if (!class_exists('GeminiClinicalInterviewDemo')) {
-            return null;
-        }
-
-        $priorGemini = self::extractGeminiContext($priorContext);
-        $isContinue = $priorGemini !== [];
-        $pack = self::$packOverrideForTest;
-        if (!is_array($pack)) {
-            $pack = $isContinue
-                ? GeminiClinicalInterviewDemo::answer($utterance, $priorGemini)
-                : GeminiClinicalInterviewDemo::start($utterance);
-        }
-
         if (self::isTransportFailure($pack)) {
-            $mapped = self::enginePriorFromGeminiContext($isContinue ? $priorGemini : []);
-
-            return self::phpFallback($utterance, $mapped, $checkboxSymptoms);
+            return self::phpFallback(
+                $utterance,
+                self::enginePriorFromGeminiContext($demoPrior),
+                $checkboxSymptoms
+            );
         }
         if (self::isHealthReject($pack)) {
             return self::toNeedsValidComplaint($pack, $utterance);
@@ -141,9 +127,12 @@ final class GeminiPatientInterview
     }
 
     /**
+     * PHP ClinicalInterviewEngine only for PHP-only mode or an already-abandoned
+     * PHP session. New consultations with empty prior use the demo start() path.
+     *
      * @param array<string, mixed> $priorContext
      */
-    private static function shouldUsePhpEngine(array $priorContext): bool
+    public static function shouldUsePhpEngine(array $priorContext): bool
     {
         $raw = getenv('MEDCONNECT_PHP_NLP_ONLY');
         if ($raw !== false && in_array(strtolower(trim((string) $raw)), ['1', 'true', 'yes', 'on'], true)) {
@@ -153,7 +142,7 @@ final class GeminiPatientInterview
         if (!empty($priorContext['gemini_led_abandoned']) || !empty($interview['gemini_led_abandoned'])) {
             return true;
         }
-        if (self::extractGeminiContext($priorContext) !== []) {
+        if (self::demoInterviewContext($priorContext) !== []) {
             return false;
         }
         $asked = $interview['questions_asked'] ?? $priorContext['questions_asked'] ?? [];
@@ -165,15 +154,19 @@ final class GeminiPatientInterview
     }
 
     /**
+     * Exact demo interview_context the demo page posts as interview_context.
+     *
      * @param array<string, mixed> $priorContext
      * @return array<string, mixed>
      */
-    private static function extractGeminiContext(array $priorContext): array
+    public static function demoInterviewContext(array $priorContext): array
     {
+        $nestedInterview = is_array($priorContext['interview'] ?? null) ? $priorContext['interview'] : [];
         foreach ([
-            $priorContext[self::CONTEXT_KEY] ?? null,
-            is_array($priorContext['interview'] ?? null) ? ($priorContext['interview'][self::CONTEXT_KEY] ?? null) : null,
             $priorContext['interview_context'] ?? null,
+            $priorContext[self::CONTEXT_KEY] ?? null,
+            $nestedInterview['interview_context'] ?? null,
+            $nestedInterview[self::CONTEXT_KEY] ?? null,
         ] as $raw) {
             if (!is_array($raw) || $raw === []) {
                 continue;
@@ -441,8 +434,10 @@ final class GeminiPatientInterview
         $interview['retry_current_question'] = !empty($assessment['retry_current_question']);
         $interview['answer_rejected'] = !empty($assessment['answer_rejected']);
         $interview[self::CONTEXT_KEY] = $context;
+        $interview['interview_context'] = $context;
         $assessment['interview'] = $interview;
         $assessment[self::CONTEXT_KEY] = $context;
+        $assessment['interview_context'] = $context;
 
         return $assessment;
     }

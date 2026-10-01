@@ -233,8 +233,9 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
-     * Demo-only. When Gemini/OpenRouter/Groq cannot run, keep interviewing from
-     * NLP-mapped facts and the local question bank. Patient Gemini-led path skips this.
+     * When Gemini/OpenRouter/Groq cannot run, keep interviewing from NLP-mapped
+     * facts and the local question bank. Shared by the demo page and the live
+     * patient flow (both call start/answer).
      *
      * @param array<string, mixed> $nlpPrecheck
      * @param array<string, mixed> $context

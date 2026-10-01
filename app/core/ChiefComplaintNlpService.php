@@ -181,9 +181,11 @@ final class ChiefComplaintNlpService
     }
 
     /**
-     * Adaptive interview: Gemini clinical interview (same services as the demo)
-     * with ClinicalInterviewEngine PHP/NLP as last-resort fallback.
-     * Final completed assessments resolve to NON-URGENT, URGENT, or EMERGENCY only.
+     * Adaptive interview: same GeminiClinicalInterviewDemo::start / ::answer
+     * methods as public/gemini_clinical_interview_demo.php (via its API).
+     * ClinicalInterviewEngine is last-resort when that demo class cannot run
+     * (PHP-only mode, abandoned PHP session, or a true demo transport failure).
+     * Completed acuity still comes only from ClinicalTriageEngine inside the demo class.
      *
      * @param list<string> $checkboxSymptoms
      * @param array<string, mixed> $priorContext
@@ -192,11 +194,24 @@ final class ChiefComplaintNlpService
     public static function assessInterview(string $utterance, array $priorContext = [], array $checkboxSymptoms = []): array
     {
         try {
+            if (class_exists('GeminiPatientInterview') && GeminiPatientInterview::shouldUsePhpEngine($priorContext)) {
+                return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
+            }
+            if (!class_exists('GeminiClinicalInterviewDemo')) {
+                return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
+            }
+
+            $prior = class_exists('GeminiPatientInterview')
+                ? GeminiPatientInterview::demoInterviewContext($priorContext)
+                : [];
+            $pack = (class_exists('GeminiPatientInterview') && is_array(GeminiPatientInterview::$packOverrideForTest))
+                ? GeminiPatientInterview::$packOverrideForTest
+                : ($prior === []
+                    ? GeminiClinicalInterviewDemo::start($utterance)
+                    : GeminiClinicalInterviewDemo::answer($utterance, $prior));
+
             if (class_exists('GeminiPatientInterview')) {
-                $led = GeminiPatientInterview::assess($utterance, $priorContext, $checkboxSymptoms);
-                if (is_array($led)) {
-                    return $led;
-                }
+                return GeminiPatientInterview::mapPack($pack, $utterance, $prior, $checkboxSymptoms);
             }
 
             return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);

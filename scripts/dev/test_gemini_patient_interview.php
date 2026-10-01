@@ -129,7 +129,13 @@ $phpPrior = [
         'gemini_led_abandoned' => true,
     ],
 ];
-ok('abandoned PHP session is not Gemini-led', GeminiPatientInterview::assess('still hurts', $phpPrior) === null);
+ok('abandoned PHP session is not Gemini-led', GeminiPatientInterview::shouldUsePhpEngine($phpPrior) === true);
+$abandoned = ChiefComplaintNlpService::assessInterview('still hurts', $phpPrior);
+ok(
+    'abandoned PHP session stays on ClinicalInterviewEngine (no new demo start)',
+    empty($abandoned[GeminiPatientInterview::CONTEXT_KEY])
+    && empty($abandoned['interview'][GeminiPatientInterview::CONTEXT_KEY])
+);
 
 GeminiPatientInterview::resetTestHooks();
 $phpGemmaCalls = 0;
@@ -271,11 +277,40 @@ GeminiPatientInterview::$packOverrideForTest = [
     ],
     'question_language' => 'hiligaynon',
 ];
-$fresh = GeminiPatientInterview::assess('sakit ulo ko', []);
+$fresh = ChiefComplaintNlpService::assessInterview('sakit ulo ko', []);
 ok('empty prior starts a Gemini interview (not leftover PHP questions_asked)', is_array($fresh));
 ok(
     'Start New Consultation empty prior does not reuse old awaiting_question_id',
     (string) (($fresh['interview']['awaiting_question_id'] ?? 'x')) === ''
+);
+ok(
+    'Start New Consultation persists demo interview_context (same key the demo page posts)',
+    is_array($fresh['interview_context'] ?? null)
+    && ($fresh['interview_context']['chief_complaint'] ?? '') === 'sakit ulo ko'
+);
+ok(
+    'empty prior is treated as demo start, not leftover PHP questions_asked',
+    GeminiPatientInterview::demoInterviewContext([]) === []
+    && GeminiPatientInterview::shouldUsePhpEngine([]) === false
+);
+
+$sharedComplaint = 'Masakit akon ulo kag daw naga init akon lawas.';
+ok(
+    'new consultation for the shared example has no leftover demo interview_context',
+    GeminiPatientInterview::demoInterviewContext([]) === []
+);
+$followPrior = GeminiPatientInterview::demoInterviewContext([
+    'interview_context' => [
+        'chief_complaint' => $sharedComplaint,
+        'awaiting_question' => 'San-o nagsugod ang kasakit sa imo ulo?',
+        'patient_turns' => [$sharedComplaint],
+    ],
+]);
+ok(
+    'follow-up reuses the same interview_context object the demo page posts',
+    ($followPrior['chief_complaint'] ?? '') === $sharedComplaint
+    && ($followPrior['awaiting_question'] ?? '') !== ''
+    && ($followPrior['patient_turns'][0] ?? '') === $sharedComplaint
 );
 
 $negMapped = GeminiClinicalInterviewDemo::mapFactsForEngine([
@@ -290,21 +325,73 @@ ok(
 );
 
 $src = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/ChiefComplaintNlpService.php');
+$demoApiSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/api/ai/gemini_clinical_interview_demo.php');
+$patientSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/GeminiPatientInterview.php');
+$jsSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/public/assets/js/gemini_clinical_interview_demo.js');
 ok(
-    'assessInterview tries GeminiPatientInterview before ClinicalInterviewEngine',
-    str_contains($src, 'GeminiPatientInterview::assess')
-    && strpos($src, 'GeminiPatientInterview::assess') < strpos($src, 'ClinicalInterviewEngine::assess')
+    'demo START INTERVIEW posts action=start',
+    str_contains($jsSrc, "action: 'start'")
+);
+ok(
+    'demo FOLLOW-UP ANSWER posts action=answer with interview_context',
+    str_contains($jsSrc, "action: 'answer'")
+    && str_contains($jsSrc, 'interview_context: JSON.stringify(interviewContext)')
+);
+ok(
+    'demo API start calls GeminiClinicalInterviewDemo::start',
+    str_contains($demoApiSrc, 'GeminiClinicalInterviewDemo::start($complaint)')
+);
+ok(
+    'demo API answer calls GeminiClinicalInterviewDemo::answer',
+    str_contains($demoApiSrc, 'GeminiClinicalInterviewDemo::answer($answer, $prior)')
+);
+ok(
+    'live assessInterview calls the same start method as the demo API',
+    str_contains($src, 'GeminiClinicalInterviewDemo::start($utterance)')
+);
+ok(
+    'live assessInterview calls the same answer method as the demo API',
+    str_contains($src, 'GeminiClinicalInterviewDemo::answer($utterance, $prior)')
+);
+ok(
+    'live assessInterview no longer orchestrates via GeminiPatientInterview::assess',
+    !str_contains($src, 'GeminiPatientInterview::assess')
+);
+ok(
+    'GeminiPatientInterview has no competing assess() interview engine',
+    !preg_match('/function\s+assess\s*\(/', $patientSrc)
 );
 ok(
     'AI fail path does not call assessWithFallback as interview fallback',
-    !str_contains((string) file_get_contents(dirname(__DIR__, 2) . '/app/core/GeminiPatientInterview.php'), 'assessWithFallback')
+    !str_contains($patientSrc, 'assessWithFallback')
 );
-$patientSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/GeminiPatientInterview.php');
 ok(
-    'patient start/answer do not skip the demo OpenRouter/Groq hop',
+    'patient mapper does not skip the demo OpenRouter/Groq hop',
     !str_contains($patientSrc, 'beginSkipPhpOpenRouterQuotaFallback')
 );
+
 $demoSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/GeminiClinicalInterviewDemo.php');
+ok(
+    'finalize still uses ClinicalTriageEngine as the only acuity authority',
+    str_contains($demoSrc, 'ClinicalTriageEngine::assess(')
+    && str_contains($demoSrc, 'function finalizeWithClinicalEngine')
+    && !str_contains($patientSrc, 'ClinicalTriageEngine::assess')
+);
+ok(
+    'demo start() still runs NLP precheck before Gemini',
+    str_contains($demoSrc, 'runNlpDomainPrecheck')
+    && strpos($demoSrc, 'runNlpDomainPrecheck($complaint)') < strpos($demoSrc, "callGemini('start'")
+);
+ok(
+    'demo answer() still interprets the follow-up via callGemini then applyGeminiTurn',
+    str_contains($demoSrc, "callGemini('answer'")
+    && str_contains($demoSrc, 'applyGeminiTurn($context, $gemini, false)')
+);
+ok(
+    'demo finalize still hands structured facts to ClinicalTriageEngine',
+    str_contains($demoSrc, 'mapFactsForEngine')
+    && strpos($demoSrc, 'function finalizeWithClinicalEngine') < strpos($demoSrc, 'ClinicalTriageEngine::assess(')
+);
 ok(
     'demo PHP OpenRouter recovery remains for the shared generate path',
     str_contains($demoSrc, 'recoverDemoQuotaWithOpenRouter')
