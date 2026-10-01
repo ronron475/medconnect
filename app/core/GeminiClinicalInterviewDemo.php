@@ -317,8 +317,8 @@ final class GeminiClinicalInterviewDemo
     private static $openRouterTransportForTest = null;
 
     /**
-     * Patient Gemini-led path: Railway already ran 3.5 → 3.8 → nemotron.
-     * Do not add the demo-only Hostinger PHP gemma OpenRouter hop.
+     * Test-only. Live patient Gemini-led interviews use the same generate()
+     * fallbacks as this demo (OpenRouter → Groq → NLP question bank).
      */
     private static bool $skipPhpOpenRouterQuotaFallback = false;
 

@@ -181,7 +181,8 @@ final class ChiefComplaintNlpService
     }
 
     /**
-     * Adaptive interview on top of the existing NLP engine.
+     * Adaptive interview: Gemini clinical interview (same services as the demo)
+     * with ClinicalInterviewEngine PHP/NLP as last-resort fallback.
      * Final completed assessments resolve to NON-URGENT, URGENT, or EMERGENCY only.
      *
      * @param list<string> $checkboxSymptoms

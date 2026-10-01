@@ -2,10 +2,11 @@
 /**
  * Logged-in patient Gemini-led interview adapter.
  *
- * Uses GeminiClinicalInterviewDemo::start/answer (Railway 3.5 → 3.8 → nemotron).
- * Does not use the demo browser/API or the Hostinger PHP gemma OpenRouter hop.
+ * Reuses GeminiClinicalInterviewDemo::start/answer (same generate path as the
+ * working demo): Gemini Flash → gemini-3.8-flash → OpenRouter → Groq → NLP
+ * question bank. Does not use the demo browser/API or debug UI.
  * Persist gemini_led_context inside assessment_payload.
- * AI transport failure → ClinicalInterviewEngine::assess($currentUtterance, mappedPrior).
+ * Only after that chain cannot continue → ClinicalInterviewEngine (PHP/NLP).
  * ClinicalTriageEngine remains the only acuity authority.
  */
 final class GeminiPatientInterview
@@ -46,14 +47,9 @@ final class GeminiPatientInterview
         $isContinue = $priorGemini !== [];
         $pack = self::$packOverrideForTest;
         if (!is_array($pack)) {
-            GeminiClinicalInterviewDemo::beginSkipPhpOpenRouterQuotaFallback();
-            try {
-                $pack = $isContinue
-                    ? GeminiClinicalInterviewDemo::answer($utterance, $priorGemini)
-                    : GeminiClinicalInterviewDemo::start($utterance);
-            } finally {
-                GeminiClinicalInterviewDemo::endSkipPhpOpenRouterQuotaFallback();
-            }
+            $pack = $isContinue
+                ? GeminiClinicalInterviewDemo::answer($utterance, $priorGemini)
+                : GeminiClinicalInterviewDemo::start($utterance);
         }
 
         if (self::isTransportFailure($pack)) {
@@ -179,7 +175,13 @@ final class GeminiPatientInterview
             is_array($priorContext['interview'] ?? null) ? ($priorContext['interview'][self::CONTEXT_KEY] ?? null) : null,
             $priorContext['interview_context'] ?? null,
         ] as $raw) {
-            if (is_array($raw) && trim((string) ($raw['chief_complaint'] ?? '')) !== '') {
+            if (!is_array($raw) || $raw === []) {
+                continue;
+            }
+            if (trim((string) ($raw['chief_complaint'] ?? '')) !== ''
+                || trim((string) ($raw['awaiting_question'] ?? '')) !== ''
+                || self::stringList($raw['patient_turns'] ?? []) !== []
+            ) {
                 return $raw;
             }
         }
@@ -291,8 +293,9 @@ final class GeminiPatientInterview
         if ($lang === '') {
             $lang = 'english';
         }
+        $retry = self::isRetryTurn($pack, $context);
         $question = [
-            'question_id' => '',
+            'question_id' => self::questionIdForUi($pack, $context, $q),
             'text' => $q,
             'language' => $lang,
         ];
@@ -300,14 +303,19 @@ final class GeminiPatientInterview
             is_array($pack['clinical_facts'] ?? null) ? $pack['clinical_facts'] : []
         );
         $complaint = (string) ($pack['chief_complaint'] ?? $context['chief_complaint'] ?? '');
+        $notice = trim((string) ($pack['message'] ?? ''));
 
         $assessment = [
             'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
             'followup_required' => true,
             'followup_question' => $question,
-            'patient_message' => $q,
+            'patient_message' => ($retry && $notice !== '') ? $notice : $q,
+            'retry_current_question' => $retry,
+            'answer_rejected' => $retry,
             'chief_complaint' => $complaint,
             'original_chief_complaint' => $complaint,
+            'detected_language' => (string) ($context['detected_language'] ?? $lang),
+            'question_language' => $lang,
             'detected_symptoms' => is_array($facts['symptoms'] ?? null) ? $facts['symptoms'] : [],
             'clinical_transcript' => implode('. ', self::stringList($context['patient_turns'] ?? [])),
             'triage' => [
@@ -354,6 +362,17 @@ final class GeminiPatientInterview
             is_array($pack['clinical_facts'] ?? null) ? $pack['clinical_facts'] : []
         );
         $complaint = (string) ($pack['chief_complaint'] ?? $context['chief_complaint'] ?? '');
+        $transcript = implode('. ', self::stringList($context['patient_turns'] ?? []));
+        if ($transcript === '') {
+            $transcript = $complaint;
+        }
+        $action = self::recommendedActionForDisplay($display, (string) ($final['recommended_action'] ?? ''));
+        $urgency = match ($display) {
+            'EMERGENCY' => 'Emergency (Immediate)',
+            'URGENT' => 'Urgent (Priority)',
+            default => 'Non-Urgent (Routine)',
+        };
+        $confidenceScore = (int) ($final['confidence_score'] ?? 0);
         $assessment = [
             'assessment_status' => ClinicalInterviewEngine::STATUS_COMPLETED,
             'followup_required' => false,
@@ -363,7 +382,16 @@ final class GeminiPatientInterview
                 : $display,
             'chief_complaint' => $complaint,
             'original_chief_complaint' => $complaint,
+            'english_translation' => $transcript,
+            'detected_language' => (string) ($context['detected_language'] ?? ''),
             'detected_symptoms' => is_array($facts['symptoms'] ?? null) ? $facts['symptoms'] : [],
+            'clinical_transcript' => $transcript,
+            'recommended_action' => $action,
+            'recommendations' => array_values(array_filter([$action])),
+            'confidence' => [
+                'score' => $confidenceScore,
+                'level' => $confidenceScore >= 75 ? 'high' : ($confidenceScore >= 50 ? 'moderate' : 'review_needed'),
+            ],
             'triage' => [
                 'triage_display' => $display,
                 'triage_classification' => (string) ($final['triage_classification'] ?? $classification),
@@ -373,11 +401,12 @@ final class GeminiPatientInterview
                 'assessment_status' => ClinicalInterviewEngine::STATUS_COMPLETED,
                 'final_authority' => 'ClinicalTriageEngine',
                 'reason' => (string) ($final['reason'] ?? ''),
-                'recommended_action' => (string) ($final['recommended_action'] ?? ''),
+                'recommended_action' => $action,
                 'red_flags' => is_array($final['red_flags'] ?? null) ? $final['red_flags'] : [],
+                'confidence_score' => $confidenceScore,
             ],
             'db_level' => $db,
-            'urgency_label' => $display,
+            'urgency_label' => $urgency,
             'engine' => 'gemini-patient-interview',
             'engine_version' => class_exists('MedicalAssessmentEngine') ? MedicalAssessmentEngine::VERSION : '',
         ];
@@ -409,11 +438,87 @@ final class GeminiPatientInterview
         $interview['awaiting_question_id'] = '';
         $interview['last_followup_question'] = $question;
         $interview['next_question'] = $question;
+        $interview['retry_current_question'] = !empty($assessment['retry_current_question']);
+        $interview['answer_rejected'] = !empty($assessment['answer_rejected']);
         $interview[self::CONTEXT_KEY] = $context;
         $assessment['interview'] = $interview;
         $assessment[self::CONTEXT_KEY] = $context;
 
         return $assessment;
+    }
+
+    /**
+     * Existing patient UI chips key off question_id. Map Gemini slots onto those
+     * ids only for display — do not treat them as PHP question-bank state.
+     *
+     * @param array<string, mixed> $pack
+     * @param array<string, mixed> $context
+     */
+    private static function questionIdForUi(array $pack, array $context, string $questionText): string
+    {
+        $targets = is_array($pack['awaiting_target_findings'] ?? null)
+            ? $pack['awaiting_target_findings']
+            : (is_array($context['awaiting_target_findings'] ?? null) ? $context['awaiting_target_findings'] : []);
+        $slot = strtolower(trim((string) ($targets[0] ?? '')));
+        if ($slot === '' && $questionText !== '') {
+            if (preg_match('/\b(1\s*(to|tubtob|hanggang|-|–)\s*10|pain\s*score|gaano\s*kasakit|how\s+(bad|severe))\b/u', mb_strtolower($questionText))) {
+                $slot = 'pain_score';
+            } elseif (preg_match('/\b(how\s+long|gaano\s+(na\s+)?katagal|duration|tagal)\b/u', mb_strtolower($questionText))) {
+                $slot = 'duration';
+            } elseif (preg_match('/\b(when|san-o|kailan|nagsugod|nagsimula|onset)\b/u', mb_strtolower($questionText))) {
+                $slot = 'onset';
+            } elseif (preg_match('/\b(where|diin|saan|location|which\s+part)\b/u', mb_strtolower($questionText))) {
+                $slot = 'location';
+            }
+        }
+
+        return match ($slot) {
+            'pain_score' => 'PAIN_SEVERITY',
+            'duration' => 'DURATION',
+            'onset' => 'ONSET',
+            'location' => 'LOCATION',
+            'laterality' => 'LATERALITY',
+            'associated_symptoms' => 'ASSOCIATED_SYMPTOMS',
+            'associated_detail' => 'ASSOCIATED_DETAIL',
+            default => (str_starts_with($slot, 'finding_') || str_starts_with($slot, 'FINDING_'))
+                ? strtoupper($slot)
+                : '',
+        };
+    }
+
+    /**
+     * @param array<string, mixed> $pack
+     * @param array<string, mixed> $context
+     */
+    private static function isRetryTurn(array $pack, array $context): bool
+    {
+        $status = strtoupper((string) ($pack['last_answer_status'] ?? $context['last_answer_status'] ?? ''));
+        if (in_array($status, ['UNCLEAR', 'UNRELATED'], true)) {
+            return true;
+        }
+        $conv = is_array($pack['conversation'] ?? null)
+            ? $pack['conversation']
+            : (is_array($context['conversation'] ?? null) ? $context['conversation'] : []);
+        if ($conv === []) {
+            return false;
+        }
+        $last = end($conv);
+
+        return is_array($last) && strtolower((string) ($last['kind'] ?? '')) === 'retry';
+    }
+
+    private static function recommendedActionForDisplay(string $display, string $fromEngine): string
+    {
+        $fromEngine = trim($fromEngine);
+        if ($fromEngine !== '') {
+            return $fromEngine;
+        }
+
+        return match ($display) {
+            'EMERGENCY' => 'Seek emergency medical care immediately.',
+            'URGENT' => 'Consult a healthcare provider within 24 hours.',
+            default => 'Monitor symptoms and schedule a routine consultation if symptoms persist.',
+        };
     }
 
     /**

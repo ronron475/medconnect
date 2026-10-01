@@ -1,7 +1,7 @@
 <?php
 /**
- * Gemini-led patient adapter: transport fail → ClinicalInterviewEngine with current utterance.
- * No live Gemini / OpenRouter / Railway.
+ * Gemini-led patient adapter: same demo fallbacks; last-resort PHP engine.
+ * No live Gemini / OpenRouter / Railway / Groq.
  */
 require __DIR__ . '/nlp_cli_bootstrap.php';
 
@@ -9,6 +9,10 @@ putenv('MEDCONNECT_PHP_NLP_ONLY=0');
 $_ENV['MEDCONNECT_PHP_NLP_ONLY'] = '0';
 putenv('MEDCONNECT_SKIP_GEMINI_FOLLOWUP=1');
 $_ENV['MEDCONNECT_SKIP_GEMINI_FOLLOWUP'] = '1';
+putenv('MEDCONNECT_SKIP_GEMINI_VALIDATION=1');
+$_ENV['MEDCONNECT_SKIP_GEMINI_VALIDATION'] = '1';
+putenv('MEDCONNECT_SKIP_GEMINI_SELECT=1');
+$_ENV['MEDCONNECT_SKIP_GEMINI_SELECT'] = '1';
 
 $fail = 0;
 $pass = 0;
@@ -41,6 +45,7 @@ $ctx = [
     'question_language' => 'english',
     'detected_language' => 'english',
     'awaiting_question' => 'How bad is the pain from 1 to 10?',
+    'awaiting_target_findings' => ['pain_score'],
     'conversation' => [
         ['role' => 'patient', 'text' => 'My stomach hurts.', 'kind' => 'complaint'],
         ['role' => 'gemini', 'text' => 'How long has this lasted?', 'kind' => 'followup'],
@@ -131,7 +136,7 @@ $phpGemmaCalls = 0;
 GeminiClinicalInterviewDemo::beginOpenRouterQuotaProbeForTest(static function () use (&$phpGemmaCalls): ?string {
     $phpGemmaCalls++;
 
-    return '{"classification":"HEALTH_RELATED","patient_subject":"HUMAN","question_needed":true,"next_question":"Where is the pain?","clinical_facts":{"symptom":"stomach pain"}}';
+    return '{"classification":"HEALTH_RELATED","patient_subject":"HUMAN","answer_status":"VALID","question_needed":true,"interview_sufficient":false,"next_question":"From 1 to 10, how bad is the pain?","clinical_facts":{"symptom":"stomach pain","duration":"Since yesterday","pain_score":7}}';
 });
 try {
     $quotaOut = ChiefComplaintNlpService::assessInterview('7', $prior, []);
@@ -139,15 +144,20 @@ try {
     GeminiClinicalInterviewDemo::endOpenRouterQuotaProbeForTest();
 }
 ok(
-    'patient quota path does not call Hostinger PHP gemma OpenRouter',
-    $phpGemmaCalls === 0 && GeminiClinicalInterviewDemo::$phpOpenRouterRecoverCallsForTest === 0,
+    'patient quota path uses the same OpenRouter hop as the demo',
+    $phpGemmaCalls === 1 && GeminiClinicalInterviewDemo::$phpOpenRouterRecoverCallsForTest >= 1,
     'gemma_transport=' . $phpGemmaCalls
         . ' recover_calls=' . GeminiClinicalInterviewDemo::$phpOpenRouterRecoverCallsForTest
 );
 ok(
-    'Railway/nemotron fail still sends current utterance 7 to ClinicalInterviewEngine',
-    GeminiPatientInterview::$engineAssessCallsForTest === ['7'],
+    'OpenRouter success does not abandon to ClinicalInterviewEngine',
+    GeminiPatientInterview::$engineAssessCallsForTest === [],
     json_encode(GeminiPatientInterview::$engineAssessCallsForTest)
+);
+ok(
+    'OpenRouter success keeps Gemini-led context',
+    is_array($quotaOut['gemini_led_context'] ?? null)
+        && trim((string) (($quotaOut['gemini_led_context']['chief_complaint'] ?? ''))) === 'My stomach hurts.'
 );
 $quotaFacts = is_array($quotaOut['interview']['facts'] ?? null)
     ? $quotaOut['interview']['facts']
@@ -159,6 +169,124 @@ ok(
 ok(
     'quota generate-path does not invent awaiting_question_id before engine',
     ($mapped['awaiting_question_id'] ?? 'x') === ''
+);
+
+GeminiPatientInterview::resetTestHooks();
+GeminiPatientInterview::$packOverrideForTest = [
+    'status' => GeminiClinicalInterviewDemo::STATUS_INTERVIEWING,
+    'awaiting_question' => 'How bad is the pain from 1 to 10?',
+    'awaiting_target_findings' => ['pain_score'],
+    'chief_complaint' => 'My stomach hurts.',
+    'clinical_facts' => [
+        'symptom' => 'stomach pain',
+        'duration' => 'Since yesterday',
+    ],
+    'interview_context' => $ctx,
+    'question_language' => 'english',
+];
+$mid = ChiefComplaintNlpService::assessInterview('My stomach hurts.', []);
+ok('in-progress uses existing follow-up UI contract', ClinicalInterviewEngine::isInProgress($mid));
+ok(
+    'pain-score follow-up maps to existing PAIN_SEVERITY chip id',
+    (string) (($mid['followup_question']['question_id'] ?? '')) === 'PAIN_SEVERITY'
+);
+ok('gemini_led_context persisted on assessment', is_array($mid[GeminiPatientInterview::CONTEXT_KEY] ?? null));
+ok('original complaint wording preserved', ($mid['original_chief_complaint'] ?? '') === 'My stomach hurts.');
+ok('in-progress does not set EMERGENCY/URGENT/NON-URGENT', ($mid['triage']['triage_display'] ?? '') === '');
+
+GeminiPatientInterview::resetTestHooks();
+GeminiPatientInterview::$packOverrideForTest = [
+    'status' => GeminiClinicalInterviewDemo::STATUS_INTERVIEWING,
+    'awaiting_question' => 'How bad is the pain from 1 to 10?',
+    'last_answer_status' => 'UNCLEAR',
+    'message' => 'Please answer the question above.',
+    'awaiting_target_findings' => ['pain_score'],
+    'chief_complaint' => 'My stomach hurts.',
+    'clinical_facts' => ['symptom' => 'stomach pain'],
+    'interview_context' => array_merge($ctx, [
+        'last_answer_status' => 'UNCLEAR',
+        'conversation' => array_merge($ctx['conversation'], [
+            ['role' => 'gemini', 'text' => 'How bad is the pain from 1 to 10?', 'kind' => 'retry'],
+        ]),
+    ]),
+];
+$retry = ChiefComplaintNlpService::assessInterview('asdf', $prior, []);
+ok('unclear answer sets retry_current_question', !empty($retry['retry_current_question']) || !empty($retry['interview']['retry_current_question']));
+ok('retry keeps the same pain question', str_contains(strtolower((string) ($retry['followup_question']['text'] ?? '')), '1 to 10'));
+
+GeminiPatientInterview::resetTestHooks();
+GeminiPatientInterview::$packOverrideForTest = [
+    'status' => GeminiClinicalInterviewDemo::STATUS_FINAL,
+    'chief_complaint' => 'My stomach hurts.',
+    'clinical_facts' => [
+        'symptom' => 'stomach pain',
+        'location' => 'stomach',
+        'duration' => 'Since yesterday',
+        'pain_score' => 4,
+        'relevant_negatives' => ['fever'],
+        'finding_status' => ['fever' => 'negative'],
+    ],
+    'final_triage' => [
+        'triage_display' => 'NON-URGENT',
+        'triage_classification' => 'NON_URGENT',
+        'triage_level' => 'LOW',
+        'recommended_action' => 'Monitor symptoms and schedule a routine consultation if symptoms persist.',
+        'reason' => 'No red flags on accumulated facts.',
+        'red_flags' => [],
+        'final_authority' => 'ClinicalTriageEngine',
+        'confidence_score' => 80,
+    ],
+    'interview_context' => array_merge($ctx, ['status' => GeminiClinicalInterviewDemo::STATUS_FINAL]),
+];
+$done = ChiefComplaintNlpService::assessInterview('no fever', $prior, []);
+ok('completed interview is not in progress', !ClinicalInterviewEngine::isInProgress($done));
+ok(
+    'ClinicalTriageEngine is the stored final authority',
+    ($done['triage']['final_authority'] ?? '') === 'ClinicalTriageEngine'
+);
+ok(
+    'completed NON-URGENT has recommendations for care-tip review',
+    is_array($done['recommendations'] ?? null) && implode("\n", $done['recommendations']) !== ''
+);
+ok('completed class comes from ClinicalTriageEngine payload', ($done['triage']['triage_display'] ?? '') === 'NON-URGENT');
+$doneFacts = is_array($done['interview']['facts'] ?? null) ? $done['interview']['facts'] : [];
+ok(
+    'negative fever polarity is not stored as fever=true',
+    ($doneFacts['fever'] ?? null) !== true
+    && !in_array('fever', (array) ($doneFacts['symptoms'] ?? []), true)
+);
+
+GeminiPatientInterview::resetTestHooks();
+GeminiPatientInterview::$packOverrideForTest = [
+    'status' => GeminiClinicalInterviewDemo::STATUS_INTERVIEWING,
+    'awaiting_question' => 'Diin ang sakit?',
+    'chief_complaint' => 'sakit ulo ko',
+    'clinical_facts' => ['symptom' => 'head pain'],
+    'interview_context' => [
+        'chief_complaint' => 'sakit ulo ko',
+        'patient_turns' => ['sakit ulo ko'],
+        'awaiting_question' => 'Diin ang sakit?',
+        'clinical_facts' => ['symptom' => 'head pain'],
+        'question_language' => 'hiligaynon',
+    ],
+    'question_language' => 'hiligaynon',
+];
+$fresh = GeminiPatientInterview::assess('sakit ulo ko', []);
+ok('empty prior starts a Gemini interview (not leftover PHP questions_asked)', is_array($fresh));
+ok(
+    'Start New Consultation empty prior does not reuse old awaiting_question_id',
+    (string) (($fresh['interview']['awaiting_question_id'] ?? 'x')) === ''
+);
+
+$negMapped = GeminiClinicalInterviewDemo::mapFactsForEngine([
+    'symptom' => 'head pain',
+    'relevant_negatives' => ['fever'],
+    'finding_status' => ['fever' => 'negative'],
+]);
+ok(
+    'explicit negative fever is not fever=true',
+    ($negMapped['fever'] ?? null) !== true
+    && !in_array('fever', (array) ($negMapped['symptoms'] ?? []), true)
 );
 
 $src = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/ChiefComplaintNlpService.php');
@@ -173,18 +301,17 @@ ok(
 );
 $patientSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/GeminiPatientInterview.php');
 ok(
-    'patient start/answer skip PHP gemma OpenRouter',
-    str_contains($patientSrc, 'beginSkipPhpOpenRouterQuotaFallback')
-    && str_contains($patientSrc, 'endSkipPhpOpenRouterQuotaFallback')
+    'patient start/answer do not skip the demo OpenRouter/Groq hop',
+    !str_contains($patientSrc, 'beginSkipPhpOpenRouterQuotaFallback')
 );
 $demoSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/core/GeminiClinicalInterviewDemo.php');
 ok(
-    'demo PHP OpenRouter recovery remains for the demo generate path',
+    'demo PHP OpenRouter recovery remains for the shared generate path',
     str_contains($demoSrc, 'recoverDemoQuotaWithOpenRouter')
     && str_contains($demoSrc, 'medconnect_demo_openrouter_quota_text')
 );
 ok(
-    'patient skip returns before PHP OpenRouter helper',
+    'skip flag still gates PHP OpenRouter helper when tests enable it',
     strpos($demoSrc, 'skipPhpOpenRouterQuotaFallback') < strpos($demoSrc, 'medconnect_demo_openrouter_quota_text')
 );
 
@@ -197,6 +324,13 @@ ok(
     'Railway quota pack tries Groq after OpenRouter miss',
     str_contains($py, 'def _groq_http_complete')
     && strpos($py, '_openrouter_http_complete(payload, timeout)') < strpos($py, '_groq_http_complete(payload, timeout)')
+);
+
+$submitSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/includes/patient_symptoms_review_submit.php');
+ok(
+    'live submit still calls assessInterview (not the demo page)',
+    str_contains($submitSrc, 'ChiefComplaintNlpService::assessInterview')
+    && !str_contains($submitSrc, 'gemini_clinical_interview_demo.php')
 );
 
 echo "\n$pass passed, $fail failed\n";
