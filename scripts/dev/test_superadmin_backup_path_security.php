@@ -129,10 +129,30 @@ try {
     }
 
     $apiSrc = file_get_contents($root . '/app/api/superadmin/backup.php') ?: '';
-    if (str_contains($apiSrc, 'superadmin_backup_resolve_safe_path')) {
+    if (str_contains($apiSrc, 'superadmin_backup_resolve_safe_path')
+        || str_contains($apiSrc, 'superadmin_backup_download_prepare')
+    ) {
         pass('backup download also uses safe path resolver');
     } else {
         fail('backup download also uses safe path resolver');
+    }
+
+    if (str_contains($apiSrc, "\$action === 'download' && \$method !== 'POST'")
+        && str_contains($apiSrc, 'http_response_code(405)')
+        && !preg_match('/GET.*action === \'download\'[\s\S]*readfile/', $apiSrc)
+    ) {
+        pass('GET download is rejected (POST-only)');
+    } else {
+        fail('GET download is rejected (POST-only)');
+    }
+
+    $retentionSrc = $restoreSrc;
+    if (str_contains($retentionSrc, 'superadmin_backup_retention_unlink_if_safe')
+        && str_contains($retentionSrc, 'superadmin_backup_resolve_safe_path')
+    ) {
+        pass('retention deletion uses safe-path helper');
+    } else {
+        fail('retention deletion uses safe-path helper');
     }
 } finally {
     $cleanup();

@@ -132,6 +132,7 @@ function superadmin_ensure_schema(PDO $pdo): void
             filename VARCHAR(255) NOT NULL,
             file_path VARCHAR(500) NULL,
             file_size BIGINT UNSIGNED NULL DEFAULT 0,
+            file_checksum CHAR(64) NULL DEFAULT NULL,
             backup_type ENUM('manual','scheduled','restore') NOT NULL DEFAULT 'manual',
             status ENUM('success','failed','in_progress') NOT NULL DEFAULT 'in_progress',
             created_by INT UNSIGNED NULL,
@@ -143,6 +144,7 @@ function superadmin_ensure_schema(PDO $pdo): void
             CONSTRAINT fk_backup_logs_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE SET NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+    superadmin_backup_logs_ensure_checksum_column($pdo);
 
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS api_settings (
@@ -189,6 +191,27 @@ function superadmin_ensure_schema(PDO $pdo): void
         } catch (Throwable $e) {}
     }
 
+    $done = true;
+}
+
+/**
+ * Existing Hostinger tables are not updated by CREATE TABLE IF NOT EXISTS.
+ * Add file_checksum when missing (SHA-256 hex of the dump file).
+ */
+function superadmin_backup_logs_ensure_checksum_column(PDO $pdo): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    try {
+        $col = $pdo->query("SHOW COLUMNS FROM backup_logs LIKE 'file_checksum'")->fetch(PDO::FETCH_ASSOC);
+        if (!is_array($col) || $col === []) {
+            $pdo->exec('ALTER TABLE backup_logs ADD COLUMN file_checksum CHAR(64) NULL DEFAULT NULL AFTER file_size');
+        }
+    } catch (Throwable $e) {
+        // Table may not exist yet on first boot; CREATE TABLE handles new installs.
+    }
     $done = true;
 }
 

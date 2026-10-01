@@ -23,24 +23,12 @@ if ($method === 'GET' && $action === 'status') {
     exit;
 }
 
-if ($method === 'GET' && $action === 'download') {
-    $id = (int) ($_GET['id'] ?? 0);
-    $stmt = $pdo->prepare("
-        SELECT filename, file_path, backup_type
-        FROM backup_logs
-        WHERE id = ? AND status = ?
-        LIMIT 1
-    ");
-    $stmt->execute([$id, 'success']);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $safePath = $row ? superadmin_backup_resolve_safe_path((string) ($row['file_path'] ?? '')) : null;
-    if (!$row || ($row['backup_type'] ?? '') === 'restore' || $safePath === null) {
-        http_response_code(404);
-        die('Backup not found.');
-    }
-    header('Content-Type: application/sql');
-    header('Content-Disposition: attachment; filename="' . basename($row['filename']) . '"');
-    readfile($safePath);
+if ($action === 'download' && $method !== 'POST') {
+    http_response_code(405);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Download requires POST with Super Admin password re-authentication.',
+    ]);
     exit;
 }
 
@@ -58,8 +46,30 @@ switch ($action) {
     case 'restore':
         // Manual restore only — never triggered by cron/schedule.
         $backupId = (int) ($_POST['backup_id'] ?? 0);
-        echo json_encode(superadmin_restore_backup($pdo, $backupId, $userId));
+        $currentPassword = (string) ($_POST['current_password'] ?? '');
+        $confirmText = (string) ($_POST['confirm_text'] ?? '');
+        echo json_encode(superadmin_restore_backup($pdo, $backupId, $userId, $currentPassword, $confirmText));
         break;
+    case 'download':
+        superadmin_ensure_schema($pdo);
+        $backupId = (int) ($_POST['backup_id'] ?? 0);
+        $currentPassword = (string) ($_POST['current_password'] ?? '');
+        $prepared = superadmin_backup_download_prepare($pdo, $backupId, $userId, $currentPassword);
+        if (empty($prepared['success'])) {
+            echo json_encode([
+                'success' => false,
+                'message' => (string) ($prepared['message'] ?? 'Download failed.'),
+            ]);
+            break;
+        }
+        $downloadName = basename((string) ($prepared['filename'] ?? 'medconnect_backup.sql'));
+        $downloadName = preg_replace('/[^A-Za-z0-9._-]/', '_', $downloadName) ?: 'medconnect_backup.sql';
+        header('Content-Type: application/sql');
+        header('Content-Disposition: attachment; filename="' . $downloadName . '"');
+        header('X-Content-Type-Options: nosniff');
+        header('Cache-Control: private, no-store');
+        readfile((string) $prepared['path']);
+        exit;
     case 'save_settings':
         $result = superadmin_backup_settings_save($pdo, [
             'enabled' => $_POST['enabled'] ?? '0',

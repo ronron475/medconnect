@@ -34,6 +34,30 @@ require_once __DIR__ . '/partials/layout_open.php';
   <button type="button" class="mc-btn mc-btn--primary" id="btnBackup">Create Manual Backup</button>
 </div>
 
+<div class="mc-card" style="padding:14px 16px;margin-bottom:12px;">
+  <h3 class="text-h3" style="margin:0 0 10px;">Backup Security</h3>
+  <dl class="text-xs" style="display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:6px 16px;margin:0;line-height:1.45;">
+    <dt class="text-muted" style="font-weight:700;">Super Admin access</dt>
+    <dd style="margin:0;">Protected</dd>
+    <dt class="text-muted" style="font-weight:700;">POST actions</dt>
+    <dd style="margin:0;">CSRF protected</dd>
+    <dt class="text-muted" style="font-weight:700;">Backup path</dt>
+    <dd style="margin:0;">Protected</dd>
+    <dt class="text-muted" style="font-weight:700;">Restore</dt>
+    <dd style="margin:0;">Password re-authentication required</dd>
+    <dt class="text-muted" style="font-weight:700;">Restore confirmation</dt>
+    <dd style="margin:0;"><code>RESTORE DATABASE</code> required</dd>
+    <dt class="text-muted" style="font-weight:700;">Backup integrity</dt>
+    <dd style="margin:0;">SHA-256 verified</dd>
+    <dt class="text-muted" style="font-weight:700;">Backup encryption</dt>
+    <dd style="margin:0;">Not enabled</dd>
+    <dt class="text-muted" style="font-weight:700;">Storage</dt>
+    <dd style="margin:0;">Same server</dd>
+    <dt class="text-muted" style="font-weight:700;">Scheduled backup</dt>
+    <dd style="margin:0;">Depends on Hostinger cron configuration</dd>
+  </dl>
+</div>
+
 <div class="superadmin-stat-grid superadmin-stat-grid--compact" style="margin-bottom:12px;">
   <div class="mc-card superadmin-stat-card">
     <div class="text-xs text-muted" style="text-transform:uppercase;font-weight:800;letter-spacing:.04em;">Latest Backup</div>
@@ -156,7 +180,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <td data-label="Created" class="text-xs text-muted"><?= !empty($b['created_at']) ? date('M j, Y', strtotime($b['created_at'])) . ' • ' . date('g:i A', strtotime($b['created_at'])) : '—' ?></td>
         <td data-label="Actions" style="display:flex;gap:6px;flex-wrap:wrap;">
           <?php if ($canAct): ?>
-          <a class="mc-btn mc-btn--outline" style="padding:4px 10px;font-size:11px;" href="<?= htmlspecialchars($api) ?>?action=download&id=<?= (int) $b['id'] ?>">Download</a>
+          <button type="button" class="mc-btn mc-btn--outline btn-download" style="padding:4px 10px;font-size:11px;" data-id="<?= (int) $b['id'] ?>" data-filename="<?= htmlspecialchars((string) $b['filename'], ENT_QUOTES, 'UTF-8') ?>">Download</button>
           <button type="button" class="mc-btn mc-btn--outline btn-restore" style="padding:4px 10px;font-size:11px;" data-id="<?= (int) $b['id'] ?>">Restore</button>
           <?php else: ?>
           <span class="text-xs text-muted">—</span>
@@ -167,12 +191,58 @@ require_once __DIR__ . '/partials/layout_open.php';
     </tbody>
   </table>
 </div>
+
+<div id="backupRestoreModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div class="mc-card" style="width:min(480px,92vw);margin:20px;">
+    <h3 class="text-h3 mb-md">Restore database</h3>
+    <p class="text-xs" style="margin:0 0 12px;color:#b45309;font-weight:700;line-height:1.45;">WARNING: Restoring this backup will overwrite the current live database. This action is manual and is not automatically reversible.</p>
+    <form id="backupRestoreForm" style="display:flex;flex-direction:column;gap:12px;">
+      <input type="hidden" name="backup_id" id="restoreBackupId" value="">
+      <label class="text-xs" style="display:flex;flex-direction:column;gap:4px;">
+        <span class="text-muted" style="font-weight:700;">Current Super Admin Password</span>
+        <input type="password" name="current_password" id="restorePassword" class="form-control" autocomplete="current-password" required>
+      </label>
+      <label class="text-xs" style="display:flex;flex-direction:column;gap:4px;">
+        <span class="text-muted" style="font-weight:700;">Type RESTORE DATABASE</span>
+        <input type="text" name="confirm_text" id="restoreConfirmText" class="form-control" autocomplete="off" required placeholder="RESTORE DATABASE">
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="backupRestoreClose">Cancel</button>
+        <button type="submit" class="mc-btn mc-btn--primary">Restore</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="backupDownloadModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center;">
+  <div class="mc-card" style="width:min(440px,92vw);margin:20px;">
+    <h3 class="text-h3 mb-md">Download backup</h3>
+    <p class="text-xs text-muted" style="margin:0 0 12px;line-height:1.45;">Re-enter your Super Admin password. The file is sent only after server-side verification.</p>
+    <form id="backupDownloadForm" style="display:flex;flex-direction:column;gap:12px;">
+      <input type="hidden" name="backup_id" id="downloadBackupId" value="">
+      <input type="hidden" name="filename" id="downloadBackupFilename" value="">
+      <label class="text-xs" style="display:flex;flex-direction:column;gap:4px;">
+        <span class="text-muted" style="font-weight:700;">Current Super Admin Password</span>
+        <input type="password" name="current_password" id="downloadPassword" class="form-control" autocomplete="current-password" required>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral" id="backupDownloadClose">Cancel</button>
+        <button type="submit" class="mc-btn mc-btn--primary">Download</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 (function () {
   var api = <?= json_encode($api) ?>;
   var freq = document.getElementById('backupFrequency');
   var hourWrap = document.getElementById('backupHourWrap');
   var weekWrap = document.getElementById('backupWeekdayWrap');
+  var restoreModal = document.getElementById('backupRestoreModal');
+  var downloadModal = document.getElementById('backupDownloadModal');
+  var restoreForm = document.getElementById('backupRestoreForm');
+  var downloadForm = document.getElementById('backupDownloadForm');
 
   function syncScheduleFields() {
     var v = freq ? freq.value : 'daily';
@@ -181,6 +251,13 @@ require_once __DIR__ . '/partials/layout_open.php';
   }
   if (freq) freq.addEventListener('change', syncScheduleFields);
   syncScheduleFields();
+
+  function closeModals() {
+    if (restoreModal) restoreModal.style.display = 'none';
+    if (downloadModal) downloadModal.style.display = 'none';
+    if (restoreForm) restoreForm.reset();
+    if (downloadForm) downloadForm.reset();
+  }
 
   document.getElementById('btnBackup').onclick = function () {
     var fd = new FormData();
@@ -196,13 +273,70 @@ require_once __DIR__ . '/partials/layout_open.php';
   document.querySelectorAll('.btn-restore').forEach(function (b) {
     b.onclick = function () {
       if (!confirm('Restore will overwrite the current live database. This is manual only and cannot be undone easily. Continue?')) return;
-      var fd = new FormData();
-      fd.append('action', 'restore');
-      fd.append('backup_id', b.dataset.id);
-      fetch(api, { method: 'POST', body: fd })
-        .then(function (r) { return r.json(); })
-        .then(function (j) { alert(j.message || 'Done'); });
+      document.getElementById('restoreBackupId').value = b.dataset.id || '';
+      document.getElementById('restorePassword').value = '';
+      document.getElementById('restoreConfirmText').value = '';
+      restoreModal.style.display = 'flex';
+      document.getElementById('restorePassword').focus();
     };
+  });
+
+  document.querySelectorAll('.btn-download').forEach(function (b) {
+    b.onclick = function () {
+      document.getElementById('downloadBackupId').value = b.dataset.id || '';
+      document.getElementById('downloadBackupFilename').value = b.dataset.filename || 'medconnect_backup.sql';
+      document.getElementById('downloadPassword').value = '';
+      downloadModal.style.display = 'flex';
+      document.getElementById('downloadPassword').focus();
+    };
+  });
+
+  document.getElementById('backupRestoreClose').onclick = closeModals;
+  document.getElementById('backupDownloadClose').onclick = closeModals;
+
+  restoreForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var fd = new FormData(restoreForm);
+    fd.append('action', 'restore');
+    fetch(api, { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        alert(j.message || 'Done');
+        if (j.success) location.reload();
+      })
+      .finally(function () {
+        document.getElementById('restorePassword').value = '';
+      });
+  });
+
+  downloadForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var fd = new FormData(downloadForm);
+    fd.append('action', 'download');
+    var filename = document.getElementById('downloadBackupFilename').value || 'medconnect_backup.sql';
+    fetch(api, { method: 'POST', body: fd })
+      .then(function (r) {
+        var ct = (r.headers.get('Content-Type') || '').toLowerCase();
+        if (ct.indexOf('application/sql') !== -1 || ct.indexOf('octet-stream') !== -1) {
+          return r.blob().then(function (blob) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            closeModals();
+          });
+        }
+        return r.json().then(function (j) {
+          alert(j.message || 'Download failed.');
+        });
+      })
+      .finally(function () {
+        document.getElementById('downloadPassword').value = '';
+      });
   });
 
   var form = document.getElementById('backupSettingsForm');

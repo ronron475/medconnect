@@ -74,6 +74,142 @@ function superadmin_backup_resolve_safe_path(string $path): ?string
     return $resolved;
 }
 
+const SUPERADMIN_BACKUP_RESTORE_PHRASE = 'RESTORE DATABASE';
+
+/**
+ * Re-authenticate the logged-in Super Admin with their current password.
+ * Uses password_verify() against users.password. Never stores the submitted password.
+ */
+function superadmin_verify_current_password(PDO $pdo, int $userId, string $password): bool
+{
+    if ($userId <= 0 || $password === '') {
+        return false;
+    }
+    try {
+        $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ? AND role = 'superadmin' LIMIT 1");
+        $stmt->execute([$userId]);
+        $hash = (string) ($stmt->fetchColumn() ?: '');
+    } catch (Throwable $e) {
+        return false;
+    }
+    if ($hash === '') {
+        return false;
+    }
+    return password_verify($password, $hash);
+}
+
+function superadmin_backup_confirm_phrase_valid(string $confirmText): bool
+{
+    return hash_equals(SUPERADMIN_BACKUP_RESTORE_PHRASE, $confirmText);
+}
+
+function superadmin_backup_file_checksum(string $path): ?string
+{
+    if ($path === '' || !is_file($path) || !is_readable($path)) {
+        return null;
+    }
+    $hash = @hash_file('sha256', $path);
+    if (!is_string($hash) || strlen($hash) !== 64) {
+        return null;
+    }
+    return strtolower($hash);
+}
+
+/**
+ * @return array{ok:bool,reason:string}
+ */
+function superadmin_backup_verify_checksum(string $resolvedPath, ?string $storedChecksum): array
+{
+    $stored = strtolower(trim((string) $storedChecksum));
+    if ($stored === '' || !preg_match('/^[a-f0-9]{64}$/', $stored)) {
+        return ['ok' => false, 'reason' => 'missing_checksum'];
+    }
+    $actual = superadmin_backup_file_checksum($resolvedPath);
+    if ($actual === null) {
+        return ['ok' => false, 'reason' => 'checksum_unavailable'];
+    }
+    if (!hash_equals($stored, $actual)) {
+        return ['ok' => false, 'reason' => 'checksum_mismatch'];
+    }
+    return ['ok' => true, 'reason' => ''];
+}
+
+function superadmin_backup_audit_fail(
+    PDO $pdo,
+    string $action,
+    int $userId,
+    int $backupId,
+    string $reason
+): void {
+    $reason = trim($reason);
+    if ($reason === '') {
+        $reason = 'failed';
+    }
+    $desc = $backupId > 0 ? "Backup #{$backupId}: {$reason}" : $reason;
+    try {
+        superadmin_security_log(
+            $pdo,
+            $action,
+            'backup',
+            'failure',
+            $desc,
+            $userId > 0 ? $userId : null,
+            $userId > 0 ? 'superadmin' : 'system'
+        );
+    } catch (Throwable $e) {
+        // Logging must never block deny-by-default.
+    }
+}
+
+function superadmin_backup_audit_success(
+    PDO $pdo,
+    string $action,
+    int $userId,
+    int $backupId,
+    string $description,
+    string $status = 'success'
+): void {
+    $desc = $backupId > 0 ? "Backup #{$backupId}: {$description}" : $description;
+    try {
+        superadmin_security_log(
+            $pdo,
+            $action,
+            'backup',
+            $status,
+            $desc,
+            $userId > 0 ? $userId : null,
+            $userId > 0 ? 'superadmin' : 'system'
+        );
+    } catch (Throwable $e) {
+    }
+}
+
+/**
+ * Unlink a retained dump only when the stored path is inside storage/backups.
+ * Unsafe paths are not deleted.
+ */
+function superadmin_backup_retention_unlink_if_safe(PDO $pdo, int $logId, string $path): bool
+{
+    if ($path === '') {
+        return false;
+    }
+    $safe = superadmin_backup_resolve_safe_path($path);
+    if ($safe === null) {
+        superadmin_backup_audit_fail(
+            $pdo,
+            'database_backup_retention',
+            0,
+            $logId,
+            'unsafe path skipped (not deleted)'
+        );
+        return false;
+    }
+    if (is_file($safe)) {
+        @unlink($safe);
+    }
+    return true;
+}
+
 /** @return array{enabled:bool,frequency:string,hour:int,weekday:int,retention_count:int,last_auto_at:?string,last_auto_status:?string,last_auto_message:?string} */
 function superadmin_backup_settings(PDO $pdo): array
 {
@@ -291,10 +427,33 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
         return ['success' => false, 'message' => 'Could not write backup file.', 'log_id' => $logId];
     }
     $size = filesize($path) ?: 0;
+    $checksum = superadmin_backup_file_checksum($path);
+    if ($checksum === null) {
+        if ($logId) {
+            $pdo->prepare("UPDATE backup_logs SET status='failed', notes=? WHERE id=?")
+                ->execute(['Could not compute backup integrity checksum.', $logId]);
+        }
+        superadmin_security_log(
+            $pdo,
+            'database_backup',
+            'backup',
+            'failure',
+            "Backup checksum failed ({$type}): {$filename}",
+            $userId,
+            $userId ? 'superadmin' : 'system'
+        );
+        return ['success' => false, 'message' => 'Could not compute backup integrity checksum.', 'log_id' => $logId];
+    }
 
     if ($logId) {
-        $pdo->prepare("UPDATE backup_logs SET status='success', file_size=?, notes=? WHERE id=?")
-            ->execute([$size, 'Backup completed successfully.', $logId]);
+        try {
+            $pdo->prepare("UPDATE backup_logs SET status='success', file_size=?, file_checksum=?, notes=? WHERE id=?")
+                ->execute([$size, $checksum, 'Backup completed successfully.', $logId]);
+        } catch (Throwable $e) {
+            $pdo->prepare("UPDATE backup_logs SET status='failed', notes=? WHERE id=?")
+                ->execute(['Could not store backup integrity checksum.', $logId]);
+            return ['success' => false, 'message' => 'Could not store backup integrity checksum.', 'log_id' => $logId];
+        }
     }
 
     superadmin_security_log(
@@ -387,11 +546,10 @@ function superadmin_apply_backup_retention(PDO $pdo): int
     $del = $pdo->prepare('DELETE FROM backup_logs WHERE id = ?');
     foreach ($toDelete as $row) {
         $path = (string) ($row['file_path'] ?? '');
-        if ($path !== '' && is_file($path)) {
-            @unlink($path);
-        }
+        $rowId = (int) ($row['id'] ?? 0);
+        superadmin_backup_retention_unlink_if_safe($pdo, $rowId, $path);
         try {
-            $del->execute([(int) $row['id']]);
+            $del->execute([$rowId]);
             $removed++;
         } catch (Throwable $e) {
             // continue
@@ -470,42 +628,26 @@ function superadmin_backup_status_summary(PDO $pdo): array
     ];
 }
 
-function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
-{
+function superadmin_restore_backup(
+    PDO $pdo,
+    int $backupId,
+    int $userId,
+    string $currentPassword = '',
+    string $confirmText = ''
+): array {
     superadmin_ensure_schema($pdo);
-    if ($userId <= 0) {
-        return ['success' => false, 'message' => 'Authorized Super Admin required to restore.'];
+    $prepared = superadmin_restore_prepare($pdo, $backupId, $userId, $currentPassword, $confirmText);
+    if (empty($prepared['success'])) {
+        return [
+            'success' => false,
+            'message' => (string) ($prepared['message'] ?? 'Restore is not allowed.'),
+        ];
     }
 
-    $stmt = $pdo->prepare('SELECT * FROM backup_logs WHERE id = ? LIMIT 1');
-    $stmt->execute([$backupId]);
-    $backup = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$backup || empty($backup['file_path'])) {
-        return ['success' => false, 'message' => 'Backup file not found.'];
-    }
-    if (($backup['backup_type'] ?? '') === 'restore') {
-        return ['success' => false, 'message' => 'Cannot restore from a restore audit entry.'];
-    }
-    if (($backup['status'] ?? '') !== 'success') {
-        return ['success' => false, 'message' => 'Only successful backups can be restored.'];
-    }
-
-    $safePath = superadmin_backup_resolve_safe_path((string) $backup['file_path']);
-    if ($safePath === null) {
-        superadmin_security_log(
-            $pdo,
-            'database_restore',
-            'backup',
-            'failure',
-            "Restore rejected unsafe path for backup #{$backupId}",
-            $userId,
-            'superadmin'
-        );
-        return ['success' => false, 'message' => 'Backup file not found or not allowed.'];
-    }
-
+    $safePath = (string) $prepared['path'];
     $sql = file_get_contents($safePath);
     if ($sql === false || $sql === '') {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'empty or invalid backup file');
         return ['success' => false, 'message' => 'Backup file is empty.'];
     }
 
@@ -514,8 +656,8 @@ function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
         $pdo->exec($sql);
         $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
     } catch (Throwable $e) {
-        superadmin_security_log($pdo, 'database_restore', 'backup', 'failure', "Restore failed for #{$backupId}: " . $e->getMessage(), $userId, 'superadmin');
-        return ['success' => false, 'message' => 'Restore failed: ' . $e->getMessage()];
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'SQL restore failed');
+        return ['success' => false, 'message' => 'Restore failed.'];
     }
 
     try {
@@ -523,7 +665,7 @@ function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
             INSERT INTO backup_logs (filename, file_path, backup_type, status, created_by, notes, created_at)
             VALUES (?, ?, ?, ?, ?, ?, NOW())
         ')->execute([
-            $backup['filename'],
+            $prepared['filename'],
             $safePath,
             'restore',
             'success',
@@ -536,4 +678,168 @@ function superadmin_restore_backup(PDO $pdo, int $backupId, int $userId): array
     superadmin_security_log($pdo, 'database_restore', 'backup', 'warning', "Restored backup #{$backupId}", $userId, 'superadmin');
 
     return ['success' => true, 'message' => 'Database restored from backup.'];
+}
+
+/**
+ * Validate restore gates without executing SQL (password, phrase, path, checksum).
+ *
+ * @return array{success:bool,message?:string,path?:string,filename?:string}
+ */
+function superadmin_restore_prepare(
+    PDO $pdo,
+    int $backupId,
+    int $userId,
+    string $currentPassword,
+    string $confirmText
+): array {
+    if ($userId <= 0) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'authorized Super Admin required');
+        return ['success' => false, 'message' => 'Authorized Super Admin required to restore.'];
+    }
+
+    if ($currentPassword === '') {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'missing password');
+        return ['success' => false, 'message' => 'Super Admin password is required to restore.'];
+    }
+    if (!superadmin_verify_current_password($pdo, $userId, $currentPassword)) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'wrong password');
+        return ['success' => false, 'message' => 'Super Admin password is incorrect.'];
+    }
+
+    if ($confirmText === '') {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'missing confirmation phrase');
+        return ['success' => false, 'message' => 'Type RESTORE DATABASE to confirm.'];
+    }
+    if (!superadmin_backup_confirm_phrase_valid($confirmText)) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'incorrect confirmation phrase');
+        return ['success' => false, 'message' => 'Confirmation phrase is incorrect. Type RESTORE DATABASE.'];
+    }
+
+    if ($backupId <= 0) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, 0, 'invalid backup');
+        return ['success' => false, 'message' => 'Backup file not found.'];
+    }
+
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM backup_logs WHERE id = ? LIMIT 1');
+        $stmt->execute([$backupId]);
+        $backup = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'invalid backup');
+        return ['success' => false, 'message' => 'Backup file not found.'];
+    }
+
+    if (!$backup || empty($backup['file_path'])) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'missing backup');
+        return ['success' => false, 'message' => 'Backup file not found.'];
+    }
+    if (($backup['backup_type'] ?? '') === 'restore') {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'wrong backup type');
+        return ['success' => false, 'message' => 'Cannot restore from a restore audit entry.'];
+    }
+    if (($backup['status'] ?? '') !== 'success') {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'unsuccessful backup status');
+        return ['success' => false, 'message' => 'Only successful backups can be restored.'];
+    }
+
+    $safePath = superadmin_backup_resolve_safe_path((string) $backup['file_path']);
+    if ($safePath === null) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'unsafe path');
+        return ['success' => false, 'message' => 'Backup file not found or not allowed.'];
+    }
+
+    $checksumCheck = superadmin_backup_verify_checksum($safePath, isset($backup['file_checksum']) ? (string) $backup['file_checksum'] : null);
+    if (!$checksumCheck['ok']) {
+        $reason = $checksumCheck['reason'] === 'missing_checksum'
+            ? 'missing checksum'
+            : 'checksum mismatch';
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, $reason);
+        return [
+            'success' => false,
+            'message' => 'Backup integrity check failed. Create a new backup, then restore from that file.',
+        ];
+    }
+
+    $size = filesize($safePath);
+    if ($size === false || $size <= 0) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'empty or invalid backup file');
+        return ['success' => false, 'message' => 'Backup file is empty.'];
+    }
+
+    return [
+        'success' => true,
+        'path' => $safePath,
+        'filename' => (string) ($backup['filename'] ?? basename($safePath)),
+    ];
+}
+
+/**
+ * Validate download gates (password, path, checksum) without streaming the file.
+ *
+ * @return array{success:bool,message?:string,path?:string,filename?:string}
+ */
+function superadmin_backup_download_prepare(
+    PDO $pdo,
+    int $backupId,
+    int $userId,
+    string $currentPassword
+): array {
+    if ($userId <= 0) {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'authorized Super Admin required');
+        return ['success' => false, 'message' => 'Authorized Super Admin required to download.'];
+    }
+
+    if ($currentPassword === '') {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'missing password');
+        return ['success' => false, 'message' => 'Super Admin password is required to download.'];
+    }
+    if (!superadmin_verify_current_password($pdo, $userId, $currentPassword)) {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'wrong password');
+        return ['success' => false, 'message' => 'Super Admin password is incorrect.'];
+    }
+
+    if ($backupId <= 0) {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, 0, 'invalid backup');
+        return ['success' => false, 'message' => 'Backup file not found.'];
+    }
+
+    try {
+        $stmt = $pdo->prepare('SELECT * FROM backup_logs WHERE id = ? AND status = ? LIMIT 1');
+        $stmt->execute([$backupId, 'success']);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'invalid backup');
+        return ['success' => false, 'message' => 'Backup file not found.'];
+    }
+
+    if (!$row || ($row['backup_type'] ?? '') === 'restore') {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'invalid backup');
+        return ['success' => false, 'message' => 'Backup file not found.'];
+    }
+
+    $safePath = superadmin_backup_resolve_safe_path((string) ($row['file_path'] ?? ''));
+    if ($safePath === null) {
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'unsafe path');
+        return ['success' => false, 'message' => 'Backup file not found or not allowed.'];
+    }
+
+    $checksumCheck = superadmin_backup_verify_checksum($safePath, isset($row['file_checksum']) ? (string) $row['file_checksum'] : null);
+    if (!$checksumCheck['ok']) {
+        $reason = $checksumCheck['reason'] === 'missing_checksum'
+            ? 'missing checksum'
+            : 'checksum mismatch';
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, $reason);
+        return [
+            'success' => false,
+            'message' => 'Backup integrity check failed. Create a new backup, then download that file.',
+        ];
+    }
+
+    superadmin_backup_audit_success($pdo, 'database_backup_download', $userId, $backupId, 'download succeeded');
+
+    return [
+        'success' => true,
+        'path' => $safePath,
+        'filename' => (string) ($row['filename'] ?? basename($safePath)),
+    ];
 }
