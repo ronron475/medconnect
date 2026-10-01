@@ -1080,3 +1080,40 @@ html[data-theme-resolved='dark'] body.role-patient.is-ended-consultation .mc-vc-
     inset: auto;
   }
 }
+
+/* Unread chat badge on the More (3-dot) button and Chat menu item — matches .mc-messages-fab__badge. */
+.mc-vc-unread-badge {
+  position: absolute;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.45);
+  pointer-events: none;
+}
+
+.mc-vc-unread-badge[hidden] {
+  display: none;
+}
+
+.mc-vc-unread-badge--more {
+  top: -4px;
+  right: -4px;
+  z-index: 2;
+}
+
+#mcVcChatBtn {
+  position: relative;
+}
+
+.mc-vc-unread-badge--item {
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+}

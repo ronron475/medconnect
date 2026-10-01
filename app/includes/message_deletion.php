@@ -481,6 +481,58 @@ function message_unread_count(PDO $pdo, int $userId): int
 }
 
 /**
+ * Unread messages addressed to the user within the given consultations (excludes delete-for-me hidden rows).
+ *
+ * @param int[] $consultationIds
+ */
+function message_unread_count_in_consultations(PDO $pdo, array $consultationIds, int $userId): int
+{
+    $consultationIds = array_values(array_filter(array_map('intval', $consultationIds), static fn(int $id): bool => $id > 0));
+    if (!$consultationIds) {
+        return 0;
+    }
+
+    $placeholders = implode(',', array_fill(0, count($consultationIds), '?'));
+    $stmt = $pdo->prepare("
+        SELECT id, is_deleted_for_everyone, deleted_for_me_users
+        FROM consultation_messages
+        WHERE consultation_id IN ($placeholders)
+          AND receiver_id = ?
+          AND is_read = 0
+          AND is_deleted_for_everyone = 0
+    ");
+    $stmt->execute(array_merge($consultationIds, [$userId]));
+
+    $count = 0;
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        if (!message_is_hidden_for_user($row, $userId)) {
+            $count++;
+        }
+    }
+
+    return $count;
+}
+
+/**
+ * Unread messages for the viewer across the patient–provider pair of a consultation
+ * (same scope as list.php history and mark_read.php).
+ */
+function message_pair_unread_count(PDO $pdo, int $consultationId, int $userId): int
+{
+    $pair = message_resolve_pair($pdo, $consultationId, $userId);
+    if (!$pair['success']) {
+        return 0;
+    }
+
+    $ids = message_pair_consultation_ids($pdo, (int) $pair['patient_id'], (int) $pair['provider_id']);
+    if (!$ids) {
+        $ids = [$consultationId];
+    }
+
+    return message_unread_count_in_consultations($pdo, $ids, $userId);
+}
+
+/**
  * Latest unread message timestamp for polling clients.
  */
 function message_latest_unread_at(PDO $pdo, int $userId): ?string
@@ -934,21 +986,7 @@ function message_list_pair_conversations(PDO $pdo, int $userId, string $role, st
         $lastStmt->execute($ids);
         $last = $lastStmt->fetch(PDO::FETCH_ASSOC) ?: null;
 
-        $unreadStmt = $pdo->prepare("
-            SELECT id, is_deleted_for_everyone, deleted_for_me_users
-            FROM consultation_messages
-            WHERE consultation_id IN ($placeholders)
-              AND receiver_id = ?
-              AND is_read = 0
-              AND is_deleted_for_everyone = 0
-        ");
-        $unreadStmt->execute(array_merge($ids, [$userId]));
-        $unread = 0;
-        foreach ($unreadStmt->fetchAll(PDO::FETCH_ASSOC) as $urow) {
-            if (!message_is_hidden_for_user($urow, $userId)) {
-                $unread++;
-            }
-        }
+        $unread = message_unread_count_in_consultations($pdo, $ids, $userId);
 
         if ($box === 'inbox' && $allArchived && $unread <= 0) {
             continue;

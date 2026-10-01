@@ -15,6 +15,11 @@
 
   let contextData = null;
   let chatPollTimer = null;
+  const UNREAD_POLL_MS = 5000;
+  let unreadPollTimer = null;
+  let unreadInFlight = false;
+  let markReadInFlight = false;
+  let unreadRefreshQueued = false;
   let soapSaveTimer = null;
   let callEnded = false;
   /** Several end paths can call showPostCall(); the modal must only open once. */
@@ -31,6 +36,7 @@
   function markCallEnded() {
     callEnded = true;
     window.__mcCallEnded = true;
+    stopUnreadPoll();
   }
 
   function resetCallUi() {
@@ -39,6 +45,7 @@
     const endModal = q('endCallModal');
     if (endModal) endModal.classList.remove('show');
     setPanelOpen(false);
+    startUnreadPoll();
   }
 
   function q(id) {
@@ -333,6 +340,98 @@
     }
   }
 
+  function renderUnreadBadge(count) {
+    const n = Math.max(0, parseInt(count, 10) || 0);
+    document.querySelectorAll('[data-mc-vc-unread]').forEach((badge) => {
+      badge.textContent = n > 99 ? '99+' : (n > 0 ? String(n) : '');
+      badge.hidden = n <= 0;
+    });
+    ['mcVcMoreBtn', 'mcVcChatBtn'].forEach((id) => {
+      const btn = q(id);
+      if (!btn) return;
+      if (!btn.dataset.mcBaseLabel) btn.dataset.mcBaseLabel = btn.getAttribute('aria-label') || '';
+      const base = btn.dataset.mcBaseLabel;
+      btn.setAttribute('aria-label', n > 0 ? base + ' (' + n + ' unread)' : base);
+    });
+  }
+
+  function chatIsVisible() {
+    const panel = q('mcVcSidePanel');
+    const pane = q('mcVcChatPane');
+    return !!(panel && !panel.hidden && pane && pane.classList.contains('is-active') && !document.hidden);
+  }
+
+  function refreshUnread(skipMarkRead) {
+    if (!CONSULTATION_ID) return Promise.resolve();
+    if (unreadInFlight) {
+      unreadRefreshQueued = true;
+      return Promise.resolve();
+    }
+    unreadInFlight = true;
+    return fetch(API + '/app/api/messages/unread_count.php?consultation_id=' + encodeURIComponent(CONSULTATION_ID) + '&_=' + Date.now(), {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { Accept: 'application/json', 'X-MC-No-Loader': '1' },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data || !data.success || typeof data.consultation_unread_count === 'undefined') return;
+        const n = parseInt(data.consultation_unread_count, 10) || 0;
+        if (n > 0 && !skipMarkRead && chatIsVisible()) {
+          markChatRead();
+          return;
+        }
+        renderUnreadBadge(n);
+      })
+      .catch(() => {})
+      .finally(() => {
+        unreadInFlight = false;
+        if (unreadRefreshQueued) {
+          unreadRefreshQueued = false;
+          refreshUnread(true);
+        }
+      });
+  }
+
+  function markChatRead() {
+    if (!CONSULTATION_ID || !CSRF || markReadInFlight) return Promise.resolve();
+    markReadInFlight = true;
+    const fd = new FormData();
+    fd.set('consultation_id', String(CONSULTATION_ID));
+    fd.set('csrf_token', CSRF);
+    return fetch(API + '/app/api/messages/mark_read.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: { 'X-MC-No-Loader': '1' },
+    })
+      .catch(() => {})
+      .finally(() => {
+        markReadInFlight = false;
+        refreshUnread(true);
+      });
+  }
+
+  function startUnreadPoll() {
+    if (unreadPollTimer || callEnded || !CONSULTATION_ID) return;
+    refreshUnread();
+    unreadPollTimer = setInterval(() => {
+      if (callEnded || window.__mcCallEnded) {
+        stopUnreadPoll();
+        return;
+      }
+      if (document.hidden) return;
+      refreshUnread();
+    }, UNREAD_POLL_MS);
+  }
+
+  function stopUnreadPoll() {
+    if (unreadPollTimer) {
+      clearInterval(unreadPollTimer);
+      unreadPollTimer = null;
+    }
+  }
+
   function bindChat() {
     const form = q('mcVcChatForm');
     const input = q('mcVcChatInput');
@@ -404,6 +503,7 @@
       backdrop.setAttribute('aria-hidden', open && isMobilePanel() ? 'false' : 'true');
     }
     document.body.classList.toggle('mc-vc-panel-open', open && isMobilePanel());
+    if (open && chatIsVisible()) markChatRead();
   }
 
   function openPanelTab(tab) {
@@ -454,7 +554,10 @@
         document.querySelectorAll('[data-panel-pane]').forEach((pane) => {
           pane.classList.toggle('is-active', pane.getAttribute('data-panel-pane') === tab);
         });
-        if (tab === 'chat') startChatPoll();
+        if (tab === 'chat') {
+          startChatPoll();
+          if (chatIsVisible()) markChatRead();
+        }
       });
     });
     global.addEventListener('resize', () => {
@@ -680,6 +783,7 @@
     }
     setPanelOpen(false);
     stopChatPoll();
+    stopUnreadPoll();
     if (IS_PATIENT) {
       fillPatientPostCall(null);
       fetchSessionSummary().then((summary) => {
@@ -775,6 +879,7 @@
     enhanceNetworkMonitor();
 
     loadContext(false);
+    startUnreadPoll();
   }
 
   if (document.readyState === 'loading') {
