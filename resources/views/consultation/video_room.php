@@ -1633,6 +1633,46 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     let peerInitialized = false;
 
+    async function ensureLiveLocalMediaForReconnect() {
+      if (demoMode || !localStream || !window.McWebrtcPeerCall) return;
+      const oldStream = localStream;
+      const hadVideo = oldStream.getVideoTracks().length > 0;
+      const audioLive = streamHasLiveTrack(oldStream, 'audio');
+      const videoLive = !hadVideo || streamHasLiveTrack(oldStream, 'video');
+      if (audioLive && videoLive) {
+        if (McWebrtcPeerCall.getLocalStream() !== oldStream) McWebrtcPeerCall.setLocalStream(oldStream);
+        return;
+      }
+      if (mediaRequestInFlight || !canUseMediaDevices()) return;
+      mediaRequestInFlight = true;
+      try {
+        const fresh = await acquireLocalMedia(hadVideo);
+        if (window.McVideoCallCore && typeof McVideoCallCore.applyCaptureConstraints === 'function') {
+          await McVideoCallCore.applyCaptureConstraints(fresh);
+        }
+        if (endingCall || window.__mcCallEnded || localStream !== oldStream) {
+          stopMediaStream(fresh);
+          return;
+        }
+        const oldAudio = oldStream.getAudioTracks()[0];
+        const oldVideo = oldStream.getVideoTracks()[0];
+        const newAudio = fresh.getAudioTracks()[0];
+        const newVideo = fresh.getVideoTracks()[0];
+        if (oldAudio && newAudio) newAudio.enabled = oldAudio.enabled;
+        if (oldVideo && newVideo) newVideo.enabled = oldVideo.enabled;
+        stopMediaStream(oldStream);
+        localStream = fresh;
+        McWebrtcPeerCall.setLocalStream(fresh);
+        syncMediaStatus();
+      } catch (err) {
+        console.warn('Could not reacquire camera/microphone after reconnect:', err);
+        showMediaPermissionGate();
+        failMediaPermission(err, hadVideo);
+      } finally {
+        mediaRequestInFlight = false;
+      }
+    }
+
     function createPeer() {
       if (endingCall || window.__mcCallEnded) return;
       if (!window.McWebrtcPeerCall) return;
@@ -1645,7 +1685,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         onRecreate: function () {
           if (endingCall || window.__mcCallEnded) return;
           peerInitialized = false;
-          createPeer();
+          ensureLiveLocalMediaForReconnect().finally(() => {
+            if (endingCall || window.__mcCallEnded) return;
+            createPeer();
+          });
         },
         onNeedsRedial: function () {
           if (endingCall || window.__mcCallEnded || !localStream) return;

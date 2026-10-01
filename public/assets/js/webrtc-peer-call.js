@@ -657,7 +657,8 @@
     answerCall(call);
   }
 
-  function destroyPeer() {
+  function destroyPeer(options) {
+    options = options || {};
     clearRecoveryTimers();
     stopQualityMonitor();
     lastRemoteAttachKey = '';
@@ -670,7 +671,8 @@
     lastRemoteStream = null;
     reconnectAttempts = 0;
     reconnectInProgress = false;
-    if (myStream) {
+    // Signaling-only teardown (recreate / re-init) must not kill the shared camera/mic stream.
+    if (myStream && !options.keepLocalStream) {
       myStream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
       myStream = null;
     }
@@ -704,7 +706,7 @@
   function recreatePeer(reason) {
     if (intentionalLeave || global.__mcCallEnded) return;
     console.warn('Recreating PeerJS connection:', reason || 'retry');
-    destroyPeer();
+    destroyPeer({ keepLocalStream: true });
     peerRetryTimer = setTimeout(function () {
       if (typeof config.onRecreate === 'function') {
         config.onRecreate(reason);
@@ -727,7 +729,7 @@
       return peer;
     }
 
-    destroyPeer();
+    destroyPeer({ keepLocalStream: true });
 
     peer = config.useAutoPeerId
       ? new global.Peer(config.peerOptions)
@@ -933,7 +935,7 @@
     openDataChannel: openDataChannel,
     sendData: sendData,
     wireDataConnection: wireDataConnection,
-    destroy: destroyPeer,
+    destroy: function () { destroyPeer(); },
     prepareForRejoin: prepareForRejoin,
     recreatePeer: recreatePeer,
     closeCurrentCall: closeCurrentCall,
