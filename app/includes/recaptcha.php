@@ -4,6 +4,11 @@
  * Secret is read from the environment only. Never log the secret or full token.
  */
 
+$medconnectEnvLoader = dirname(__DIR__, 2) . '/config/env_loader.php';
+if (is_readable($medconnectEnvLoader)) {
+    require_once $medconnectEnvLoader;
+}
+
 function medconnect_recaptcha_env(string $name): string
 {
     foreach ([getenv($name), $_ENV[$name] ?? null, $_SERVER[$name] ?? null] as $candidate) {

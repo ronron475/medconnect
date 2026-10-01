@@ -11,7 +11,7 @@ if (!defined('BASE_PATH')) {
 }
 $role = (string) ($_SESSION['user_role'] ?? '');
 if ($role === 'provider') {
-    header('Location: ' . BASE_URL . '/views/provider/gis_dashboard.php');
+    header('Location: ' . BASE_URL . '/views/provider/dashboard.php');
     exit;
 }
 require_once __DIR__ . '/_portal_access.php';
