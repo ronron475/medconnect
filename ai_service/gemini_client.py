@@ -318,6 +318,17 @@ def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any
     }
 
 
+def _payload_for_secondary_gemini(payload: dict[str, Any]) -> dict[str, Any]:
+    """Keep prompt/content; drop Gemini 3.5 thinkingLevel MINIMAL (rejected by 3.8 Flash)."""
+    body = dict(payload or {})
+    gen = body.get("generationConfig")
+    if isinstance(gen, dict) and "thinkingConfig" in gen:
+        gen = dict(gen)
+        gen.pop("thinkingConfig", None)
+        body["generationConfig"] = gen
+    return body
+
+
 def _try_secondary_gemini_model(
     payload: dict[str, Any],
     primary_model: str,
@@ -328,8 +339,9 @@ def _try_secondary_gemini_model(
     fallback = GEMINI_FALLBACK_MODEL
     if not fallback or primary_model == fallback:
         return None
+    body = _payload_for_secondary_gemini(payload)
     try:
-        data = _post_generate(payload, fallback, key, timeout)
+        data = _post_generate(body, fallback, key, timeout)
     except Exception:
         logger.warning("Gemini HTTP 429; fallback model %s failed", fallback)
         return None

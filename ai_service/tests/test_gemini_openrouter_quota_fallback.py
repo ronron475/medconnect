@@ -122,6 +122,32 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         self.assertEqual(pack["model"], gemini_client.GEMINI_FALLBACK_MODEL)
         self._assert_no_keys(json.dumps(pack))
 
+    def test_http_429_strips_thinking_config_for_gemini_38_only(self) -> None:
+        models: list[str] = []
+        posted: list[dict] = []
+
+        def _post(payload, model, _key, _timeout):
+            models.append(model)
+            posted.append(payload)
+            if model == "gemini-3.5-flash":
+                raise _http_error(429, b'{"error":{"code":429}}')
+            return _gemini_ok(GEMINI_38_TEXT)
+
+        body = dict(self.payload)
+        body["generationConfig"] = dict(self.payload["generationConfig"])
+        body["generationConfig"]["thinkingConfig"] = {"thinkingLevel": "MINIMAL"}
+
+        with patch.object(gemini_client, "_post_generate", side_effect=_post), \
+             patch.object(gemini_client, "_openrouter_http_complete") as openrouter:
+            pack = gemini_client.generate_content(body, model="gemini-3.5-flash", timeout=15)
+
+        self.assertEqual(models, ["gemini-3.5-flash", gemini_client.GEMINI_FALLBACK_MODEL])
+        self.assertEqual(posted[0]["generationConfig"].get("thinkingConfig"), {"thinkingLevel": "MINIMAL"})
+        self.assertNotIn("thinkingConfig", posted[1].get("generationConfig") or {})
+        self.assertEqual(posted[1]["contents"], body["contents"])
+        openrouter.assert_not_called()
+        self.assertEqual(pack["model"], gemini_client.GEMINI_FALLBACK_MODEL)
+
     def test_http_429_gemini_38_fail_calls_openrouter_once(self) -> None:
         models: list[str] = []
         seen: list[dict] = []

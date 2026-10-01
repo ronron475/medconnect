@@ -6601,8 +6601,16 @@ PROMPT;
             return null;
         }
         $url = sprintf(self::ENDPOINT, rawurlencode($fallback));
+        $body = $payload;
+        if (isset($body['generationConfig']) && is_array($body['generationConfig'])
+            && array_key_exists('thinkingConfig', $body['generationConfig'])
+        ) {
+            $gen = $body['generationConfig'];
+            unset($gen['thinkingConfig']);
+            $body['generationConfig'] = $gen;
+        }
         try {
-            $data = self::httpPostJson($url, $payload, [
+            $data = self::httpPostJson($url, $body, [
                 'x-goog-api-key: ' . $key,
             ]);
         } catch (RuntimeException) {
