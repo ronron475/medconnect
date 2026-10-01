@@ -13,6 +13,7 @@ from typing import Any
 logger = logging.getLogger("medconnect.nlp.gemini")
 
 DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_FALLBACK_MODEL = "gemini-3.8-flash"
 GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 # Same fixed free model as the clinical interview demo. Not a rotating router.
 OPENROUTER_DEMO_MODEL = "google/gemma-4-31b-it:free"
@@ -317,6 +318,33 @@ def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any
     }
 
 
+def _try_secondary_gemini_model(
+    payload: dict[str, Any],
+    primary_model: str,
+    key: str,
+    timeout: int,
+) -> dict[str, Any] | None:
+    """One Gemini 3.8 generateContent call after primary HTTP 429. No retry loop."""
+    fallback = GEMINI_FALLBACK_MODEL
+    if not fallback or primary_model == fallback:
+        return None
+    try:
+        data = _post_generate(payload, fallback, key, timeout)
+    except Exception:
+        logger.warning("Gemini HTTP 429; fallback model %s failed", fallback)
+        return None
+    text = _extract_gemini_text(data)
+    if not text:
+        logger.warning("Gemini HTTP 429; fallback model %s returned empty text", fallback)
+        return None
+    logger.info("Gemini HTTP 429; fallback model %s returned text", fallback)
+    return {
+        "model": fallback,
+        "text": text,
+        "response": data,
+    }
+
+
 def generate_content(
     payload: dict[str, Any],
     *,
@@ -346,8 +374,11 @@ def generate_content(
             err_body = exc.read().decode("utf-8", errors="replace")[:400]
         except Exception:
             pass
-        # Quota is not transient. One generateContent call must not be repeated.
+        # Quota is not transient. Do not retry the primary model; try Gemini 3.8 once, then OpenRouter.
         if exc.code == 429:
+            recovered = _try_secondary_gemini_model(body, use_model, key, wait)
+            if recovered is not None:
+                return recovered
             recovered = _quota_fallback_pack(body, wait)
             if recovered is not None:
                 logger.info("Gemini HTTP 429; OpenRouter demo fallback returned text")
