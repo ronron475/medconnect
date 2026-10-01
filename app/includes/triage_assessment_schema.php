@@ -238,6 +238,49 @@ function triage_provider_may_release_recommendations(array $row): bool
 }
 
 /**
+ * SQL: this triage row is the patient's current care-tips review that the bound
+ * provider can still decide. Binds one provider id (`assigned_provider_id = ?`).
+ *
+ * Composes existing helpers rather than a second GIS-only definition:
+ * - provider_triage_row_visibility_sql() — assigned to this doctor, not cancelled
+ * - patient_triage_sql_active_only() — not already booked / completed / later visit
+ * - triage_provider_can_decide_care_tips() predicates — pending, same calendar day,
+ *   not terminated, still has complaint + tips
+ * - latest finished assessment (same filter as GIS AI badge) so an old
+ *   pending_approval row cannot outrank the current case
+ */
+function triage_sql_current_pending_care_tips_review(string $alias = 'prw'): string
+{
+    require_once __DIR__ . '/patient_booking_status.php';
+    require_once __DIR__ . '/provider_patient_access.php';
+
+    $a = preg_replace('/[^a-zA-Z0-9_]/', '', $alias) ?: 'prw';
+    $visibility = provider_triage_row_visibility_sql($a);
+    $activeOnly = patient_triage_sql_active_only($a);
+
+    return "
+        {$visibility}
+        AND COALESCE({$a}.recommendation_status, 'hidden') = 'pending_approval'
+        AND COALESCE({$a}.status, 'pending') = 'pending'
+        AND TRIM(COALESCE({$a}.chief_complaint, '')) <> ''
+        AND TRIM(COALESCE({$a}.recommendations, '')) <> ''
+        AND LOWER(COALESCE({$a}.outcome, '')) NOT IN ('terminated', 'emergency_referral')
+        AND DATE({$a}.assessed_at) = CURDATE()
+        AND LOWER(COALESCE({$a}.triage_level, '')) NOT IN ('urgent', 'emergency')
+        {$activeOnly}
+        AND {$a}.id = (
+            SELECT fin.id
+            FROM triage_results fin
+            WHERE fin.patient_id = {$a}.patient_id
+              AND TRIM(COALESCE(fin.triage_classification, '')) <> ''
+              AND COALESCE(fin.assessment_status, 'COMPLETED') <> 'IN_PROGRESS'
+            ORDER BY fin.assessed_at DESC, fin.id DESC
+            LIMIT 1
+        )
+    ";
+}
+
+/**
  * Initial patient-facing recommendation gate after NLP assessment save.
  * No chief complaint => never show NLP remedies to the patient.
  * Non-urgent with remedies => pending provider approval.
