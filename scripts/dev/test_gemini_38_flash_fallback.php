@@ -89,6 +89,16 @@ try {
 ok('Gemini 3.8 failure returns null for OpenRouter', $miss === null);
 ok('Gemini 3.8 failure is one attempt, not a retry loop', $attempts === 1, 'attempts=' . $attempts);
 
+GeminiClinicalInterviewDemo::beginGeminiQuotaProbeForTest('');
+try {
+    $empty200 = $tryFallback->invoke(null, $quota, $payload, 'gemini-3.5-flash', 'probe-not-sent');
+    $emptyAttempts = GeminiClinicalInterviewDemo::geminiGenerateAttemptsForTest();
+} finally {
+    GeminiClinicalInterviewDemo::endGeminiQuotaProbeForTest();
+}
+ok('Gemini 3.8 HTTP 200 empty/unusable returns null for OpenRouter', $empty200 === null);
+ok('Gemini 3.8 HTTP 200 empty is one attempt', $emptyAttempts === 1, 'attempts=' . $emptyAttempts);
+
 $skipSame = $tryFallback->invoke(
     null,
     $quota,
@@ -167,6 +177,23 @@ if (!$useRailway) {
         'start(): existing OpenRouter fallback runs after both Gemini models fail',
         $openRouterCalls === 1 || ($startedOr['code'] ?? '') === 'gemini_quota_exceeded',
         'openrouter=' . $openRouterCalls . ' code=' . (string) ($startedOr['code'] ?? '')
+    );
+
+    $openRouterCalls = 0;
+    GeminiClinicalInterviewDemo::beginGeminiQuotaProbeForTest('');
+    $transportProp->setValue(null, $transport);
+    try {
+        $startedEmpty = GeminiClinicalInterviewDemo::start($complaint);
+        $directEmpty = (int) $directProp->getValue();
+    } finally {
+        $transportProp->setValue(null, null);
+        GeminiClinicalInterviewDemo::endGeminiQuotaProbeForTest();
+    }
+    ok('start(): Gemini 3.8 HTTP 200 empty is one 3.8 attempt', $directEmpty === 2, 'direct=' . $directEmpty);
+    ok(
+        'start(): existing OpenRouter fallback runs after Gemini 3.8 empty/unusable',
+        $openRouterCalls === 1 || ($startedEmpty['code'] ?? '') === 'gemini_quota_exceeded',
+        'openrouter=' . $openRouterCalls . ' code=' . (string) ($startedEmpty['code'] ?? '')
     );
 } else {
     echo "NOTE  shouldUseRailway() is true; live demo 3.8 order is in gemini_client.generate_content()\n";

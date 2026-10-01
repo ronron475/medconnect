@@ -6616,7 +6616,11 @@ PROMPT;
         } catch (RuntimeException) {
             return null;
         }
-        $text = self::extractCandidateText($data);
+        try {
+            $text = self::extractCandidateText($data);
+        } catch (RuntimeException) {
+            return null;
+        }
         if ($text === '') {
             return null;
         }
