@@ -748,6 +748,17 @@
             </div>
           </section>
 
+          <?php
+            require_once BASE_PATH . '/app/includes/recaptcha.php';
+            $recaptchaSiteKey = medconnect_recaptcha_site_key();
+          ?>
+          <div class="reg-recaptcha" id="reg-recaptcha-wrap">
+            <?php if ($recaptchaSiteKey !== ''): ?>
+            <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars($recaptchaSiteKey, ENT_QUOTES, 'UTF-8') ?>"></div>
+            <?php endif; ?>
+            <span class="field-error" id="recaptcha-error" role="alert"></span>
+          </div>
+
         </div><!-- /intake-sections -->
 
         <div class="step2-actions">
@@ -790,6 +801,9 @@
   window.APP_BASE = <?= json_encode($b) ?>;
   window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;
 </script>
+<?php if (!empty($recaptchaSiteKey)): ?>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+<?php endif; ?>
 <script src="<?= $b ?>/assets/js/ph-address-autofill.js?v=20260930ocr5"></script>
 <script src="<?= $b ?>/assets/js/phone-validation.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/phone-validation.js') ?>"></script>
 <script src="<?= $b ?>/assets/js/ocr-national-id.js?v=20260930ocr5"></script>

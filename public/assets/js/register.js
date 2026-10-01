@@ -640,6 +640,20 @@ function validateStep2Form() {
     }
   }
 
+  const recaptchaToken = getRecaptchaToken();
+  const recaptchaErr = document.getElementById('recaptcha-error');
+  if (!recaptchaToken) {
+    const recaptchaMsg = 'Please confirm you are not a robot.';
+    if (recaptchaErr) recaptchaErr.textContent = recaptchaMsg;
+    valid = false;
+    if (!firstError) {
+      firstError = recaptchaMsg;
+      firstInvalidEl = document.getElementById('reg-recaptcha-wrap');
+    }
+  } else if (recaptchaErr) {
+    recaptchaErr.textContent = '';
+  }
+
   return { valid, firstError, firstInvalidEl };
 }
 
@@ -887,6 +901,20 @@ function syncMedicalYesNoFields() {
   if (allergiesInput) allergiesInput.value = allergyYes && allergyYes.checked ? 'Yes' : 'No';
   if (medsInput) medsInput.value = medsYes && medsYes.checked ? 'Yes' : 'No';
   if (conditionsInput) conditionsInput.value = conditionsYes && conditionsYes.checked ? 'Yes' : 'No';
+}
+
+function getRecaptchaToken() {
+  let token = '';
+  if (window.grecaptcha && typeof window.grecaptcha.getResponse === 'function') {
+    try {
+      token = String(window.grecaptcha.getResponse() || '');
+    } catch (_) { /* ignore */ }
+  }
+  if (!token) {
+    const field = document.querySelector('#step2-form [name="g-recaptcha-response"]');
+    token = field ? String(field.value || '') : '';
+  }
+  return token.trim();
 }
 
 function updateChiefComplaintCount() {
@@ -1195,6 +1223,8 @@ step2Form.addEventListener('submit', async e => {
   try {
     syncStep1HiddenFields();
     const fd = new FormData(step2Form);
+    fd.set('csrf_token', window.CSRF_TOKEN || '');
+    fd.set('g-recaptcha-response', getRecaptchaToken());
 
     if (nlp && typeof nlp.isComplaintSkipped === 'function' && nlp.isComplaintSkipped()) {
       fd.append('chief_complaint_skipped', '1');

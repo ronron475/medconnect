@@ -1656,6 +1656,19 @@ body.reg-outcome-open {
   border-top: 1px solid var(--border);
 }
 
+.reg-recaptcha {
+  margin: 16px 0 4px;
+  overflow-x: auto;
+}
+.reg-recaptcha .g-recaptcha {
+  display: inline-block;
+  max-width: 100%;
+}
+.reg-recaptcha #recaptcha-error {
+  display: block;
+  margin-top: 8px;
+}
+
 #step2 .step2-actions .btn-submit {
   min-height: 46px;
   border-radius: 11px;
