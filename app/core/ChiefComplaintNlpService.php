@@ -191,6 +191,13 @@ final class ChiefComplaintNlpService
     public static function assessInterview(string $utterance, array $priorContext = [], array $checkboxSymptoms = []): array
     {
         try {
+            if (class_exists('GeminiPatientInterview')) {
+                $led = GeminiPatientInterview::assess($utterance, $priorContext, $checkboxSymptoms);
+                if (is_array($led)) {
+                    return $led;
+                }
+            }
+
             return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
         } catch (Throwable $e) {
             error_log('ChiefComplaintNlpService interview fallback: ' . $e->getMessage());

@@ -148,6 +148,74 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         openrouter.assert_not_called()
         self.assertEqual(pack["model"], gemini_client.GEMINI_FALLBACK_MODEL)
 
+    def test_github_openrouter_model_and_json_format_preserved(self) -> None:
+        self.assertEqual(
+            gemini_client.OPENROUTER_DEMO_MODEL,
+            "nvidia/nemotron-3-super-120b-a12b:free",
+        )
+        body = gemini_client._openrouter_body_from_gemini(self.payload)
+        self.assertIsNotNone(body)
+        assert body is not None
+        self.assertEqual(body["model"], "nvidia/nemotron-3-super-120b-a12b:free")
+        self.assertEqual(body.get("response_format"), {"type": "json_object"})
+        self.assertGreaterEqual(int(body["max_tokens"]), 2048)
+        self.assertNotEqual(body["model"], "google/gemma-4-31b-it:free")
+
+    def test_github_openrouter_reasoning_helper_unchanged(self) -> None:
+        decoded = {
+            "choices": [{
+                "message": {
+                    "content": "",
+                    "reasoning": 'prefix {"classification":"HEALTH_RELATED"} suffix',
+                },
+            }],
+        }
+        text = gemini_client._openrouter_choice_text(decoded)
+        self.assertEqual(text, '{"classification":"HEALTH_RELATED"}')
+
+    def test_http_429_gemini_38_empty_calls_openrouter(self) -> None:
+        models: list[str] = []
+        with patch.object(
+            gemini_client,
+            "_post_generate",
+            side_effect=self._post_record(
+                models,
+                {
+                    "gemini-3.5-flash": _http_error(429, b'{"error":{"code":429}}'),
+                    gemini_client.GEMINI_FALLBACK_MODEL: {"candidates": [{"content": {"parts": [{"text": ""}]}}]},
+                },
+            ),
+        ), patch.object(gemini_client, "_openrouter_http_complete", return_value=OPENROUTER_TEXT) as openrouter:
+            pack = gemini_client.generate_content(self.payload, model="gemini-3.5-flash", timeout=15)
+
+        self.assertEqual(models, ["gemini-3.5-flash", gemini_client.GEMINI_FALLBACK_MODEL])
+        openrouter.assert_called_once()
+        self.assertEqual(pack["model"], gemini_client.OPENROUTER_DEMO_MODEL)
+
+    def test_http_429_gemini_38_thought_only_calls_openrouter(self) -> None:
+        models: list[str] = []
+        thought = {
+            "candidates": [{
+                "content": {"parts": [{"thought": True, "text": "hidden thinking"}]},
+            }],
+        }
+        with patch.object(
+            gemini_client,
+            "_post_generate",
+            side_effect=self._post_record(
+                models,
+                {
+                    "gemini-3.5-flash": _http_error(429, b'{"error":{"code":429}}'),
+                    gemini_client.GEMINI_FALLBACK_MODEL: thought,
+                },
+            ),
+        ), patch.object(gemini_client, "_openrouter_http_complete", return_value=OPENROUTER_TEXT) as openrouter:
+            pack = gemini_client.generate_content(self.payload, model="gemini-3.5-flash", timeout=15)
+
+        self.assertEqual(models, ["gemini-3.5-flash", gemini_client.GEMINI_FALLBACK_MODEL])
+        openrouter.assert_called_once()
+        self.assertEqual(pack["text"], OPENROUTER_TEXT)
+
     def test_http_429_gemini_38_fail_calls_openrouter_once(self) -> None:
         models: list[str] = []
         seen: list[dict] = []

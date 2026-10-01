@@ -238,6 +238,25 @@ final class GeminiClinicalInterviewDemo
     private static $openRouterTransportForTest = null;
 
     /**
+     * Patient Gemini-led path: Railway already ran 3.5 → 3.8 → nemotron.
+     * Do not add the demo-only Hostinger PHP gemma OpenRouter hop.
+     */
+    private static bool $skipPhpOpenRouterQuotaFallback = false;
+
+    /** Test-only: times recoverDemoQuotaWithOpenRouter invoked the PHP OpenRouter helper. */
+    public static int $phpOpenRouterRecoverCallsForTest = 0;
+
+    public static function beginSkipPhpOpenRouterQuotaFallback(): void
+    {
+        self::$skipPhpOpenRouterQuotaFallback = true;
+    }
+
+    public static function endSkipPhpOpenRouterQuotaFallback(): void
+    {
+        self::$skipPhpOpenRouterQuotaFallback = false;
+    }
+
+    /**
      * @param callable(array<string, mixed>): ?string $transport
      */
     public static function beginOpenRouterQuotaProbeForTest(callable $transport): void
@@ -997,7 +1016,7 @@ final class GeminiClinicalInterviewDemo
      * @param array<string, mixed> $facts
      * @return array<string, mixed>
      */
-    private static function mapFactsForEngine(array $facts): array
+    public static function mapFactsForEngine(array $facts): array
     {
         $mapped = class_exists('ClinicalInterviewEngine')
             ? ClinicalInterviewEngine::normalizeContext(['facts' => []])['facts']
@@ -6638,9 +6657,13 @@ PROMPT;
      */
     private static function recoverDemoQuotaWithOpenRouter(RuntimeException $e, array $payload): ?string
     {
+        if (self::$skipPhpOpenRouterQuotaFallback) {
+            return null;
+        }
         if (!self::isGeminiQuotaError($e->getMessage())) {
             return null;
         }
+        self::$phpOpenRouterRecoverCallsForTest++;
         require_once dirname(__DIR__) . '/includes/openrouter_demo_fallback.php';
         $text = medconnect_demo_openrouter_quota_text(
             $e->getMessage(),
