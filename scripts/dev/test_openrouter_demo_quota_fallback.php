@@ -147,6 +147,31 @@ ok(
         return '{"classification":"HEALTH_RELATED"}';
     }) === null
 );
+
+$bitsCalled = 0;
+$bitsText = medconnect_demo_bits_quota_text(
+    'Gemini HTTP 429: You exceeded your current quota',
+    $payload,
+    static function (array $body) use (&$bitsCalled, $modelJson): ?string {
+        $bitsCalled++;
+        if (($body['model'] ?? '') !== 'phi3:mini') {
+            return null;
+        }
+        if (!isset($body['messages']) || !is_array($body['messages'])) {
+            return null;
+        }
+
+        return $modelJson;
+    }
+);
+ok('quota Groq miss can use BITS Ollama once', $bitsCalled === 1, 'calls=' . $bitsCalled);
+ok('BITS quota text is returned', $bitsText === $modelJson);
+ok(
+    'BITS is not used for HTTP 400',
+    medconnect_demo_bits_quota_text('Gemini HTTP 400: bad request', $payload, static function (): ?string {
+        return '{"classification":"HEALTH_RELATED"}';
+    }) === null
+);
 ok(
     'key check reports missing and does not return the key',
     medconnect_demo_openrouter_key_is_configured() === false

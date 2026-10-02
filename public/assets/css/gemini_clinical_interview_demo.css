@@ -169,9 +169,20 @@
   color: #334155;
 }
 
-.gci-status[data-status="interviewing"] {
+.gci-status[data-status="interviewing"],
+.gci-status[data-status="busy"] {
   background: #ecfeff;
   color: #0e7490;
+}
+
+.gci-status[data-status="ok"] {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.gci-status[data-status="error"] {
+  background: #fef2f2;
+  color: #b91c1c;
 }
 
 .gci-status[data-status="information_sufficient"],

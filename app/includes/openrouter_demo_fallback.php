@@ -1,6 +1,6 @@
 <?php
 /**
- * OpenRouter quota fallback for the Gemini clinical interview demo only.
+ * OpenRouter / Groq / campus BITS Ollama quota fallbacks for Gemini interview.
  *
  * Called only after Gemini returns HTTP 429 / quota exceeded. The Gemini
  * system and user text are forwarded unchanged. The model text is returned
@@ -475,4 +475,194 @@ function medconnect_demo_groq_http_complete(array $body): ?string
     $text = medconnect_demo_openrouter_choice_text($decoded);
 
     return $text !== '' ? $text : null;
+}
+
+function medconnect_bits_service_enabled(): bool
+{
+    if (defined('BITS_SERVICE_ENABLED')) {
+        return (bool) BITS_SERVICE_ENABLED;
+    }
+    $raw = getenv('MEDCONNECT_BITS_SERVICE');
+    if ($raw === false || $raw === '') {
+        $raw = $_ENV['MEDCONNECT_BITS_SERVICE'] ?? '1';
+    }
+
+    return !in_array(strtolower(trim((string) $raw)), ['0', 'false', 'no', 'off'], true);
+}
+
+function medconnect_bits_service_url(): string
+{
+    if (defined('BITS_SERVICE_URL') && BITS_SERVICE_URL !== '') {
+        return rtrim((string) BITS_SERVICE_URL, '/');
+    }
+    $url = getenv('MEDCONNECT_BITS_SERVICE_URL');
+    if ($url === false || $url === '') {
+        $url = $_ENV['MEDCONNECT_BITS_SERVICE_URL'] ?? 'https://bits-service.bagocitycollege.com';
+    }
+
+    return rtrim((string) $url, '/');
+}
+
+function medconnect_bits_ollama_model(): string
+{
+    if (defined('BITS_OLLAMA_MODEL') && BITS_OLLAMA_MODEL !== '') {
+        return (string) BITS_OLLAMA_MODEL;
+    }
+    $model = getenv('MEDCONNECT_BITS_OLLAMA_MODEL');
+    if ($model === false || $model === '') {
+        $model = $_ENV['MEDCONNECT_BITS_OLLAMA_MODEL'] ?? 'phi3:mini';
+    }
+
+    return (string) $model;
+}
+
+/**
+ * Campus BITS Ollama after Groq miss. Same Gemini payload. Does not set triage.
+ *
+ * @param array<string, mixed> $geminiPayload
+ * @param (callable(array<string, mixed>): ?string)|null $transport
+ */
+function medconnect_demo_bits_quota_text(
+    string $geminiError,
+    array $geminiPayload,
+    ?callable $transport = null
+): ?string {
+    if (!medconnect_demo_gemini_error_is_quota($geminiError)) {
+        return null;
+    }
+    if ($transport === null && !medconnect_bits_service_enabled()) {
+        return null;
+    }
+
+    $openRouterBody = medconnect_demo_openrouter_request_from_gemini($geminiPayload);
+    if ($openRouterBody === null) {
+        return null;
+    }
+    $messages = is_array($openRouterBody['messages'] ?? null) ? $openRouterBody['messages'] : [];
+    if ($messages === []) {
+        return null;
+    }
+
+    $ollamaBody = [
+        'model' => medconnect_bits_ollama_model(),
+        'stream' => false,
+        'messages' => $messages,
+    ];
+
+    $text = $transport !== null
+        ? $transport($ollamaBody)
+        : medconnect_demo_bits_http_complete($ollamaBody);
+    if (!is_string($text)) {
+        return null;
+    }
+    $text = trim($text);
+
+    return $text !== '' ? $text : null;
+}
+
+/**
+ * @param array<string, mixed> $body
+ */
+function medconnect_demo_bits_http_complete(array $body): ?string
+{
+    $base = medconnect_bits_service_url();
+    if ($base === '' || !function_exists('curl_init')) {
+        return null;
+    }
+
+    $timeout = defined('BITS_SERVICE_TIMEOUT') ? (int) BITS_SERVICE_TIMEOUT : 60;
+    $timeout = max(15, min(90, $timeout));
+    $verifySsl = true;
+    $rawSsl = getenv('AI_SSL_VERIFY');
+    if ($rawSsl === false || $rawSsl === '') {
+        $rawSsl = $_ENV['AI_SSL_VERIFY'] ?? null;
+    }
+    if ($rawSsl !== null && $rawSsl !== '') {
+        $verifySsl = !in_array(strtolower(trim((string) $rawSsl)), ['0', 'false', 'no', 'off'], true);
+    }
+
+    $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+    if (!is_readable($ca)) {
+        $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
+    }
+
+    $chatBody = [
+        'model' => (string) ($body['model'] ?? medconnect_bits_ollama_model()),
+        'stream' => false,
+        'messages' => is_array($body['messages'] ?? null) ? $body['messages'] : [],
+    ];
+    $decoded = medconnect_demo_bits_curl_json($base . '/api/chat', $chatBody, $timeout, $verifySsl, $ca);
+    if (is_array($decoded)) {
+        $content = trim((string) ($decoded['message']['content'] ?? ''));
+        if ($content !== '') {
+            return $content;
+        }
+    }
+
+    $promptParts = [];
+    foreach ($chatBody['messages'] as $message) {
+        if (!is_array($message)) {
+            continue;
+        }
+        $role = strtoupper((string) ($message['role'] ?? 'USER'));
+        $promptParts[] = $role . ":\n" . trim((string) ($message['content'] ?? ''));
+    }
+    $genBody = [
+        'model' => $chatBody['model'],
+        'prompt' => implode("\n\n", $promptParts),
+        'stream' => false,
+    ];
+    $generated = medconnect_demo_bits_curl_json($base . '/api/generate', $genBody, $timeout, $verifySsl, $ca);
+    if (!is_array($generated)) {
+        return null;
+    }
+    $content = trim((string) ($generated['response'] ?? ''));
+
+    return $content !== '' ? $content : null;
+}
+
+/**
+ * @param array<string, mixed> $body
+ * @return array<string, mixed>|null
+ */
+function medconnect_demo_bits_curl_json(
+    string $url,
+    array $body,
+    int $timeout,
+    bool $verifySsl,
+    string $ca
+): ?array {
+    $ch = curl_init($url);
+    if ($ch === false) {
+        return null;
+    }
+    $opts = [
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ],
+        CURLOPT_POSTFIELDS => json_encode($body, JSON_UNESCAPED_UNICODE),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => $timeout,
+        CURLOPT_CONNECTTIMEOUT => min(8, $timeout),
+        CURLOPT_SSL_VERIFYPEER => $verifySsl,
+        CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
+    ];
+    if ($verifySsl && $ca !== '' && is_readable($ca)) {
+        $opts[CURLOPT_CAINFO] = $ca;
+    }
+    curl_setopt_array($ch, $opts);
+    $raw = curl_exec($ch);
+    $errno = curl_errno($ch);
+    $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    if ($raw === false || $errno !== 0 || $code < 200 || $code >= 300) {
+        error_log('BITS Ollama quota fallback unavailable: http ' . $code);
+
+        return null;
+    }
+    $decoded = json_decode((string) $raw, true);
+
+    return is_array($decoded) ? $decoded : null;
 }

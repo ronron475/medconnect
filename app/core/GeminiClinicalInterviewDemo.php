@@ -6760,6 +6760,11 @@ PROMPT;
                 self::$aiProviderUsed = 'groq';
                 return trim($groqText);
             }
+            $bitsText = medconnect_demo_bits_quota_text($e->getMessage(), $payload, null);
+            if (is_string($bitsText) && trim($bitsText) !== '') {
+                self::$aiProviderUsed = 'bits';
+                return trim($bitsText);
+            }
         }
         throw $e;
     }
@@ -6839,6 +6844,15 @@ PROMPT;
             self::$aiProviderUsed = 'groq';
             return;
         }
+        if (
+            str_contains($model, 'phi3')
+            || str_contains($model, 'qwen')
+            || str_contains($model, 'llava')
+            || str_contains($model, 'bits')
+        ) {
+            self::$aiProviderUsed = 'bits';
+            return;
+        }
         self::$aiProviderUsed = 'openrouter';
     }
 
@@ -6848,6 +6862,7 @@ PROMPT;
             'gemini' => 'Gemini Flash',
             'openrouter' => 'OpenRouter (Gemini quota fallback)',
             'groq' => 'Groq (Gemini quota fallback)',
+            'bits' => 'BITS Ollama (Gemini quota fallback)',
             'nlp' => 'Question bank (Gemini quota fallback)',
             default => 'Unknown',
         };

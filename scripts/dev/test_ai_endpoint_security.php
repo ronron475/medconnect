@@ -158,6 +158,19 @@ if (str_contains($geminiDemo, 'security_throttle')
     fail('gemini_clinical_interview_demo.php stays public demo (CSRF+throttle, no login gate)');
 }
 
+$bitsDemo = file_get_contents($root . '/app/api/ai/bits_ollama_demo.php') ?: '';
+if (str_contains($bitsDemo, 'security_throttle')
+    && str_contains($bitsDemo, 'auth_csrf_validate')
+    && str_contains($bitsDemo, 'ai_endpoint_rate_limit')
+    && !str_contains($bitsDemo, 'ai_endpoint_require_roles')
+    && !str_contains($bitsDemo, 'Api::requireAuth')
+    && str_contains($bitsDemo, 'ClinicalTriageEngine')
+) {
+    pass('bits_ollama_demo.php stays public demo (CSRF+throttle, no login gate, no triage authority)');
+} else {
+    fail('bits_ollama_demo.php stays public demo (CSRF+throttle, no login gate, no triage authority)');
+}
+
 // assess stays public for trainer/registration (rate-limited, not requireAuth)
 $assess = file_get_contents($root . '/app/api/ai/assess_chief_complaint.php') ?: '';
 if (str_contains($assess, 'ai_endpoint_rate_limit')

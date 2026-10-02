@@ -105,6 +105,7 @@
       used !== 'Gemini Flash'
       && used !== 'OpenRouter (Gemini quota fallback)'
       && used !== 'Groq (Gemini quota fallback)'
+      && used !== 'BITS Ollama (Gemini quota fallback)'
       && used !== 'Question bank (Gemini quota fallback)'
     ) {
       used = 'Unknown';

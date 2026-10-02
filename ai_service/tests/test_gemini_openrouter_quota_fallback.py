@@ -68,12 +68,15 @@ class GeminiOpenRouterQuotaFallbackTests(unittest.TestCase):
         os.environ["OPENROUTER_API_KEY"] = OPENROUTER_KEY
         self.payload = _gemini_payload()
         self._groq_none = patch.object(gemini_client, "_groq_http_complete", return_value=None)
+        self._bits_none = patch.object(gemini_client, "_bits_http_complete", return_value=None)
         self._groq_none.start()
+        self._bits_none.start()
 
     def tearDown(self) -> None:
         os.environ.pop("OPENROUTER_API_KEY", None)
         os.environ.pop("AI_MODEL", None)
         self._groq_none.stop()
+        self._bits_none.stop()
 
     def _assert_no_keys(self, blob: str) -> None:
         self.assertNotIn(GEMINI_KEY, blob)

@@ -1,7 +1,8 @@
 <?php
 /**
  * AI-powered Hiligaynon/Ilonggo medical language understanding for Step 2 translation.
- * Provider priority: Groq → OpenAI → local Llama (Ollama).
+ * Provider priority: Groq → OpenAI → campus BITS Ollama → local Llama.
+ * BITS and local Llama never set triage.
  */
 
 final class MedicalAiInterpreter
@@ -40,9 +41,9 @@ PROMPT;
     /** @return list<string> */
     public static function providerChain(): array
     {
-        $order = getenv('MEDCONNECT_AI_PROVIDER_ORDER') ?: 'groq,openai,local';
+        $order = getenv('MEDCONNECT_AI_PROVIDER_ORDER') ?: 'groq,openai,bits,local';
         $names = array_values(array_filter(array_map('trim', explode(',', (string) $order))));
-        return $names !== [] ? $names : ['groq', 'openai', 'local'];
+        return $names !== [] ? $names : ['groq', 'openai', 'bits', 'local'];
     }
 
     /** @return array<string, mixed> */
@@ -54,6 +55,9 @@ PROMPT;
             'openai_configured' => OPENAI_API_KEY !== '',
             'local_llama_url'   => LOCAL_LLAMA_URL,
             'local_llama_model' => LOCAL_LLAMA_MODEL,
+            'bits_configured'   => BITS_SERVICE_ENABLED && BITS_SERVICE_URL !== '',
+            'bits_service_url'  => BITS_SERVICE_URL,
+            'bits_ollama_model' => BITS_OLLAMA_MODEL,
             'primary_model'     => GROQ_MODEL,
             'provider_order'    => self::providerChain(),
         ];
@@ -61,7 +65,7 @@ PROMPT;
 
     /**
      * Multilingual complaint meaning support (Hiligaynon / Tagalog / English / mixed).
-     * Uses configured provider order (default: Groq → OpenAI → local). Fails soft.
+     * Uses configured provider order (default: Groq → OpenAI → BITS → local). Fails soft.
      * Does not triage and must not replace the original patient text at the call site.
      *
      * @return array<string, mixed>
@@ -505,11 +509,52 @@ PROMPT;
             return [$data['choices'][0]['message']['content'], 'openai', OPENAI_MODEL];
         }
 
+        if ($provider === 'bits') {
+            if (!BITS_SERVICE_ENABLED || BITS_SERVICE_URL === '') {
+                throw new RuntimeException('BITS Ollama is disabled');
+            }
+
+            return self::ollamaCompletion(
+                BITS_SERVICE_URL,
+                BITS_OLLAMA_MODEL,
+                $userPrompt,
+                'bits_ollama',
+                BITS_SERVICE_TIMEOUT
+            );
+        }
+
         if ($provider === 'local') {
+            return self::ollamaCompletion(
+                LOCAL_LLAMA_URL,
+                LOCAL_LLAMA_MODEL,
+                $userPrompt,
+                'local_llama',
+                AI_INTERPRETER_TIMEOUT
+            );
+        }
+
+        throw new RuntimeException('Unknown provider: ' . $provider);
+    }
+
+    /**
+     * Ollama chat, then /api/generate if chat is unavailable.
+     *
+     * @return array{0:string,1:string,2:string}
+     */
+    private static function ollamaCompletion(
+        string $baseUrl,
+        string $model,
+        string $userPrompt,
+        string $label,
+        int $timeout
+    ): array {
+        $baseUrl = rtrim($baseUrl, '/');
+        $chatError = '';
+        try {
             $data = self::httpPostJson(
-                LOCAL_LLAMA_URL . '/api/chat',
+                $baseUrl . '/api/chat',
                 [
-                    'model'    => LOCAL_LLAMA_MODEL,
+                    'model'    => $model,
                     'stream'   => false,
                     'format'   => 'json',
                     'messages' => [
@@ -517,20 +562,42 @@ PROMPT;
                         ['role' => 'user', 'content' => $userPrompt],
                     ],
                 ],
-                []
+                [],
+                $timeout
             );
-            $content = (string) ($data['message']['content'] ?? '');
-            return [$content, 'local_llama', LOCAL_LLAMA_MODEL];
+            $content = trim((string) ($data['message']['content'] ?? ''));
+            if ($content !== '') {
+                return [$content, $label, $model];
+            }
+            $chatError = 'empty chat content';
+        } catch (Throwable $e) {
+            $chatError = $e->getMessage();
         }
 
-        throw new RuntimeException('Unknown provider: ' . $provider);
+        $data = self::httpPostJson(
+            $baseUrl . '/api/generate',
+            [
+                'model'  => $model,
+                'prompt' => self::SYSTEM_PROMPT . "\n\n" . $userPrompt,
+                'stream' => false,
+                'format' => 'json',
+            ],
+            [],
+            $timeout
+        );
+        $content = trim((string) ($data['response'] ?? ''));
+        if ($content === '') {
+            throw new RuntimeException($chatError !== '' ? $chatError : 'Empty Ollama response');
+        }
+
+        return [$content, $label, $model];
     }
 
     /** @param array<string, mixed> $payload
      * @param list<string> $extraHeaders
      * @return array<string, mixed>
      */
-    private static function httpPostJson(string $url, array $payload, array $extraHeaders): array
+    private static function httpPostJson(string $url, array $payload, array $extraHeaders, int $timeout = 0): array
     {
         $headers = array_merge(['Content-Type: application/json'], $extraHeaders);
         $ch = curl_init($url);
@@ -541,13 +608,15 @@ PROMPT;
         // Match Gemini/FAQ clients: local XAMPP may set AI_SSL_VERIFY=false when
         // PHP curl lacks a CA bundle; keep true on Hostinger/production.
         $verifySsl = self::envFlag('AI_SSL_VERIFY', true);
+        $wait = $timeout > 0 ? $timeout : AI_INTERPRETER_TIMEOUT;
 
         $opts = [
             CURLOPT_POST           => true,
             CURLOPT_HTTPHEADER     => $headers,
             CURLOPT_POSTFIELDS     => json_encode($payload, JSON_UNESCAPED_UNICODE),
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => AI_INTERPRETER_TIMEOUT,
+            CURLOPT_CONNECTTIMEOUT => min(8, $wait),
+            CURLOPT_TIMEOUT        => $wait,
             CURLOPT_SSL_VERIFYPEER => $verifySsl,
             CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
         ];

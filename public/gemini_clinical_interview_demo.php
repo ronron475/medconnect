@@ -104,7 +104,7 @@ $assetBase = ASSET_BASE;
       <p class="gci-hint" id="gci-provider">
         <span id="gci-provider-used">AI Provider Used: Unknown</span><br />
         Primary Provider: Gemini Flash<br />
-        Fallback: OpenRouter, then Groq, then NLP question bank
+        Fallback: OpenRouter, then Groq, then campus BITS Ollama, then NLP question bank
       </p>
       <details open>
         <summary>Structured Gemini output + engine result</summary>

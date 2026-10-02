@@ -9,11 +9,16 @@ from typing import Any
 
 from ai_interpreter_config import (
     AI_INTERPRETER_ENABLED,
+    AI_INTERPRETER_TIMEOUT,
     GROQ_MODEL,
     OPENAI_API_KEY,
     OPENAI_MODEL,
     LOCAL_LLAMA_MODEL,
     LOCAL_LLAMA_URL,
+    BITS_SERVICE_URL,
+    BITS_OLLAMA_MODEL,
+    BITS_SERVICE_ENABLED,
+    BITS_SERVICE_TIMEOUT,
     provider_chain,
 )
 from groq_client import groq_chat_completion
@@ -112,35 +117,85 @@ def _chat_completion(provider: str, user_prompt: str) -> tuple[str, str, str]:
             raise ValueError("Empty OpenAI response")
         return content, "openai", OPENAI_MODEL
 
-    if provider == "local":
-        import urllib.request
+    if provider == "bits":
+        if not BITS_SERVICE_ENABLED or not BITS_SERVICE_URL:
+            raise RuntimeError("BITS Ollama is disabled")
+        return _ollama_completion(
+            BITS_SERVICE_URL,
+            BITS_OLLAMA_MODEL,
+            user_prompt,
+            "bits_ollama",
+            BITS_SERVICE_TIMEOUT,
+        )
 
-        base = LOCAL_LLAMA_URL.rstrip("/")
-        body = json.dumps(
-            {
-                "model": LOCAL_LLAMA_MODEL,
-                "stream": False,
-                "format": "json",
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_prompt},
-                ],
-            }
-        ).encode("utf-8")
+    if provider == "local":
+        return _ollama_completion(
+            LOCAL_LLAMA_URL,
+            LOCAL_LLAMA_MODEL,
+            user_prompt,
+            "local_llama",
+            AI_INTERPRETER_TIMEOUT,
+        )
+
+    raise RuntimeError(f"Unknown provider: {provider}")
+
+
+def _ollama_completion(
+    base: str,
+    model: str,
+    user_prompt: str,
+    label: str,
+    timeout: int,
+) -> tuple[str, str, str]:
+    import urllib.request
+
+    base = (base or "").rstrip("/")
+    chat_body = json.dumps(
+        {
+            "model": model,
+            "stream": False,
+            "format": "json",
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+        }
+    ).encode("utf-8")
+    try:
         req = urllib.request.Request(
             f"{base}/api/chat",
-            data=body,
+            data=chat_body,
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=25) as resp:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         content = str(data.get("message", {}).get("content") or "").strip()
-        if not content:
-            raise ValueError("Empty local Llama response")
-        return content, "local_llama", LOCAL_LLAMA_MODEL
+        if content:
+            return content, label, model
+    except Exception:
+        logger.warning("Ollama chat unavailable for %s; trying /api/generate", label)
 
-    raise RuntimeError(f"Unknown provider: {provider}")
+    gen_body = json.dumps(
+        {
+            "model": model,
+            "prompt": SYSTEM_PROMPT + "\n\n" + user_prompt,
+            "stream": False,
+            "format": "json",
+        }
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        f"{base}/api/generate",
+        data=gen_body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    content = str(data.get("response") or "").strip()
+    if not content:
+        raise ValueError(f"Empty Ollama response from {label}")
+    return content, label, model
 
 
 def _format_match_lines(matches: list[dict[str, Any]], local_key: str = "local_term", english_key: str = "english_term") -> str:

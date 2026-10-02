@@ -425,7 +425,7 @@ def _groq_http_complete(payload: dict[str, Any], timeout: int) -> str | None:
 
 
 def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any] | None:
-    """Gemini HTTP 429 only. OpenRouter first, then Groq. Same pack shape as generate_content."""
+    """Gemini HTTP 429 only. OpenRouter first, then Groq, then campus BITS Ollama."""
     text = _openrouter_http_complete(payload, timeout)
     if text:
         return _fallback_text_pack(OPENROUTER_DEMO_MODEL, text)
@@ -433,7 +433,65 @@ def _quota_fallback_pack(payload: dict[str, Any], timeout: int) -> dict[str, Any
     if text:
         logger.info("Gemini HTTP 429; Groq quota fallback returned text")
         return _fallback_text_pack(_groq_model_id(), text)
+    text = _bits_http_complete(payload, timeout)
+    if text:
+        logger.info("Gemini HTTP 429; BITS Ollama quota fallback returned text")
+        model = _env("MEDCONNECT_BITS_OLLAMA_MODEL") or "phi3:mini"
+        return _fallback_text_pack(model, text)
     return None
+
+
+def _bits_http_complete(payload: dict[str, Any], timeout: int) -> str | None:
+    """Campus BITS Ollama. Language assist only; does not set triage."""
+    enabled = (_env("MEDCONNECT_BITS_SERVICE") or "1").lower() not in ("0", "false", "no", "off")
+    if not enabled:
+        return None
+    base = (_env("MEDCONNECT_BITS_SERVICE_URL") or "https://bits-service.bagocitycollege.com").rstrip("/")
+    model = _env("MEDCONNECT_BITS_OLLAMA_MODEL") or "phi3:mini"
+    body = _openrouter_body_from_gemini(payload)
+    if body is None:
+        return None
+    messages = body.get("messages") if isinstance(body.get("messages"), list) else []
+    if not messages:
+        return None
+    wait = max(15, min(90, timeout if timeout and timeout > 15 else 60))
+    chat = {"model": model, "stream": False, "messages": messages}
+    try:
+        req = urllib.request.Request(
+            f"{base}/api/chat",
+            data=json.dumps(chat).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=wait) as resp:
+            decoded = json.loads(resp.read().decode("utf-8"))
+        content = str((decoded.get("message") or {}).get("content") or "").strip()
+        if content:
+            return content
+    except Exception:
+        logger.warning("BITS Ollama /api/chat unavailable; trying /api/generate")
+
+    parts: list[str] = []
+    for message in messages:
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role") or "user").upper()
+        parts.append(f"{role}:\n{str(message.get('content') or '').strip()}")
+    gen = {"model": model, "prompt": "\n\n".join(parts), "stream": False}
+    try:
+        req = urllib.request.Request(
+            f"{base}/api/generate",
+            data=json.dumps(gen).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Accept": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=wait) as resp:
+            decoded = json.loads(resp.read().decode("utf-8"))
+        content = str(decoded.get("response") or "").strip()
+        return content or None
+    except Exception:
+        logger.warning("BITS Ollama quota fallback unavailable")
+        return None
 
 
 def _payload_for_secondary_gemini(payload: dict[str, Any]) -> dict[str, Any]:

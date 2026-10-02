@@ -408,9 +408,11 @@ ok('Railway OpenRouter JSON response_format preserved', str_contains($py, '"resp
 ok('Railway OpenRouter reasoning helper preserved', str_contains($py, 'def _openrouter_choice_text') && str_contains($py, 'reasoning'));
 ok('3.8 still runs before OpenRouter pack', strpos($py, '_try_secondary_gemini_model(body, use_model, key, wait)') < strpos($py, '_quota_fallback_pack(body, wait)'));
 ok(
-    'Railway quota pack tries Groq after OpenRouter miss',
+    'Railway quota pack tries Groq then BITS after OpenRouter miss',
     str_contains($py, 'def _groq_http_complete')
+    && str_contains($py, 'def _bits_http_complete')
     && strpos($py, '_openrouter_http_complete(payload, timeout)') < strpos($py, '_groq_http_complete(payload, timeout)')
+    && strpos($py, '_groq_http_complete(payload, timeout)') < strpos($py, '_bits_http_complete(payload, timeout)')
 );
 
 $submitSrc = (string) file_get_contents(dirname(__DIR__, 2) . '/app/includes/patient_symptoms_review_submit.php');
@@ -432,11 +434,12 @@ ok(
     && !str_contains($src, 'assessWithFallback($utterance, $checkboxSymptoms)')
 );
 ok(
-    'generate fallback order is Gemini then 3.8 then OpenRouter then Groq',
+    'generate fallback order is Gemini then 3.8 then OpenRouter then Groq then BITS',
     str_contains($demoSrc, "GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash'")
     && str_contains($demoSrc, 'tryGeminiFallbackModelOnce')
     && str_contains($demoSrc, 'recoverDemoQuotaWithOpenRouter')
     && strpos($demoSrc, 'medconnect_demo_openrouter_quota_text') < strpos($demoSrc, 'medconnect_demo_groq_quota_text')
+    && strpos($demoSrc, 'medconnect_demo_groq_quota_text') < strpos($demoSrc, 'medconnect_demo_bits_quota_text')
     && str_contains($demoSrc, 'continueWithNlpQuestionBank')
 );
 
