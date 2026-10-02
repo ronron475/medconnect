@@ -84,10 +84,16 @@ if ($restorePreliminaryUi) {
 }
 $preliminary_json = $preliminary_payload ? json_encode($preliminary_payload, JSON_UNESCAPED_UNICODE) : '';
 $followup_q_text = (string) ($preliminary_payload['followup_question'] ?? '');
-$followup_is_pain_scale = (bool) preg_match(
-    '/1\s*(tubtob|to|hanggang|-|–|—)\s*10|0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*[01]|[01]\s*(out of|\/)\s*10|pinakagrabe|worst pain|pain level|kagrabe|gaano\s+kasakit/iu',
-    $followup_q_text
-);
+$followup_qid = strtoupper((string) ($preliminary_payload['followup_question_id'] ?? ''));
+$followup_qid_base = str_contains($followup_qid, '__') ? explode('__', $followup_qid, 2)[0] : $followup_qid;
+$followup_is_pain_scale = $followup_qid_base === 'PAIN_SEVERITY'
+    || ($followup_qid_base !== '' && $followup_qid_base !== 'BREATHING_SEVERITY' && str_contains($followup_qid_base, 'SEVERITY'));
+if (!$followup_is_pain_scale && $followup_qid === '') {
+    $followup_is_pain_scale = (bool) preg_match(
+        '/1\s*(tubtob|to|hanggang|-|–|—)\s*10|0\s*(tubtob|to|hanggang|-|–|—)\s*10|scale\s*(of|nga)?\s*[01]|[01]\s*(out of|\/)\s*10|gaano\s+kasakit|how\s+(bad|severe)|pain\s*score/iu',
+        $followup_q_text
+    );
+}
 $interview_complaint_locked = $chief_complaint_locked
     || ($preliminary_payload !== null && trim((string) ($preliminary_payload['chief_complaint'] ?? '')) !== '');
 // Keep Start New available during unfinished interview/preliminary even when that

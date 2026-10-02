@@ -132,12 +132,13 @@
       || /scale\s*(of|nga)?\s*[01]/i.test(q)
       || /[01]\s*(out of|\/)\s*10/i.test(q)
       || /gaano\s+kasakit/i.test(q)
-      || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
+      || /how\s+(bad|severe)\b/i.test(q)
+      || /pain\s*score/i.test(q);
   }
 
   function setFollowupExtras(question, meta) {
     meta = meta || {};
-    var qid = String(meta.questionId || meta.followup_question_id || lastFollowupMeta.questionId || '').trim();
+    var qid = String(meta.questionId || meta.followup_question_id || '').trim();
     var lang = String(meta.language || meta.question_language || lastFollowupMeta.language || 'english').trim();
     lastFollowupMeta = { questionId: qid, language: lang };
 
@@ -284,6 +285,7 @@
     if (followupWrap) {
       followupWrap.hidden = true;
     }
+    lastFollowupMeta = { questionId: '', language: lastFollowupMeta.language || 'english' };
     if (form) {
       form.classList.remove('is-followup-active');
     }

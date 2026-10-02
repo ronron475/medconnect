@@ -763,9 +763,22 @@
           if (window.McVideoCallCore && typeof McVideoCallCore.qualityFromStats === 'function' && snapshot) {
             quality = McVideoCallCore.qualityFromStats(snapshot, ice, conn);
           }
-          netEl.textContent = quality.label;
-          netEl.dataset.state = quality.level;
-          netEl.dataset.level = quality.level;
+          const voiceLinkUp = window.__mcVoiceOnlyActive
+            && (ice === 'connected' || ice === 'completed')
+            && conn !== 'failed' && conn !== 'disconnected' && conn !== 'closed'
+            && (!conn || conn === 'connected');
+          if (voiceLinkUp) {
+            netEl.textContent = 'Voice-only mode — poor connection';
+            netEl.dataset.state = 'voice-only';
+            netEl.dataset.level = 'poor';
+            if (statusEl && !/ended|saving recording/i.test(String(statusEl.textContent || ''))) {
+              statusEl.textContent = 'Voice-only mode — poor connection';
+            }
+          } else {
+            netEl.textContent = quality.label;
+            netEl.dataset.state = quality.level;
+            netEl.dataset.level = quality.level;
+          }
           window.__mcWebrtcStats = snapshot;
 
           const panel = ensureStatsPanel();
