@@ -408,32 +408,6 @@
     font-size: 13px;
 }
 
-.queue-monitor {
-    padding: 12px 16px;
-}
-
-.queue-monitor-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--mc-navy-dark, #012a4a);
-}
-
-.queue-monitor-item:last-child { border-bottom: none; }
-
-.queue-monitor-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 8px;
-}
-
 @media (max-width: 1200px) {
     .queue-layout-inner { grid-template-columns: 1fr; }
     .queue-metrics {

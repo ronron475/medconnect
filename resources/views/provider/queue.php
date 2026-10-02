@@ -31,7 +31,6 @@ $queue_stats = [
     'active'    => 0,
     'urgent'    => 0,
     'completed' => 0,
-    'urgent_followups' => 0,
 ];
 
 try {
@@ -136,7 +135,6 @@ foreach ($queue_items as $item) {
         $queue_stats['urgent']++;
     }
 }
-$queue_stats['urgent_followups'] = count($urgent_followup_queue);
 
 if (!$queue_items && !empty($queue)) {
     foreach ($queue as $q) {
@@ -516,29 +514,6 @@ require_once __DIR__ . '/partials/layout_open.php';
                         </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                </div>
-            </div>
-
-            <div class="queue-panel">
-                <div class="queue-panel-header">
-                    <div class="queue-panel-title"><?= icon('monitor') ?> Queue Monitor</div>
-                </div>
-                <div class="queue-monitor">
-                    <?php
-                    $monitor = [
-                        ['Waiting', $queue_stats['waiting'], '#f59e0b'],
-                        ['In Consultation', $queue_stats['active'], '#2563eb'],
-                        ['Urgent Follow-ups', $queue_stats['urgent_followups'], '#dc2626'],
-                        ['Urgent Priority', $queue_stats['urgent'], '#ef4444'],
-                        ['Completed', $queue_stats['completed'], '#16a34a'],
-                    ];
-                    foreach ($monitor as [$label, $count, $color]):
-                    ?>
-                    <div class="queue-monitor-item">
-                        <span><span class="queue-monitor-dot" style="background:<?= $color ?>"></span><?= htmlspecialchars($label) ?></span>
-                        <span><?= (int)$count ?></span>
-                    </div>
-                    <?php endforeach; ?>
                 </div>
             </div>
         </aside>
