@@ -18,6 +18,11 @@ require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 $queue = $queue ?? [];
 $stats = $stats ?? [];
 $provider_id = (int) ($_SESSION['user_id'] ?? 0);
+try {
+    $stats = queue_in_consultation_counts_today($pdo, $provider_id) + $stats;
+} catch (Throwable $e) {
+    error_log('Provider dashboard in-consultation split: ' . $e->getMessage());
+}
 $chart_period = provider_parse_dashboard_period($_GET['period'] ?? 'week');
 $chart_data = provider_dashboard_consultation_chart($pdo, $provider_id, $chart_period);
 $week_chart = $chart_data['series'];
@@ -101,6 +106,13 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
                 In Consultation
               </span>
               <strong data-live-status="ongoing"><?= (int) ($stats['ongoing'] ?? 0) ?></strong>
+            </div>
+            <div class="prov-status-item">
+              <span class="prov-status-item__label">
+                <span class="prov-status-dot" style="background:#f59e0b;"></span>
+                Documentation Pending
+              </span>
+              <strong data-live-status="documentation_pending"><?= (int) ($stats['documentation_pending'] ?? 0) ?></strong>
             </div>
             <div class="prov-status-item">
               <span class="prov-status-item__label">

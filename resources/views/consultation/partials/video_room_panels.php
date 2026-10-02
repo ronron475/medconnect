@@ -36,7 +36,7 @@ $info_sub = !empty($is_patient)
           <?php endif; ?>
           <div><dt>Consultation</dt><dd>#<?= (int) $consultation_id ?></dd></div>
           <div><dt>Appointment</dt><dd><?= htmlspecialchars((string) ($appointment_label ?? '—') !== '' ? $appointment_label : '—') ?></dd></div>
-          <div><dt>Chief complaint</dt><dd><?= htmlspecialchars((string) ($chief_complaint_seed ?? '') !== '' ? $chief_complaint_seed : '—') ?></dd></div>
+          <div><dt><?= empty($is_patient) ? 'Primary complaint' : 'Chief complaint' ?></dt><dd><?= htmlspecialchars((string) ($chief_complaint_seed ?? '') !== '' ? $chief_complaint_seed : '—') ?></dd></div>
         </dl>
         <p class="mc-vc-info-refresh" id="mcVcInfoStatus">Refreshing live details…</p>
         <button type="button" class="mc-vc-info-retry" id="mcVcInfoRetry" hidden>Retry loading details</button>

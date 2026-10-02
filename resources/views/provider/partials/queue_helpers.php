@@ -29,6 +29,63 @@ function queue_normalize_status(string $status): string
     };
 }
 
+/**
+ * SELECT columns `has_ended_video` and `soap_finalized` for a consultations alias.
+ */
+function queue_documentation_flags_sql(string $alias = 'c'): string
+{
+    return "EXISTS (
+                SELECT 1 FROM video_sessions vse
+                WHERE vse.consultation_id = {$alias}.id AND vse.status = 'ended'
+            ) AS has_ended_video,
+            EXISTS (
+                SELECT 1 FROM clinical_notes cnf
+                WHERE cnf.consultation_id = {$alias}.id
+                  AND (
+                      (cnf.finalized_at IS NOT NULL AND cnf.finalized_at <> '0000-00-00 00:00:00')
+                      OR (cnf.signature_data IS NOT NULL AND TRIM(cnf.signature_data) <> '')
+                  )
+            ) AS soap_finalized";
+}
+
+/**
+ * Video ended but the Final Assessment is not finalized yet; the consultation
+ * stays `in_consultation` in the database until SOAP finalize completes it.
+ * Expects `room_token` to hold the active video room (empty when none is active).
+ */
+function queue_is_documentation_pending(array $item): bool
+{
+    return queue_normalize_status((string) ($item['status'] ?? '')) === 'in_consultation'
+        && trim((string) ($item['room_token'] ?? '')) === ''
+        && !empty($item['has_ended_video'])
+        && empty($item['soap_finalized']);
+}
+
+/**
+ * Today's `in_consultation` consultations split by queue display state.
+ *
+ * @return array{ongoing:int, documentation_pending:int}
+ */
+function queue_in_consultation_counts_today(PDO $pdo, int $providerId): array
+{
+    $stmt = $pdo->prepare("
+        SELECT c.status,
+               (SELECT vsa.room_token FROM video_sessions vsa
+                WHERE vsa.consultation_id = c.id AND vsa.status = 'active'
+                LIMIT 1) AS room_token,
+               " . queue_documentation_flags_sql('c') . "
+        FROM consultations c
+        WHERE c.provider_id = ? AND c.consult_date = CURDATE() AND c.status = 'in_consultation'
+    ");
+    $stmt->execute([$providerId]);
+
+    $counts = ['ongoing' => 0, 'documentation_pending' => 0];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $counts[queue_is_documentation_pending($row) ? 'documentation_pending' : 'ongoing']++;
+    }
+    return $counts;
+}
+
 function queue_scheduled_label(?string $consult_date, ?string $consult_time = null): string
 {
     $consult_date = queue_normalize_date($consult_date);

@@ -56,7 +56,8 @@ try {
             s.end_time AS slot_end,
             c.provider_id,
             c.early_start_response,
-            " . consultation_timing_latest_patient_joined_sql('c') . " AS patient_joined_at
+            " . consultation_timing_latest_patient_joined_sql('c') . " AS patient_joined_at,
+            " . queue_documentation_flags_sql('c') . "
         FROM consultations c
         JOIN users u ON u.id = c.patient_id
         LEFT JOIN patient_registrations pr ON pr.email = u.email
@@ -415,6 +416,7 @@ foreach ($queue_items as $metric_item) {
                                 $name = trim(($item['first_name'] ?? '') . ' ' . ($item['last_name'] ?? '')) ?: 'Patient';
                                 $status = (string)($item['status'] ?? 'pending');
                                 $status_class = queue_status_class($status);
+                                $documentation_pending = queue_is_documentation_pending($item);
                                 $is_urgent = queue_is_urgent($item['level'] ?? '', $item['urgency_label'] ?? '');
                                 $session_url = 'consultation_session.php?id=' . (int)$item['id'];
                                 $session_access = queue_session_access($item);
@@ -463,7 +465,7 @@ foreach ($queue_items as $metric_item) {
                                     <div class="queue-meta" data-queue-wait-label<?= $wait_label === '' ? ' hidden' : '' ?>><?= htmlspecialchars($wait_label) ?></div>
                                 </td>
                                 <td class="col-status" data-label="Status" data-queue-status="<?= (int) $item['id'] ?>">
-                                    <span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span>
+                                    <span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars($documentation_pending ? 'Documentation Pending' : queue_status_label($status)) ?></span>
                                 </td>
                                 <td
                                     data-label="Action"
@@ -474,7 +476,7 @@ foreach ($queue_items as $metric_item) {
                                     <div class="queue-actions">
                                         <?php if ($session_access['allowed']): ?>
                                             <?php if (!empty($item['room_token']) || ($status === 'in_consultation')): ?>
-                                                <a href="<?= $session_url ?>" class="queue-btn primary">Enter Session</a>
+                                                <a href="<?= $session_url ?>" class="queue-btn primary"><?= $documentation_pending ? 'Continue Assessment' : 'Enter Session' ?></a>
                                             <?php else: ?>
                                                 <a href="<?= $session_url ?>" class="queue-btn primary">Open &amp; Start</a>
                                             <?php endif; ?>
