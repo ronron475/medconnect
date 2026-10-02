@@ -130,6 +130,16 @@
     endTimers.set(item.id, timer);
   }
 
+  function updateWaitLabel(item) {
+    const cell = document.querySelector('[data-queue-wait="' + item.id + '"]');
+    if (!cell) return;
+    const el = cell.querySelector('[data-queue-wait-label]');
+    if (!el) return;
+    const label = item.waiting_label || '';
+    el.textContent = label;
+    el.hidden = label === '';
+  }
+
   function updateStatusCell(item) {
     const cell = document.querySelector('[data-queue-status="' + item.id + '"]');
     if (!cell) return;
@@ -152,6 +162,7 @@
     cell.innerHTML = renderActions(item);
     bindBlockedButtons(cell);
     updateStatusCell(item);
+    updateWaitLabel(item);
 
     if (item.session_allowed && wasBlocked) {
       cell.classList.add('queue-action--just-opened');

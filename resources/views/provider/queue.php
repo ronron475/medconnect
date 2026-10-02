@@ -430,6 +430,7 @@ foreach ($queue_items as $metric_item) {
                                 $display_date = $session_ctx['effective_date'] !== '' ? $session_ctx['effective_date'] : $session_ctx['consult_date'];
                                 $display_time = $session_ctx['consult_time'];
                                 $opens_label = $session_ctx['opens_at_label'] !== '' ? $session_ctx['opens_at_label'] : 'Schedule';
+                                $wait_label = consultation_timing_provider_wait_label($item);
                             ?>
                             <tr>
                                 <td class="queue-td--patient" data-label="Patient">
@@ -456,9 +457,10 @@ foreach ($queue_items as $metric_item) {
                                         <?= htmlspecialchars($item['urgency_label'] ?: ($is_urgent ? 'Urgent' : 'Not triaged')) ?>
                                     </span>
                                 </td>
-                                <td data-label="Schedule">
+                                <td data-label="Schedule" data-queue-wait="<?= (int) $item['id'] ?>">
                                     <div style="font-weight:700;"><?= htmlspecialchars($display_date !== '' ? date('M j, Y', strtotime($display_date)) : 'â€”') ?></div>
                                     <div class="queue-meta"><?= htmlspecialchars($display_time !== '' ? date('g:i A', strtotime($display_time)) : 'â€”') ?></div>
+                                    <div class="queue-meta" data-queue-wait-label<?= $wait_label === '' ? ' hidden' : '' ?>><?= htmlspecialchars($wait_label) ?></div>
                                 </td>
                                 <td class="col-status" data-label="Status" data-queue-status="<?= (int) $item['id'] ?>">
                                     <span class="queue-badge <?= $status_class ?>"><?= htmlspecialchars(queue_status_label($status)) ?></span>
