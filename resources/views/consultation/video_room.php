@@ -889,8 +889,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     body.role-provider .mc-vc-top-actions,
     body.role-provider .mc-vc-pill--secure,
     body.role-provider #timerDisplay,
-    body.role-provider #mcVcFullscreenBtn,
-    body.embedded-shell.role-provider #mcVcFullscreenBtn,
     body.role-provider #mcVcMinimizeBtn,
     body.role-provider #mcVcSpeakerBtn,
     body.role-provider #mcVcTtsBtn,
