@@ -190,7 +190,6 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         'ongoing'      => 0,
         'completed'    => 0,
         'missed'       => 0,
-        'slot_waiting' => 0,
         'triage_pending' => 0,
     ];
 
@@ -261,9 +260,6 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         ");
         $s->execute([$providerId]);
         $stats['completed'] = (int) $s->fetchColumn();
-
-        require_once __DIR__ . '/patient_slot_waitlist.php';
-        $stats['slot_waiting'] = patient_slot_waitlist_count_for_provider($pdo, $providerId);
     } catch (Throwable $e) {
         // keep zeros
     }
