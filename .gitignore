@@ -51,6 +51,9 @@ storage/uploads/profile_pictures/*
 storage/uploads/media_library/**
 !storage/uploads/media_library/.gitkeep
 !storage/uploads/media_library/.htaccess
+storage/uploads/soap_signed/*
+!storage/uploads/soap_signed/.gitkeep
+!storage/uploads/soap_signed/.htaccess
 storage/residency/**
 !storage/residency/.gitkeep
 !storage/residency/.htaccess

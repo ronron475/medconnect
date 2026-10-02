@@ -4,7 +4,8 @@
  * URL: /app/api/provider/save_clinical_notes.php
  *
  * Draft (default): saves notes without ending the consultation.
- * Finalize (finalize=1): requires signature, completes consult in one transaction.
+ * Finalize (finalize=1): requires an uploaded signed SOAP PDF (multipart field signed_pdf),
+ * completes consult in one transaction.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
@@ -28,6 +29,12 @@ if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+    exit;
+}
+
+if (empty($_POST) && empty($_FILES) && (int) ($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+    http_response_code(413);
+    echo json_encode(['success' => false, 'message' => 'The uploaded signed PDF is too large.']);
     exit;
 }
 
@@ -55,8 +62,6 @@ $data = [
     'diagnosis'       => $_POST['diagnosis']       ?? '',
     'treatment_plan'  => $_POST['treatment_plan']  ?? '',
     'prescription'    => $_POST['prescription']    ?? '',
-    'signature'       => (string) ($_POST['signature_data'] ?? ''),
-    'signature_method'=> strtolower(trim((string) ($_POST['signature_method'] ?? ''))),
 ];
 
 if (!$data['consultation_id'] || !$data['patient_id']) {
@@ -145,13 +150,14 @@ if ($alreadyFinalized) {
             exit;
         }
 
-        $drawn = clinical_note_drawn_signature_valid((string) ($data['signature'] ?? ''));
-        if (!$drawn['ok']) {
-            echo json_encode(['success' => false, 'message' => $drawn['message']]);
+        $signedPdfUpload = $_FILES['signed_pdf'] ?? null;
+        $pdfCheck = clinical_note_signed_pdf_validate_upload($signedPdfUpload);
+        if (!$pdfCheck['ok']) {
+            echo json_encode(['success' => false, 'message' => $pdfCheck['message']]);
             exit;
         }
 
-        $data['signature_method'] = 'drawn';
+        $data['signature_method'] = 'pdf_upload';
         $data['signature_name'] = $signatureName;
 
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
@@ -182,6 +188,18 @@ if ($alreadyFinalized) {
         }
         $data['final_urgency_bucket'] = $finalUrgencyBucket;
         $data['final_urgency_note'] = $finalUrgencyNote;
+
+        $storedPdf = clinical_note_signed_pdf_store($signedPdfUpload, (int) $data['consultation_id']);
+        if (!$storedPdf['ok']) {
+            echo json_encode(['success' => false, 'message' => $storedPdf['message']]);
+            exit;
+        }
+        $data['signed_pdf_path'] = $storedPdf['path'];
+        $data['signed_pdf_abs'] = $storedPdf['abs'];
+        $data['signed_pdf_name'] = $storedPdf['name'];
+        $data['signed_pdf_size'] = $storedPdf['size'];
+        $data['signed_pdf_sha256'] = $storedPdf['sha256'];
+        $data['signature'] = 'signed_pdf:' . $storedPdf['sha256'];
     }
 
 try {
@@ -219,8 +237,9 @@ try {
 
     $stmt = $pdo->prepare("
         INSERT INTO clinical_notes
-        (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data, signature_method, signature_name, signed_at, finalized_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data, signature_method, signature_name, signed_at, finalized_at,
+         signed_pdf_path, signed_pdf_name, signed_pdf_size, signed_pdf_sha256)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             subjective = VALUES(subjective),
             objective = VALUES(objective),
@@ -233,13 +252,18 @@ try {
             signature_method = VALUES(signature_method),
             signature_name = VALUES(signature_name),
             signed_at = NOW(),
-            finalized_at = NOW()
+            finalized_at = NOW(),
+            signed_pdf_path = VALUES(signed_pdf_path),
+            signed_pdf_name = VALUES(signed_pdf_name),
+            signed_pdf_size = VALUES(signed_pdf_size),
+            signed_pdf_sha256 = VALUES(signed_pdf_sha256)
     ");
     $stmt->execute([
         $data['consultation_id'], $data['patient_id'], $data['provider_id'],
         $data['subjective'], $data['objective'], $data['assessment'], $data['plan'],
         $data['diagnosis'], $data['treatment_plan'], $data['prescription'], $data['signature'],
         $data['signature_method'], $data['signature_name'],
+        $data['signed_pdf_path'], $data['signed_pdf_name'], $data['signed_pdf_size'], $data['signed_pdf_sha256'],
     ]);
 
     $diag = trim((string) ($data['diagnosis'] ?? ''));
@@ -406,6 +430,9 @@ try {
 } catch (Exception $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
+        if (!empty($data['signed_pdf_abs']) && is_file($data['signed_pdf_abs'])) {
+            @unlink($data['signed_pdf_abs']);
+        }
     }
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Could not save clinical notes.']);

@@ -35,6 +35,31 @@ $barangay_label = htmlspecialchars($bhw_barangay_name);
               <input class="form-control" id="bhwRegEmail" name="email" type="email" required maxlength="180" autocomplete="email" placeholder="name@gmail.com">
             </div>
           </div>
+          <div class="bhw-reg-split">
+            <div class="bhw-field">
+              <label class="form-label" for="bhwRegDob">Date of Birth <span class="bhw-req" aria-hidden="true">*</span></label>
+              <input class="form-control" id="bhwRegDob" name="date_of_birth" type="date" required max="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d', strtotime('-130 years')) ?>">
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="bhwRegSex">Sex <span class="bhw-req" aria-hidden="true">*</span></label>
+              <select class="form-control" id="bhwRegSex" name="gender" required>
+                <option value="">Select sex</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+          </div>
+          <div class="bhw-reg-split">
+            <div class="bhw-field">
+              <label class="form-label" for="bhwRegPurok">Purok <span class="bhw-req" aria-hidden="true">*</span></label>
+              <input class="form-control" id="bhwRegPurok" name="purok" required maxlength="80" list="bhwRegPurokList" autocomplete="off" placeholder="e.g. Purok 1">
+              <datalist id="bhwRegPurokList"></datalist>
+            </div>
+            <div class="bhw-field">
+              <label class="form-label" for="bhwRegBarangay">Barangay</label>
+              <input class="form-control" id="bhwRegBarangay" value="Brgy. <?= $barangay_label ?>" readonly tabindex="-1" aria-readonly="true">
+            </div>
+          </div>
         </div>
       </section>
 

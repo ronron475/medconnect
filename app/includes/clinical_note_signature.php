@@ -2,7 +2,11 @@
 /**
  * SOAP electronic signature helpers.
  * Signature identity always comes from the authenticated provider Full Name.
+ * The signature itself is a provider-uploaded signed PDF of the completed SOAP note.
  */
+
+const CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES = 10485760;
+const CLINICAL_NOTE_SIGNED_PDF_SUBDIR = 'uploads/soap_signed';
 
 function clinical_note_signature_schema_ensure(PDO $pdo): void
 {
@@ -35,6 +39,18 @@ function clinical_note_signature_schema_ensure(PDO $pdo): void
     }
     if (!isset($byName['finalized_at'])) {
         $alters[] = "ADD COLUMN finalized_at DATETIME NULL DEFAULT NULL AFTER signed_at";
+    }
+    if (!isset($byName['signed_pdf_path'])) {
+        $alters[] = "ADD COLUMN signed_pdf_path VARCHAR(255) NULL DEFAULT NULL AFTER finalized_at";
+    }
+    if (!isset($byName['signed_pdf_name'])) {
+        $alters[] = "ADD COLUMN signed_pdf_name VARCHAR(255) NULL DEFAULT NULL AFTER signed_pdf_path";
+    }
+    if (!isset($byName['signed_pdf_size'])) {
+        $alters[] = "ADD COLUMN signed_pdf_size INT UNSIGNED NULL DEFAULT NULL AFTER signed_pdf_name";
+    }
+    if (!isset($byName['signed_pdf_sha256'])) {
+        $alters[] = "ADD COLUMN signed_pdf_sha256 CHAR(64) NULL DEFAULT NULL AFTER signed_pdf_size";
     }
 
     if ($alters) {
@@ -157,84 +173,155 @@ function clinical_note_typed_name_matches(string $typed, array $identity): bool
     return in_array($typedN, clinical_note_typed_name_candidates($identity), true);
 }
 
+function clinical_note_signed_pdf_dir(): string
+{
+    $base = defined('STORAGE_PATH') ? (string) STORAGE_PATH : dirname(__DIR__, 2) . '/storage';
+    return rtrim($base, '/\\') . '/' . CLINICAL_NOTE_SIGNED_PDF_SUBDIR;
+}
+
 /**
+ * @param mixed $file One entry from $_FILES
  * @return array{ok:bool,message:string}
  */
-function clinical_note_drawn_signature_valid(string $dataUrl): array
+function clinical_note_signed_pdf_validate_upload($file): array
 {
-    $dataUrl = trim($dataUrl);
-    if ($dataUrl === '' || strncmp($dataUrl, 'data:image/', 11) !== 0) {
-        return [
-            'ok' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ];
+    $missing = 'Please upload the signed SOAP note PDF before finalizing.';
+    $maxMb = (int) round(CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES / 1048576);
+    $tooLarge = 'The signed PDF is too large. Maximum size is ' . $maxMb . ' MB.';
+
+    if (!is_array($file) || !isset($file['error']) || is_array($file['error'])) {
+        return ['ok' => false, 'message' => $missing];
     }
 
-    if (!preg_match('#^data:image/(png|jpeg|jpg|webp);base64,([A-Za-z0-9+/=\s]+)$#i', $dataUrl, $m)) {
-        return [
-            'ok' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ];
+    $err = (int) $file['error'];
+    if ($err === UPLOAD_ERR_NO_FILE) {
+        return ['ok' => false, 'message' => $missing];
+    }
+    if ($err === UPLOAD_ERR_INI_SIZE || $err === UPLOAD_ERR_FORM_SIZE) {
+        return ['ok' => false, 'message' => $tooLarge];
+    }
+    if ($err !== UPLOAD_ERR_OK) {
+        return ['ok' => false, 'message' => 'The signed PDF could not be uploaded. Please try again.'];
     }
 
-    $bin = base64_decode(preg_replace('/\s+/', '', $m[2]), true);
-    if ($bin === false || strlen($bin) < 400) {
-        return [
-            'ok' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ];
-    }
-    if (strlen($bin) > 450000) {
-        return ['ok' => false, 'message' => 'Signature image is too large. Please clear and sign again.'];
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    if ($tmp === '' || !is_uploaded_file($tmp)) {
+        return ['ok' => false, 'message' => $missing];
     }
 
-    if (!function_exists('imagecreatefromstring')) {
-        return ['ok' => true, 'message' => ''];
+    $size = (int) @filesize($tmp);
+    if ($size <= 0) {
+        return ['ok' => false, 'message' => 'The signed PDF is empty. Please choose another file.'];
+    }
+    if ($size > CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES) {
+        return ['ok' => false, 'message' => $tooLarge];
     }
 
-    $img = @imagecreatefromstring($bin);
-    if (!$img) {
-        return [
-            'ok' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ];
+    $ext = strtolower((string) pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+    if ($ext !== 'pdf') {
+        return ['ok' => false, 'message' => 'Only PDF files are accepted for the signed SOAP note.'];
     }
 
-    $w = imagesx($img);
-    $h = imagesy($img);
-    if ($w < 80 || $h < 40) {
-        imagedestroy($img);
-        return [
-            'ok' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ];
-    }
-
-    $ink = 0;
-    $stepX = max(1, (int) floor($w / 90));
-    $stepY = max(1, (int) floor($h / 50));
-    for ($y = 0; $y < $h; $y += $stepY) {
-        for ($x = 0; $x < $w; $x += $stepX) {
-            $rgba = imagecolorat($img, $x, $y);
-            $a = ($rgba & 0x7F000000) >> 24;
-            $r = ($rgba >> 16) & 0xFF;
-            $g = ($rgba >> 8) & 0xFF;
-            $b = $rgba & 0xFF;
-            if ($a < 110 && ($r < 242 || $g < 242 || $b < 242)) {
-                $ink++;
-            }
+    if (class_exists('finfo')) {
+        $mime = (string) ((new finfo(FILEINFO_MIME_TYPE))->file($tmp) ?: '');
+        if (!in_array($mime, ['application/pdf', 'application/x-pdf'], true)) {
+            return ['ok' => false, 'message' => 'Only PDF files are accepted for the signed SOAP note.'];
         }
     }
-    imagedestroy($img);
 
-    if ($ink < 10) {
-        return [
-            'ok' => false,
-            'message' => 'Please provide your electronic signature before finalizing the SOAP note.',
-        ];
+    $fh = @fopen($tmp, 'rb');
+    $head = $fh ? (string) fread($fh, 5) : '';
+    if ($fh) {
+        fclose($fh);
+    }
+    if ($head !== '%PDF-') {
+        return ['ok' => false, 'message' => 'The uploaded file is not a valid PDF.'];
     }
 
     return ['ok' => true, 'message' => ''];
+}
+
+/**
+ * Move a validated upload into private storage.
+ *
+ * @return array{ok:bool,message:string,path?:string,abs?:string,name?:string,size?:int,sha256?:string}
+ */
+function clinical_note_signed_pdf_store(array $file, int $consultationId): array
+{
+    $fail = ['ok' => false, 'message' => 'Could not store the signed PDF. Please try again.'];
+
+    $dir = clinical_note_signed_pdf_dir();
+    if (!is_dir($dir) && !@mkdir($dir, 0750, true) && !is_dir($dir)) {
+        return $fail;
+    }
+    $htaccess = $dir . '/.htaccess';
+    if (!is_file($htaccess)) {
+        @file_put_contents($htaccess, "Deny from all\n");
+    }
+
+    $tmp = (string) ($file['tmp_name'] ?? '');
+    $sha = (string) (@hash_file('sha256', $tmp) ?: '');
+    if ($sha === '') {
+        return $fail;
+    }
+
+    try {
+        $basename = 'consult_' . $consultationId . '_' . bin2hex(random_bytes(12)) . '.pdf';
+    } catch (Throwable $e) {
+        return $fail;
+    }
+    $abs = $dir . '/' . $basename;
+    if (!@move_uploaded_file($tmp, $abs)) {
+        return $fail;
+    }
+    @chmod($abs, 0640);
+
+    $original = basename(str_replace('\\', '/', (string) ($file['name'] ?? '')));
+    $original = preg_replace('/[\x00-\x1F\x7F]+/u', '', $original) ?? '';
+    $original = trim(mb_substr($original, 0, 200, 'UTF-8'));
+    if ($original === '') {
+        $original = 'signed-soap-note.pdf';
+    }
+
+    return [
+        'ok' => true,
+        'message' => '',
+        'path' => CLINICAL_NOTE_SIGNED_PDF_SUBDIR . '/' . $basename,
+        'abs' => $abs,
+        'name' => $original,
+        'size' => (int) filesize($abs),
+        'sha256' => $sha,
+    ];
+}
+
+/** Absolute path of a stored signed PDF, or null when missing / outside the private directory. */
+function clinical_note_signed_pdf_abs_path(?string $relPath): ?string
+{
+    $rel = trim((string) $relPath);
+    if ($rel === '' || !str_starts_with($rel, CLINICAL_NOTE_SIGNED_PDF_SUBDIR . '/')) {
+        return null;
+    }
+    $dir = realpath(clinical_note_signed_pdf_dir());
+    $base = defined('STORAGE_PATH') ? (string) STORAGE_PATH : dirname(__DIR__, 2) . '/storage';
+    $abs = realpath(rtrim($base, '/\\') . '/' . $rel);
+    if ($dir === false || $abs === false || !is_file($abs)) {
+        return null;
+    }
+    if (!str_starts_with($abs, $dir . DIRECTORY_SEPARATOR)) {
+        return null;
+    }
+    return $abs;
+}
+
+function clinical_note_has_signed_pdf(?array $note): bool
+{
+    return is_array($note) && trim((string) ($note['signed_pdf_path'] ?? '')) !== '';
+}
+
+function clinical_note_signed_pdf_url(int $consultationId): string
+{
+    $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
+    return $base . '/app/api/consultations/view_signed_soap_pdf.php?consultation_id=' . $consultationId;
 }
 
 function clinical_note_is_image_payload(?string $value): bool

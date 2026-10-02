@@ -18,12 +18,24 @@ function admin_operational_report_catalog(): array
 {
     return [
         'appointments' => [
-            'title' => 'Appointment Summary',
-            'description' => 'Complete list of all consultations, provider assignments, and completion status.',
-            'headers' => ['ID', 'Patient ID', 'Provider', 'Type', 'Status', 'Date', 'Time'],
-            'sql' => 'SELECT id, patient_id, provider_name, consult_type, status, consult_date, consult_time
-                      FROM consultations
-                      ORDER BY id ASC',
+            'title' => 'Consultation & Appointment Report',
+            'description' => 'Overview of consultations, assigned providers, appointment dates, and consultation status.',
+            'headers' => ['ID', 'Patient', 'Doctor', 'Patient Complaint', 'Date', 'Time', 'Status'],
+            'sql' => "SELECT c.id AS consultation_id,
+                             c.patient_id,
+                             TRIM(CONCAT(COALESCE(p.first_name, ''), ' ', COALESCE(p.last_name, ''))) AS patient_name,
+                             COALESCE(
+                                 NULLIF(TRIM(c.provider_name), ''),
+                                 TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, '')))
+                             ) AS doctor_name,
+                             c.consult_type AS patient_complaint,
+                             c.consult_date,
+                             c.consult_time,
+                             c.status
+                      FROM consultations c
+                      LEFT JOIN users p ON p.id = c.patient_id
+                      LEFT JOIN users d ON d.id = c.provider_id
+                      ORDER BY c.id ASC",
             'table' => 'consultations',
         ],
         'users' => [
@@ -83,6 +95,10 @@ function admin_operational_report_table_exists(PDO $pdo, ?string $table): bool
  */
 function admin_operational_report_values(string $type, array $row): array
 {
+    if ($type === 'appointments') {
+        return admin_operational_report_appointment_values($row);
+    }
+
     if ($type === 'users') {
         $row['is_active'] = !empty($row['is_active']) ? 'Active' : 'Inactive';
     }
@@ -93,6 +109,45 @@ function admin_operational_report_values(string $type, array $row): array
     }
 
     return $values;
+}
+
+/**
+ * @param array<string, mixed> $row
+ * @return list<string>
+ */
+function admin_operational_report_appointment_values(array $row): array
+{
+    $patientId = (int) ($row['patient_id'] ?? 0);
+    $patient = trim((string) ($row['patient_name'] ?? ''));
+    if ($patient === '') {
+        $patient = $patientId > 0 ? 'Patient #' . $patientId : '—';
+    }
+
+    $doctor = trim((string) ($row['doctor_name'] ?? ''));
+    if ($doctor === '') {
+        $doctor = 'Unassigned';
+    } elseif (!preg_match('/^dr\.?\s/i', $doctor)) {
+        $doctor = 'Dr. ' . $doctor;
+    }
+
+    $complaint = trim(preg_replace('/\s+/', ' ', (string) ($row['patient_complaint'] ?? '')) ?? '');
+
+    $date = trim((string) ($row['consult_date'] ?? ''));
+    $dateTs = $date !== '' ? strtotime($date) : false;
+    $time = trim((string) ($row['consult_time'] ?? ''));
+    $timeTs = $time !== '' ? strtotime('1970-01-01 ' . $time) : false;
+
+    $status = trim((string) ($row['status'] ?? ''));
+
+    return [
+        (string) (int) ($row['consultation_id'] ?? 0),
+        $patient,
+        $doctor,
+        $complaint !== '' ? $complaint : '—',
+        $dateTs !== false ? date('M j, Y', $dateTs) : ($date !== '' ? $date : '—'),
+        $timeTs !== false ? date('g:i A', $timeTs) : ($time !== '' ? $time : '—'),
+        $status !== '' ? ucwords(str_replace('_', ' ', strtolower($status))) : '—',
+    ];
 }
 
 /**

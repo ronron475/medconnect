@@ -243,6 +243,7 @@ ob_start();
       profilePrintRow('Contact Number', p.contact_number) +
       profilePrintRow('Date of Birth', fmtDate(p.date_of_birth)) +
       profilePrintRow('Barangay', p.barangay) +
+      profilePrintRow('Purok', p.purok) +
       profilePrintRow('Blood Type', p.blood_type) +
       '</tbody></table></section>' +
       '<section class="bhw-pl-profile-report__section">' +
@@ -283,7 +284,7 @@ ob_start();
         '<div class="bhw-pl-drawer-section"><h4>Profile</h4><dl class="bhw-pl-drawer-dl">' +
         row('Patient ID', '#' + p.id) + row('Email', p.email) + row('Contact', p.contact_number) +
         row('Gender', p.gender) + row('Age', p.age) + row('DOB', fmtDate(p.date_of_birth)) +
-        row('Barangay', p.barangay) + row('Blood type', p.blood_type) +
+        row('Barangay', p.barangay) + row('Purok', p.purok) + row('Blood type', p.blood_type) +
         row('Workflow', WORKFLOW_LABELS[(p.workflow_status || 'registered').toLowerCase()] || p.workflow_status) +
         '</dl></div>' +
         '<div class="bhw-pl-drawer-section"><h4>Medical Summary</h4><dl class="bhw-pl-drawer-dl">' +
@@ -426,7 +427,6 @@ $bhw_inline_script = ob_get_clean();
       <button type="button" class="bhw-pl-btn bhw-pl-btn--ghost" id="bhwPlRefresh" aria-label="Refresh list">Refresh</button>
       <button type="button" class="bhw-pl-btn bhw-pl-btn--outline" id="bhwPlExportCsv">Export CSV</button>
       <button type="button" class="bhw-pl-btn bhw-pl-btn--outline" id="bhwPlExportPdf">Export PDF</button>
-      <a href="update.php" class="bhw-pl-btn bhw-pl-btn--primary">Assist Patient</a>
     </div>
   </header>
 

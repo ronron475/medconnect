@@ -389,6 +389,11 @@ $patient_page_stylesheets = [
             <?php if ($signedAt !== ''): ?><?php if ($signedBy !== ''): ?><br><?php endif; ?><?= htmlspecialchars($signedAt) ?><?php endif; ?>
           </p>
           <?php endif; ?>
+          <?php if (clinical_note_has_signed_pdf($note)): ?>
+          <p class="pmh-file-card__link">
+            <a href="<?= htmlspecialchars(clinical_note_signed_pdf_url((int) ($note['consultation_id'] ?? 0))) ?>" class="pmh-btn pmh-btn--outline" target="_blank" rel="noopener">View signed PDF</a>
+          </p>
+          <?php endif; ?>
           <?php if (trim((string) ($note['diagnosis'] ?? '')) !== ''): ?>
           <p class="pmh-detail__diag"><strong>Diagnosis:</strong> <?= htmlspecialchars($note['diagnosis']) ?></p>
           <?php endif; ?>

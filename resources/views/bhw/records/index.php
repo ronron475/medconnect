@@ -15,7 +15,7 @@ require __DIR__ . '/../partials/layout_open.php';
 
   <header class="bhw-records-header bhw-page-intro">
     <div>
-      <p class="bhw-records-sub">Search residents in <strong>Brgy. <?= $barangay_label ?></strong> and open their record. Profile, medical history, prescriptions, and documents stay in your barangay.</p>
+      <p class="bhw-records-sub">Search residents in <strong>Brgy. <?= $barangay_label ?></strong> and open their record. Profile, medical history, and prescriptions stay in your barangay.</p>
     </div>
   </header>
 
@@ -46,14 +46,11 @@ require __DIR__ . '/../partials/layout_open.php';
         <button type="button" class="bhw-records-tabs__btn is-active" role="tab" id="bhwRecordsTabProfile" aria-selected="true" aria-controls="bhwRecordsPanelProfile" data-records-tab="profile">Profile</button>
         <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabHealth" aria-selected="false" aria-controls="bhwRecordsPanelHealth" data-records-tab="health" tabindex="-1">Medical History</button>
         <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabRx" aria-selected="false" aria-controls="bhwRecordsPanelRx" data-records-tab="rx" tabindex="-1">Prescriptions</button>
-        <button type="button" class="bhw-records-tabs__btn" role="tab" id="bhwRecordsTabDocs" aria-selected="false" aria-controls="bhwRecordsPanelDocs" data-records-tab="docs" tabindex="-1">Documents</button>
       </div>
       <div class="bhw-records-modal__body">
         <section class="bhw-records-panel is-active" id="bhwRecordsPanelProfile" role="tabpanel" aria-labelledby="bhwRecordsTabProfile" data-records-panel="profile"></section>
         <section class="bhw-records-panel" id="bhwRecordsPanelHealth" role="tabpanel" aria-labelledby="bhwRecordsTabHealth" data-records-panel="health" hidden></section>
-        <section class="bhw-records-panel" id="bhwRecordsPanelRx" role="tabpanel" aria-labelledby="bhwRecordsTabRx" data-records-panel="rx" hidden></section>
-        <section class="bhw-records-panel" id="bhwRecordsPanelDocs" role="tabpanel" aria-labelledby="bhwRecordsTabDocs" data-records-panel="docs" hidden></section>
-      </div>
+        <section class="bhw-records-panel" id="bhwRecordsPanelRx" role="tabpanel" aria-labelledby="bhwRecordsTabRx" data-records-panel="rx" hidden></section>      </div>
     </div>
   </div>
 

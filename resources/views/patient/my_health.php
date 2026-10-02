@@ -128,7 +128,7 @@ try {
                cn.plan AS duration,
                COALESCE(NULLIF(cn.treatment_plan, ''), NULLIF(cn.subjective, ''), '') AS detail,
                cn.subjective, cn.objective, cn.assessment, cn.plan, cn.diagnosis, cn.treatment_plan,
-               cn.signature_name, cn.signed_at, cn.finalized_at,
+               cn.signature_name, cn.signed_at, cn.finalized_at, cn.signed_pdf_path,
                DATE(COALESCE(cn.finalized_at, cn.created_at)) AS record_date,
                CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM clinical_notes cn

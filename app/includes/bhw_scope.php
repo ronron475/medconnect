@@ -143,6 +143,29 @@ function bhw_list_barangay_options(PDO $pdo): array
 }
 
 /**
+ * True when patient_registrations.date_of_birth holds a real birth date.
+ * Legacy BHW rows stored the placeholder 1900-01-01, which must read as unknown.
+ */
+function bhw_pr_dob_known_sql(string $prAlias = 'pr'): string
+{
+    return "({$prAlias}.date_of_birth IS NOT NULL"
+        . " AND {$prAlias}.date_of_birth > '1900-01-01'"
+        . " AND {$prAlias}.date_of_birth <= CURDATE())";
+}
+
+/**
+ * Current age in years from date_of_birth; falls back to the stored age only when it is
+ * a real value (> 0). Yields NULL when unknown so placeholders never count as children.
+ */
+function bhw_pr_age_sql(string $prAlias = 'pr'): string
+{
+    $known = bhw_pr_dob_known_sql($prAlias);
+    return "(CASE WHEN {$known} THEN TIMESTAMPDIFF(YEAR, {$prAlias}.date_of_birth, CURDATE())"
+        . " WHEN CAST({$prAlias}.age AS UNSIGNED) > 0 THEN CAST({$prAlias}.age AS UNSIGNED)"
+        . " ELSE NULL END)";
+}
+
+/**
  * Join condition linking a patient_registrations row to its user account.
  *
  * user_id is authoritative; the email match only covers legacy rows written

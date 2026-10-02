@@ -18,9 +18,10 @@ final class BhwWorkflows
     {
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $join = bhw_pr_user_join('pr', 'u');
+        $ageExpr = bhw_pr_age_sql('pr');
         $sql = "
             SELECT u.id, u.first_name, u.last_name, u.email, u.is_active, u.created_at,
-                   pr.contact_number, pr.barangay, pr.purok, pr.age, pr.gender, pr.patient_code,
+                   pr.contact_number, pr.barangay, pr.purok, {$ageExpr} AS age, pr.gender, pr.patient_code,
                    COALESCE(NULLIF(pr.workflow_status, ''), 'registered') AS workflow_status,
                    (SELECT MAX(c.consult_date) FROM consultations c WHERE c.patient_id = u.id) AS last_consult,
                    (SELECT tr.urgency_label FROM triage_results tr WHERE tr.patient_id = u.id ORDER BY tr.assessed_at DESC LIMIT 1) AS risk_level,
@@ -54,11 +55,38 @@ final class BhwWorkflows
             return null;
         }
         $join = bhw_pr_user_join('pr', 'u');
-        // pr.* is selected first so the trailing user columns win the name clash on
-        // `id` — callers pass a user id and must get the same id back.
+        // Allow-list only: OCR payloads, ID document paths, national ID hashes, consent
+        // and other registration columns must never reach BHW screens.
+        $cols = bhw_pr_columns($pdo);
+        $optional = static function (string $col) use ($cols): string {
+            return in_array($col, $cols, true) ? "pr.{$col}" : "NULL AS {$col}";
+        };
+        $dobKnown = bhw_pr_dob_known_sql('pr');
+        $ageExpr = bhw_pr_age_sql('pr');
+        $prFields = implode(",\n                   ", [
+            $optional('middle_name'),
+            $optional('suffix'),
+            'pr.contact_number',
+            'pr.gender',
+            "CASE WHEN {$dobKnown} THEN pr.date_of_birth ELSE NULL END AS date_of_birth",
+            "{$ageExpr} AS age",
+            'pr.barangay',
+            $optional('purok'),
+            $optional('city_municipality'),
+            $optional('province'),
+            $optional('address'),
+            $optional('full_address'),
+            'pr.blood_type',
+            'pr.existing_conditions',
+            'pr.allergies',
+            'pr.current_medications',
+            $optional('workflow_status'),
+            $optional('patient_code'),
+            'pr.created_at',
+        ]);
         $stmt = $pdo->prepare("
-            SELECT pr.*, pr.id AS registration_id,
-                   u.id, u.first_name, u.last_name, u.email, u.is_active
+            SELECT u.id, u.first_name, u.last_name, u.email, u.is_active,
+                   {$prFields}
             FROM users u
             LEFT JOIN patient_registrations pr ON {$join}
             WHERE u.id = ? LIMIT 1
@@ -122,6 +150,8 @@ final class BhwWorkflows
         if (!in_array($blood, $bloodAllowed, true)) {
             throw new InvalidArgumentException('Select a valid blood type.');
         }
+
+        $demo = self::validateRegistrationDemographics($data);
 
         $clip = static function (string $value): ?string {
             $value = trim($value);
@@ -189,19 +219,20 @@ final class BhwWorkflows
             $pdo->prepare("
                 INSERT INTO patient_registrations (
                     first_name, last_name, full_name, email, contact_number,
-                    date_of_birth, age, address, full_address,
+                    date_of_birth, age, gender, purok, address, full_address,
                     barangay, barangay_id, city_municipality, province,
                     national_id, blood_type, existing_conditions, allergies, current_medications,
                     status, patient_code, user_id, registered_by_bhw_id, created_at
                 ) VALUES (
                     ?, ?, ?, ?, ?,
-                    '1900-01-01', 0, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
                     ?, ?, 'Bago City', 'Negros Occidental',
                     ?, ?, ?, ?, ?,
                     'pending_verification', ?, ?, ?, NOW()
                 )
             ")->execute([
                 $firstName, $lastName, $fullName, $email, $contact,
+                $demo['date_of_birth'], $demo['age'], $demo['gender'], $demo['purok'],
                 $address, $address,
                 $barangayName, $barangayId,
                 $nationalId, $blood, $conditions, $allergies, $medications,
@@ -230,9 +261,53 @@ final class BhwWorkflows
         bhw_audit($pdo, $userId, 'bhw_patient_registered', 'BHW started patient registration. The patient must verify Gmail and create their own password.', [
             'patient_name' => $fullName,
             'email' => $email,
+            'demographics_recorded' => ['date_of_birth', 'sex', 'purok'],
         ]);
 
         return self::registrationStatus($pdo, $ctx, $userId);
+    }
+
+    /**
+     * Date of birth, sex, and purok for BHW registration. Barangay is never accepted
+     * from input — it always comes from the BHW's assigned station.
+     *
+     * @return array{date_of_birth: string, age: int, gender: string, purok: string}
+     */
+    private static function validateRegistrationDemographics(array $data): array
+    {
+        $dobRaw = trim((string) ($data['date_of_birth'] ?? ''));
+        $dob = DateTimeImmutable::createFromFormat('!Y-m-d', $dobRaw);
+        if ($dobRaw === '' || !$dob || $dob->format('Y-m-d') !== $dobRaw) {
+            throw new InvalidArgumentException('Enter the patient\'s date of birth.');
+        }
+        $today = new DateTimeImmutable('today');
+        if ($dob > $today) {
+            throw new InvalidArgumentException('Date of birth cannot be in the future.');
+        }
+        $age = (int) $dob->diff($today)->y;
+        if ($age > 130) {
+            throw new InvalidArgumentException('Enter a valid date of birth.');
+        }
+
+        $gender = ucfirst(strtolower(trim((string) ($data['gender'] ?? ''))));
+        if (!in_array($gender, ['Male', 'Female'], true)) {
+            throw new InvalidArgumentException('Select the patient\'s sex.');
+        }
+
+        $purok = preg_replace('/\s+/u', ' ', trim((string) ($data['purok'] ?? ''))) ?? '';
+        if ($purok === '') {
+            throw new InvalidArgumentException('Enter the patient\'s purok.');
+        }
+        if (mb_strlen($purok) > 80) {
+            throw new InvalidArgumentException('Purok must be 80 characters or less.');
+        }
+
+        return [
+            'date_of_birth' => $dob->format('Y-m-d'),
+            'age' => $age,
+            'gender' => $gender,
+            'purok' => $purok,
+        ];
     }
 
     /**
