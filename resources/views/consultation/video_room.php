@@ -1085,6 +1085,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           Secure
         </span>
+        <span class="mc-vc-pill" id="mcVcRecordingPill" hidden style="color:#fecaca;" title="This consultation is being recorded">● Recording</span>
         <span class="mc-vc-pill mc-vc-pill--duration" id="consultDuration" title="Consultation duration"><?= sprintf('%02d:%02d', (int) floor($elapsed_capped_seconds / 60), $elapsed_capped_seconds % 60) ?></span>
         <span class="mc-vc-pill mc-vc-pill--timer mc-vc-slot-timer" id="timerDisplay" title="Time remaining in slot"><?= sprintf('%02d:%02d', (int) floor($seconds_remaining / 60), $seconds_remaining % 60) ?></span>
         <?php if (!$is_patient): ?>
@@ -1382,6 +1383,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let demoBus = null;
     let demoHelloTimer = null;
     let localStream;
+    let localVoiceOnly = false;
+    let peerVoiceOnly = false;
+    const VOICE_ONLY_STATUS = 'Voice-only mode — poor connection';
     let lastMediaWantedVideo = true;
     let mediaRequestInFlight = false;
     let timeLeft = <?= (int) $seconds_remaining ?>;
@@ -1400,6 +1404,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     let recordingAudioContext;
     let recordingAudioDestination;
     let remoteAudioConnected = false;
+    let remoteRecordingSourceNode = null;
+    let remoteRecordingSourceStream = null;
     let callInterval = null;
     let muteTts = null;
     let remoteMediaUnlocked = false;
@@ -1506,6 +1512,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           remoteDiscoveredId = null;
           return;
         }
+        if (msg.type === 'mc_recording') {
+          handleRecordingMessage(msg);
+        }
         // Same-browser mute TTS / mute state backup (does not need PeerJS data channel).
         if ((msg.type === 'mute_tts' || msg.type === 'mute_state') && muteTts) {
           muteTts.handleIncomingData(msg);
@@ -1546,7 +1555,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       syncMediaStatus({ connectionLabel: '● Connected', connectionState: 'connected' });
       const tip = document.getElementById('demoConnectTip');
       if (tip) tip.style.display = 'none';
-      connectRemoteAudioToRecording();
+      connectRemoteAudioToRecording(remoteStream);
       setTimeout(() => unlockRemoteAudio(), 200);
       setTimeout(() => unlockRemoteAudio(), 800);
       if (userRole === 'provider' && !recorderIsRecording()) {
@@ -1574,6 +1583,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           document.getElementById('callStatus').textContent = text || '';
         },
         onData: (data) => {
+          if (handleRecordingMessage(data)) return;
           if (muteTts) muteTts.handleIncomingData(data);
         },
       });
@@ -1603,6 +1613,29 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         } catch (e) {}
       }
       return sent;
+    }
+
+    function setRecordingIndicator(active) {
+      const pill = document.getElementById('mcVcRecordingPill');
+      if (!pill) return;
+      pill.hidden = !active;
+    }
+
+    function announceRecordingState(active) {
+      if (userRole !== 'provider') return;
+      if (endingCall && active) return;
+      sendMuteData({
+        type: 'mc_recording',
+        active: !!active,
+        role: 'provider',
+      });
+    }
+
+    function handleRecordingMessage(data) {
+      if (!data || data.type !== 'mc_recording') return false;
+      if (data.role && data.role === userRole) return true;
+      setRecordingIndicator(!!data.active);
+      return true;
     }
 
     function openDataChannel() {
@@ -1735,6 +1768,10 @@ if (session_status() === PHP_SESSION_ACTIVE) {
           muteTts.syncMuteStateToPeer();
         }
         announceLocalMicState();
+        announceLocalVoiceOnly();
+        if (userRole === 'provider' && recorderIsRecording()) {
+          announceRecordingState(true);
+        }
         if (userRole === 'patient' && !callHasRemoteStream && !endingCall) {
           patientMayDial = true;
           startCall();
@@ -1743,8 +1780,14 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
       rtc.on('data', function (ev) {
         if (handlePeerLeftMessage(ev.data)) return;
+        if (handleRecordingMessage(ev.data)) return;
+        if (handleVoiceOnlyMessage(ev.data)) return;
         if (handleMicStateMessage(ev.data)) return;
         if (muteTts) muteTts.handleIncomingData(ev.data);
+      });
+
+      rtc.on('voice-only', function (ev) {
+        onLocalVoiceOnly(ev);
       });
 
       rtc.on('incoming-call', function (ev) {
@@ -1938,7 +1981,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       syncMediaStatus({ connectionLabel: '● Connected', connectionState: 'connected' });
       const tip = document.getElementById('demoConnectTip');
       if (tip) tip.style.display = 'none';
-      connectRemoteAudioToRecording();
+      connectRemoteAudioToRecording(remoteStream);
       setTimeout(() => unlockRemoteAudio(), 200);
       setTimeout(() => unlockRemoteAudio(), 1000);
       if (userRole === 'provider' && !recorderIsRecording()) {
@@ -2028,6 +2071,77 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       });
     }
 
+    function voiceOnlySessionActive() {
+      return (localVoiceOnly || peerVoiceOnly) && !endingCall && !window.__mcCallEnded;
+    }
+
+    function publishVoiceOnlyFlag() {
+      window.__mcVoiceOnlyActive = voiceOnlySessionActive() && !!callHasRemoteStream;
+    }
+
+    function applyVoiceOnlyPresentation() {
+      publishVoiceOnlyFlag();
+      const statusEl = document.getElementById('callStatus');
+      const netEl = document.getElementById('mediaStatusConn');
+      if (!window.__mcVoiceOnlyActive) {
+        if (statusEl && statusEl.textContent === VOICE_ONLY_STATUS) {
+          statusEl.textContent = callHasRemoteStream ? 'Connected' : statusEl.textContent;
+        }
+        if (netEl && netEl.dataset.state === 'voice-only') {
+          netEl.textContent = '● Connected';
+          netEl.dataset.state = 'connected';
+          netEl.dataset.level = 'good';
+        }
+        return;
+      }
+      if (statusEl) statusEl.textContent = VOICE_ONLY_STATUS;
+      if (netEl) {
+        netEl.textContent = VOICE_ONLY_STATUS;
+        netEl.dataset.state = 'voice-only';
+        netEl.dataset.level = 'poor';
+      }
+    }
+
+    function syncLocalCameraUi() {
+      if (!localStream) return;
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (!videoTrack || videoTrack.readyState === 'ended') syncCameraButtonUi(true);
+      else syncCameraButtonUi(!videoTrack.enabled);
+      syncMediaStatus();
+    }
+
+    function announceLocalVoiceOnly() {
+      if (endingCall || window.__mcCallEnded) return;
+      sendMuteData({
+        type: 'mc_voice_only',
+        active: !!localVoiceOnly,
+        role: userRole,
+      });
+    }
+
+    function onLocalVoiceOnly(ev) {
+      localVoiceOnly = !!(ev && ev.active);
+      syncLocalCameraUi();
+      applyVoiceOnlyPresentation();
+      announceLocalVoiceOnly();
+    }
+
+    function handleVoiceOnlyMessage(data) {
+      if (!data || data.type !== 'mc_voice_only') return false;
+      if (data.role && data.role === userRole) return true;
+      const active = !!data.active;
+      if (peerVoiceOnly === active) return true;
+      peerVoiceOnly = active;
+      applyVoiceOnlyPresentation();
+      return true;
+    }
+
+    function clearVoiceOnlySessionState() {
+      localVoiceOnly = false;
+      peerVoiceOnly = false;
+      window.__mcVoiceOnlyActive = false;
+    }
+
     function handleMicStateMessage(data) {
       if (!data || data.type !== 'mc_mic_state' || data.role === userRole) return false;
       const banner = document.getElementById('callStatus');
@@ -2045,6 +2159,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         document.getElementById('callStatus').textContent = overrides.callStatusText;
       }
       notifyParentCallState(statusKey, overrides);
+      if (String(statusKey) === 'connected' && voiceOnlySessionActive() && callHasRemoteStream) {
+        applyVoiceOnlyPresentation();
+      }
     }
 
     function unlockRemoteAudio() {
@@ -2617,12 +2734,17 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         clearInterval(drawInterval);
         drawInterval = null;
       }
+      if (remoteRecordingSourceNode) {
+        try { remoteRecordingSourceNode.disconnect(); } catch (e) {}
+        remoteRecordingSourceNode = null;
+      }
+      remoteRecordingSourceStream = null;
+      remoteAudioConnected = false;
       if (recordingAudioContext) {
         try { recordingAudioContext.close(); } catch (e) {}
         recordingAudioContext = null;
         recordingAudioDestination = null;
       }
-      remoteAudioConnected = false;
       canvasStream = null;
       canvasContext = null;
     }
@@ -2678,6 +2800,83 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       }, 1800);
     }
 
+    function selectRecordingMimeType() {
+      if (typeof MediaRecorder === 'undefined') {
+        console.warn('Consultation recording unavailable: MediaRecorder is not supported in this browser.');
+        return '';
+      }
+      if (typeof MediaRecorder.isTypeSupported !== 'function') {
+        console.warn('Consultation recording unavailable: MediaRecorder.isTypeSupported is not available.');
+        return '';
+      }
+      const preferredType = 'video/webm;codecs=vp8,opus';
+      const fallbackType = 'video/webm';
+      try {
+        if (MediaRecorder.isTypeSupported(preferredType)) return preferredType;
+        if (MediaRecorder.isTypeSupported(fallbackType)) return fallbackType;
+      } catch (e) {
+        console.warn('Consultation recording unavailable: MIME support check failed.', e);
+        return '';
+      }
+      console.warn('Consultation recording unavailable: neither video/webm;codecs=vp8,opus nor video/webm is supported.');
+      return '';
+    }
+
+    function abandonRecordingStart(reason, resolveUpload) {
+      console.warn('Consultation recording unavailable: ' + reason);
+      mediaRecorder = null;
+      teardownRecordingPipeline();
+      setRecordingIndicator(false);
+      if (typeof resolveUpload === 'function') {
+        try { resolveUpload(); } catch (e) {}
+      }
+      uploadPromise = null;
+    }
+
+    const RECORDING_UPLOAD_ATTEMPTS = 3;
+    const RECORDING_UPLOAD_RETRY_MS = 1200;
+    const RECORDING_UPLOAD_ATTEMPT_MS = 8000;
+
+    async function postRecordingBlob(blob, meta) {
+      let lastMessage = 'Upload rejected by server.';
+      for (let attempt = 1; attempt <= RECORDING_UPLOAD_ATTEMPTS; attempt++) {
+        const formData = new FormData();
+        formData.append('video', blob, 'consultation-' + consultationId + '-seg-' + meta.segmentIndex + '.webm');
+        formData.append('token', roomToken);
+        formData.append('csrf_token', document.body.dataset.csrf || '');
+        formData.append('upload_key', meta.uploadKey);
+        formData.append('segment_index', String(meta.segmentIndex));
+        formData.append('started_at', meta.startedAt);
+        formData.append('ended_at', meta.endedAt);
+        const controller = new AbortController();
+        const timer = setTimeout(function () { controller.abort(); }, RECORDING_UPLOAD_ATTEMPT_MS);
+        try {
+          const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/upload_recording.php', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+            signal: controller.signal,
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            return { ok: true, data: data };
+          }
+          lastMessage = (data && data.message) ? String(data.message) : 'Upload rejected by server.';
+          console.warn('Recording upload attempt ' + attempt + ' failed:', lastMessage);
+        } catch (e) {
+          lastMessage = 'Network error while uploading the consultation recording.';
+          console.warn('Recording upload attempt ' + attempt + ' failed:', e);
+        } finally {
+          clearTimeout(timer);
+        }
+        if (attempt < RECORDING_UPLOAD_ATTEMPTS) {
+          await new Promise(function (r) { setTimeout(r, RECORDING_UPLOAD_RETRY_MS); });
+        }
+      }
+      console.error('Recording upload failed after ' + RECORDING_UPLOAD_ATTEMPTS + ' attempts:', lastMessage);
+      return { ok: false, message: lastMessage };
+    }
+
     function startRecording() {
       if (userRole !== 'provider') return;
       if (endingCall || window.__mcCallEnded) return;
@@ -2686,6 +2885,9 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         pendingStartRecording = true;
         return;
       }
+
+      const recordingMimeType = selectRecordingMimeType();
+      if (!recordingMimeType) return;
 
       teardownRecordingPipeline();
 
@@ -2699,6 +2901,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       let resolveUpload;
       uploadPromise = new Promise(resolve => { resolveUpload = resolve; });
 
+      try {
       // Recording must not compete with the live WebRTC encode on the main thread.
       // Composite at 480p / 10fps (360p on phones) instead of 720p@30 with clip().
       const lowPower = (navigator.deviceMemory && navigator.deviceMemory <= 4)
@@ -2774,7 +2977,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         recordingAudioContext.resume().catch(function () {});
       }
 
-      if (localStream.getAudioTracks().length > 0) {
+      if (localStream && localStream.getAudioTracks().length > 0) {
         recordingAudioContext.createMediaStreamSource(localStream).connect(recordingAudioDestination);
       }
 
@@ -2786,22 +2989,26 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         ...recordingAudioDestination.stream.getAudioTracks()
       ]);
       
-      const preferredType = 'video/webm;codecs=vp8,opus';
-      const fallbackType = 'video/webm';
       const recorderOpts = {
+        mimeType: recordingMimeType,
         videoBitsPerSecond: lowPower ? 400000 : 700000,
         audioBitsPerSecond: 48000,
       };
-      if (MediaRecorder.isTypeSupported(preferredType)) recorderOpts.mimeType = preferredType;
-      else if (MediaRecorder.isTypeSupported(fallbackType)) recorderOpts.mimeType = fallbackType;
-
-      mediaRecorder = new MediaRecorder(combinedStream, recorderOpts);
+      try {
+        mediaRecorder = new MediaRecorder(combinedStream, recorderOpts);
+      } catch (e) {
+        console.warn('Consultation recording unavailable: MediaRecorder construction failed.', e);
+        abandonRecordingStart('MediaRecorder construction failed.', resolveUpload);
+        return;
+      }
       
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) recordedChunks.push(event.data);
       };
 
       mediaRecorder.onstop = async () => {
+        setRecordingIndicator(false);
+        announceRecordingState(false);
         const quiet = recordingQuietStop;
         const segmentIndex = recordingSegmentIndex;
         const startedMs = recordingStartedAtMs;
@@ -2839,60 +3046,40 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         }
 
         const startedAt = startedMs ? new Date(startedMs).toISOString() : '';
-        const formData = new FormData();
-        formData.append('video', blob, 'consultation-' + consultationId + '-seg-' + segmentIndex + '.webm');
-        formData.append('token', roomToken);
-        formData.append('csrf_token', document.body.dataset.csrf || '');
-        formData.append('upload_key', roomToken + '-s' + segmentIndex + '-' + String(startedMs || Date.now()));
-        formData.append('segment_index', String(segmentIndex));
-        formData.append('started_at', startedAt);
-        formData.append('ended_at', new Date().toISOString());
-
-        try {
-          const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/upload_recording.php', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin',
-          });
-          const data = await res.json();
-          if (data.success) {
-            recordingSegmentIndex = segmentIndex + 1;
-            console.log("Recording uploaded successfully:", data.path);
-            if (!quiet) {
-              document.getElementById('callStatus').textContent = 'Recording saved.';
-              document.getElementById('callStatus').style.color = '#86efac';
-              showSavingModal('Recording saved', 'Consultation recording was uploaded successfully.');
-            } else if (patientWaitMode) {
-              document.getElementById('callStatus').textContent = 'Patient temporarily left';
-              document.getElementById('callStatus').style.color = '';
-            }
-          } else {
-            const msg = (data && data.message) ? String(data.message) : 'Upload rejected by server.';
-            console.error("Recording upload failed:", msg);
-            document.getElementById('callStatus').textContent = 'Recording upload failed.';
-            document.getElementById('callStatus').style.color = '#fca5a5';
-            if (!quiet) {
-              showSavingModal('Recording upload failed', msg);
-              await new Promise((r) => setTimeout(r, 2500));
-            }
+        const uploadKey = roomToken + '-s' + segmentIndex + '-' + String(startedMs || Date.now());
+        const uploaded = await postRecordingBlob(blob, {
+          segmentIndex: segmentIndex,
+          uploadKey: uploadKey,
+          startedAt: startedAt,
+          endedAt: new Date().toISOString(),
+        });
+        if (uploaded.ok) {
+          const data = uploaded.data || {};
+          recordingSegmentIndex = segmentIndex + 1;
+          console.log("Recording uploaded successfully:", data.path);
+          if (!quiet) {
+            document.getElementById('callStatus').textContent = 'Recording saved.';
+            document.getElementById('callStatus').style.color = '#86efac';
+            showSavingModal('Recording saved', 'Consultation recording was uploaded successfully.');
+          } else if (patientWaitMode) {
+            document.getElementById('callStatus').textContent = 'Patient temporarily left';
+            document.getElementById('callStatus').style.color = '';
           }
-        } catch (e) {
-          console.error("Upload error:", e);
+        } else {
           document.getElementById('callStatus').textContent = 'Recording upload failed.';
           document.getElementById('callStatus').style.color = '#fca5a5';
           if (!quiet) {
-            showSavingModal('Recording upload failed', 'Network error while uploading the consultation recording.');
+            showSavingModal('Recording upload failed', uploaded.message || 'Upload rejected by server.');
             await new Promise((r) => setTimeout(r, 2500));
           }
-        } finally {
-          try { if (stoppedRecorder) stoppedRecorder.ondataavailable = null; } catch (e) {}
-          const done = resolveUpload;
-          uploadPromise = null;
-          done();
-          if (pendingStartRecording && callHasRemoteStream && !endingCall) {
-            pendingStartRecording = false;
-            startRecording();
-          }
+        }
+        try { if (stoppedRecorder) stoppedRecorder.ondataavailable = null; } catch (e) {}
+        const done = resolveUpload;
+        uploadPromise = null;
+        done();
+        if (pendingStartRecording && callHasRemoteStream && !endingCall) {
+          pendingStartRecording = false;
+          startRecording();
         }
       };
 
@@ -2900,35 +3087,76 @@ if (session_status() === PHP_SESSION_ACTIVE) {
         console.error('MediaRecorder error:', event && event.error ? event.error : event);
       };
 
-      if (mediaRecorder.state === 'inactive') {
-        mediaRecorder.start(2000);
-        console.log("PiP Recording started.");
+      try {
+        if (mediaRecorder.state === 'inactive') {
+          mediaRecorder.start(2000);
+        }
+      } catch (e) {
+        console.warn('Consultation recording unavailable: MediaRecorder.start failed.', e);
+        abandonRecordingStart('MediaRecorder.start failed.', resolveUpload);
+        return;
+      }
+      if (!recorderIsRecording()) {
+        abandonRecordingStart('MediaRecorder did not enter the recording state.', resolveUpload);
+        return;
+      }
+      setRecordingIndicator(true);
+      announceRecordingState(true);
+      console.log("PiP Recording started.");
+      } catch (e) {
+        console.warn('Consultation recording unavailable: unexpected error while starting.', e);
+        abandonRecordingStart('unexpected error while starting.', resolveUpload);
       }
     }
 
-    function connectRemoteAudioToRecording() {
-      if (!recordingAudioContext || !recordingAudioDestination || remoteAudioConnected) return;
+    function remoteStreamForRecording(explicitStream) {
+      if (explicitStream && explicitStream.getAudioTracks && explicitStream.getAudioTracks().length > 0) {
+        return explicitStream;
+      }
+      const remoteVideo = document.getElementById('remoteVideo');
+      const remoteAudio = document.getElementById('remoteAudio');
+      if (remoteVideo && remoteVideo.srcObject && remoteVideo.srcObject.getAudioTracks && remoteVideo.srcObject.getAudioTracks().length > 0) {
+        return remoteVideo.srcObject;
+      }
+      if (remoteAudio && remoteAudio.srcObject && remoteAudio.srcObject.getAudioTracks && remoteAudio.srcObject.getAudioTracks().length > 0) {
+        return remoteAudio.srcObject;
+      }
+      return null;
+    }
+
+    function disconnectRemoteRecordingAudio() {
+      if (remoteRecordingSourceNode) {
+        try { remoteRecordingSourceNode.disconnect(); } catch (e) {}
+        remoteRecordingSourceNode = null;
+      }
+      remoteRecordingSourceStream = null;
+      remoteAudioConnected = false;
+    }
+
+    function connectRemoteAudioToRecording(explicitStream) {
+      if (!recordingAudioContext || !recordingAudioDestination) return;
+      if (recordingAudioContext.state === 'closed') return;
       if (recordingAudioContext.state === 'suspended') {
         recordingAudioContext.resume().catch(function () {});
       }
 
-      let remoteStream = null;
-      const remoteVideo = document.getElementById('remoteVideo');
-      const remoteAudio = document.getElementById('remoteAudio');
-
-      if (remoteVideo && remoteVideo.srcObject && remoteVideo.srcObject.getAudioTracks().length > 0) {
-        remoteStream = remoteVideo.srcObject;
-      } else if (remoteAudio && remoteAudio.srcObject && remoteAudio.srcObject.getAudioTracks().length > 0) {
-        remoteStream = remoteAudio.srcObject;
+      const remoteStream = remoteStreamForRecording(explicitStream);
+      if (!remoteStream) return;
+      if (remoteAudioConnected && remoteStream === remoteRecordingSourceStream && remoteRecordingSourceNode) {
+        return;
       }
 
-      if (!remoteStream) return;
+      disconnectRemoteRecordingAudio();
 
       try {
-        recordingAudioContext.createMediaStreamSource(remoteStream).connect(recordingAudioDestination);
+        const node = recordingAudioContext.createMediaStreamSource(remoteStream);
+        node.connect(recordingAudioDestination);
+        remoteRecordingSourceNode = node;
+        remoteRecordingSourceStream = remoteStream;
         remoteAudioConnected = true;
         console.log('Remote participant audio connected to consultation recording.');
       } catch (err) {
+        disconnectRemoteRecordingAudio();
         console.warn('Could not mix remote audio into recording:', err);
       }
     }
@@ -3234,6 +3462,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
     function stopPatientCallAfterServerEnd() {
       if (!isPatient) return;
       window.__mcCallEnded = true;
+      clearVoiceOnlySessionState();
       patientLeftRejoinable = false;
       stopAllCallTimers();
       if (!patientSoapRedirected) {
@@ -3481,6 +3710,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function disconnectLocalCall(options) {
       options = options || {};
+      clearVoiceOnlySessionState();
       stopAllCallTimers();
 
       if (localDemoCall) {
@@ -3657,6 +3887,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (!isPatient) return;
 
       rejoinInFlight = true;
+      clearVoiceOnlySessionState();
       const retryBtn = document.getElementById('retryConnectBtn');
       if (retryBtn) retryBtn.disabled = true;
 

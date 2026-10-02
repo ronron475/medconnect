@@ -39,6 +39,14 @@
   var goodQualityStreak = 0;
   var currentScale = 1;
   var collectRtcStats = null;
+  /** System turned video off for sustained poor quality. Distinct from a manual camera-off. */
+  var qualityVoiceOnlyActive = false;
+  /** User pressed the camera button off. Recovery must not turn that camera back on. */
+  var userDisabledVideo = false;
+  /** User turned video back on during voice-only. Hold until sustained good quality. */
+  var userKeptVideo = false;
+  /** Joined with "Join with audio only" — there is no video sender to restore. */
+  var startedWithoutVideo = false;
 
   var config = {
     peerOptions: {},
@@ -175,17 +183,99 @@
     if (lastRemoteStream) addRemoteVideo(lastRemoteStream);
   }
 
-  /** ZIP: toggleVideo */
-  function toggleVideo(enabled) {
-    if (!myStream) return false;
+  function liveVideoTrack() {
+    if (!myStream || !myStream.getVideoTracks) return null;
     var track = myStream.getVideoTracks()[0];
+    if (!track || track.readyState === 'ended') return null;
+    return track;
+  }
+
+  /**
+   * Enable or disable the local video track only.
+   * reason 'quality' is the automatic voice-only path. Any other call is the user.
+   * The microphone track is never changed here.
+   */
+  function toggleVideo(enabled, meta) {
+    if (!myStream) return false;
+    var track = liveVideoTrack();
     if (!track) return false;
     var on;
     if (enabled === true || enabled === 'true') on = true;
     else if (enabled === false || enabled === 'false') on = false;
     else on = !track.enabled;
+    var reason = (meta && meta.reason) || 'user';
+    if (reason !== 'quality') {
+      userDisabledVideo = !on;
+      userKeptVideo = !!on && qualityVoiceOnlyActive;
+      if (!on) userKeptVideo = false;
+      if (qualityVoiceOnlyActive) {
+        qualityVoiceOnlyActive = false;
+        emit('voice-only', { active: false, origin: 'local' });
+      }
+    }
     track.enabled = on;
     return on;
+  }
+
+  function preserveMicrophone(mutator) {
+    var audio = myStream && myStream.getAudioTracks ? myStream.getAudioTracks()[0] : null;
+    var wasEnabled = audio ? audio.enabled : null;
+    var result = mutator();
+    if (audio && wasEnabled !== null && audio.enabled !== wasEnabled) {
+      try { audio.enabled = wasEnabled; } catch (e) {}
+    }
+    return result;
+  }
+
+  /** Voice-only is only valid while this same peer connection can still carry audio. */
+  function connectionAllowsVoiceFallback(pc) {
+    if (!pc || pc.signalingState === 'closed') return false;
+    var ice = String(pc.iceConnectionState || '');
+    var conn = String(pc.connectionState || '');
+    if (ice !== 'connected' && ice !== 'completed') return false;
+    if (conn === 'failed' || conn === 'disconnected' || conn === 'closed') return false;
+    if (conn && conn !== 'connected') return false;
+    return true;
+  }
+
+  function enterQualityVoiceOnly() {
+    if (qualityVoiceOnlyActive || userDisabledVideo || userKeptVideo || startedWithoutVideo) return;
+    if (intentionalLeave || global.__mcCallEnded) return;
+    var track = liveVideoTrack();
+    if (!track || !track.enabled) return;
+    preserveMicrophone(function () {
+      toggleVideo(false, { reason: 'quality' });
+    });
+    if (track.enabled) return;
+    qualityVoiceOnlyActive = true;
+    emit('voice-only', { active: true, origin: 'local' });
+  }
+
+  function exitQualityVoiceOnly() {
+    if (!qualityVoiceOnlyActive) return;
+    if (intentionalLeave || global.__mcCallEnded) return;
+    var track = liveVideoTrack();
+    var canRestore = !startedWithoutVideo && !userDisabledVideo && !!track;
+    if (!canRestore) {
+      qualityVoiceOnlyActive = false;
+      emit('voice-only', { active: false, origin: 'local' });
+      return;
+    }
+    if (!track.enabled) {
+      preserveMicrophone(function () {
+        toggleVideo(true, { reason: 'quality' });
+      });
+      if (!track.enabled) return;
+    }
+    qualityVoiceOnlyActive = false;
+    emit('voice-only', { active: false, origin: 'local' });
+  }
+
+  function resetVoiceOnlyFlags() {
+    qualityVoiceOnlyActive = false;
+    userDisabledVideo = false;
+    userKeptVideo = false;
+    startedWithoutVideo = false;
   }
 
   /** ZIP: toggleAudio */
@@ -205,6 +295,11 @@
   function setLocalStream(stream) {
     myStream = stream;
     if (stream) {
+      var videoTrack = stream.getVideoTracks ? stream.getVideoTracks()[0] : null;
+      startedWithoutVideo = !(videoTrack && videoTrack.readyState !== 'ended');
+      userDisabledVideo = false;
+      userKeptVideo = false;
+      if (startedWithoutVideo) qualityVoiceOnlyActive = false;
       var audioTrack = stream.getAudioTracks()[0];
       if (audioTrack && !userMicMuted) {
         try { audioTrack.enabled = true; } catch (e) {}
@@ -332,6 +427,7 @@
         var quality = global.McVideoCallCore && typeof global.McVideoCallCore.qualityFromStats === 'function'
           ? global.McVideoCallCore.qualityFromStats(snapshot, ice, conn)
           : { level: 'good' };
+        if (intentionalLeave || global.__mcCallEnded) return;
         if (quality.level === 'poor') {
           poorQualityStreak += 1;
           goodQualityStreak = 0;
@@ -339,12 +435,21 @@
             currentScale = 2;
             applyLiveRtcTuning(pc);
           }
+          // Same sustained-poor bar as the scaler (two samples). ICE failure is
+          // also labeled poor, but voice-only runs only while audio can stay up.
+          if (poorQualityStreak >= 2 && connectionAllowsVoiceFallback(pc)) {
+            enterQualityVoiceOnly();
+          }
         } else if (quality.level === 'good') {
           goodQualityStreak += 1;
           poorQualityStreak = 0;
           if (goodQualityStreak >= 3 && currentScale > 1) {
             currentScale = 1;
             applyLiveRtcTuning(pc);
+          }
+          if (goodQualityStreak >= 3 && connectionAllowsVoiceFallback(pc)) {
+            userKeptVideo = false;
+            exitQualityVoiceOnly();
           }
         } else {
           poorQualityStreak = 0;
@@ -660,6 +765,7 @@
   function destroyPeer() {
     clearRecoveryTimers();
     stopQualityMonitor();
+    resetVoiceOnlyFlags();
     lastRemoteAttachKey = '';
     lastRemoteEmitKey = '';
     peerReady = false;
@@ -866,6 +972,9 @@
 
   function replaceLocalVideoTrack(newTrack) {
     if (!newTrack) return Promise.resolve(false);
+    if (qualityVoiceOnlyActive || userDisabledVideo) {
+      try { newTrack.enabled = false; } catch (e) {}
+    }
     if (myStream) {
       myStream.getVideoTracks().forEach(function (old) {
         try { myStream.removeTrack(old); } catch (e) {}
@@ -915,6 +1024,9 @@
     refreshRemoteMedia: refreshRemoteMedia,
     toggleVideo: toggleVideo,
     toggleAudio: toggleAudio,
+    isQualityVoiceOnly: function () { return qualityVoiceOnlyActive; },
+    isUserVideoDisabled: function () { return userDisabledVideo; },
+    didStartWithoutVideo: function () { return startedWithoutVideo; },
     replaceLocalVideoTrack: replaceLocalVideoTrack,
     setLocalStream: setLocalStream,
     getLocalStream: getLocalStream,

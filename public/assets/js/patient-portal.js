@@ -1550,13 +1550,14 @@
       || /scale\s*(of|nga)?\s*[01]/i.test(q)
       || /[01]\s*(out of|\/)\s*10/i.test(q)
       || /gaano\s+kasakit/i.test(q)
-      || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
+      || /how\s+(bad|severe)\b/i.test(q)
+      || /pain\s*score/i.test(q);
   }
 
   let lastBookingFollowupMeta = { questionId: '', language: 'english' };
 
   function setBookingFollowupExtras(question, meta = {}) {
-    const qid = String(meta.questionId || meta.followup_question_id || lastBookingFollowupMeta.questionId || '').trim();
+    const qid = String(meta.questionId || meta.followup_question_id || '').trim();
     const lang = String(meta.language || meta.question_language || lastBookingFollowupMeta.language || 'english').trim();
     lastBookingFollowupMeta = { questionId: qid, language: lang };
 
@@ -1721,6 +1722,7 @@
     if (wrap) wrap.hidden = true;
     if (form) form.classList.remove('is-followup-active');
     if (ans) ans.value = '';
+    lastBookingFollowupMeta = { questionId: '', language: lastBookingFollowupMeta.language || 'english' };
     clearBookingFollowupNotice();
     setBookingFollowupExtras('', {});
   }

@@ -72,6 +72,11 @@ if ($pdo->query("SHOW TABLES LIKE 'triage_results'")->rowCount()) {
     $s = $pdo->prepare('SELECT id, level, symptoms, assessed_at, chief_complaint, urgency_label, triage_level, triage_classification, assessment_payload, outcome, recommendation_status, status, assessment_status FROM triage_results WHERE patient_id=? ORDER BY assessed_at DESC, id DESC');
     $s->execute([$uid]);
     $triage_history = $s->fetchAll(PDO::FETCH_ASSOC);
+    require_once __DIR__ . '/partials/triage_helpers.php';
+    $triage_history = mc_patient_visit_history_without_unfinished_attempts(
+        $triage_history,
+        mc_patient_visit_history_consultation_triage_ids($pdo, (int) $uid)
+    );
 }
 
 require_once BASE_PATH . '/app/includes/patient_booking_status.php';

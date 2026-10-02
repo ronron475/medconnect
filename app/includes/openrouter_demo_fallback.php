@@ -517,19 +517,16 @@ function medconnect_bits_ollama_model(): string
 }
 
 /**
- * Campus BITS Ollama after Groq miss. Same Gemini payload. Does not set triage.
+ * Run campus BITS/Ollama with the existing Gemini interview payload
+ * (systemPrompt + buildUserPrompt). Does not set triage.
  *
  * @param array<string, mixed> $geminiPayload
  * @param (callable(array<string, mixed>): ?string)|null $transport
  */
-function medconnect_demo_bits_quota_text(
-    string $geminiError,
+function medconnect_demo_bits_text_from_gemini(
     array $geminiPayload,
     ?callable $transport = null
 ): ?string {
-    if (!medconnect_demo_gemini_error_is_quota($geminiError)) {
-        return null;
-    }
     if ($transport === null && !medconnect_bits_service_enabled()) {
         return null;
     }
@@ -558,6 +555,24 @@ function medconnect_demo_bits_quota_text(
     $text = trim($text);
 
     return $text !== '' ? $text : null;
+}
+
+/**
+ * Campus BITS Ollama after Groq miss. Same Gemini payload. Does not set triage.
+ *
+ * @param array<string, mixed> $geminiPayload
+ * @param (callable(array<string, mixed>): ?string)|null $transport
+ */
+function medconnect_demo_bits_quota_text(
+    string $geminiError,
+    array $geminiPayload,
+    ?callable $transport = null
+): ?string {
+    if (!medconnect_demo_gemini_error_is_quota($geminiError)) {
+        return null;
+    }
+
+    return medconnect_demo_bits_text_from_gemini($geminiPayload, $transport);
 }
 
 /**
@@ -591,12 +606,18 @@ function medconnect_demo_bits_http_complete(array $body): ?string
         'stream' => false,
         'messages' => is_array($body['messages'] ?? null) ? $body['messages'] : [],
     ];
-    $decoded = medconnect_demo_bits_curl_json($base . '/api/chat', $chatBody, $timeout, $verifySsl, $ca);
+    $chatErrno = 0;
+    $decoded = medconnect_demo_bits_curl_json($base . '/api/chat', $chatBody, $timeout, $verifySsl, $ca, $chatErrno);
     if (is_array($decoded)) {
         $content = trim((string) ($decoded['message']['content'] ?? ''));
         if ($content !== '') {
             return $content;
         }
+    }
+    // Chat already used the full timeout (or could not connect). Do not stack another
+    // /api/generate wait — the patient UI aborts at 120s.
+    if ($decoded === null && $chatErrno !== 0) {
+        return null;
     }
 
     $promptParts = [];
@@ -630,10 +651,13 @@ function medconnect_demo_bits_curl_json(
     array $body,
     int $timeout,
     bool $verifySsl,
-    string $ca
+    string $ca,
+    ?int &$curlErrno = null
 ): ?array {
     $ch = curl_init($url);
     if ($ch === false) {
+        $curlErrno = -1;
+
         return null;
     }
     $opts = [
@@ -656,9 +680,11 @@ function medconnect_demo_bits_curl_json(
     $raw = curl_exec($ch);
     $errno = curl_errno($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $cerr = curl_error($ch);
     curl_close($ch);
+    $curlErrno = $errno;
     if ($raw === false || $errno !== 0 || $code < 200 || $code >= 300) {
-        error_log('BITS Ollama quota fallback unavailable: http ' . $code);
+        error_log('BITS Ollama quota fallback unavailable: http ' . $code . ' errno ' . $errno . ($cerr !== '' ? ' ' . $cerr : ''));
 
         return null;
     }

@@ -178,6 +178,109 @@ function mc_triage_level_label(string $level, ?string $urgency_label = null): st
 }
 
 /**
+ * Unfinished triage/interview rows are not visits.
+ *
+ * These flags are written only when an interview is cancelled or still in progress
+ * (Start New Complaint, or the orphan in-progress row closed after a finished
+ * preliminary exists). A booked consultation that is later cancelled does not
+ * set them; that visit stays in history when a consultation is linked.
+ *
+ * @param array<string, mixed> $row
+ */
+function mc_patient_visit_history_is_unfinished_attempt(array $row): bool
+{
+    $outcome = strtolower(trim((string) ($row['outcome'] ?? '')));
+    $assessment = strtoupper(trim((string) ($row['assessment_status'] ?? '')));
+
+    if (in_array($outcome, ['cancelled', 'canceled'], true)) {
+        return true;
+    }
+    if (in_array($assessment, ['CANCELLED', 'CANCELED', 'IN_PROGRESS'], true)) {
+        return true;
+    }
+
+    return $outcome === 'assessment_in_progress';
+}
+
+/**
+ * Triage ids that already belong to a consultation, including a cancelled booking.
+ *
+ * @return array<int, true>
+ */
+function mc_patient_visit_history_consultation_triage_ids(PDO $pdo, int $patientId): array
+{
+    $ids = [];
+    if ($patientId <= 0) {
+        return $ids;
+    }
+
+    try {
+        if ($pdo->query("SHOW TABLES LIKE 'consultations'")->rowCount()) {
+            $stmt = $pdo->prepare('
+                SELECT triage_result_id
+                FROM consultations
+                WHERE patient_id = ?
+                  AND triage_result_id IS NOT NULL
+                  AND triage_result_id > 0
+            ');
+            $stmt->execute([$patientId]);
+            while ($id = $stmt->fetchColumn()) {
+                $ids[(int) $id] = true;
+            }
+        }
+    } catch (Throwable $e) {
+        // Visit history still renders without this link.
+    }
+
+    try {
+        if ($pdo->query("SHOW TABLES LIKE 'patient_chief_complaints'")->rowCount()) {
+            $stmt = $pdo->prepare('
+                SELECT triage_result_id
+                FROM patient_chief_complaints
+                WHERE patient_id = ?
+                  AND triage_result_id IS NOT NULL
+                  AND triage_result_id > 0
+                  AND consultation_id IS NOT NULL
+                  AND consultation_id > 0
+            ');
+            $stmt->execute([$patientId]);
+            while ($id = $stmt->fetchColumn()) {
+                $ids[(int) $id] = true;
+            }
+        }
+    } catch (Throwable $e) {
+        // Visit history still renders without this link.
+    }
+
+    return $ids;
+}
+
+/**
+ * Drop unfinished interview rows that never became a consultation.
+ * Linked rows stay, including a cancelled booking, with their existing labels.
+ *
+ * @param list<array<string, mixed>> $rows
+ * @param array<int, true> $consultationTriageIds
+ * @return list<array<string, mixed>>
+ */
+function mc_patient_visit_history_without_unfinished_attempts(array $rows, array $consultationTriageIds): array
+{
+    $kept = [];
+    foreach ($rows as $row) {
+        if (!is_array($row)) {
+            continue;
+        }
+        $id = (int) ($row['id'] ?? 0);
+        if (mc_patient_visit_history_is_unfinished_attempt($row) && ($id <= 0 || !isset($consultationTriageIds[$id]))) {
+            continue;
+        }
+        $kept[] = $row;
+    }
+
+    return $kept;
+}
+
+/**
  * Patient-facing visit status (no NLP / confidence exposure).
  *
  * @param array<string, mixed> $row

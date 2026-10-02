@@ -21,7 +21,8 @@
       || /scale\s*(of|nga)?\s*[01]/i.test(q)
       || /[01]\s*(out of|\/)\s*10/i.test(q)
       || /gaano\s+kasakit/i.test(q)
-      || /pinakagrabe|worst pain|pain level|kagrabe/i.test(q);
+      || /how\s+(bad|severe)\b/i.test(q)
+      || /pain\s*score/i.test(q);
   }
 
   /**
@@ -43,7 +44,7 @@
     if (freeTextIds[base] || base.indexOf('URINARY') === 0) {
       return 'free_text';
     }
-    if (base === 'PAIN_SEVERITY' || (base.indexOf('SEVERITY') !== -1 && base !== 'BREATHING_SEVERITY')) {
+    if (base === 'PAIN_SEVERITY' || (base.indexOf('SEVERITY') !== -1 && base !== '' && base !== 'BREATHING_SEVERITY')) {
       return 'pain';
     }
     if (base === 'ONSET') {
@@ -79,7 +80,7 @@
     ) {
       return 'yes_no';
     }
-    if (isPainScaleText(questionText)) {
+    if (!base && isPainScaleText(questionText)) {
       return 'pain';
     }
     return 'free_text';
@@ -154,34 +155,6 @@
 
   function helperText(kind, lang) {
     lang = normalizeLang(lang);
-    if (kind === 'yes_no') {
-      return L(lang,
-        'Tap Yes, No, or Not sure — or Other to type.',
-        'Pindutin ang Oo, Hindi, o Hindi ako sure — o Iba pa para mag-type.',
-        'Pinduta ang Oo, Indi, ukon Indi ko sure — ukon Iban pa para mag-type.'
-      );
-    }
-    if (kind === 'onset') {
-      return L(lang,
-        'Tap when it started and/or sudden vs gradual — or Other / Specific date.',
-        'Pindutin kung kailan nagsimula at/o biglaan vs unti-unti — o Iba pa / petsa.',
-        'Pinduta kung san-o nagsugod kag/ukon gulpi vs hinay-hinay — ukon Iban pa / petsa.'
-      );
-    }
-    if (kind === 'duration') {
-      return L(lang,
-        'Tap how long this has lasted — or Other to type.',
-        'Pindutin kung gaano na katagal — o Iba pa para mag-type.',
-        'Pinduta kung makadugay na — ukon Iban pa para mag-type.'
-      );
-    }
-    if (kind === 'location') {
-      return L(lang,
-        'Tap a body area — or Other to type.',
-        'Pindutin ang bahagi ng katawan — o Iba pa para mag-type.',
-        'Pinduta ang bahin sang lawas — ukon Iban pa para mag-type.'
-      );
-    }
     if (kind === 'pain') {
       return L(lang,
         'Tap a number from 1 to 10, or type your answer (for example: 5, 7/10, or “grabe”).',
@@ -223,93 +196,8 @@
   function render(container, opts) {
     opts = opts || {};
     var kind = String(opts.kind || 'free_text');
-    var lang = normalizeLang(opts.lang);
-    var answerEl = opts.answerEl || null;
-    var onSelect = typeof opts.onSelect === 'function' ? opts.onSelect : null;
-
+    // Keep 1–10 pain scale in page HTML. Do not paint yes/no, onset, duration, or location chips.
     clear(container);
-    if (!container || kind === 'free_text' || kind === 'pain') {
-      return kind;
-    }
-
-    var choices = choicesForKind(kind, lang);
-    if (!choices.length) {
-      return kind;
-    }
-
-    container.hidden = false;
-    container.setAttribute('data-kind', kind);
-    container.setAttribute('role', 'group');
-    container.setAttribute('aria-label', 'Answer choices');
-
-    var track = document.createElement('div');
-    track.className = 'pdash-followup__choices-track';
-
-    var dateWrap = document.createElement('div');
-    dateWrap.className = 'pdash-followup__choice-extra';
-    dateWrap.hidden = true;
-    var dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.className = 'form-control pdash-followup__date-input';
-    dateInput.setAttribute('aria-label', L(lang, 'Specific date', 'Petsa', 'Petsa'));
-    dateWrap.appendChild(dateInput);
-
-    function setSelected(btn) {
-      Array.prototype.forEach.call(track.querySelectorAll('.pdash-followup__choice-btn'), function (el) {
-        el.classList.toggle('is-selected', el === btn);
-      });
-    }
-
-    function applyValue(value, meta) {
-      if (answerEl) {
-        answerEl.value = value;
-      }
-      if (onSelect) {
-        onSelect(value, meta || {});
-      }
-    }
-
-    choices.forEach(function (choice) {
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'pdash-followup__choice-btn';
-      btn.textContent = choice.label;
-      btn.setAttribute('data-choice-id', choice.id);
-      if (choice.value) {
-        btn.setAttribute('data-value', choice.value);
-      }
-      btn.addEventListener('click', function () {
-        setSelected(btn);
-        dateWrap.hidden = !choice.date;
-        if (choice.date) {
-          applyValue('', { other: true, date: true });
-          dateInput.focus();
-          return;
-        }
-        if (choice.other) {
-          applyValue('', { other: true });
-          if (answerEl) {
-            answerEl.focus();
-          }
-          return;
-        }
-        applyValue(choice.value, { id: choice.id });
-        if (answerEl) {
-          answerEl.focus();
-        }
-      });
-      track.appendChild(btn);
-    });
-
-    dateInput.addEventListener('change', function () {
-      var d = String(dateInput.value || '').trim();
-      if (!d) return;
-      // Phrasing extractors treat as free clinical timing; also keeps ISO in transcript.
-      applyValue('started on ' + d, { date: true });
-    });
-
-    container.appendChild(track);
-    container.appendChild(dateWrap);
     return kind;
   }
 

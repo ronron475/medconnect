@@ -22,6 +22,7 @@ final class GeminiPatientInterview
         self::$engineAssessCallsForTest = [];
         if (class_exists('GeminiClinicalInterviewDemo')) {
             GeminiClinicalInterviewDemo::endSkipPhpOpenRouterQuotaFallback();
+            GeminiClinicalInterviewDemo::endBitsProviderTransportForTest();
             GeminiClinicalInterviewDemo::$phpOpenRouterRecoverCallsForTest = 0;
         }
     }
@@ -457,13 +458,16 @@ final class GeminiPatientInterview
             : (is_array($context['awaiting_target_findings'] ?? null) ? $context['awaiting_target_findings'] : []);
         $slot = strtolower(trim((string) ($targets[0] ?? '')));
         if ($slot === '' && $questionText !== '') {
-            if (preg_match('/\b(1\s*(to|tubtob|hanggang|-|–)\s*10|pain\s*score|gaano\s*kasakit|how\s+(bad|severe))\b/u', mb_strtolower($questionText))) {
+            $low = mb_strtolower($questionText);
+            if (preg_match('/\b(1\s*(to|tubtob|hanggang|-|–)\s*10|pain\s*score|gaano\s*kasakit|how\s+(bad|severe))\b/u', $low)) {
                 $slot = 'pain_score';
-            } elseif (preg_match('/\b(how\s+long|gaano\s+(na\s+)?katagal|duration|tagal)\b/u', mb_strtolower($questionText))) {
+            } elseif (preg_match('/\b(fall|fell|injury|injured|accident|trauma|nahulog|nabunggo|nabungguan|naaksidente|pilas|samad)\b/u', $low)) {
+                $slot = 'trauma';
+            } elseif (preg_match('/\b(how\s+long|gaano\s+(na\s+)?katagal|duration|tagal)\b/u', $low)) {
                 $slot = 'duration';
-            } elseif (preg_match('/\b(when|san-o|kailan|nagsugod|nagsimula|onset)\b/u', mb_strtolower($questionText))) {
+            } elseif (preg_match('/\b(when|san-o|kailan|nagsugod|nagsimula|onset)\b/u', $low)) {
                 $slot = 'onset';
-            } elseif (preg_match('/\b(where|diin|saan|location|which\s+part)\b/u', mb_strtolower($questionText))) {
+            } elseif (preg_match('/\b(where|diin|saan|location|which\s+part)\b/u', $low)) {
                 $slot = 'location';
             }
         }
@@ -474,6 +478,8 @@ final class GeminiPatientInterview
             'onset' => 'ONSET',
             'location' => 'LOCATION',
             'laterality' => 'LATERALITY',
+            'trauma' => 'TRAUMA',
+            'frequency' => 'FREQUENCY',
             'associated_symptoms' => 'ASSOCIATED_SYMPTOMS',
             'associated_detail' => 'ASSOCIATED_DETAIL',
             default => (str_starts_with($slot, 'finding_') || str_starts_with($slot, 'FINDING_'))

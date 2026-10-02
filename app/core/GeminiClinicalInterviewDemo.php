@@ -29,6 +29,10 @@ final class GeminiClinicalInterviewDemo
     /** Second Gemini model after primary HTTP 429/quota. Not a replacement for gemini-3.5-flash. */
     private const GEMINI_FALLBACK_MODEL = 'gemini-3.8-flash';
     private const MAX_TURNS = 12;
+    /** Hard cap on follow-up questions (Gemini and BITS share applyGeminiTurn). Never exceeded. */
+    private const MAX_FOLLOWUP_QUESTIONS = 4;
+    /** Ask this many when clinically useful; do not pad with low-priority slots to reach it. */
+    private const PREFERRED_FOLLOWUP_QUESTIONS = 3;
     private const TIMEOUT = 45;
     /** Minimum Gemini extraction confidence to accept semantic fallback when NLP has no mapping. */
     private const GEMINI_SEMANTIC_MIN_CONFIDENCE = 0.8;
@@ -317,6 +321,9 @@ final class GeminiClinicalInterviewDemo
     /** @var (callable(array<string, mixed>): ?string)|null */
     private static $openRouterTransportForTest = null;
 
+    /** @var (callable(array<string, mixed>): ?string)|null */
+    private static $bitsTransportForTest = null;
+
     /**
      * Test-only. Live patient Gemini-led interviews use the same generate()
      * fallbacks as this demo (OpenRouter → Groq → NLP question bank).
@@ -349,6 +356,21 @@ final class GeminiClinicalInterviewDemo
     {
         self::$openRouterQuotaProbe = false;
         self::$openRouterTransportForTest = null;
+    }
+
+    /**
+     * Test-only. Mock campus BITS/Ollama for AI_PROVIDER=bits (same Gemini payload).
+     *
+     * @param callable(array<string, mixed>): ?string $transport
+     */
+    public static function beginBitsProviderTransportForTest(callable $transport): void
+    {
+        self::$bitsTransportForTest = $transport;
+    }
+
+    public static function endBitsProviderTransportForTest(): void
+    {
+        self::$bitsTransportForTest = null;
     }
 
     private static int $directGeminiAttempts = 0;
@@ -419,17 +441,23 @@ final class GeminiClinicalInterviewDemo
             $status = 'VALID';
         }
 
-        // Short contextual replies (yes/no/negation/particles) are valid answers — do not retry.
         $latestPatient = '';
         $turns = is_array($context['patient_turns'] ?? null) ? $context['patient_turns'] : [];
         if ($turns !== []) {
             $latestPatient = trim((string) end($turns));
         }
-        if (!$isStart && in_array($status, ['UNCLEAR', 'UNRELATED'], true)
-            && self::isContextualShortReply($latestPatient)
-        ) {
-            $status = 'VALID';
-            $gemini['answer_status'] = 'VALID';
+        // PHP owns answer meaning. Uncertain / yes / no must never become an UNCLEAR retry.
+        if (!$isStart && $latestPatient !== '') {
+            if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($latestPatient)) {
+                $status = 'UNCERTAIN';
+                $gemini['answer_status'] = 'UNCERTAIN';
+            } elseif (in_array($status, ['UNCLEAR', 'UNRELATED'], true)
+                && (self::isContextualShortReply($latestPatient)
+                    || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::extractYesNo($latestPatient) !== null))
+            ) {
+                $status = 'VALID';
+                $gemini['answer_status'] = 'VALID';
+            }
         }
 
         // Merge clinical facts (never replace original wording); scrub discourse particles.
@@ -507,6 +535,11 @@ final class GeminiClinicalInterviewDemo
                 $status,
                 self::ledgerFingerprint($factsBeforeTurn) !== self::ledgerFingerprint($context['clinical_facts'])
             );
+            $remember = trim((string) ($context['awaiting_slot'] ?? ''));
+            if ($remember === '') {
+                $remember = self::questionFactSlot((string) ($context['awaiting_question'] ?? ''));
+            }
+            self::rememberAskedSlot($context, $remember);
         }
 
         $sufficient = !empty($gemini['interview_sufficient']) || empty($gemini['question_needed']);
@@ -534,6 +567,21 @@ final class GeminiClinicalInterviewDemo
                 $gemini['targeted_findings'] = [$slot];
             }
             $gemini['next_question'] = $nextQ;
+        }
+
+        $askedFollowups = self::followUpQuestionCount($context);
+        $missingNow = is_array($context['missing_information'] ?? null) ? $context['missing_information'] : [];
+        if (!$sufficient && $nextQ !== ''
+            && !self::shouldAskAnotherFollowUp($context, $missingNow, $askedFollowups)
+        ) {
+            $sufficient = true;
+            $nextQ = '';
+            $gemini['next_question'] = '';
+            $gemini['question_needed'] = false;
+            $gemini['interview_sufficient'] = true;
+            $context['awaiting_slot'] = '';
+            $context['awaiting_complaint_id'] = '';
+            $context['awaiting_target_findings'] = [];
         }
 
         if ($sufficient || $nextQ === '') {
@@ -917,6 +965,8 @@ final class GeminiClinicalInterviewDemo
             'active_complaint_id' => '',
             'awaiting_complaint_id' => '',
             'awaiting_slot' => '',
+            /** @var list<string> Clinical slots already asked and answered this interview */
+            'asked_slots' => [],
             /** @var array<string, string> Patient wording kept for slots it did not resolve (never a fact) */
             'unresolved_answers' => [],
             'question_language' => '',
@@ -988,6 +1038,18 @@ final class GeminiClinicalInterviewDemo
             $base['awaiting_target_findings'] = [];
         } else {
             $base['awaiting_target_findings'] = self::normalizeFindingKeyList($base['awaiting_target_findings']);
+        }
+        if (!is_array($base['asked_slots'] ?? null)) {
+            $base['asked_slots'] = [];
+        } else {
+            $clean = [];
+            foreach ($base['asked_slots'] as $slot) {
+                $slot = self::canonicalInterviewSlot((string) $slot);
+                if ($slot !== '' && !in_array($slot, $clean, true)) {
+                    $clean[] = $slot;
+                }
+            }
+            $base['asked_slots'] = $clean;
         }
 
         return $base;
@@ -2116,6 +2178,14 @@ final class GeminiClinicalInterviewDemo
         if ($answerStatus === 'UNCERTAIN') {
             $yn = null;
         }
+        // A left/right answer is a side, even when the wording contains "wala".
+        // Do not let a generic yes/no or a model "negative" replace that side.
+        if (in_array('laterality', $targets, true) && self::canonicalLaterality($answer, true) !== '') {
+            $yn = null;
+            $uncertain = false;
+            $status['laterality'] = 'positive';
+            unset($geminiFs['laterality']);
+        }
 
         // Semantic per-finding mentions in the answer (EN / Tagalog / Hiligaynon / mixed).
         $mentioned = self::detectFindingMentionsInAnswer($answer, $targets);
@@ -2458,6 +2528,141 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
+     * Follow-up questions already shown this interview (retries of the same question do not count).
+     *
+     * @param array<string, mixed> $context
+     */
+    private static function followUpQuestionCount(array $context): int
+    {
+        $n = 0;
+        foreach ((array) ($context['conversation'] ?? []) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (strtolower((string) ($row['kind'] ?? '')) === 'followup') {
+                $n++;
+            }
+        }
+
+        return $n;
+    }
+
+    /**
+     * PHP-enforced cap shared by Gemini and BITS. Not taken from the model JSON.
+     *
+     * @param array<string, mixed> $context
+     * @param list<string> $missing
+     */
+    private static function shouldAskAnotherFollowUp(array $context, array $missing, int $alreadyAsked): bool
+    {
+        if ($alreadyAsked >= self::MAX_FOLLOWUP_QUESTIONS) {
+            return false;
+        }
+        if ($missing === []) {
+            return false;
+        }
+        $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
+        if ($alreadyAsked >= self::PREFERRED_FOLLOWUP_QUESTIONS) {
+            return self::extraFollowUpNeeded($context, $missing);
+        }
+        if (self::hasClinicallyUsefulFacts($facts) && self::onlyLowPriorityFollowUpGaps($missing)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Location/laterality alone must not pad the interview to 3 questions.
+     *
+     * @param list<string> $missing
+     */
+    private static function onlyLowPriorityFollowUpGaps(array $missing): bool
+    {
+        if ($missing === []) {
+            return false;
+        }
+        foreach ($missing as $entry) {
+            $slot = self::canonicalInterviewSlot(self::missingSlotId((string) $entry));
+            if (!in_array($slot, ['location', 'laterality'], true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * A 4th question only for still-missing triage-critical slots.
+     *
+     * @param array<string, mixed> $context
+     * @param list<string> $missing
+     */
+    private static function extraFollowUpNeeded(array $context, array $missing): bool
+    {
+        $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
+        if (!self::hasClinicallyUsefulFacts($facts)) {
+            return $missing !== [];
+        }
+        foreach ($missing as $entry) {
+            $slot = self::canonicalInterviewSlot(self::missingSlotId((string) $entry));
+            if (in_array($slot, ['pain_score', 'trauma', 'associated_symptoms', 'findings'], true)) {
+                return true;
+            }
+            if (str_starts_with($slot, 'finding_') || str_starts_with($slot, 'FINDING_')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function canonicalInterviewSlot(string $slot): string
+    {
+        $slot = strtolower(trim($slot));
+        if ($slot === 'associated_detail' || $slot === 'has_other_symptoms') {
+            return 'associated_symptoms';
+        }
+
+        return $slot;
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function rememberAskedSlot(array &$context, string $slot): void
+    {
+        $slot = self::canonicalInterviewSlot($slot);
+        if ($slot === '' || $slot === 'none') {
+            return;
+        }
+        if (!isset($context['asked_slots']) || !is_array($context['asked_slots'])) {
+            $context['asked_slots'] = [];
+        }
+        if (!in_array($slot, $context['asked_slots'], true)) {
+            $context['asked_slots'][] = $slot;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $context
+     */
+    private static function slotAlreadyAsked(array $context, string $slot): bool
+    {
+        $slot = self::canonicalInterviewSlot($slot);
+        if ($slot === '') {
+            return false;
+        }
+        foreach ((array) ($context['asked_slots'] ?? []) as $item) {
+            if (self::canonicalInterviewSlot((string) $item) === $slot) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Keep the next question on a fact that is still missing. One question per turn.
      *
      * @param array<string, mixed> $context
@@ -2715,7 +2920,10 @@ final class GeminiClinicalInterviewDemo
     private static function missingSlotsAcrossComplaints(array $complaints, array $parent, array $context): array
     {
         $total = count($complaints);
-        $missing = [];
+        $redFlag = [];
+        $severity = [];
+        $timing = [];
+        $place = [];
         foreach ($complaints as $complaint) {
             $scoped = self::complaintAsFacts($complaint);
             $scope = self::complaintScopeText($complaint);
@@ -2723,33 +2931,43 @@ final class GeminiClinicalInterviewDemo
                 // The patient denied feeling anything there; it is not a complaint to probe.
                 continue;
             }
-            if (!self::hasClinicallyUsefulFacts($scoped) && !self::complaintSlotSettled($complaint, 'symptom')) {
-                $missing[] = self::formatMissingEntry('symptom', $complaint, $total);
-
-                return $missing;
+            if (!self::hasClinicallyUsefulFacts($scoped) && !self::complaintSlotSettled($complaint, 'symptom')
+                && !self::slotAlreadyAsked($context, 'symptom')
+            ) {
+                return [self::formatMissingEntry('symptom', $complaint, $total)];
             }
-            if (!self::complaintSlotSettled($complaint, 'location') && self::locationIsUseful($scoped, $context, $scope)) {
-                $missing[] = self::formatMissingEntry('location', $complaint, $total);
+            if (!self::slotAlreadyAsked($context, 'trauma')
+                && !self::complaintSlotSettled($complaint, 'trauma') && self::traumaIsUseful($scoped, $context, $scope)
+            ) {
+                $redFlag[] = self::formatMissingEntry('trauma', $complaint, $total);
             }
-            if (!self::complaintSlotSettled($complaint, 'laterality') && self::lateralityIsUseful($scoped)) {
-                $missing[] = self::formatMissingEntry('laterality', $complaint, $total);
+            if (!self::slotAlreadyAsked($context, 'pain_score')
+                && !self::complaintSlotSettled($complaint, 'pain_score') && self::needsPainScore($scoped, $context, $scope)
+            ) {
+                $severity[] = self::formatMissingEntry('pain_score', $complaint, $total);
             }
-            if (!self::complaintSlotSettled($complaint, 'onset')) {
-                $missing[] = self::formatMissingEntry('onset', $complaint, $total);
+            if (!self::slotAlreadyAsked($context, 'onset') && !self::complaintSlotSettled($complaint, 'onset')) {
+                $timing[] = self::formatMissingEntry('onset', $complaint, $total);
             }
-            if (!self::complaintSlotSettled($complaint, 'duration') && !self::onsetCoversDuration($scoped)) {
-                $missing[] = self::formatMissingEntry('duration', $complaint, $total);
+            if (!self::slotAlreadyAsked($context, 'duration')
+                && !self::complaintSlotSettled($complaint, 'duration') && !self::onsetCoversDuration($scoped)
+            ) {
+                $timing[] = self::formatMissingEntry('duration', $complaint, $total);
             }
-            if (!self::complaintSlotSettled($complaint, 'pain_score') && self::needsPainScore($scoped, $context, $scope)) {
-                $missing[] = self::formatMissingEntry('pain_score', $complaint, $total);
+            if (!self::slotAlreadyAsked($context, 'location')
+                && !self::complaintSlotSettled($complaint, 'location') && self::locationIsUseful($scoped, $context, $scope)
+            ) {
+                $place[] = self::formatMissingEntry('location', $complaint, $total);
             }
-            if (!self::complaintSlotSettled($complaint, 'trauma') && self::traumaIsUseful($scoped, $context, $scope)) {
-                $missing[] = self::formatMissingEntry('trauma', $complaint, $total);
+            if (!self::slotAlreadyAsked($context, 'laterality')
+                && !self::complaintSlotSettled($complaint, 'laterality') && self::lateralityIsUseful($scoped)
+            ) {
+                $place[] = self::formatMissingEntry('laterality', $complaint, $total);
             }
         }
-        $missing = array_merge($missing, self::missingAssociated($parent, $context));
+        $associated = self::missingAssociated($parent, $context);
 
-        return $missing;
+        return array_merge($redFlag, $severity, $associated, $timing, $place);
     }
 
     /**
@@ -2759,7 +2977,9 @@ final class GeminiClinicalInterviewDemo
      */
     private static function missingAssociated(array $facts, array $context): array
     {
-        if (self::contextSlotUnresolved($context, 'associated_symptoms')) {
+        if (self::slotAlreadyAsked($context, 'associated_symptoms')
+            || self::contextSlotUnresolved($context, 'associated_symptoms')
+        ) {
             return [];
         }
         if (self::associatedNeedsDetail($facts)) {
@@ -2775,32 +2995,36 @@ final class GeminiClinicalInterviewDemo
         if ($complaints !== []) {
             return self::missingSlotsAcrossComplaints($complaints, $facts, $context);
         }
-        $open = static fn (string $slot): bool => !self::slotAddressed($slot, $facts) && !self::contextSlotUnresolved($context, $slot);
+        $open = static fn (string $slot): bool => !self::slotAlreadyAsked($context, $slot)
+            && !self::slotAddressed($slot, $facts)
+            && !self::contextSlotUnresolved($context, $slot);
         if (!self::hasClinicallyUsefulFacts($facts) && $open('symptom')) {
             return ['symptom'];
         }
 
-        $missing = [];
-        if ($open('location') && self::locationIsUseful($facts, $context)) {
-            $missing[] = 'location';
-        }
-        if ($open('laterality') && self::lateralityIsUseful($facts)) {
-            $missing[] = 'laterality';
-        }
-        if ($open('onset')) {
-            $missing[] = 'onset';
-        }
-        if ($open('duration') && !self::onsetCoversDuration($facts)) {
-            $missing[] = 'duration';
+        $priority = [];
+        if ($open('trauma') && self::traumaIsUseful($facts, $context)) {
+            $priority[] = 'trauma';
         }
         if ($open('pain_score') && self::needsPainScore($facts, $context)) {
-            $missing[] = 'pain_score';
+            $priority[] = 'pain_score';
         }
-        if ($open('trauma') && self::traumaIsUseful($facts, $context)) {
-            $missing[] = 'trauma';
+        $associated = self::missingAssociated($facts, $context);
+        $rest = [];
+        if ($open('onset')) {
+            $rest[] = 'onset';
+        }
+        if ($open('duration') && !self::onsetCoversDuration($facts)) {
+            $rest[] = 'duration';
+        }
+        if ($open('location') && self::locationIsUseful($facts, $context)) {
+            $rest[] = 'location';
+        }
+        if ($open('laterality') && self::lateralityIsUseful($facts)) {
+            $rest[] = 'laterality';
         }
 
-        return array_merge($missing, self::missingAssociated($facts, $context));
+        return array_merge($priority, $associated, $rest);
     }
 
     /**
@@ -2880,42 +3104,63 @@ final class GeminiClinicalInterviewDemo
      */
     private static function applyBareAnswerToComplaint(array $facts, array $context, string $utterance): array
     {
-        $slot = trim((string) ($context['awaiting_slot'] ?? ''));
+        $slot = self::canonicalInterviewSlot(trim((string) ($context['awaiting_slot'] ?? '')));
         $id = trim((string) ($context['awaiting_complaint_id'] ?? ''));
         $uncertain = class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($utterance);
         $yn = class_exists('ClinicalFeatureExtractors') ? ClinicalFeatureExtractors::extractYesNo($utterance) : null;
-        if ($slot === '' || $slot === 'associated_symptoms' || $slot === 'associated_detail' || $id === '') {
-            if ($uncertain) {
-                return self::markSlot($facts, 'associated_symptoms', 'uncertain');
-            }
-            if ($yn === false) {
-                return self::markSlot($facts, 'associated_symptoms', 'negative');
-            }
-            if ($yn === true) {
-                return self::markSlot($facts, 'associated_symptoms', 'positive');
+        $polarity = '';
+        if ($uncertain) {
+            $polarity = 'uncertain';
+        } elseif ($yn === false) {
+            $polarity = 'negative';
+        } elseif ($yn === true) {
+            $polarity = 'positive';
+        }
+        $side = $slot === 'laterality' ? self::canonicalLaterality($utterance, true) : '';
+        if ($side !== '') {
+            $polarity = 'positive';
+        } elseif ($polarity === 'positive' && !in_array($slot, ['trauma', 'associated_symptoms'], true)) {
+            $polarity = '';
+        }
+
+        if ($slot === '' || $slot === 'associated_symptoms') {
+            if ($polarity !== '') {
+                return self::markSlot($facts, 'associated_symptoms', $polarity);
             }
 
             return $facts;
         }
+
         $complaints = self::complaintRecords($facts);
+        if ($complaints === []) {
+            if ($side !== '') {
+                $facts['laterality'] = $side;
+            }
+
+            return $polarity !== '' ? self::markSlot($facts, $slot, $polarity) : $facts;
+        }
         foreach ($complaints as $i => $complaint) {
-            if ((string) ($complaint['id'] ?? '') !== $id) {
+            if ($id !== '' && (string) ($complaint['id'] ?? '') !== $id) {
                 continue;
             }
-            if ($slot === 'laterality' && self::isLateralityToken($utterance)) {
-                $complaint['laterality'] = mb_strtolower(trim((string) preg_replace('/[.!?…]+$/u', '', $utterance)));
+            if ($slot === 'laterality' && $side !== '') {
+                $complaint['laterality'] = $side;
                 $complaint = self::markComplaintSlot($complaint, 'laterality', 'positive');
-            } elseif ($uncertain) {
-                $complaint = self::markComplaintSlot($complaint, $slot, 'uncertain');
-            } elseif ($yn === false) {
-                $complaint = self::markComplaintSlot($complaint, $slot, 'negative');
-            } elseif ($yn === true && in_array($slot, ['trauma', 'associated_symptoms'], true)) {
-                $complaint = self::markComplaintSlot($complaint, $slot, 'positive');
+            } elseif ($polarity !== '') {
+                $complaint = self::markComplaintSlot($complaint, $slot, $polarity);
             }
             $complaints[$i] = $complaint;
-            break;
+            if ($id !== '') {
+                break;
+            }
         }
         $facts['complaints'] = $complaints;
+        if ($side !== '') {
+            $facts['laterality'] = $side;
+        }
+        if ($polarity !== '') {
+            $facts = self::markSlot($facts, $slot, $polarity);
+        }
 
         return self::projectComplaintLedger($facts);
     }
@@ -3233,59 +3478,72 @@ final class GeminiClinicalInterviewDemo
      */
     private static function resolveAwaitingAnswer(array $context, string $utterance, string $answerStatus, bool $learnedSomething): array
     {
-        $slot = trim((string) ($context['awaiting_slot'] ?? ''));
         $utterance = trim($utterance);
-        if ($slot === '' || $utterance === '') {
+        if ($utterance === '') {
             return $context;
         }
-        if ($slot === 'associated_detail') {
-            $slot = 'associated_symptoms';
+        $slot = self::canonicalInterviewSlot(trim((string) ($context['awaiting_slot'] ?? '')));
+        if ($slot === '') {
+            $slot = self::canonicalInterviewSlot(self::questionFactSlot((string) ($context['awaiting_question'] ?? '')));
+        }
+        if ($slot === '') {
+            return $context;
         }
         $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
         $polarity = $answerStatus === 'UNCERTAIN' ? 'uncertain' : self::answerPolarityForSlot($slot, $utterance);
+        $complaints = self::complaintRecords($facts);
+        $id = trim((string) ($context['awaiting_complaint_id'] ?? ''));
+        $targets = [];
+        if ($complaints !== []) {
+            if ($slot === 'associated_symptoms' || $id === '' || self::complaintById($complaints, $id) === null) {
+                foreach ($complaints as $complaint) {
+                    $cid = (string) ($complaint['id'] ?? '');
+                    if ($cid !== '') {
+                        $targets[] = $cid;
+                    }
+                }
+            } else {
+                $targets = [$id];
+            }
+        }
+        if ($slot === 'laterality' && $polarity !== 'uncertain') {
+            $side = self::canonicalLaterality($utterance, true);
+            if ($side !== '') {
+                return self::storeLateralityAnswer($context, $facts, $complaints, $targets, $side, $slot);
+            }
+        }
         if ($polarity === 'positive' && !in_array($slot, ['trauma', 'associated_symptoms'], true)) {
             $polarity = '';
         }
-        $keepWording = !$learnedSomething || self::sameQuestionAskedTwice($context);
-        $complaints = self::complaintRecords($facts);
-        $id = trim((string) ($context['awaiting_complaint_id'] ?? ''));
 
-        if ($slot !== 'associated_symptoms' && $id !== '' && self::complaintById($complaints, $id) !== null) {
+        if ($polarity !== '') {
+            $facts = self::markSlot($facts, $slot, $polarity);
             foreach ($complaints as $i => $complaint) {
-                if ((string) ($complaint['id'] ?? '') !== $id) {
+                $cid = (string) ($complaint['id'] ?? '');
+                if ($targets !== [] && !in_array($cid, $targets, true)) {
                     continue;
                 }
-                if (self::complaintSlotSettled($complaint, $slot)) {
-                    break;
-                }
-                if ($polarity !== '') {
-                    $complaints[$i] = self::markComplaintSlot($complaint, $slot, $polarity);
-                } elseif ($keepWording) {
-                    $unresolved = is_array($complaint['unresolved'] ?? null) ? $complaint['unresolved'] : [];
-                    $unresolved[$slot] = $utterance;
-                    $complaints[$i]['unresolved'] = $unresolved;
-                }
-                break;
+                $complaints[$i] = self::markComplaintSlot($complaint, $slot, $polarity);
             }
-            $facts['complaints'] = $complaints;
-            $context['clinical_facts'] = self::projectComplaintLedger($facts);
-
-            return $context;
-        }
-
-        $settled = $slot === 'associated_symptoms'
-            ? (!self::associatedNeedsDetail($facts) && self::associatedAddressed($facts, $context))
-            : self::slotAddressed($slot, $facts);
-        if ($settled || self::contextSlotUnresolved($context, $slot)) {
-            return $context;
-        }
-        if ($polarity !== '') {
-            $context['clinical_facts'] = self::markSlot($facts, $slot, $polarity);
-        } elseif ($keepWording) {
+        } else {
             $unresolved = is_array($context['unresolved_answers'] ?? null) ? $context['unresolved_answers'] : [];
             $unresolved[$slot] = $utterance;
             $context['unresolved_answers'] = $unresolved;
+            foreach ($complaints as $i => $complaint) {
+                $cid = (string) ($complaint['id'] ?? '');
+                if ($targets !== [] && !in_array($cid, $targets, true)) {
+                    continue;
+                }
+                $kept = is_array($complaint['unresolved'] ?? null) ? $complaint['unresolved'] : [];
+                $kept[$slot] = $utterance;
+                $complaints[$i]['unresolved'] = $kept;
+            }
         }
+        if ($complaints !== []) {
+            $facts['complaints'] = $complaints;
+        }
+        $context['clinical_facts'] = self::projectComplaintLedger($facts);
+        self::rememberAskedSlot($context, $slot);
 
         return $context;
     }
@@ -4000,7 +4258,7 @@ final class GeminiClinicalInterviewDemo
         return [
             'onset' => trim((string) ($scratch['onset'] ?? '')),
             'duration' => trim((string) ($scratch['duration'] ?? '')),
-            'laterality' => trim((string) ($scratch['laterality'] ?? '')),
+            'laterality' => self::lateralityScalarFromUtterance($text, $awaitingSlot, trim((string) ($scratch['laterality'] ?? ''))),
             'pain_score' => $pain,
             'trauma' => trim((string) ($status['trauma'] ?? '')),
             'frequency' => trim((string) ($scratch['frequency'] ?? '')),
@@ -4322,6 +4580,20 @@ final class GeminiClinicalInterviewDemo
             $facts[$key] = $value !== '' ? $value : null;
         }
         $facts['pain_score'] = is_numeric($primary['pain_score'] ?? null) ? (int) $primary['pain_score'] : null;
+        $parentStatus = is_array($facts['finding_status'] ?? null) ? $facts['finding_status'] : [];
+        $primaryStatus = is_array($primary['finding_status'] ?? null) ? $primary['finding_status'] : [];
+        foreach ($primaryStatus as $key => $value) {
+            $key = (string) $key;
+            $value = (string) $value;
+            if ($key === '' || !in_array($value, ['positive', 'negative', 'uncertain'], true)) {
+                continue;
+            }
+            $existing = (string) ($parentStatus[$key] ?? '');
+            if (!in_array($existing, ['positive', 'negative', 'uncertain'], true)) {
+                $parentStatus[$key] = $value;
+            }
+        }
+        $facts['finding_status'] = $parentStatus;
         $owned = [];
         foreach ($complaints as $index => $complaint) {
             if ($index === 0) {
@@ -4564,8 +4836,9 @@ final class GeminiClinicalInterviewDemo
         $lang = self::detectLanguageHint($context);
         $facts = is_array($context['clinical_facts'] ?? null) ? $context['clinical_facts'] : self::blankFacts();
         $records = self::complaintRecords($facts);
+        $namesPain = self::needsPainScore($facts, $context);
         if (count($records) > 1 && in_array($slot, ['associated_symptoms', 'associated_detail'], true)) {
-            return self::composePatientQuestion($lang, $slot, '', 'complaint');
+            return self::composePatientQuestion($lang, $slot, '', 'complaint', $namesPain);
         }
         $activeId = trim((string) ($context['active_complaint_id'] ?? ''));
         $complaint = $activeId !== '' ? self::complaintById($records, $activeId) : null;
@@ -4583,7 +4856,7 @@ final class GeminiClinicalInterviewDemo
             }
         }
 
-        return self::composePatientQuestion($lang, $slot, $focus['phrase'], $focus['kind']);
+        return self::composePatientQuestion($lang, $slot, $focus['phrase'], $focus['kind'], $namesPain);
     }
 
     /**
@@ -4788,13 +5061,16 @@ final class GeminiClinicalInterviewDemo
         if ($lang === 'english' && in_array($side, ['left', 'right'], true)) {
             return $side . ' ' . $place;
         }
-        if ($lang === 'hiligaynon' && in_array($side, ['wala', 'tuo'], true)) {
-            return $side . ' nga ' . $place;
+        if ($lang === 'hiligaynon' && in_array($side, ['wala', 'left'], true)) {
+            return 'wala nga ' . $place;
         }
-        if ($lang === 'tagalog' && $side === 'kaliwa') {
+        if ($lang === 'hiligaynon' && in_array($side, ['tuo', 'right'], true)) {
+            return 'tuo nga ' . $place;
+        }
+        if ($lang === 'tagalog' && in_array($side, ['kaliwa', 'left'], true)) {
             return 'kaliwang ' . $place;
         }
-        if ($lang === 'tagalog' && $side === 'kanan') {
+        if ($lang === 'tagalog' && in_array($side, ['kanan', 'right'], true)) {
             return 'kanang ' . $place;
         }
 
@@ -4918,20 +5194,23 @@ final class GeminiClinicalInterviewDemo
     }
 
     /**
-     * Build one grammatical question. A body-part subject is named as the place of the pain.
-     * A complaint subject is the patient's own short phrase.
+     * Build one grammatical question. Pain wording is used only when the patient
+     * already stated pain. A complaint subject stays the patient's own short phrase.
      */
-    private static function composePatientQuestion(string $lang, string $slot, string $subject, string $kind): string
+    private static function composePatientQuestion(string $lang, string $slot, string $subject, string $kind, bool $namesPain = true): string
     {
         $subject = trim($subject);
         $hasSubject = $subject !== '';
         $place = $hasSubject && $kind === 'place';
+        $painPlace = $place && $namesPain;
 
         if ($lang === 'hiligaynon') {
             if (!$hasSubject) {
                 return match ($slot) {
                     'location' => 'Diin mo ini nabatyagan?',
-                    'laterality' => 'Diin nga kilid ang masakit, sa wala ukon sa tuo?',
+                    'laterality' => $namesPain
+                        ? 'Diin nga kilid ang masakit, sa wala ukon sa tuo?'
+                        : 'Diin nga kilid, sa wala ukon sa tuo?',
                     'onset' => 'San-o ini nagsugod?',
                     'duration' => 'Pila na ka adlaw ukon oras ini nga ara?',
                     'pain_score' => 'Pila ka grabe ang kasakit, halin 1 tubtob 10?',
@@ -4942,11 +5221,13 @@ final class GeminiClinicalInterviewDemo
                     default => 'Ano ang imo nabatyagan?',
                 };
             }
-            $about = $place ? "sakit sa imo {$subject}" : "{$subject} mo";
+            $about = $painPlace ? "sakit sa imo {$subject}" : ($place ? "imo {$subject}" : "{$subject} mo");
 
             return match ($slot) {
                 'location' => "Diin mo nabatyagan ang {$subject}?",
-                'laterality' => "Sa imo {$subject}, wala ukon tuo ang masakit?",
+                'laterality' => $namesPain
+                    ? "Sa imo {$subject}, wala ukon tuo ang masakit?"
+                    : "Sa imo {$subject}, wala ukon tuo?",
                 'onset' => "San-o nagsugod ang {$about}?",
                 'duration' => "Pila na ka adlaw ukon oras ang {$about}?",
                 'pain_score' => $place
@@ -4964,7 +5245,9 @@ final class GeminiClinicalInterviewDemo
             if (!$hasSubject) {
                 return match ($slot) {
                     'location' => 'Saan mo ito nararamdaman?',
-                    'laterality' => 'Alin ang masakit, kaliwa o kanan?',
+                    'laterality' => $namesPain
+                        ? 'Alin ang masakit, kaliwa o kanan?'
+                        : 'Alin ang kilid, kaliwa o kanan?',
                     'onset' => 'Kailan ito nagsimula?',
                     'duration' => 'Gaano na katagal ito?',
                     'pain_score' => 'Gaano kasakit ito, mula 1 hanggang 10?',
@@ -4975,11 +5258,13 @@ final class GeminiClinicalInterviewDemo
                     default => 'Ano ang nararamdaman mo?',
                 };
             }
-            $about = $place ? "sakit sa {$subject} mo" : "{$subject} mo";
+            $about = $painPlace ? "sakit sa {$subject} mo" : "{$subject} mo";
 
             return match ($slot) {
                 'location' => "Saan mo nararamdaman ang {$subject}?",
-                'laterality' => "Sa {$subject} mo, kaliwa o kanan ang masakit?",
+                'laterality' => $namesPain
+                    ? "Sa {$subject} mo, kaliwa o kanan ang masakit?"
+                    : "Sa {$subject} mo, kaliwa o kanan?",
                 'onset' => "Kailan nagsimula ang {$about}?",
                 'duration' => "Gaano na katagal ang {$about}?",
                 'pain_score' => $place
@@ -5007,13 +5292,15 @@ final class GeminiClinicalInterviewDemo
                 default => 'What are you feeling?',
             };
         }
-        $about = $place ? "the pain in your {$subject}" : "your {$subject}";
+        $about = $painPlace ? "the pain in your {$subject}" : "your {$subject}";
 
         return match ($slot) {
             'location' => "Where do you feel your {$subject}?",
-            'laterality' => "Is the pain in your {$subject} on the left side or the right side?",
+            'laterality' => $namesPain
+                ? "Is the pain in your {$subject} on the left side or the right side?"
+                : "Is your {$subject} on the left side or the right side?",
             'onset' => "When did {$about} start?",
-            'duration' => $place
+            'duration' => $painPlace
                 ? "How long have you had the pain in your {$subject}?"
                 : "How long have you had your {$subject}?",
             'pain_score' => $place
@@ -5022,7 +5309,7 @@ final class GeminiClinicalInterviewDemo
             'trauma' => "Did you get hit or fall before {$about} started?",
             'associated_symptoms' => "Besides {$about}, do you feel anything else?",
             'associated_detail' => "What else do you feel besides {$about}?",
-            'frequency' => $place
+            'frequency' => $painPlace
                 ? "Does the pain in your {$subject} happen all the time, or only sometimes?"
                 : "Does your {$subject} happen all the time, or only sometimes?",
             default => "What are you feeling in your {$subject}?",
@@ -5050,12 +5337,18 @@ final class GeminiClinicalInterviewDemo
             return $facts;
         }
 
-        if ($slot === 'laterality' && self::isLateralityToken($answer)) {
-            if (trim((string) ($facts['laterality'] ?? '')) === '') {
-                $facts['laterality'] = mb_strtolower(trim((string) preg_replace('/[.!?…]+$/u', '', $answer)));
+        if ($slot === 'laterality') {
+            if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($answer)) {
+                return self::markSlot($facts, 'laterality', 'uncertain');
             }
+            $side = self::canonicalLaterality($answer, true);
+            if ($side !== '') {
+                if (trim((string) ($facts['laterality'] ?? '')) === '') {
+                    $facts['laterality'] = $side;
+                }
 
-            return self::markSlot($facts, 'laterality', 'positive');
+                return self::markSlot($facts, 'laterality', 'positive');
+            }
         }
 
         if ($slot === 'pain_score') {
@@ -5106,6 +5399,10 @@ final class GeminiClinicalInterviewDemo
         }
         if (ClinicalFeatureExtractors::looksPatientUncertain($answer)) {
             return 'uncertain';
+        }
+        // The active slot decides what "wala" means. On a left/right question it is a side.
+        if (self::canonicalInterviewSlot($slot) === 'laterality' && self::canonicalLaterality($answer, true) !== '') {
+            return '';
         }
         $yn = ClinicalFeatureExtractors::extractYesNo($answer);
         if ($yn === null) {
@@ -5196,7 +5493,7 @@ final class GeminiClinicalInterviewDemo
 
         $side = self::statedLaterality($text);
         if ($side !== '' && trim((string) ($facts['laterality'] ?? '')) === '') {
-            $facts['laterality'] = $side;
+            $facts['laterality'] = self::canonicalLaterality($side, false) ?: $side;
         }
 
         $facts = self::harvestTraumaMention($facts, $text);
@@ -5221,6 +5518,19 @@ final class GeminiClinicalInterviewDemo
             self::stringList($nlp['symptoms'] ?? []),
             static fn (string $s): bool => !isset($negated[mb_strtolower(trim($s))]) && !self::isInterviewControlLabel($s)
         )));
+        $symptoms = array_values(array_filter(
+            $symptoms,
+            static function (string $symptom) use ($text): bool {
+                if (!self::isGenericPainLabel($symptom)) {
+                    return true;
+                }
+
+                return (bool) preg_match(
+                    '/\b(sakit|masakit|pain|hapdi|kasakit|gasakit|hurts?|sumasakit)\b/ui',
+                    $text
+                );
+            }
+        ));
         foreach ($symptoms as $symptom) {
             $facts = self::keepSymptom($facts, $symptom);
         }
@@ -5364,24 +5674,101 @@ final class GeminiClinicalInterviewDemo
 
     private static function statedLaterality(string $text): string
     {
+        return self::canonicalLaterality($text, false);
+    }
+
+    /**
+     * Read a side from the answer using the active slot.
+     * "sa wala" / "left" / "kaliwa" are left even outside a laterality question.
+     * Bare "wala" is left only when this question asked which side; on a yes/no
+     * question it stays a negation.
+     *
+     * @return 'left'|'right'|'both'|''
+     */
+    private static function canonicalLaterality(string $text, bool $askedLaterality): string
+    {
         $low = mb_strtolower(trim($text));
+        $low = trim((string) preg_replace('/[.!?…]+$/u', '', $low));
         if ($low === '') {
             return '';
         }
-        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksLateralityWala($low)) {
-            return 'wala';
+        if (in_array($low, ['left', 'right', 'both'], true)) {
+            return $low;
         }
-        if (preg_match('/\b(kaliwa|left)\b/u', $low)) {
-            return 'left';
+        if (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksPatientUncertain($low)) {
+            return '';
         }
-        if (preg_match('/\b(kanan|right|tuo)\b/u', $low)) {
+
+        $denialWala = (bool) preg_match('/\b(wala\s+ko|wala\s+sang|wala\s+gid|walang)\b/u', $low);
+        $hasRight = (bool) preg_match('/\b(?:sa\s+)?(?:tuo|right|kanan)\b/u', $low);
+        $hasLeftPhrase = (bool) preg_match('/\b(?:sa\s+wala|left|kaliwa)\b/u', $low)
+            || (class_exists('ClinicalFeatureExtractors') && ClinicalFeatureExtractors::looksLateralityWala($low));
+        $bareWala = !$denialWala && (bool) preg_match('/\bwala\b/u', $low);
+        $hasLeft = $hasLeftPhrase || ($askedLaterality && $bareWala && !$hasRight);
+
+        if (preg_match('/\b(both\s+sides|both|pareho|parehas|duha\s+ka\s+bahin|bilateral)\b/u', $low)) {
+            return 'both';
+        }
+        if ($hasLeft && $hasRight) {
+            return 'both';
+        }
+        if ($hasRight) {
             return 'right';
         }
-        if (preg_match('/\b(both sides|both|pareho)\b/u', $low)) {
-            return 'both';
+        if ($hasLeft) {
+            return 'left';
         }
 
         return '';
+    }
+
+    private static function lateralityScalarFromUtterance(string $text, string $awaitingSlot, string $harvested): string
+    {
+        $harvested = trim($harvested);
+        if ($harvested !== '') {
+            return self::canonicalLaterality($harvested, $awaitingSlot === 'laterality') ?: $harvested;
+        }
+        if ($awaitingSlot !== 'laterality') {
+            return '';
+        }
+
+        return self::canonicalLaterality($text, true);
+    }
+
+    /**
+     * Store a side on the complaint the question asked about and mark that slot resolved.
+     *
+     * @param array<string, mixed> $context
+     * @param array<string, mixed> $facts
+     * @param list<array<string, mixed>> $complaints
+     * @param list<string> $targets
+     * @return array<string, mixed>
+     */
+    private static function storeLateralityAnswer(
+        array $context,
+        array $facts,
+        array $complaints,
+        array $targets,
+        string $side,
+        string $slot
+    ): array {
+        $facts['laterality'] = $side;
+        $facts = self::markSlot($facts, 'laterality', 'positive');
+        foreach ($complaints as $i => $complaint) {
+            $cid = (string) ($complaint['id'] ?? '');
+            if ($targets !== [] && !in_array($cid, $targets, true)) {
+                continue;
+            }
+            $complaint['laterality'] = $side;
+            $complaints[$i] = self::markComplaintSlot($complaint, 'laterality', 'positive');
+        }
+        if ($complaints !== []) {
+            $facts['complaints'] = $complaints;
+        }
+        $context['clinical_facts'] = self::projectComplaintLedger($facts);
+        self::rememberAskedSlot($context, $slot);
+
+        return $context;
     }
 
     private static function isLateralityToken(string $value): bool
@@ -6525,6 +6912,16 @@ PROMPT;
     private static function complete(string $userPrompt): string
     {
         self::ensureAiProviders();
+        // BITS/Ollama ignores Gemini thinkingConfig. The [true, false] retry below would
+        // send the same huge prompt twice (chat + generate each time) and exceed the
+        // patient-portal 120s abort before NLP fallback can run.
+        if (self::bitsInterviewProviderSelected()) {
+            $bitsText = self::generate(self::requestPayload($userPrompt, false));
+            if ($bitsText !== '') {
+                return $bitsText;
+            }
+            throw new RuntimeException('BITS Ollama unavailable or empty reply');
+        }
         $last = null;
         // Gemini 3.5 Flash thinks by default. Thought tokens share maxOutputTokens, so a
         // short budget returns finishReason=MAX_TOKENS and an empty candidate. The demo
@@ -6614,6 +7011,17 @@ PROMPT;
             if ($envModel !== '' && str_starts_with(strtolower($envModel), 'gemini')) {
                 $model = $envModel;
             }
+        }
+
+        if (self::bitsInterviewProviderSelected()) {
+            require_once dirname(__DIR__) . '/includes/openrouter_demo_fallback.php';
+            $bitsText = medconnect_demo_bits_text_from_gemini($payload, self::$bitsTransportForTest);
+            if (is_string($bitsText) && trim($bitsText) !== '') {
+                self::$aiProviderUsed = 'bits';
+
+                return trim($bitsText);
+            }
+            throw new RuntimeException('BITS Ollama unavailable or empty reply');
         }
 
         if (self::$openRouterQuotaProbe) {
@@ -7076,12 +7484,29 @@ PROMPT;
         if ($phpOnly) {
             return false;
         }
+        if (self::bitsInterviewProviderSelected()) {
+            if (!function_exists('medconnect_bits_service_enabled')) {
+                require_once dirname(__DIR__) . '/includes/openrouter_demo_fallback.php';
+            }
+
+            return function_exists('medconnect_bits_service_enabled') && medconnect_bits_service_enabled();
+        }
         $provider = strtolower(trim((string) (getenv('AI_PROVIDER') ?: ($_ENV['AI_PROVIDER'] ?? 'gemini'))));
         if ($provider !== '' && $provider !== 'gemini') {
             return false;
         }
 
         return self::apiKey() !== '' || self::shouldUseRailway();
+    }
+
+    /**
+     * When AI_PROVIDER=bits, generate() uses campus Ollama with the Gemini interview payload.
+     */
+    private static function bitsInterviewProviderSelected(): bool
+    {
+        $provider = strtolower(trim((string) (getenv('AI_PROVIDER') ?: ($_ENV['AI_PROVIDER'] ?? 'gemini'))));
+
+        return in_array($provider, ['bits', 'bits_ollama', 'ollama'], true);
     }
 
     private static function apiKey(): string
