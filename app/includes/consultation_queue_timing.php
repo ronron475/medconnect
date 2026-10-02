@@ -531,6 +531,233 @@ function consultation_timing_notify(PDO $pdo, int $userId, string $role, string 
     NotificationManager::notifyPatient($pdo, $userId, $options);
 }
 
+/**
+ * How early the back-to-back notice may be sent, measured from the scheduled end.
+ * A 12:30 end becomes eligible at 12:27 and stays eligible once 12:30 is reached.
+ * The in-room countdown banner is unchanged.
+ */
+function consultation_timing_back_to_back_lead_seconds(): int
+{
+    return 180;
+}
+
+/**
+ * True only for an active, not-yet-ended visit whose scheduled end matches the
+ * immediately next appointment start, inside the lead window or after that end.
+ */
+function consultation_timing_back_to_back_should_warn(
+    int $now,
+    ?int $scheduledEndTs,
+    ?int $nextStartTs,
+    string $consultStatus,
+    string $videoStatus
+): bool {
+    if (strtolower(trim($videoStatus)) !== 'active') {
+        return false;
+    }
+    if (strtolower(trim($consultStatus)) !== 'in_consultation') {
+        return false;
+    }
+    if ($scheduledEndTs === null || $scheduledEndTs <= 0 || $nextStartTs === null) {
+        return false;
+    }
+    if ($nextStartTs !== $scheduledEndTs) {
+        return false;
+    }
+
+    return $now >= ($scheduledEndTs - consultation_timing_back_to_back_lead_seconds());
+}
+
+/**
+ * Soonest later appointment for this doctor. Earlier slots and other doctors are ignored.
+ *
+ * @param array<int, array<string, mixed>> $candidates
+ * @return array<string, mixed>|null
+ */
+function consultation_timing_pick_immediately_next(
+    array $candidates,
+    int $providerId,
+    int $currentConsultationId,
+    int $currentStartTs
+): ?array {
+    $best = null;
+    foreach ($candidates as $row) {
+        if ((int) ($row['provider_id'] ?? 0) !== $providerId) {
+            continue;
+        }
+        if ((int) ($row['id'] ?? 0) === $currentConsultationId) {
+            continue;
+        }
+        $status = strtolower(trim((string) ($row['status'] ?? '')));
+        if (!in_array($status, ['pending', 'scheduled'], true)) {
+            continue;
+        }
+        $start = (int) ($row['start'] ?? 0);
+        if ($start <= $currentStartTs) {
+            continue;
+        }
+        if ($best === null
+            || $start < (int) $best['start']
+            || ($start === (int) $best['start'] && (int) ($row['id'] ?? 0) < (int) ($best['id'] ?? 0))
+        ) {
+            $best = $row;
+        }
+    }
+
+    return $best;
+}
+
+/**
+ * @return array<string, mixed>|null
+ */
+function consultation_timing_immediately_next_scheduled(
+    PDO $pdo,
+    int $providerId,
+    int $currentConsultationId,
+    int $currentStartTs
+): ?array {
+    if ($providerId <= 0 || $currentConsultationId <= 0 || $currentStartTs <= 0) {
+        return null;
+    }
+    $day = date('Y-m-d', $currentStartTs);
+    $stmt = $pdo->prepare("
+        SELECT
+            c.id,
+            c.patient_id,
+            c.provider_id,
+            c.status,
+            c.consult_date,
+            c.consult_time,
+            s.slot_date,
+            s.start_time AS slot_start,
+            s.end_time AS slot_end
+        FROM consultations c
+        LEFT JOIN appointment_slots s
+          ON s.consultation_id = c.id AND s.status = 'booked'
+        WHERE c.provider_id = ?
+          AND c.id <> ?
+          AND c.status IN ('pending', 'scheduled')
+          AND COALESCE(s.slot_date, c.consult_date) = ?
+        ORDER BY COALESCE(s.start_time, c.consult_time) ASC, c.id ASC
+    ");
+    $stmt->execute([$providerId, $currentConsultationId, $day]);
+    $candidates = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+        $bounds = consultation_timing_slot_bounds($row);
+        if ($bounds['start'] === null) {
+            continue;
+        }
+        $candidates[] = [
+            'id' => (int) $row['id'],
+            'provider_id' => (int) ($row['provider_id'] ?? 0),
+            'patient_id' => (int) ($row['patient_id'] ?? 0),
+            'status' => (string) ($row['status'] ?? ''),
+            'start' => (int) $bounds['start'],
+            'end' => $bounds['end'],
+        ];
+    }
+    $picked = consultation_timing_pick_immediately_next(
+        $candidates,
+        $providerId,
+        $currentConsultationId,
+        $currentStartTs
+    );
+    if ($picked === null) {
+        return null;
+    }
+
+    return $picked;
+}
+
+/**
+ * Doctor and current patient only. The next patient is never a recipient.
+ *
+ * @return array<int, array{user_id:int, role:string}>
+ */
+function consultation_timing_back_to_back_recipients(
+    int $now,
+    ?int $scheduledEndTs,
+    ?int $nextStartTs,
+    string $consultStatus,
+    string $videoStatus,
+    int $providerId,
+    int $currentPatientId
+): array {
+    if (!consultation_timing_back_to_back_should_warn($now, $scheduledEndTs, $nextStartTs, $consultStatus, $videoStatus)) {
+        return [];
+    }
+    $recipients = [];
+    if ($providerId > 0) {
+        $recipients[] = ['user_id' => $providerId, 'role' => 'provider'];
+    }
+    if ($currentPatientId > 0) {
+        $recipients[] = ['user_id' => $currentPatientId, 'role' => 'patient'];
+    }
+
+    return $recipients;
+}
+
+/**
+ * One back-to-back warning for the doctor and the patient in the active visit.
+ * Does not end the video, complete the consultation, or notify the next patient.
+ *
+ * @param array<string, mixed> $current
+ */
+function consultation_timing_sync_back_to_back_warning(PDO $pdo, array $current, ?int $now = null): void
+{
+    $now = $now ?? time();
+    $consultStatus = (string) ($current['consult_status'] ?? $current['status'] ?? '');
+    $videoStatus = (string) ($current['video_status'] ?? '');
+    $providerId = (int) ($current['provider_id'] ?? 0);
+    $consultationId = (int) ($current['consultation_id'] ?? $current['id'] ?? 0);
+    $currentPatientId = (int) ($current['patient_id'] ?? 0);
+    $bounds = consultation_timing_slot_bounds($current);
+    $scheduledEnd = $bounds['end'];
+    $scheduledStart = $bounds['start'];
+    $nextStart = null;
+    if ($scheduledStart !== null) {
+        $next = consultation_timing_immediately_next_scheduled($pdo, $providerId, $consultationId, $scheduledStart);
+        $nextStart = isset($next['start']) ? (int) $next['start'] : null;
+    }
+    $recipients = consultation_timing_back_to_back_recipients(
+        $now,
+        $scheduledEnd,
+        $nextStart,
+        $consultStatus,
+        $videoStatus,
+        $providerId,
+        $currentPatientId
+    );
+    if ($recipients === [] || $scheduledEnd === null) {
+        return;
+    }
+
+    $endLabel = date('g:i A', $scheduledEnd);
+    foreach ($recipients as $recipient) {
+        if ($recipient['role'] === 'provider') {
+            consultation_timing_notify(
+                $pdo,
+                $recipient['user_id'],
+                'provider',
+                'Scheduled time ending',
+                'Your current consultation is approaching or has reached its scheduled end (' . $endLabel . '), and another patient is scheduled immediately afterward. This visit stays open until you end it.',
+                $consultationId,
+                '/views/provider/consultation_session.php?id=' . $consultationId
+            );
+            continue;
+        }
+        consultation_timing_notify(
+            $pdo,
+            $recipient['user_id'],
+            'patient',
+            'Your consultation time is ending',
+            'Your scheduled consultation time is approaching or has reached its end (' . $endLabel . '), and another appointment is scheduled immediately afterward.',
+            $consultationId,
+            '/views/patient/consultations.php'
+        );
+    }
+}
+
 function consultation_timing_sync_delay_notices(PDO $pdo, int $providerId): void
 {
     if ($providerId <= 0) {

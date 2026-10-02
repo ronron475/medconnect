@@ -120,6 +120,12 @@ try {
             $videoStmt = $pdo->prepare("SELECT status FROM video_sessions WHERE consultation_id = ? ORDER BY id DESC LIMIT 1");
             $videoStmt->execute([$consultationId]);
             $videoStatus = (string) ($videoStmt->fetchColumn() ?: $videoStatus);
+            if (strtolower(trim($liveStatus)) === 'in_consultation' && strtolower(trim($videoStatus)) === 'active') {
+                $warningRow = $row;
+                $warningRow['consult_status'] = $liveStatus;
+                $warningRow['video_status'] = $videoStatus;
+                consultation_timing_sync_back_to_back_warning($pdo, $warningRow, $now);
+            }
         } catch (Throwable $e) {
             error_log('session_timer delay notice: ' . $e->getMessage());
         }
