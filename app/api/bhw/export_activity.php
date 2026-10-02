@@ -1,10 +1,11 @@
 <?php
 /**
- * BHW personal activity log export (CSV / Excel-compatible).
+ * BHW personal activity log export (CSV).
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_activity.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/csv_export.php';
 
 if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'bhw') {
     http_response_code(403);
@@ -12,11 +13,11 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'bhw') {
 }
 
 $bhwId = (int) $_SESSION['user_id'];
-$format = strtolower(trim($_GET['format'] ?? 'csv'));
 
 $filters = [
     'page'      => 1,
-    'per_page'  => 5000,
+    'per_page'  => 10000,
+    'export'    => true,
     'q'         => trim($_GET['q'] ?? ''),
     'module'    => trim($_GET['module'] ?? ''),
     'period'    => trim($_GET['period'] ?? ''),
@@ -26,40 +27,48 @@ $filters = [
 
 $result = bhw_activity_list($pdo, $bhwId, $filters);
 $rows = $result['rows'] ?? [];
+$total = (int) ($result['total'] ?? count($rows));
 
-bhw_activity_log($pdo, 'bhw_activity_exported', 'BHW exported activity log as ' . $format . '.', [
+bhw_activity_log($pdo, 'bhw_activity_exported', 'BHW exported activity log as csv.', [
     'module' => 'Reports',
     'status' => 'success',
-    'format' => $format,
+    'format' => 'csv',
     'row_count' => count($rows),
 ]);
 
-$filename = 'BHW_Activity_Log_' . date('Y-m-d') . '.' . ($format === 'excel' ? 'xls' : 'csv');
-
-if ($format === 'excel') {
-    header('Content-Type: application/vnd.ms-excel; charset=utf-8');
-} else {
-    header('Content-Type: text/csv; charset=utf-8');
+$periodNames = ['today' => 'Today', 'week' => 'Last 7 days', 'month' => 'Last 30 days'];
+$filterParts = [];
+if ($filters['q'] !== '') {
+    $filterParts[] = 'Search: ' . $filters['q'];
 }
-header('Content-Disposition: attachment; filename="' . $filename . '"');
+if ($filters['module'] !== '') {
+    $filterParts[] = 'Module: ' . $filters['module'];
+}
+if (isset($periodNames[$filters['period']])) {
+    $filterParts[] = 'Period: ' . $periodNames[$filters['period']];
+}
+if ($filters['date_from'] !== '' || $filters['date_to'] !== '') {
+    $filterParts[] = 'Date: ' . csv_export_date($filters['date_from'], 'start') . ' to ' . csv_export_date($filters['date_to'], 'today');
+}
 
-$out = fopen('php://output', 'w');
-fputcsv($out, ['medConnect BHW Activity Log']);
-fputcsv($out, ['Generated', date('Y-m-d H:i:s')]);
-fputcsv($out, ['Total Rows', count($rows)]);
-fputcsv($out, []);
-fputcsv($out, ['Date', 'Time', 'Action', 'Patient', 'Module', 'IP Address', 'Device', 'Status', 'Description']);
+$out = csv_export_begin('BHW_Activity_Log_' . date('Y-m-d') . '.csv');
+csv_export_row($out, ['medConnect BHW Activity Log']);
+csv_export_row($out, ['Filters', $filterParts !== [] ? implode('; ', $filterParts) : 'None']);
+csv_export_row($out, ['Generated', csv_export_generated_at()]);
+csv_export_row($out, ['Total Rows', count($rows) < $total ? count($rows) . ' of ' . $total : count($rows)]);
+csv_export_row($out, []);
+csv_export_row($out, ['Date', 'Time', 'Action', 'Patient', 'Module', 'IP Address', 'Device', 'Status', 'Description']);
 
 foreach ($rows as $row) {
-    fputcsv($out, [
+    csv_export_row($out, [
         $row['date'] ?? '',
         $row['time'] ?? '',
         $row['action'] ?? '',
-        $row['patient_name'] ?? '',
+        $row['patient_name'] ?? '—',
         $row['module'] ?? '',
-        $row['ip_address'] ?? '',
+        $row['ip_address'] ?? '—',
         $row['device'] ?? '',
-        $row['status'] ?? '',
+        csv_export_label((string) ($row['status'] ?? 'success')),
         $row['description'] ?? '',
     ]);
 }

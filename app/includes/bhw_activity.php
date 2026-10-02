@@ -135,7 +135,9 @@ function bhw_activity_list(PDO $pdo, int $bhwId, array $filters = []): array
     bhw_activity_ensure_schema($pdo);
 
     $page = max(1, (int) ($filters['page'] ?? 1));
-    $perPage = min(50, max(10, (int) ($filters['per_page'] ?? 20)));
+    // CSV export reads every matching row in one pass; the on-screen list stays paged at <= 50.
+    $maxPerPage = !empty($filters['export']) ? 10000 : 50;
+    $perPage = min($maxPerPage, max(10, (int) ($filters['per_page'] ?? 20)));
     $offset = ($page - 1) * $perPage;
 
     $where = [

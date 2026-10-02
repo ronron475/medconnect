@@ -437,8 +437,8 @@
     startReportsPolling();
   }
 
-  function exportUrl(fmt) {
-    var q = new URLSearchParams(Object.assign({ type: activeTab, format: fmt === 'excel' ? 'excel' : 'csv' }, filters()));
+  function exportUrl() {
+    var q = new URLSearchParams(Object.assign({ type: activeTab }, filters()));
     return base + '/app/api/bhw/export_report.php?' + q.toString();
   }
 
@@ -489,7 +489,7 @@
           return;
         }
         var link = document.createElement('a');
-        link.href = exportUrl(fmt);
+        link.href = exportUrl();
         link.rel = 'noopener';
         document.body.appendChild(link);
         link.click();

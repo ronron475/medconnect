@@ -358,23 +358,52 @@ ob_start();
     restoreListView();
   });
 
+  var BARANGAY_NAME = <?= json_encode((string) $bhw_barangay_name, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+
+  // Apostrophe-prefix text starting with = + - @ so spreadsheets never run it as a formula.
+  function csvCell(v) {
+    var s = v == null ? '' : String(v);
+    if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+
+  // Keep phone numbers as text so Excel does not drop the leading 0 or show 6.39E+11.
+  function phoneText(v) {
+    var s = dash(v);
+    return /^0\d{6,}$/.test(s.replace(/\s+/g, '')) ? "'" + s : s;
+  }
+
   function exportCsv() {
-    var headers = ['ID','Last Name','First Name','Email','Age','Gender','Contact','Barangay','Last Consult','Provider','Risk','Workflow','Status','Registered'];
-    var lines = [headers.join(',')];
+    var now = new Date();
+    var generated = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) +
+      ' at ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    var rows = [
+      ['medConnect Patient List'],
+      ['Barangay', BARANGAY_NAME],
+      ['Generated', generated],
+      ['Total Patients', filtered.length],
+      [],
+      ['Patient ID', 'Last Name', 'First Name', 'Email', 'Age', 'Sex', 'Purok', 'Barangay', 'Contact', 'Risk', 'Workflow', 'Account Status', 'Registered']
+    ];
     filtered.forEach(function (p) {
-      lines.push([
-        p.id, p.last_name, p.first_name, p.email, p.age, p.gender, p.contact_number, p.barangay,
-        p.last_consult, p.provider_name, p.risk_level,
-        WORKFLOW_LABELS[(p.workflow_status || 'registered').toLowerCase()] || p.workflow_status,
-        p.is_active ? 'Active' : 'Inactive', p.created_at
-      ].map(function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }).join(','));
+      rows.push([
+        p.id, dash(p.last_name), dash(p.first_name), dash(p.email), dash(p.age), fmtGender(p.gender),
+        dash(p.purok), dash(p.barangay || BARANGAY_NAME), phoneText(p.contact_number), p.risk_level || 'None',
+        WORKFLOW_LABELS[(p.workflow_status || 'registered').toLowerCase()] || dash(p.workflow_status),
+        p.is_active ? 'Active' : 'Inactive', fmtDate(p.created_at)
+      ]);
     });
-    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+    var csv = rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n');
+    var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+    var slug = String(BARANGAY_NAME || 'Barangay').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    var stamp = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'patients-barangay.csv';
+    a.download = 'Patient_List_' + slug + '_' + stamp + '.csv';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
 
   var searchTimer = null;
