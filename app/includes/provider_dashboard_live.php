@@ -188,6 +188,7 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         'pending'      => 0,
         'urgent'       => 0,
         'ongoing'      => 0,
+        'documentation_pending' => 0,
         'completed'    => 0,
         'missed'       => 0,
         'triage_pending' => 0,
@@ -243,13 +244,10 @@ function provider_dashboard_live_payload(PDO $pdo, int $providerId, string $peri
         $s->execute([$providerId]);
         $stats['triage_pending'] = (int) $s->fetchColumn();
 
-        $s = $pdo->prepare("
-            SELECT COUNT(*)
-            FROM consultations
-            WHERE provider_id = ? AND consult_date = CURDATE() AND status = 'in_consultation'
-        ");
-        $s->execute([$providerId]);
-        $stats['ongoing'] = (int) $s->fetchColumn();
+        require_once dirname(__DIR__, 2) . '/resources/views/provider/partials/queue_helpers.php';
+        $inConsultation = queue_in_consultation_counts_today($pdo, $providerId);
+        $stats['ongoing'] = $inConsultation['ongoing'];
+        $stats['documentation_pending'] = $inConsultation['documentation_pending'];
 
         $s = $pdo->prepare("
             SELECT COUNT(*)

@@ -210,9 +210,13 @@ function consultation_video_history_summary(
             }
             return $empty;
         }
-        $empty['has_session'] = (bool) $videoRow;
-        $empty['video_status_label'] = 'Ongoing';
-        return $empty;
+        // An ended room under an open consultation still awaits the Final Assessment;
+        // fall through so the ended-session details below are reported.
+        if (!$videoRow || $vsStatus !== 'ended') {
+            $empty['has_session'] = (bool) $videoRow;
+            $empty['video_status_label'] = 'Ongoing';
+            return $empty;
+        }
     }
 
     if (!$videoRow) {
@@ -306,6 +310,9 @@ function consultation_video_history_summary(
             $summary['session_outcome_label'] = 'Final Assessment required';
             if (!empty($durationSnap['ended_early'])) {
                 $summary['session_outcome_label'] = 'Final Assessment required — Ended early';
+            }
+            if ($status === 'in_consultation') {
+                $summary['status_label'] = $summary['session_outcome_label'];
             }
         }
 

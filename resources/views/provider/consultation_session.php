@@ -3925,6 +3925,7 @@ let timerActive = false;
 let mobileCallFullscreen = false;
 let desktopVideoExpanded = false;
 let trueCallFullscreen = false;
+let trueFullscreenOpenedMobileLayer = false;
 let videoCallClosed = <?= (!empty($history_view) || !empty($videoEndedPendingFinal)) ? 'true' : 'false' ?>;
 let lastEmergencyVideoSessionActive = false;
 const MOBILE_CONSULT_BREAK = 768;
@@ -3962,6 +3963,7 @@ function exitMobileCallFullscreen() {
         syncTrueFullscreenToFrame(false);
     }
     mobileCallFullscreen = false;
+    trueFullscreenOpenedMobileLayer = false;
     document.body.classList.remove('consultation-mobile-call-fullscreen');
     if (shell) shell.classList.remove('is-mobile-fullscreen');
     if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -4003,7 +4005,12 @@ function enterTrueCallFullscreen() {
         return;
     }
     trueCallFullscreen = true;
-    if (!mobileCallFullscreen) enterMobileCallFullscreen();
+    trueFullscreenOpenedMobileLayer = false;
+    if (!mobileCallFullscreen) {
+        enterMobileCallFullscreen();
+        // Mobile keeps this layer for the whole call; only desktop must undo it on exit.
+        trueFullscreenOpenedMobileLayer = mobileCallFullscreen && !isMobileConsultation();
+    }
     document.body.classList.add('consultation-true-fullscreen');
     syncTrueFullscreenMetrics();
     syncTrueFullscreenToFrame(true);
@@ -4021,6 +4028,10 @@ function exitTrueCallFullscreen() {
         }
     }
     syncTrueFullscreenToFrame(false);
+    if (trueFullscreenOpenedMobileLayer) {
+        trueFullscreenOpenedMobileLayer = false;
+        if (!isMobileConsultation()) exitMobileCallFullscreen();
+    }
     updateExpandButtons();
 }
 

@@ -35,6 +35,7 @@ try {
             c.early_start_responded_at,
             vs.room_token,
             {$joinedSql} AS patient_joined_at,
+            " . queue_documentation_flags_sql('c') . ",
             s.slot_date,
             s.start_time AS slot_start,
             s.end_time AS slot_end,
@@ -72,6 +73,7 @@ try {
         $access = queue_session_access($row);
         $status = queue_normalize_status((string) ($row['status'] ?? 'pending'));
         $consultDate = queue_normalize_date($row['consult_date'] ?? null);
+        $documentationPending = queue_is_documentation_pending($row);
 
         if ($consultDate === $today) {
             $stats['today']++;
@@ -89,7 +91,8 @@ try {
         $items[] = [
             'id'               => (int) ($row['id'] ?? 0),
             'status'           => $status,
-            'status_label'     => ucwords(str_replace('_', ' ', $status)),
+            'status_label'     => $documentationPending ? 'Documentation Pending' : ucwords(str_replace('_', ' ', $status)),
+            'documentation_pending' => $documentationPending,
             'session_allowed'  => (bool) $access['allowed'],
             'session_reason'   => (string) ($access['reason'] ?? ''),
             'scheduled_label'  => (string) ($access['scheduled_label'] ?? ''),

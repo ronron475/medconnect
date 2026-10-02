@@ -157,6 +157,22 @@ try {
             WHERE consultation_id = ? AND status = 'active' AND room_token = ?
         ")->execute([$consultation_id, $token]);
     } else {
+        if ($consultStatus === 'in_consultation') {
+            $flagStmt = $pdo->prepare('SELECT ' . queue_documentation_flags_sql('c') . ' FROM consultations c WHERE c.id = ? LIMIT 1');
+            $flagStmt->execute([$consultation_id]);
+            $flags = $flagStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            if (queue_is_documentation_pending(['status' => $consultStatus, 'room_token' => ''] + $flags)) {
+                $pdo->rollBack();
+                ob_end_clean();
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Final Assessment is required before starting another video session.',
+                    'code'    => 'final_assessment_required',
+                ]);
+                exit;
+            }
+        }
+
         $token = bin2hex(random_bytes(16));
         $ins = $pdo->prepare("
             INSERT INTO video_sessions (consultation_id, room_token, status, started_at)

@@ -66,6 +66,7 @@
     setText('[data-live-stat="ongoing"]', stats.ongoing || 0);
     setText('[data-live-stat="completed"]', stats.completed || 0);
     setText('[data-live-status="ongoing"]', stats.ongoing || 0);
+    setText('[data-live-status="documentation_pending"]', stats.documentation_pending || 0);
     setText('[data-live-status="completed"]', stats.completed || 0);
 
     var urgentWrap = document.querySelector('[data-live-urgent-wrap]');

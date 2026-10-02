@@ -46,7 +46,9 @@
     let html = '<div class="queue-actions">';
 
     if (allowed) {
-      const label = hasRoom ? 'Enter Session' : 'Open &amp; Start';
+      const label = item.documentation_pending
+        ? 'Continue Assessment'
+        : (hasRoom ? 'Enter Session' : 'Open &amp; Start');
       html +=
         '<a href="' + escapeHtml(sessionUrl) + '" class="queue-btn primary queue-btn--live-ready">' +
         label + '</a>';
