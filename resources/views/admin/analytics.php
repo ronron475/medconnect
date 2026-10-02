@@ -12,7 +12,7 @@ if (!defined('BASE_PATH')) {
 require_once __DIR__ . '/_portal_access.php';
 require_once BASE_PATH . '/app/includes/admin_operational_reports.php';
 
-$page_title = 'Operational Reports & Analytics';
+$page_title = 'Operational Reports';
 
 $reportPages = [];
 foreach (array_keys(admin_operational_report_catalog()) as $reportType) {

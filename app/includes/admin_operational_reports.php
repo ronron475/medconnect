@@ -1,7 +1,7 @@
 <?php
 /**
  * Shared Admin / SuperAdmin operational reports.
- * The Analytics tables and the CSV export both read these queries.
+ * The Operational Reports tables and the CSV export both read these queries.
  */
 
 declare(strict_types=1);
@@ -46,16 +46,6 @@ function admin_operational_report_catalog(): array
                       FROM users
                       ORDER BY id ASC',
             'table' => 'users',
-        ],
-        'audit' => [
-            'title' => 'System Audit Snapshot',
-            'description' => 'Condensed log of all security-related actions for the current billing cycle.',
-            'headers' => ['ID', 'User ID', 'Action', 'Description', 'IP Address', 'Timestamp'],
-            'sql' => 'SELECT id, patient_id, action_type, description, ip_address, created_at
-                      FROM patient_audit_logs
-                      ORDER BY created_at DESC
-                      LIMIT 500',
-            'table' => 'patient_audit_logs',
         ],
     ];
 }
@@ -151,7 +141,7 @@ function admin_operational_report_appointment_values(array $row): array
 }
 
 /**
- * Full report dataset used by CSV. Audit stays capped at the existing 500-row snapshot.
+ * Full report dataset used by CSV.
  *
  * @return list<list<string>>
  */
