@@ -209,6 +209,12 @@ function pmh_soap_field_meta(string $key): array
         </div>
         <?php endif; ?>
 
+        <?php if ($consultId > 0 && function_exists('clinical_note_has_signed_pdf') && clinical_note_has_signed_pdf($r)): ?>
+        <p class="pmh-file-card__link">
+          <a href="<?= htmlspecialchars(clinical_note_signed_pdf_url($consultId)) ?>" class="pmh-btn pmh-btn--outline pmh-btn--block" target="_blank" rel="noopener">View signed PDF</a>
+        </p>
+        <?php endif; ?>
+
         <?php if ($consultId > 0): ?>
         <p class="pmh-file-card__link">
           <a href="<?= htmlspecialchars(patient_consultation_detail_url($consultId)) ?>" class="pmh-btn pmh-btn--outline pmh-btn--block">View full consultation details</a>

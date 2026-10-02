@@ -45,14 +45,15 @@ final class BhwReports
             $sql .= " AND LOWER(TRIM({$pr}.gender)) = ? ";
             $params[] = $f['gender'];
         }
+        $ageExpr = bhw_pr_age_sql($pr);
         if ($f['age_group'] === 'children') {
-            $sql .= " AND CAST({$pr}.age AS UNSIGNED) BETWEEN 0 AND 12 ";
+            $sql .= " AND {$ageExpr} BETWEEN 0 AND 12 ";
         } elseif ($f['age_group'] === 'teens') {
-            $sql .= " AND CAST({$pr}.age AS UNSIGNED) BETWEEN 13 AND 17 ";
+            $sql .= " AND {$ageExpr} BETWEEN 13 AND 17 ";
         } elseif ($f['age_group'] === 'adults') {
-            $sql .= " AND CAST({$pr}.age AS UNSIGNED) BETWEEN 18 AND 59 ";
+            $sql .= " AND {$ageExpr} BETWEEN 18 AND 59 ";
         } elseif ($f['age_group'] === 'seniors') {
-            $sql .= " AND CAST({$pr}.age AS UNSIGNED) >= 60 ";
+            $sql .= " AND {$ageExpr} >= 60 ";
         }
 
         if ($f['date_from'] !== '') {
@@ -127,16 +128,17 @@ final class BhwReports
             WHERE {$pw} AND LOWER(TRIM(pr.gender)) = 'female'
         ", $params);
 
+        $ageExpr = bhw_pr_age_sql('pr');
         $seniors = self::scalar($pdo, "
             SELECT COUNT(*) FROM patient_registrations pr
             JOIN users u ON u.email = pr.email AND u.role = 'patient'
-            WHERE {$pw} AND CAST(pr.age AS UNSIGNED) >= 60
+            WHERE {$pw} AND {$ageExpr} >= 60
         ", $params);
 
         $children = self::scalar($pdo, "
             SELECT COUNT(*) FROM patient_registrations pr
             JOIN users u ON u.email = pr.email AND u.role = 'patient'
-            WHERE {$pw} AND CAST(pr.age AS UNSIGNED) BETWEEN 0 AND 12
+            WHERE {$pw} AND {$ageExpr} BETWEEN 0 AND 12
         ", $params);
 
         $cp = [];
@@ -255,18 +257,19 @@ final class BhwReports
             GROUP BY label ORDER BY label ASC LIMIT 24
         ", $params);
 
+        $ageExpr = bhw_pr_age_sql('pr');
         $ageDist = self::rows($pdo, "
             SELECT
               CASE
-                WHEN CAST(pr.age AS UNSIGNED) BETWEEN 0 AND 12 THEN 'Children (0-12)'
-                WHEN CAST(pr.age AS UNSIGNED) BETWEEN 13 AND 17 THEN 'Teens (13-17)'
-                WHEN CAST(pr.age AS UNSIGNED) BETWEEN 18 AND 59 THEN 'Adults (18-59)'
+                WHEN {$ageExpr} BETWEEN 0 AND 12 THEN 'Children (0-12)'
+                WHEN {$ageExpr} BETWEEN 13 AND 17 THEN 'Teens (13-17)'
+                WHEN {$ageExpr} BETWEEN 18 AND 59 THEN 'Adults (18-59)'
                 ELSE 'Seniors (60+)'
               END AS label,
               COUNT(*) AS value
             FROM patient_registrations pr
             JOIN users u ON u.email = pr.email AND u.role = 'patient'
-            WHERE {$pw}
+            WHERE {$pw} AND {$ageExpr} IS NOT NULL
             GROUP BY label
         ", $params);
 
@@ -559,17 +562,18 @@ final class BhwReports
             GROUP BY tr.chief_complaint ORDER BY value DESC LIMIT 10
         ", $params2);
 
+        $ageExpr = bhw_pr_age_sql('pr');
         $ageGroups = self::rows($pdo, "
             SELECT
               CASE
-                WHEN CAST(pr.age AS UNSIGNED) BETWEEN 0 AND 12 THEN 'Children'
-                WHEN CAST(pr.age AS UNSIGNED) BETWEEN 13 AND 17 THEN 'Teens'
-                WHEN CAST(pr.age AS UNSIGNED) BETWEEN 18 AND 59 THEN 'Adults'
+                WHEN {$ageExpr} BETWEEN 0 AND 12 THEN 'Children'
+                WHEN {$ageExpr} BETWEEN 13 AND 17 THEN 'Teens'
+                WHEN {$ageExpr} BETWEEN 18 AND 59 THEN 'Adults'
                 ELSE 'Seniors'
               END AS label, COUNT(*) AS value
             FROM patient_registrations pr
             JOIN users u ON u.email = pr.email AND u.role = 'patient'
-            WHERE {$pw}
+            WHERE {$pw} AND {$ageExpr} IS NOT NULL
             GROUP BY label
         ", $params);
 

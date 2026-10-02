@@ -167,7 +167,7 @@ ob_start();
   function fillSummary(p) {
     var fullName = dash((p.first_name || '') + ' ' + (p.last_name || ''));
     var active = isActive(p);
-    var addr = [p.barangay, p.city_municipality || 'Bago City', p.province].filter(Boolean).join(', ');
+    var addr = [p.purok, p.barangay, p.city_municipality || 'Bago City', p.province].filter(Boolean).join(', ');
     var pid = parseInt(p.id, 10) || 0;
     var q = pid ? '?patient_id=' + pid : '';
 

@@ -2645,34 +2645,30 @@ body.provider-body:has(.video-shell.is-call-active) .messages-fab {
     font-weight: 800;
     color: #0f172a;
 }
-.soap-sign__pad {
-    position: relative;
-    height: 160px;
+.soap-sign__file {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 6px;
+    padding: 10px;
     border: 1px dashed #0f766e;
     border-radius: 12px;
     background: #fff;
-    overflow: hidden;
-    touch-action: none;
+    font-size: 13px;
+    box-sizing: border-box;
 }
-.soap-sign__pad canvas {
-    display: block;
-    width: 100%;
-    height: 160px;
-    cursor: crosshair;
-    touch-action: none;
+.soap-sign__file-name {
+    margin: 6px 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f766e;
+    word-break: break-all;
 }
-.soap-sign__pad-hint {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #94a3b8;
-    pointer-events: none;
-}
-.soap-sign__pad.is-drawn .soap-sign__pad-hint { display: none; }
-.soap-sign__clear {
-    margin-top: 8px;
+.soap-sign__file-name:empty { display: none; }
+.soap-sign__pdf-link {
+    display: inline-flex;
+    margin-top: 10px;
+    text-decoration: none;
 }
 .soap-sign__image {
     display: block;
@@ -3066,16 +3062,10 @@ body.final-assessment-modal-open {
                     <div class="soap-sign" id="soapSignature">
                         <h3 class="soap-sign__title">Electronic Signature</h3>
                         <p class="soap-sign__doctor" id="soapProviderName"><?= htmlspecialchars($soap_esign_name !== '' ? $soap_esign_name : 'Provider name unavailable') ?></p>
-                        <div class="soap-sign__pad" id="soapSignatureWrap">
-                            <canvas id="soapSignatureCanvas" aria-label="Draw your signature"></canvas>
-                            <span class="soap-sign__pad-hint" id="soapSignaturePlaceholder">Sign here</span>
-                        </div>
-                        <button type="button" class="session-btn soap-sign__clear" id="soapSignatureClear">Clear</button>
-                        <p class="soap-sign__hint">Draw your signature with a mouse or finger. It is required before submission.</p>
-
-                        <input type="hidden" name="signature_method" id="soapSignatureMethod" value="drawn">
-                        <input type="hidden" name="signature_name" id="soapSignatureName" value="<?= htmlspecialchars($soap_esign_name) ?>">
-                        <input type="hidden" name="signature_data" id="soapSignatureData" value="">
+                        <label class="pd-label" for="soapSignedPdf">Signed SOAP note (PDF)</label>
+                        <input type="file" name="signed_pdf" id="soapSignedPdf" class="soap-sign__file" accept="application/pdf,.pdf">
+                        <p class="soap-sign__file-name" id="soapSignedPdfName" aria-live="polite"></p>
+                        <p class="soap-sign__hint">Upload the signed PDF of the completed SOAP note (PDF only, max <?= (int) round(CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES / 1048576) ?> MB). It is required before submission.</p>
 
                         <label class="soap-sign__confirm">
                             <input type="checkbox" name="soap_confirm" id="soapConfirm" value="1">
@@ -3094,7 +3084,9 @@ body.final-assessment-modal-open {
                                 This SOAP note has been electronically signed and finalized.
                             <?php endif; ?>
                         </p>
-                        <?php if (clinical_note_is_image_payload((string) ($clinical_note['signature_data'] ?? ''))): ?>
+                        <?php if (clinical_note_has_signed_pdf($clinical_note)): ?>
+                        <a class="session-btn soap-sign__pdf-link" href="<?= htmlspecialchars(clinical_note_signed_pdf_url((int) $consultation_id)) ?>" target="_blank" rel="noopener">View signed PDF</a>
+                        <?php elseif (clinical_note_is_image_payload((string) ($clinical_note['signature_data'] ?? ''))): ?>
                         <img class="soap-sign__image" alt="Electronic signature" src="<?= htmlspecialchars((string) $clinical_note['signature_data']) ?>">
                         <?php endif; ?>
                     </div>
@@ -3925,7 +3917,6 @@ body.final-assessment-modal-open {
 </div>
 
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
-<script src="<?= ASSET_BASE ?>/assets/js/soap-signature.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/soap-signature.js') ?>"></script>
 <script>
 // SESSION TIMER
 let seconds = <?= (int) $video_elapsed_seconds ?>;
@@ -5611,6 +5602,9 @@ async function saveSOAP(finalize = false) {
     syncSoapSignatureFields();
     const fd = new FormData(form);
     fd.append('csrf_token', sessionCsrf || document.body.dataset.csrf || '');
+    if (!finalize) {
+        fd.delete('signed_pdf');
+    }
     if (finalize) {
         fd.append('finalize', '1');
         fd.append('soap_confirm', document.getElementById('soapConfirm') && document.getElementById('soapConfirm').checked ? '1' : '0');
@@ -5641,17 +5635,36 @@ const soapSignerNames = <?= json_encode([
 ], JSON_UNESCAPED_UNICODE) ?>;
 
 let soapUiReady = false;
-let soapSignaturePad = null;
 let soapFinalizeBusy = false;
+const SOAP_SIGNED_PDF_MAX_BYTES = <?= (int) CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES ?>;
 
 function syncSoapSignatureFields() {
     const name = String(soapSignerNames.full || '').trim();
     const display = document.getElementById('soapProviderName');
-    const hiddenData = document.getElementById('soapSignatureData');
-    const hiddenName = document.getElementById('soapSignatureName');
     if (display && display.tagName !== 'INPUT') display.textContent = name || 'Provider name unavailable';
-    if (hiddenName) hiddenName.value = name;
-    if (hiddenData && soapSignaturePad) hiddenData.value = soapSignaturePad.toDataURL();
+    const input = document.getElementById('soapSignedPdf');
+    const label = document.getElementById('soapSignedPdfName');
+    const file = input && input.files && input.files[0] ? input.files[0] : null;
+    if (label) label.textContent = file ? 'Selected: ' + file.name : '';
+}
+
+function soapSignedPdfValidationMessage() {
+    const input = document.getElementById('soapSignedPdf');
+    const file = input && input.files && input.files[0] ? input.files[0] : null;
+    if (!file) {
+        return 'Upload the signed SOAP note PDF before submitting.';
+    }
+    const isPdf = /\.pdf$/i.test(file.name || '') && (!file.type || file.type === 'application/pdf');
+    if (!isPdf) {
+        return 'Only PDF files are accepted for the signed SOAP note.';
+    }
+    if (file.size <= 0) {
+        return 'The signed PDF is empty. Please choose another file.';
+    }
+    if (file.size > SOAP_SIGNED_PDF_MAX_BYTES) {
+        return 'The signed PDF is too large. Maximum size is ' + Math.round(SOAP_SIGNED_PDF_MAX_BYTES / 1048576) + ' MB.';
+    }
+    return '';
 }
 
 function soapClientValidationMessage() {
@@ -5674,8 +5687,9 @@ function soapClientValidationMessage() {
         return 'Select a final diagnosis from the ICD-10 list.';
     }
     syncSoapSignatureFields();
-    if (!soapSignaturePad || !soapSignaturePad.hasInk()) {
-        return 'Draw your electronic signature before submitting.';
+    const pdfMsg = soapSignedPdfValidationMessage();
+    if (pdfMsg) {
+        return pdfMsg;
     }
     if (!String(soapSignerNames.full || '').trim()) {
         return 'Provider identity could not be verified. Please refresh and try again.';
@@ -5776,22 +5790,12 @@ function initSoapSignatureUi() {
     if (soapUiReady) return;
     soapUiReady = true;
 
-    const canvas = document.getElementById('soapSignatureCanvas');
-    if (canvas && window.SoapSignaturePad) {
-        soapSignaturePad = new window.SoapSignaturePad(canvas, {
-            wrap: document.getElementById('soapSignatureWrap'),
-            placeholder: document.getElementById('soapSignaturePlaceholder')
-        });
-        soapSignaturePad.onChange = function () {
+    const signedPdfInput = document.getElementById('soapSignedPdf');
+    if (signedPdfInput) {
+        signedPdfInput.addEventListener('change', function () {
             syncSoapSignatureFields();
             updateSoapFinalizeReady();
-        };
-        const clearBtn = document.getElementById('soapSignatureClear');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', function () {
-                soapSignaturePad.clear();
-            });
-        }
+        });
     }
     initIcdSearch();
     syncSoapSignatureFields();
@@ -5805,7 +5809,6 @@ function initSoapSignatureUi() {
         form.addEventListener('change', updateSoapFinalizeReady);
         form.addEventListener('reset', function () {
             setTimeout(function () {
-                if (soapSignaturePad) soapSignaturePad.clear();
                 const diagnosis = document.getElementById('icdDiagnosis');
                 const search = document.getElementById('icdSearchInput');
                 if (diagnosis) diagnosis.value = '';

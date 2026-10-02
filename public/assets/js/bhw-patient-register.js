@@ -96,6 +96,9 @@
       full_name: document.getElementById('bhwRegName').value,
       contact_number: document.getElementById('bhwRegContact').value,
       email: document.getElementById('bhwRegEmail').value,
+      date_of_birth: document.getElementById('bhwRegDob').value,
+      gender: document.getElementById('bhwRegSex').value,
+      purok: document.getElementById('bhwRegPurok').value,
       allergies: document.getElementById('bhwRegAllergies').value,
       existing_conditions: document.getElementById('bhwRegConditions').value,
       current_medications: document.getElementById('bhwRegMeds').value,
@@ -134,6 +137,20 @@
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) poll();
   });
+
+  var purokList = document.getElementById('bhwRegPurokList');
+  if (purokList) {
+    BhwPortal.get('puroks.php', {}).then(function (r) {
+      if (!r || !r.success || !Array.isArray(r.puroks)) return;
+      r.puroks.forEach(function (row) {
+        var label = row && row.purok ? String(row.purok) : '';
+        if (!label) return;
+        var opt = document.createElement('option');
+        opt.value = label;
+        purokList.appendChild(opt);
+      });
+    }).catch(function () {});
+  }
 
   try {
     var saved = JSON.parse(sessionStorage.getItem(storageKey) || 'null');
