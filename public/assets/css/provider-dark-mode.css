@@ -2026,3 +2026,29 @@ html[data-theme-resolved='dark'] body.provider-body .ai-triage--low {
   background: rgba(16, 185, 129, 0.18) !important;
   color: #6ee7b7 !important;
 }
+
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric--patient { background: #1a2740 !important; }
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric--complaint { background: #1a2e28 !important; }
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric--triage { background: #241e38 !important; }
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric--schedule { background: #2a261c !important; }
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric--action { background: #1a2c2e !important; }
+
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric-value {
+  color: #f4f7fb !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-metric-label,
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-panel-link {
+  color: #8faabf !important;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-feed-row {
+  background: transparent !important;
+  border-top-color: #243347;
+}
+
+html[data-theme-resolved='dark'] body.provider-body .queue-page .queue-btn--opens {
+  background: #1c2838 !important;
+  border-color: #2d4160 !important;
+  color: #8faabf !important;
+}
