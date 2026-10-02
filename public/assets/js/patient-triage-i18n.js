@@ -70,6 +70,11 @@
       urg_submit: 'Please book an urgent consultation.',
       click_again_continue: 'Review the assessment, then tap “Submit Patient Complaint” to continue.',
       ai_preliminary: 'AI Assessment: {level}',
+      book_confirm_title: 'Confirm Video Consultation',
+      book_confirm_message: 'Are you sure you want to book this video consultation?',
+      book_confirm_cancel: 'Cancel',
+      book_confirm_ok: 'Confirm Booking',
+      book_confirm_type: 'Video Consultation',
     },
     fil: {
       language: 'Wika',
@@ -130,6 +135,11 @@
       urg_submit: 'Mangyaring mag-book ng urgent consultation.',
       click_again_continue: 'Suriin ang assessment, pagkatapos pindutin ang “Submit Patient Complaint” para magpatuloy.',
       ai_preliminary: 'AI Assessment: {level}',
+      book_confirm_title: 'Kumpirmahin ang Video Consultation',
+      book_confirm_message: 'Sigurado ka bang gusto mong i-book ang video consultation na ito?',
+      book_confirm_cancel: 'Kanselahin',
+      book_confirm_ok: 'Kumpirmahin ang Booking',
+      book_confirm_type: 'Video Consultation',
     },
     hil: {
       language: 'Lengwahe',
@@ -190,6 +200,11 @@
       urg_submit: 'Palihog mag-book sang urgent consultation.',
       click_again_continue: 'Tan-awa ang assessment, dayon i-tap ang “Submit Patient Complaint” para magpadayon.',
       ai_preliminary: 'AI Assessment: {level}',
+      book_confirm_title: 'Kumpirmaha ang Video Consultation',
+      book_confirm_message: 'Sigurado ka bala nga gusto mo i-book ini nga video consultation?',
+      book_confirm_cancel: 'Kanselaha',
+      book_confirm_ok: 'Kumpirmaha ang Pag-book',
+      book_confirm_type: 'Video Consultation',
     },
   };
 
@@ -308,8 +323,10 @@
    * Resolve display language for a new triage result.
    * Prefer API detection, then complaint wording, so defaults match what the patient used.
    * Manual dropdown changes still update live via setLang(..., 'manual').
+   * A manual choice always wins over auto-detection.
    */
   function resolveForComplaint(complaint, apiPayload) {
+    if (isManual()) return currentLang();
     var fromApi = langFromApi(apiPayload);
     if (fromApi) return setLang(fromApi, 'auto');
     var detected = detectFromText(complaint);

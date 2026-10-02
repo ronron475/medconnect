@@ -214,8 +214,44 @@ body.mc-vc-panel-open {
 
 .mc-vc-triage--emergency { background: #7f1d1d; color: #fecaca; }
 .mc-vc-triage--urgent { background: #78350f; color: #fde68a; }
-.mc-vc-triage--routine { background: #14532d; color: #bbf7d0; }
+.mc-vc-triage--routine,
+.mc-vc-triage--non_urgent { background: #14532d; color: #bbf7d0; }
 .mc-vc-triage--unknown { background: #334155; color: #cbd5e1; }
+
+.mc-vc-info-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.75rem;
+  margin: -0.5rem 0 1rem;
+  font-size: 0.8rem;
+}
+
+.mc-vc-info-state {
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.mc-vc-info-state--live {
+  color: #86efac;
+}
+
+.mc-vc-info-type {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.mc-vc-info-meta {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.mc-vc-info-concern {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
 
 .mc-vc-chat-log {
   flex: 1;

@@ -3514,7 +3514,31 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       if (!isPatient || patientSoapRedirected) return;
       patientSoapRedirected = true;
       stopPatientCallAfterServerEnd();
-      navigatePatientDashboard();
+
+      const enhancements = window.McVideoRoomEnhancements;
+      if (enhancements && typeof enhancements.markCallEnded === 'function') {
+        enhancements.markCallEnded();
+      }
+      if (enhancements && typeof enhancements.showPostCall === 'function') {
+        enhancements.showPostCall();
+      }
+      const postCallModal = document.getElementById('mcVcPostCallModal');
+      if (!postCallModal || postCallModal.hidden) {
+        navigatePatientDashboard();
+        return;
+      }
+
+      if (embeddedInSession) {
+        notifyParent({
+          type: 'medconnect:call-completed',
+          role: userRole,
+          token: roomToken,
+          consultationId: consultationId,
+          reason: 'consultation_completed',
+        });
+      } else {
+        clearVideoShellStorage();
+      }
     }
 
     function handlePeerLeftMessage(data) {

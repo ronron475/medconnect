@@ -27,7 +27,7 @@ $bookUrl = $asset . '/views/patient/triage.php';
     <h2 class="mc-urgency-modal__title" id="mcPatientUrgencyTitle">Regular Check-up Recommended</h2>
     <label class="mc-urgency-lang" for="mcPatientUrgencyLang">
       <span class="mc-urgency-lang__label" data-i18n="language">Language</span>
-      <select id="mcPatientUrgencyLang" class="mc-urgency-lang__select" aria-label="Language">
+      <select id="mcPatientUrgencyLang" class="mc-urgency-lang__select" aria-label="Language" data-mc-native-select="1">
         <option value="en">English</option>
         <option value="hil">Hiligaynon</option>
         <option value="fil">Tagalog</option>
@@ -72,6 +72,40 @@ $bookUrl = $asset . '/views/patient/triage.php';
       <button type="button" class="mc-urgency-modal__btn mc-urgency-modal__btn--ghost" id="mcPatientUrgencyContinueConsult" data-mc-urgency-close hidden>
         Continue Consultation
       </button>
+    </div>
+  </div>
+</div>
+
+<div
+  id="mcPatientBookConfirm"
+  class="mc-urgency-modal mc-book-confirm"
+  hidden
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="mcPatientBookConfirmTitle"
+  aria-describedby="mcPatientBookConfirmMessage"
+>
+  <div class="mc-urgency-modal__backdrop" data-mc-book-confirm-cancel></div>
+  <div class="mc-urgency-modal__card mc-book-confirm__card" role="document">
+    <div class="mc-urgency-modal__icon mc-book-confirm__icon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="17" rx="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/>
+        <line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+        <path d="M10 12.5v5l4.5-2.5z"/>
+      </svg>
+    </div>
+    <h2 class="mc-urgency-modal__title" id="mcPatientBookConfirmTitle">Confirm Video Consultation</h2>
+    <div class="mc-book-confirm__details">
+      <strong class="mc-book-confirm__doctor" id="mcPatientBookConfirmDoctor"></strong>
+      <span class="mc-book-confirm__type" id="mcPatientBookConfirmType">Video Consultation</span>
+      <span class="mc-book-confirm__time" id="mcPatientBookConfirmTime"></span>
+    </div>
+    <p class="mc-urgency-modal__message" id="mcPatientBookConfirmMessage">Are you sure you want to book this video consultation?</p>
+    <div class="mc-urgency-modal__actions">
+      <button type="button" class="mc-urgency-modal__btn mc-urgency-modal__btn--ghost" id="mcPatientBookConfirmCancel" data-mc-book-confirm-cancel>Cancel</button>
+      <button type="button" class="mc-urgency-modal__btn mc-urgency-modal__btn--primary" id="mcPatientBookConfirmOk">Confirm Booking</button>
     </div>
   </div>
 </div>

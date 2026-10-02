@@ -1921,6 +1921,7 @@
       level: '',
       complaint: '',
       inFlight: false,
+      bookingReady: false,
     };
 
     function setSubmitLabel(text) {
@@ -2049,8 +2050,12 @@
       }
     } catch (_) { /* ignore */ }
 
+    let urgentConfirmedSlotId = '';
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const confirmedSlotId = urgentConfirmedSlotId;
+      urgentConfirmedSlotId = '';
       if (twoStep.inFlight) return;
 
       const complaint = (form.querySelector('#chief_complaint')?.value || '').trim();
@@ -2069,7 +2074,7 @@
         return;
       }
 
-      if (!skipTwoStep) {
+      if (!skipTwoStep && !twoStep.bookingReady) {
         twoStep.inFlight = true;
         try {
           const readyForAssign = twoStep.awaitingSecond
@@ -2303,23 +2308,26 @@
           }
 
           setAssignedProviderDisplay(assignedId, payload.assigned_provider_name || '', payload.selected_slot_label || '');
-          const slotInput = document.getElementById('booking_slot_id');
-          if (slotInput && selectedSlotId > 0) {
-            slotInput.value = String(selectedSlotId);
-          }
           if (typeof window.refreshBookingPicker === 'function') {
             window.refreshBookingPicker();
           }
+          twoStep.bookingReady = true;
+          twoStep.awaitingSecond = false;
 
+          const selectSlotMsg = 'Please select an available appointment time below, then click "Book Appointment".';
+          const continueHint = document.getElementById('triageContinueHint');
+          if (continueHint) {
+            continueHint.textContent = selectSlotMsg;
+          }
           showTriageAlert(
             alertEl,
             'success',
             (payload.assigned_provider_name
-              ? ('Automatically assigned: Dr. ' + String(payload.assigned_provider_name).replace(/^Dr\.?\s+/i, '') +
-                (payload.selected_slot_label ? (' · ' + payload.selected_slot_label) : '') + '. ')
+              ? ('Automatically assigned: Dr. ' + String(payload.assigned_provider_name).replace(/^Dr\.?\s+/i, '') + '. ')
               : '') +
-              'Booking your real available slot…'
+              selectSlotMsg
           );
+          return;
         } catch (err) {
           showTriageAlert(
             alertEl,
@@ -2333,7 +2341,9 @@
           twoStep.inFlight = false;
           if (submitBtn) {
             submitBtn.disabled = false;
-            setSubmitLabel(twoStep.interviewInProgress ? 'Submit answer' : SUBMIT_COMPLAINT_LABEL);
+            setSubmitLabel(twoStep.bookingReady
+              ? 'Book Appointment'
+              : (twoStep.interviewInProgress ? 'Submit answer' : SUBMIT_COMPLAINT_LABEL));
           }
         }
       }
@@ -2341,10 +2351,36 @@
       const slotId = document.getElementById('booking_slot_id')?.value || '';
 
       if (!slotId && !blockTele) {
-        showTriageAlert(alertEl, 'error', skipTwoStep
+        showTriageAlert(alertEl, 'error', (skipTwoStep || twoStep.bookingReady)
           ? 'Please select an available appointment slot.'
           : CONTINUE_MSG);
         return;
+      }
+
+      // URGENT on-page choice only: Confirm Booking re-submits, so the slot is re-read and must still match.
+      if (window.BOOKING_URGENT_CHOICE === true && !blockTele && confirmedSlotId !== slotId) {
+        if (!(parseInt(slotId, 10) > 0)) {
+          showTriageAlert(alertEl, 'error', 'Please select an available appointment slot.');
+          return;
+        }
+        const urgencyApi = window.mcPatientUrgencyModal;
+        const confirmEl = document.getElementById('mcPatientBookConfirm');
+        if (urgencyApi && typeof urgencyApi.confirmBooking === 'function' && confirmEl) {
+          if (!confirmEl.hidden) return;
+          const selectedBox = document.querySelector('#bookingSlotsWrap .mc-urgent-selected-slot');
+          const doctorName = (selectedBox?.querySelector('.mc-urgent-selected-slot__title')?.textContent || '').trim();
+          const slotTime = (selectedBox?.querySelector('.mc-urgent-selected-slot__time')?.textContent || '').trim();
+          urgencyApi.confirmBooking(doctorName, slotTime, () => {
+            urgentConfirmedSlotId = slotId;
+            if (typeof form.requestSubmit === 'function') {
+              form.requestSubmit();
+            } else {
+              form.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+            urgentConfirmedSlotId = '';
+          });
+          return;
+        }
       }
 
       const fd = new FormData(form);
