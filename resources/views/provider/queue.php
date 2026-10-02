@@ -252,31 +252,56 @@ $page_styles = ['provider_queue.css', 'provider_session_alert.css'];
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
+<?php
+$queue_metric_cards = [
+    'patient' => 0,
+    'complaint' => 0,
+    'triage' => 0,
+    'schedule' => 0,
+    'action' => 0,
+];
+foreach ($queue_items as $metric_item) {
+    $queue_metric_cards['patient']++;
+    $metric_complaint = trim((string) ($metric_item['chief_complaint'] ?? ''));
+    if ($metric_complaint === '') {
+        $metric_complaint = trim((string) ($metric_item['consult_type'] ?? ''));
+    }
+    if ($metric_complaint !== '') {
+        $queue_metric_cards['complaint']++;
+    }
+    $metric_urgency = trim((string) ($metric_item['urgency_label'] ?? ''));
+    if ($metric_urgency !== '' && strcasecmp($metric_urgency, 'Not triaged') !== 0) {
+        $queue_metric_cards['triage']++;
+    }
+    if (trim((string) ($metric_item['consult_date'] ?? '')) !== '') {
+        $queue_metric_cards['schedule']++;
+    }
+    if (!in_array((string) ($metric_item['status'] ?? ''), ['completed', 'cancelled'], true)) {
+        $queue_metric_cards['action']++;
+    }
+}
+?>
 <div class="queue-page">
-    <section class="queue-hero provider-page-intro">
-        <p class="queue-subtitle">Track assigned patients, live rooms, triage priority, and session status from one workspace.</p>
-    </section>
-
     <section class="queue-metrics" aria-label="Queue summary">
-        <div class="queue-metric teal">
-            <div class="queue-metric-label">Today</div>
-            <div class="queue-metric-value" data-queue-stat="today"><?= (int)$queue_stats['today'] ?></div>
+        <div class="queue-metric queue-metric--patient">
+            <div class="queue-metric-value"><?= (int) $queue_metric_cards['patient'] ?></div>
+            <div class="queue-metric-label">Patient</div>
         </div>
-        <div class="queue-metric blue">
-            <div class="queue-metric-label">Waiting</div>
-            <div class="queue-metric-value" data-queue-stat="waiting"><?= (int)$queue_stats['waiting'] ?></div>
+        <div class="queue-metric queue-metric--complaint">
+            <div class="queue-metric-value"><?= (int) $queue_metric_cards['complaint'] ?></div>
+            <div class="queue-metric-label">Primary Complaint</div>
         </div>
-        <div class="queue-metric red">
-            <div class="queue-metric-label">Urgent</div>
-            <div class="queue-metric-value"><?= (int)$queue_stats['urgent'] ?></div>
+        <div class="queue-metric queue-metric--triage">
+            <div class="queue-metric-value"><?= (int) $queue_metric_cards['triage'] ?></div>
+            <div class="queue-metric-label">Triage</div>
         </div>
-        <div class="queue-metric green">
-            <div class="queue-metric-label">Active</div>
-            <div class="queue-metric-value" data-queue-stat="active"><?= (int)$queue_stats['active'] ?></div>
+        <div class="queue-metric queue-metric--schedule">
+            <div class="queue-metric-value"><?= (int) $queue_metric_cards['schedule'] ?></div>
+            <div class="queue-metric-label">Schedule</div>
         </div>
-        <div class="queue-metric gray">
-            <div class="queue-metric-label">Completed</div>
-            <div class="queue-metric-value" data-queue-stat="completed"><?= (int)$queue_stats['completed'] ?></div>
+        <div class="queue-metric queue-metric--action">
+            <div class="queue-metric-value"><?= (int) $queue_metric_cards['action'] ?></div>
+            <div class="queue-metric-label">Action</div>
         </div>
     </section>
 
@@ -286,7 +311,7 @@ require_once __DIR__ . '/partials/layout_open.php';
         <?php if ($urgent_followup_queue): ?>
         <div class="queue-panel queue-panel--urgent-followup" id="urgent-followup-queue">
             <div class="queue-panel-header">
-                <div class="queue-panel-title"><?= icon('alert') ?> Urgent Follow-up Queue</div>
+                <div class="queue-panel-title">Urgent Follow-up Queue</div>
                 <span class="queue-badge urgent"><?= count($urgent_followup_queue) ?> case<?= count($urgent_followup_queue) !== 1 ? 's' : '' ?></span>
             </div>
             <div class="queue-table-wrap">
@@ -343,7 +368,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                                 <?php elseif ($canAccept): ?>
                                     <div class="queue-actions">
                                         <?php if ($canStartNow): ?>
-                                        <button type="button" class="queue-btn primary uf-accept-btn" data-case-id="<?= (int) $ufCase['id'] ?>" data-start-video="1"><?= icon_sm('video') ?> Start Now</button>
+                                        <button type="button" class="queue-btn primary uf-accept-btn" data-case-id="<?= (int) $ufCase['id'] ?>" data-start-video="1">Start Now</button>
                                         <?php endif; ?>
                                         <button type="button" class="queue-btn uf-accept-btn" data-case-id="<?= (int) $ufCase['id'] ?>" data-start-video="0">Accept</button>
                                     </div>
@@ -362,8 +387,8 @@ require_once __DIR__ . '/partials/layout_open.php';
         <div class="queue-layout-inner">
         <div class="queue-panel">
             <div class="queue-panel-header">
-                <div class="queue-panel-title"><?= icon('users') ?> Assigned Consultation Queue</div>
-                <a href="schedule.php" class="queue-btn">View Schedule</a>
+                <div class="queue-panel-title">Assigned Consultation Queue</div>
+                <a href="schedule.php" class="queue-panel-link">View Schedule</a>
             </div>
             <div class="queue-table-wrap">
                 <table class="queue-table">
@@ -447,20 +472,20 @@ require_once __DIR__ . '/partials/layout_open.php';
                                     <div class="queue-actions">
                                         <?php if ($session_access['allowed']): ?>
                                             <?php if (!empty($item['room_token']) || ($status === 'in_consultation')): ?>
-                                                <a href="<?= $session_url ?>" class="queue-btn primary"><?= icon_sm('video') ?> Enter Session</a>
+                                                <a href="<?= $session_url ?>" class="queue-btn primary">Enter Session</a>
                                             <?php else: ?>
-                                                <a href="<?= $session_url ?>" class="queue-btn primary"><?= icon_sm('video') ?> Open &amp; Start</a>
+                                                <a href="<?= $session_url ?>" class="queue-btn primary">Open &amp; Start</a>
                                             <?php endif; ?>
                                         <?php else: ?>
                                             <button
                                                 type="button"
-                                                class="queue-btn primary is-disabled queue-open-session-blocked"
+                                                class="queue-btn queue-btn--opens queue-open-session-blocked"
                                                 data-reason="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>"
                                                 title="<?= htmlspecialchars($session_access['reason'], ENT_QUOTES, 'UTF-8') ?>"
-                                            ><?= icon_sm('video') ?> Opens at <?= htmlspecialchars($opens_label) ?></button>
+                                            >Opens at <?= htmlspecialchars($opens_label) ?></button>
                                         <?php endif; ?>
                                         <?php if (!empty($item['room_token']) && $session_access['allowed']): ?>
-                                            <a href="<?= ASSET_BASE ?>/views/consultation/video_room.php?token=<?= urlencode($item['room_token']) ?>" class="queue-btn"><?= icon_sm('monitor') ?> Live Room</a>
+                                            <a href="<?= ASSET_BASE ?>/views/consultation/video_room.php?token=<?= urlencode($item['room_token']) ?>" class="queue-btn">Live Room</a>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -472,51 +497,35 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
         </div>
 
-        <aside class="queue-sidebar">
-            <div class="queue-panel">
-                <div class="queue-panel-header">
-                    <div class="queue-panel-title"><?= icon('activity') ?> Triage Feed</div>
-                    <a href="triage.php" class="queue-btn">Review All</a>
-                </div>
-                <div class="queue-feed">
-                    <?php if (!$triage_feed): ?>
-                        <div class="queue-empty">No triage cases recorded.</div>
-                    <?php else: ?>
-                        <?php foreach ($triage_feed as $case):
-                            $urgent = queue_is_urgent($case['level'] ?? '', $case['urgency_label'] ?? '');
-                            $case_name = trim(($case['first_name'] ?? '') . ' ' . ($case['last_name'] ?? '')) ?: 'Patient';
-                            $feed_complaint = trim((string) ($case['chief_complaint'] ?? ''));
-                            $feed_symptoms = queue_symptoms_distinct_from_complaint(
-                                queue_format_symptoms($case['symptoms'] ?? ''),
-                                $feed_complaint
-                            );
-                        ?>
-                        <div class="queue-feed-card <?= $urgent ? 'urgent' : 'routine' ?>">
-                            <div class="queue-feed-top">
-                                <div>
-                                    <div class="queue-feed-name"><?= htmlspecialchars($case_name ?: 'Patient') ?></div>
-                                    <div class="queue-feed-time"><?= htmlspecialchars(date('M j, Y', strtotime($case['assessed_at'])) . ' • ' . date('g:i A', strtotime($case['assessed_at']))) ?></div>
-                                </div>
-                                <span class="queue-badge <?= $urgent ? 'urgent' : 'routine' ?>"><?= $urgent ? 'Urgent' : 'Routine' ?></span>
-                            </div>
-                            <?php if ($feed_complaint !== ''): ?>
-                            <div class="queue-feed-complaint"><?= htmlspecialchars($feed_complaint) ?></div>
-                            <?php endif; ?>
-                            <?php if ($feed_symptoms): ?>
-                            <div class="queue-chip-list">
-                                <?php foreach ($feed_symptoms as $symptom): ?>
-                                <span class="queue-chip"><?= htmlspecialchars($symptom) ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                            <?php elseif ($feed_complaint === ''): ?>
-                            <div class="queue-feed-complaint">No complaint recorded.</div>
-                            <?php endif; ?>
-                        </div>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </div>
+        <div class="queue-panel">
+            <div class="queue-panel-header">
+                <div class="queue-panel-title">Triage Feed</div>
+                <a href="triage.php" class="queue-panel-link">Review All</a>
             </div>
-        </aside>
+            <div class="queue-feed">
+                <?php if (!$triage_feed): ?>
+                    <div class="queue-empty">No triage cases recorded.</div>
+                <?php else: ?>
+                    <?php foreach ($triage_feed as $case):
+                        $urgent = queue_is_urgent($case['level'] ?? '', $case['urgency_label'] ?? '');
+                        $case_name = trim(($case['first_name'] ?? '') . ' ' . ($case['last_name'] ?? '')) ?: 'Patient';
+                        $feed_complaint = trim((string) ($case['chief_complaint'] ?? ''));
+                        if ($feed_complaint === '') {
+                            $feed_complaint = 'No complaint recorded.';
+                        }
+                    ?>
+                    <div class="queue-feed-row <?= $urgent ? 'urgent' : 'routine' ?>">
+                        <div class="queue-feed-main">
+                            <div class="queue-feed-name"><?= htmlspecialchars($case_name ?: 'Patient') ?></div>
+                            <div class="queue-feed-time"><?= htmlspecialchars(date('M j, Y', strtotime($case['assessed_at'])) . ' · ' . date('g:i A', strtotime($case['assessed_at']))) ?></div>
+                        </div>
+                        <div class="queue-feed-complaint"><?= htmlspecialchars($feed_complaint) ?></div>
+                        <span class="queue-badge <?= $urgent ? 'urgent' : 'routine' ?>"><?= $urgent ? 'Urgent' : 'Routine' ?></span>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
         </div>
     </section>
 </div>

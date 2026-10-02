@@ -39,14 +39,6 @@
     }
   }
 
-  function videoIcon() {
-    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z"/></svg>';
-  }
-
-  function monitorIcon() {
-    return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>';
-  }
-
   function renderActions(item) {
     const allowed = !!item.session_allowed;
     const sessionUrl = item.session_url || (base + '/views/provider/consultation_session.php?id=' + item.id);
@@ -57,11 +49,10 @@
       const label = hasRoom ? 'Enter Session' : 'Open &amp; Start';
       html +=
         '<a href="' + escapeHtml(sessionUrl) + '" class="queue-btn primary queue-btn--live-ready">' +
-        videoIcon() + ' ' + label + '</a>';
+        label + '</a>';
       if (item.live_room_url) {
         html +=
-          '<a href="' + escapeHtml(item.live_room_url) + '" class="queue-btn">' +
-          monitorIcon() + ' Live Room</a>';
+          '<a href="' + escapeHtml(item.live_room_url) + '" class="queue-btn">Live Room</a>';
       }
     } else {
       const reason = item.session_reason || 'This session cannot be opened right now.';
@@ -69,9 +60,9 @@
         ? 'Opens at ' + escapeHtml(item.opens_at_label)
         : 'Opens at Schedule';
       html +=
-        '<button type="button" class="queue-btn primary is-disabled queue-open-session-blocked" ' +
+        '<button type="button" class="queue-btn queue-btn--opens queue-open-session-blocked" ' +
         'data-reason="' + escapeHtml(reason) + '" title="' + escapeHtml(reason) + '">' +
-        videoIcon() + ' ' + label + '</button>';
+        label + '</button>';
     }
 
     html += '</div>';
