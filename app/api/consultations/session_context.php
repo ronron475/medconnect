@@ -222,6 +222,15 @@ $patientPanel = [
     'ended_label'       => (string) ($durationSnap['ended_label'] ?? ''),
     'actual_duration_label' => (string) ($durationSnap['actual_duration_label'] ?? ''),
     'status_label'      => (string) ($durationSnap['status_label'] ?? ''),
+    'consultation_status' => $consultStatus,
+    'patient_original_complaint' => trim((string) ($clinical['patient_original_complaint'] ?? '')),
+    'symptoms'          => array_values(array_filter(
+        array_map(
+            static fn ($s): string => is_string($s) ? trim($s) : '',
+            is_array($clinical['symptoms'] ?? null) ? $clinical['symptoms'] : []
+        ),
+        static fn (string $s): bool => $s !== ''
+    )),
 ];
 
 $providerPanel = [

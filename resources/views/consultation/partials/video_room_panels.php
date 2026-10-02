@@ -14,6 +14,38 @@ $info_sub = !empty($is_patient)
         (!empty($patient_age_seed) ? $patient_age_seed . ' yrs' : '—')
         . ' · ' . (trim((string) ($session['patient_sex'] ?? '')) !== '' ? (string) $session['patient_sex'] : '—')
     );
+
+$seed_consult_status = strtolower(trim((string) ($session['consult_status'] ?? '')));
+$seed_original_complaint = '';
+$seed_status_label = '';
+$seed_started_label = '';
+$seed_scheduled_duration_label = '';
+if (!empty($is_patient)) {
+    if (isset($pdo) && $pdo instanceof PDO && (int) $consultation_id > 0) {
+        try {
+            require_once BASE_PATH . '/app/includes/provider_clinical_support.php';
+            $seed_original = provider_clinical_support_patient_original(
+                $pdo,
+                (int) $consultation_id,
+                (int) ($session['patient_id'] ?? 0)
+            );
+            $seed_original_complaint = trim((string) ($seed_original['complaint'] ?? ''));
+        } catch (Throwable $e) {
+            error_log('video_room_panels original complaint: ' . $e->getMessage());
+        }
+    }
+    if (function_exists('consultation_duration_snapshot')) {
+        $seed_snap = consultation_duration_snapshot(
+            trim((string) ($video_started_at ?? '')) !== '' ? (string) $video_started_at : null,
+            null,
+            (int) ($scheduled_duration_seconds ?? 0),
+            $seed_consult_status
+        );
+        $seed_status_label = (string) ($seed_snap['status_label'] ?? '');
+        $seed_started_label = (string) ($seed_snap['started_label'] ?? '');
+        $seed_scheduled_duration_label = (string) ($seed_snap['scheduled_duration_label'] ?? '');
+    }
+}
 ?>
 <div id="mcVcPanelBackdrop" class="mc-vc-side-backdrop" hidden aria-hidden="true"></div>
 <aside id="mcVcSidePanel" class="mc-vc-side-panel" aria-label="<?= !empty($is_patient) ? 'Consultation details' : 'Patient information' ?>" hidden>
@@ -27,17 +59,52 @@ $info_sub = !empty($is_patient)
   </div>
   <div class="mc-vc-side-panel__body">
     <div class="mc-vc-side-panel__pane is-active" data-panel-pane="info" id="mcVcInfoPane">
+      <?php if (!empty($is_patient)): ?>
+      <div class="mc-vc-info-card" id="mcVcInfoSeed"
+        data-original-complaint="<?= htmlspecialchars($seed_original_complaint) ?>"
+        data-consultation-status="<?= htmlspecialchars($seed_consult_status) ?>"
+        data-status-label="<?= htmlspecialchars($seed_status_label) ?>"
+        data-started-label="<?= htmlspecialchars($seed_started_label) ?>"
+        data-scheduled-duration-label="<?= htmlspecialchars($seed_scheduled_duration_label) ?>">
+        <h3 class="mc-vc-info-card__title"><?= htmlspecialchars($info_title) ?></h3>
+        <p class="mc-vc-info-card__sub"><?= htmlspecialchars($info_sub) ?></p>
+        <div class="mc-vc-info-badges">
+          <?php if ($seed_consult_status === 'in_consultation'): ?>
+          <span class="mc-vc-info-state mc-vc-info-state--live">● In Consultation</span>
+          <?php endif; ?>
+          <span class="mc-vc-info-type">Video Consultation</span>
+        </div>
+        <dl class="mc-vc-info-dl">
+          <div><dt>Consultation</dt><dd>#<?= (int) $consultation_id ?></dd></div>
+          <div><dt>Appointment</dt><dd><?= htmlspecialchars((string) ($appointment_label ?? '—') !== '' ? $appointment_label : '—') ?></dd></div>
+          <?php if ($seed_scheduled_duration_label !== ''): ?>
+          <div><dt>Scheduled duration</dt><dd><?= htmlspecialchars($seed_scheduled_duration_label) ?></dd></div>
+          <?php endif; ?>
+          <?php if ($seed_status_label !== ''): ?>
+          <div><dt>Consultation status</dt><dd>
+            <?php if ($seed_status_label === 'Ongoing'): ?>
+            <span class="mc-vc-info-state mc-vc-info-state--live">● Ongoing</span>
+            <?php else: ?>
+            <?= htmlspecialchars($seed_status_label) ?>
+            <?php endif; ?>
+            <?php if ($seed_started_label !== ''): ?>
+            <span class="mc-vc-info-meta">Started: <?= htmlspecialchars($seed_started_label) ?></span>
+            <?php endif; ?>
+          </dd></div>
+          <?php endif; ?>
+          <div><dt>Your concern</dt><dd class="mc-vc-info-concern"><?= htmlspecialchars($seed_original_complaint !== '' ? $seed_original_complaint : '—') ?></dd></div>
+        </dl>
+      <?php else: ?>
       <div class="mc-vc-info-card" id="mcVcInfoSeed">
         <h3 class="mc-vc-info-card__title"><?= htmlspecialchars($info_title) ?></h3>
         <p class="mc-vc-info-card__sub"><?= htmlspecialchars($info_sub) ?></p>
         <dl class="mc-vc-info-dl">
-          <?php if (empty($is_patient)): ?>
           <div><dt>Patient ID</dt><dd><?= htmlspecialchars((string) ($patient_number ?? '—')) ?></dd></div>
-          <?php endif; ?>
           <div><dt>Consultation</dt><dd>#<?= (int) $consultation_id ?></dd></div>
           <div><dt>Appointment</dt><dd><?= htmlspecialchars((string) ($appointment_label ?? '—') !== '' ? $appointment_label : '—') ?></dd></div>
-          <div><dt><?= empty($is_patient) ? 'Primary complaint' : 'Chief complaint' ?></dt><dd><?= htmlspecialchars((string) ($chief_complaint_seed ?? '') !== '' ? $chief_complaint_seed : '—') ?></dd></div>
+          <div><dt>Primary complaint</dt><dd><?= htmlspecialchars((string) ($chief_complaint_seed ?? '') !== '' ? $chief_complaint_seed : '—') ?></dd></div>
         </dl>
+      <?php endif; ?>
         <p class="mc-vc-info-refresh" id="mcVcInfoStatus">Refreshing live details…</p>
         <button type="button" class="mc-vc-info-retry" id="mcVcInfoRetry" hidden>Retry loading details</button>
       </div>

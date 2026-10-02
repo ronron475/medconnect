@@ -1021,6 +1021,92 @@ body.mc-urgency-modal-open {
   }
 }
 
+/* ── Urgent booking confirmation (stacks above the urgency modal) ── */
+.mc-urgency-modal.mc-book-confirm {
+  z-index: 200500;
+}
+
+.mc-book-confirm .mc-book-confirm__card {
+  width: min(100%, 400px);
+  padding: 24px 22px 20px;
+}
+
+.mc-urgency-modal.mc-book-confirm .mc-book-confirm__icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 12px;
+  background: linear-gradient(145deg, #14b8a6, #0f766e);
+  box-shadow: 0 8px 24px rgba(15, 118, 110, 0.28);
+}
+
+.mc-book-confirm__details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  overflow-wrap: anywhere;
+}
+
+.mc-book-confirm__doctor {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mc-book-confirm__type {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.mc-book-confirm__time {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.mc-book-confirm .mc-urgency-modal__message {
+  margin-bottom: 18px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.mc-book-confirm .mc-urgency-modal__btn {
+  min-height: 48px;
+}
+
+.mc-urgency-modal.mc-book-confirm .mc-urgency-modal__btn--primary {
+  background: linear-gradient(135deg, #0d9488, #0f766e);
+}
+
+.mc-urgency-modal.mc-book-confirm .mc-urgency-modal__btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-book-confirm__details {
+  background: #0D1E30;
+  border-color: #243347;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-book-confirm__doctor {
+  color: #f8fafc;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-book-confirm__time {
+  color: #cbd5e1;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .mc-book-confirm__type {
+  color: #5eead4;
+}
+
 /* ── Tips ready + cancel booked visit ── */
 body.mc-tips-ready-modal-open {
   overflow: hidden;

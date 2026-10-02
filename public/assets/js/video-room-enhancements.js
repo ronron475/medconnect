@@ -14,6 +14,8 @@
   const CSRF = META.csrf || '';
 
   let contextData = null;
+  /** Server-rendered patient values from #mcVcInfoSeed, kept for the offline fallback. */
+  let patientSeed = {};
   let chatPollTimer = null;
   let soapSaveTimer = null;
   let callEnded = false;
@@ -74,7 +76,12 @@
         doctor_name: doctor,
         specialization: META.specialty || 'General Medicine',
         appointment_label: META.appointmentLabel || '',
-        chief_complaint: META.chiefComplaint || '',
+        consultation_status: patientSeed.consultationStatus || '',
+        status_label: patientSeed.statusLabel || '',
+        started_label: patientSeed.startedLabel || '',
+        scheduled_duration_label: patientSeed.scheduledDurationLabel || '',
+        patient_original_complaint: patientSeed.originalComplaint || '',
+        symptoms: [],
         triage_level: 'Not assessed',
         triage_bucket: 'unknown',
         ai_triage_level: 'Not assessed',
@@ -151,25 +158,46 @@
 
     if (IS_PATIENT) {
       const p = data.patient_panel || fallbackContext().patient_panel;
-      const showFinal = !!(p.show_final_triage && (p.final_triage_level || '').trim());
+      const consultStatus = String(p.consultation_status || '').trim().toLowerCase();
+      const isActive = consultStatus === 'in_consultation';
+      // Doctor-final triage is only ever shown once the visit is completed.
+      const showFinal = !!(p.show_final_triage && (p.final_triage_level || '').trim() && consultStatus === 'completed');
       const finalRow = showFinal
         ? ('<div><dt>Final Triage Result</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.triage_bucket || 'unknown') + '">' + escapeHtml(p.final_triage_level) + '</span></dd></div>' +
           (p.finalized_by ? '<div><dt>Finalized By</dt><dd>' + escapeHtml(p.finalized_by) + '</dd></div>' : ''))
         : '';
+      const statusLabel = String(p.status_label || '').trim() || (isActive ? 'Ongoing' : '');
+      const statusValue = statusLabel === 'Ongoing'
+        ? '<span class="mc-vc-info-state mc-vc-info-state--live">● Ongoing</span>'
+        : escapeHtml(statusLabel);
+      const symptoms = (Array.isArray(p.symptoms) ? p.symptoms : [])
+        .map((s) => String(s == null ? '' : s).trim())
+        .filter(Boolean);
+      const concern = String(p.patient_original_complaint || '');
       pane.innerHTML =
         '<div class="mc-vc-info-card">' +
         '<h3 class="mc-vc-info-card__title">' + escapeHtml(p.doctor_name || 'Your healthcare provider') + '</h3>' +
         '<p class="mc-vc-info-card__sub">' + escapeHtml(p.specialization || 'General Medicine') + '</p>' +
+        '<div class="mc-vc-info-badges">' +
+          (isActive ? '<span class="mc-vc-info-state mc-vc-info-state--live">● In Consultation</span>' : '') +
+          '<span class="mc-vc-info-type">Video Consultation</span>' +
+        '</div>' +
         '<dl class="mc-vc-info-dl">' +
         '<div><dt>Consultation</dt><dd>#' + escapeHtml(p.consultation_id || CONSULTATION_ID || '—') + '</dd></div>' +
         '<div><dt>Appointment</dt><dd>' + escapeHtml(p.appointment_label || '—') + '</dd></div>' +
         (p.scheduled_duration_label ? '<div><dt>Scheduled duration</dt><dd>' + escapeHtml(p.scheduled_duration_label) + '</dd></div>' : '') +
-        (p.started_label ? '<div><dt>Started</dt><dd>' + escapeHtml(p.started_label) + '</dd></div>' : '') +
-        (p.ended_label ? '<div><dt>Ended</dt><dd>' + escapeHtml(p.ended_label) + '</dd></div>' : '') +
-        (p.actual_duration_label ? '<div><dt>Actual duration</dt><dd>' + escapeHtml(p.actual_duration_label) + '</dd></div>' : '') +
-        (p.status_label ? '<div><dt>Status</dt><dd>' + escapeHtml(p.status_label) + '</dd></div>' : '') +
-        '<div><dt>Chief complaint</dt><dd>' + escapeHtml(p.chief_complaint || '—') + '</dd></div>' +
-        '<div><dt>Preliminary AI Assessment</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.ai_triage_bucket || 'unknown') + '">' + escapeHtml(p.ai_triage_level || 'Not assessed') + '</span></dd></div>' +
+        (statusLabel
+          ? '<div><dt>Consultation status</dt><dd>' + statusValue +
+            (p.started_label ? '<span class="mc-vc-info-meta">Started: ' + escapeHtml(p.started_label) + '</span>' : '') +
+            '</dd></div>'
+          : '') +
+        '<div><dt>Your concern</dt><dd class="mc-vc-info-concern">' + (concern.trim() ? escapeHtml(concern) : '—') + '</dd></div>' +
+        (symptoms.length
+          ? '<div><dt>Reported symptoms</dt><dd>' + symptoms.map(escapeHtml).join(' • ') +
+            '<span class="mc-vc-info-meta">Identified from your description</span></dd></div>'
+          : '') +
+        '<div><dt>Preliminary AI triage</dt><dd><span class="mc-vc-triage mc-vc-triage--' + escapeHtml(p.ai_triage_bucket || 'unknown') + '">' + escapeHtml(p.ai_triage_level || 'Not assessed') + '</span>' +
+          '<span class="mc-vc-info-meta">Initial AI-generated assessment. Your doctor will make the final clinical assessment.</span></dd></div>' +
         finalRow +
         '</dl></div>';
       return;
@@ -773,6 +801,16 @@
     watchCallStatusForWaiting();
     enhanceNetworkMonitor();
 
+    const seed = q('mcVcInfoSeed');
+    if (seed && IS_PATIENT) {
+      patientSeed = {
+        originalComplaint: seed.getAttribute('data-original-complaint') || '',
+        consultationStatus: seed.getAttribute('data-consultation-status') || '',
+        statusLabel: seed.getAttribute('data-status-label') || '',
+        startedLabel: seed.getAttribute('data-started-label') || '',
+        scheduledDurationLabel: seed.getAttribute('data-scheduled-duration-label') || '',
+      };
+    }
     loadContext(false);
   }
 

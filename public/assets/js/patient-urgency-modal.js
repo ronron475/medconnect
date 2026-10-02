@@ -81,6 +81,11 @@
     slots_booked: 'Appointment booked. Redirecting…',
     slots_book_network: 'Network error. Please try again.',
     doctor: 'Doctor',
+    book_confirm_title: 'Confirm Video Consultation',
+    book_confirm_message: 'Are you sure you want to book this video consultation?',
+    book_confirm_cancel: 'Cancel',
+    book_confirm_ok: 'Confirm Booking',
+    book_confirm_type: 'Video Consultation',
   };
 
   function i18n(key, vars) {
@@ -100,6 +105,68 @@
   }
   var urgentCtx = { complaint: '', triageId: 0, bookUrl: '' };
   var bookingInFlight = false;
+  var bookConfirm = null;
+  var bookConfirmOnConfirm = null;
+  var bookConfirmReturnFocus = null;
+
+  function bookConfirmEl() {
+    if (!bookConfirm) bookConfirm = document.getElementById('mcPatientBookConfirm');
+    return bookConfirm;
+  }
+
+  function isBookConfirmOpen() {
+    var el = bookConfirmEl();
+    return !!(el && !el.hidden);
+  }
+
+  function setBookConfirmText(id, text) {
+    var node = document.getElementById(id);
+    if (node) node.textContent = text;
+  }
+
+  function openBookConfirm(name, time, onConfirm) {
+    var el = bookConfirmEl();
+    if (!el || isBookConfirmOpen()) return false;
+    bookConfirmOnConfirm = typeof onConfirm === 'function' ? onConfirm : null;
+    bookConfirmReturnFocus = document.activeElement;
+
+    setBookConfirmText('mcPatientBookConfirmTitle', i18n('book_confirm_title'));
+    setBookConfirmText('mcPatientBookConfirmDoctor', name || i18n('doctor'));
+    setBookConfirmText('mcPatientBookConfirmType', i18n('book_confirm_type'));
+    setBookConfirmText('mcPatientBookConfirmTime', time || '');
+    setBookConfirmText('mcPatientBookConfirmMessage', i18n('book_confirm_message'));
+    setBookConfirmText('mcPatientBookConfirmCancel', i18n('book_confirm_cancel'));
+    setBookConfirmText('mcPatientBookConfirmOk', i18n('book_confirm_ok'));
+    var timeEl = document.getElementById('mcPatientBookConfirmTime');
+    if (timeEl) timeEl.hidden = !time;
+
+    el.hidden = false;
+    el.removeAttribute('hidden');
+    el.setAttribute('aria-hidden', 'false');
+    var cancelBtn = document.getElementById('mcPatientBookConfirmCancel');
+    if (cancelBtn) cancelBtn.focus();
+    return true;
+  }
+
+  function closeBookConfirm(restoreFocus) {
+    var el = bookConfirmEl();
+    var returnFocus = bookConfirmReturnFocus;
+    bookConfirmOnConfirm = null;
+    bookConfirmReturnFocus = null;
+    if (!el || el.hidden) return;
+    el.hidden = true;
+    el.setAttribute('hidden', '');
+    el.setAttribute('aria-hidden', 'true');
+    if (restoreFocus && returnFocus && typeof returnFocus.focus === 'function' && document.contains(returnFocus)) {
+      try { returnFocus.focus(); } catch (_) { /* ignore */ }
+    }
+  }
+
+  function acceptBookConfirm() {
+    var onConfirm = bookConfirmOnConfirm;
+    closeBookConfirm(false);
+    if (onConfirm) onConfirm();
+  }
 
   function base() {
     return (typeof window.APP_BASE !== 'undefined' && window.APP_BASE)
@@ -371,76 +438,72 @@
       return;
     }
 
-    var confirmMsg = i18n('slots_confirm', {
-      name: providerName || i18n('doctor'),
-      time: timeLabel || '',
-    });
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
+    openBookConfirm(providerName || i18n('doctor'), timeLabel || '', function () {
+      if (bookingInFlight) return;
 
-    bookingInFlight = true;
-    setSlotsStatus(i18n('slots_booking'));
-    if (slotsList) {
-      slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
-    }
+      bookingInFlight = true;
+      setSlotsStatus(i18n('slots_booking'));
+      if (slotsList) {
+        slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+      }
 
-    var fd = new FormData();
-    fd.set('chief_complaint', complaint);
-    fd.set('slot_id', String(slotId));
-    fd.set('csrf_token', csrf());
-    if (urgentCtx.triageId > 0) {
-      fd.set('triage_id', String(urgentCtx.triageId));
-    }
+      var fd = new FormData();
+      fd.set('chief_complaint', complaint);
+      fd.set('slot_id', String(slotId));
+      fd.set('csrf_token', csrf());
+      if (urgentCtx.triageId > 0) {
+        fd.set('triage_id', String(urgentCtx.triageId));
+      }
 
-    fetch(base() + '/app/api/patient/submit_triage.php', {
-      method: 'POST',
-      body: fd,
-      credentials: 'same-origin',
-      headers: { 'X-MC-No-Loader': '1' },
-    })
-      .then(function (res) { return res.json().catch(function () { return null; }); })
-      .then(function (data) {
-        bookingInFlight = false;
-        if (!data || !data.success) {
-          setSlotsStatus((data && data.message) || i18n('slots_book_fail'), true);
-          if (slotsList) {
-            slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-          }
-          loadEarliestSlots();
-          return;
-        }
-
-        if (data.emergency === true || (data.data && data.data.emergency)) {
-          setSlotsStatus(data.message || i18n('slots_emergency'), true);
-          return;
-        }
-
-        var booked = data.booked !== false && !(data.awaiting_provider_review === true) && !(data.waiting_for_slot === true);
-        if (data.data && typeof data.data.booked !== 'undefined') {
-          booked = data.data.booked !== false && !data.data.awaiting_provider_review && !data.data.waiting_for_slot;
-        }
-
-        if (!booked) {
-          setSlotsStatus(data.message || i18n('slots_incomplete'), true);
-          if (slotsList) {
-            slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-          }
-          return;
-        }
-
-        setSlotsStatus(data.message || i18n('slots_booked'));
-        setTimeout(function () {
-          window.location.href = base() + '/views/patient/consultations.php';
-        }, 1200);
+      fetch(base() + '/app/api/patient/submit_triage.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        headers: { 'X-MC-No-Loader': '1' },
       })
-      .catch(function () {
-        bookingInFlight = false;
-        setSlotsStatus(i18n('slots_book_network'), true);
-        if (slotsList) {
-          slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
-        }
-      });
+        .then(function (res) { return res.json().catch(function () { return null; }); })
+        .then(function (data) {
+          bookingInFlight = false;
+          if (!data || !data.success) {
+            setSlotsStatus((data && data.message) || i18n('slots_book_fail'), true);
+            if (slotsList) {
+              slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+            }
+            loadEarliestSlots();
+            return;
+          }
+
+          if (data.emergency === true || (data.data && data.data.emergency)) {
+            setSlotsStatus(data.message || i18n('slots_emergency'), true);
+            return;
+          }
+
+          var booked = data.booked !== false && !(data.awaiting_provider_review === true) && !(data.waiting_for_slot === true);
+          if (data.data && typeof data.data.booked !== 'undefined') {
+            booked = data.data.booked !== false && !data.data.awaiting_provider_review && !data.data.waiting_for_slot;
+          }
+
+          if (!booked) {
+            setSlotsStatus(data.message || i18n('slots_incomplete'), true);
+            if (slotsList) {
+              slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+            }
+            return;
+          }
+
+          setSlotsStatus(data.message || i18n('slots_booked'));
+          setTimeout(function () {
+            window.location.href = base() + '/views/patient/consultations.php';
+          }, 1200);
+        })
+        .catch(function () {
+          bookingInFlight = false;
+          setSlotsStatus(i18n('slots_book_network'), true);
+          if (slotsList) {
+            slotsList.querySelectorAll('button').forEach(function (b) { b.disabled = false; });
+          }
+        });
+    });
   }
 
   function normalizeKind(kind) {
@@ -620,6 +683,7 @@
   }
 
   function close() {
+    closeBookConfirm(false);
     if (!els()) return;
     // Always allow dismiss so Start New Complaint / page controls are never trapped
     // under a leftover urgency backdrop (bookingInFlight only blocks Escape/book flow).
@@ -641,6 +705,16 @@
     var t = e.target;
     if (!t || !t.closest) return;
 
+    if (t.closest('[data-mc-book-confirm-cancel]')) {
+      closeBookConfirm(true);
+      return;
+    }
+
+    if (t.closest('#mcPatientBookConfirmOk')) {
+      acceptBookConfirm();
+      return;
+    }
+
     if (t.closest('[data-mc-urgency-close]')) {
       close();
       // Ensure page controls (e.g. Start New Complaint) receive clicks after dismiss.
@@ -659,12 +733,17 @@
   });
 
   document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && isBookConfirmOpen()) {
+      closeBookConfirm(true);
+      return;
+    }
     if (e.key === 'Escape' && modal && !modal.hidden && !bookingInFlight) {
       close();
     }
   });
 
   window.addEventListener('medconnect:patient-ui-lang', function () {
+    closeBookConfirm(false);
     if (modal && !modal.hidden && lastOpts) {
       var refresh = {};
       Object.keys(lastOpts).forEach(function (key) { refresh[key] = lastOpts[key]; });
@@ -734,6 +813,7 @@
         document.body.classList.add('mc-urgency-modal-open');
       }
     },
+    confirmBooking: openBookConfirm,
     close: close,
   };
 })(window, document);
