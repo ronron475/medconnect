@@ -3237,7 +3237,7 @@ body.final-assessment-modal-open {
                     <div class="csp-manual">
                         <h4 class="csp-section__title">Adjust urgency during visit</h4>
                         <p class="csp-empty" style="font-style:normal;margin-bottom:8px;">
-                            Use this if AI urgency is wrong mid-consultation. You will confirm the <strong>final</strong> case urgency again when finalizing the SOAP note.
+                            Use this if AI urgency is wrong mid-consultation. The saved override becomes the <strong>Final Doctor Assessment</strong> used when you finalize the SOAP note.
                         </p>
                         <label class="csp-section__title" for="cspManualUrgency">Doctor urgency</label>
                         <select id="cspManualUrgency" class="pd-input">
@@ -3860,6 +3860,21 @@ body.final-assessment-modal-open {
   </div>
 </div>
 
+<?php
+$soapSavedDoctorBucket = '';
+$soapSavedDoctorReason = '';
+$soapSavedOverrideRow = provider_clinical_support_latest_override_row($pdo, (int) $consultation_id);
+if ($soapSavedOverrideRow && !empty($clinical_support['manual_urgency'])) {
+    $soapSavedBucketCandidate = provider_clinical_support_normalize_bucket((string) ($clinical_support['doctor_urgency_bucket'] ?? ''));
+    if (in_array($soapSavedBucketCandidate, ['emergency', 'urgent', 'non_urgent'], true)) {
+        $soapSavedDoctorBucket = $soapSavedBucketCandidate;
+        $soapSavedDoctorReason = trim((string) ($soapSavedOverrideRow['audit_note'] ?? ''));
+    }
+}
+$soapFinalUrgencyNotePrefill = $soapSavedDoctorBucket !== ''
+    ? $soapSavedDoctorReason
+    : (string) ($clinical_support['manual_override_note'] ?? '');
+?>
 <div id="soapFinalizeModal" class="soap-finalize-modal" aria-hidden="true">
   <div class="soap-finalize-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="soapFinalizeTitle">
     <div class="soap-finalize-modal__body">
@@ -3873,14 +3888,14 @@ body.final-assessment-modal-open {
           <span style="display:block;margin-top:4px;">Do not use the AI result as your final assessment unless you explicitly confirm it below.</span>
         </p>
         <label for="soapFinalUrgency" style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Final Doctor Assessment</label>
-        <select id="soapFinalUrgency" class="pd-input" style="width:100%;" required>
+        <select id="soapFinalUrgency" class="pd-input" style="width:100%;" required<?= $soapSavedDoctorBucket !== '' ? ' disabled' : '' ?>>
           <option value="">Select final case urgency…</option>
-          <option value="emergency">Emergency</option>
-          <option value="urgent">Urgent</option>
-          <option value="non_urgent">Non-Urgent</option>
+          <option value="emergency"<?= $soapSavedDoctorBucket === 'emergency' ? ' selected' : '' ?>>Emergency</option>
+          <option value="urgent"<?= $soapSavedDoctorBucket === 'urgent' ? ' selected' : '' ?>>Urgent</option>
+          <option value="non_urgent"<?= $soapSavedDoctorBucket === 'non_urgent' ? ' selected' : '' ?>>Non-Urgent</option>
         </select>
         <label for="soapFinalUrgencyNote" style="display:block;font-size:13px;font-weight:600;margin:10px 0 4px;">Clinical reason</label>
-        <textarea id="soapFinalUrgencyNote" class="pd-textarea" rows="2" style="width:100%;" placeholder="Required when final urgency differs from AI; otherwise confirm why you accept this final level."><?= htmlspecialchars((string) ($clinical_support['manual_override_note'] ?? '')) ?></textarea>
+        <textarea id="soapFinalUrgencyNote" class="pd-textarea" rows="2" style="width:100%;" placeholder="Required when final urgency differs from AI; otherwise confirm why you accept this final level."<?= $soapSavedDoctorBucket !== '' ? ' readonly' : '' ?>><?= htmlspecialchars($soapFinalUrgencyNotePrefill) ?></textarea>
         <p id="soapFinalUrgencyHint" class="soap-finalize-modal__text" style="margin:8px 0 0;font-size:12px;color:#64748b;">You must select and submit a Final Assessment before this consultation is marked completed.</p>
       </div>
     </div>
@@ -5015,6 +5030,14 @@ async function overrideClinicalUrgency() {
         if (select && persisted.final_bucket) {
             select.value = persisted.final_bucket;
         }
+        if (['emergency', 'urgent', 'non_urgent'].indexOf(String(persisted.final_bucket || '')) !== -1) {
+            soapSavedDoctorUrgency = {
+                bucket: String(persisted.final_bucket),
+                reason: String(persisted.clinical_reason || note),
+            };
+            syncSoapFinalizeSavedUrgency();
+            syncSoapFinalizeUrgencyHint();
+        }
         if (status) {
             status.className = 'csp-status is-ok';
             status.textContent = gisLabel
@@ -5283,7 +5306,7 @@ window.addEventListener('message', (event) => {
         const sessionPage = document.getElementById('providerSessionPage') || document.querySelector('.session-page');
         if (sessionPage) sessionPage.classList.add('is-post-call');
         // Video ended only — consultation stays open until Final Assessment is submitted.
-        promptFinalAssessmentRequired();
+        openFollowUpModal({ fromCallEnd: true });
         return;
     }
 
@@ -5619,10 +5642,15 @@ async function saveSOAP(finalize = false) {
     if (finalize) {
         fd.append('finalize', '1');
         fd.append('soap_confirm', document.getElementById('soapConfirm') && document.getElementById('soapConfirm').checked ? '1' : '0');
-        const urgencyEl = document.getElementById('soapFinalUrgency');
-        const noteEl = document.getElementById('soapFinalUrgencyNote');
-        fd.append('final_urgency_bucket', urgencyEl ? String(urgencyEl.value || '') : '');
-        fd.append('final_urgency_note', noteEl ? String(noteEl.value || '').trim() : '');
+        if (soapHasSavedDoctorUrgency()) {
+            fd.append('final_urgency_bucket', soapSavedDoctorUrgency.bucket);
+            fd.append('final_urgency_note', soapSavedDoctorUrgency.reason);
+        } else {
+            const urgencyEl = document.getElementById('soapFinalUrgency');
+            const noteEl = document.getElementById('soapFinalUrgencyNote');
+            fd.append('final_urgency_bucket', urgencyEl ? String(urgencyEl.value || '') : '');
+            fd.append('final_urgency_note', noteEl ? String(noteEl.value || '').trim() : '');
+        }
     }
     try {
         const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/save_clinical_notes.php', {
@@ -5644,6 +5672,11 @@ async function saveSOAP(finalize = false) {
 const soapSignerNames = <?= json_encode([
     'full' => $soap_esign_name,
 ], JSON_UNESCAPED_UNICODE) ?>;
+
+let soapSavedDoctorUrgency = <?= json_encode([
+    'bucket' => $soapSavedDoctorBucket,
+    'reason' => $soapSavedDoctorReason,
+], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
 let soapUiReady = false;
 let soapFinalizeBusy = false;
@@ -5727,6 +5760,7 @@ function updateSoapFinalizeReady() {
 function openSoapFinalizeModal() {
     const modal = document.getElementById('soapFinalizeModal');
     if (!modal) return;
+    syncSoapFinalizeSavedUrgency();
     syncSoapFinalizeUrgencyHint();
     modal.classList.add('is-open');
     modal.setAttribute('aria-hidden', 'false');
@@ -5747,7 +5781,31 @@ function soapFinalizeAiBucket() {
     return '';
 }
 
+function soapHasSavedDoctorUrgency() {
+    return !!soapSavedDoctorUrgency
+        && ['emergency', 'urgent', 'non_urgent'].indexOf(String(soapSavedDoctorUrgency.bucket || '')) !== -1;
+}
+
+function syncSoapFinalizeSavedUrgency() {
+    const urgencyEl = document.getElementById('soapFinalUrgency');
+    const noteEl = document.getElementById('soapFinalUrgencyNote');
+    if (!soapHasSavedDoctorUrgency()) {
+        if (urgencyEl) urgencyEl.disabled = false;
+        if (noteEl) noteEl.readOnly = false;
+        return;
+    }
+    if (urgencyEl) {
+        urgencyEl.value = soapSavedDoctorUrgency.bucket;
+        urgencyEl.disabled = true;
+    }
+    if (noteEl) {
+        noteEl.value = String(soapSavedDoctorUrgency.reason || '');
+        noteEl.readOnly = true;
+    }
+}
+
 function soapFinalizeUrgencyValidationMessage() {
+    if (soapHasSavedDoctorUrgency()) return '';
     const urgencyEl = document.getElementById('soapFinalUrgency');
     const noteEl = document.getElementById('soapFinalUrgencyNote');
     const bucket = urgencyEl ? String(urgencyEl.value || '').trim() : '';
@@ -5766,6 +5824,10 @@ function syncSoapFinalizeUrgencyHint() {
     const hint = document.getElementById('soapFinalUrgencyHint');
     const urgencyEl = document.getElementById('soapFinalUrgency');
     if (!hint || !urgencyEl) return;
+    if (soapHasSavedDoctorUrgency()) {
+        hint.textContent = 'Using your saved Doctor Urgency Override as the Final Doctor Assessment. To change it, use "Adjust urgency during visit" and save a new override.';
+        return;
+    }
     const bucket = String(urgencyEl.value || '');
     const aiBucket = soapFinalizeAiBucket();
     if (aiBucket && bucket !== aiBucket) {
@@ -6264,11 +6326,10 @@ function closeFollowUpModal() {
     modal.setAttribute('aria-hidden', 'true');
 
     // After follow-up from call end, return to Final Assessment (SOAP), not a completed state.
+    // No reload: unsaved SOAP text on this page must survive.
     if (fuOpenedFromCallEnd) {
         fuOpenedFromCallEnd = false;
-        window.location.replace(
-            <?= json_encode(ASSET_BASE . '/views/provider/consultation_session.php?id=' . (int) $consultation_id . '&soap=1&final_assessment=1#soapDocumentation') ?>
-        );
+        promptFinalAssessmentRequired();
     }
 }
 

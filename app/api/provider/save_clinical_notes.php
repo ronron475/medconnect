@@ -161,33 +161,60 @@ if ($alreadyFinalized) {
         $data['signature_name'] = $signatureName;
 
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
-        $finalUrgencyBucket = provider_clinical_support_normalize_bucket((string) ($_POST['final_urgency_bucket'] ?? ''));
-        if (!in_array($finalUrgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Final Assessment required: select the final case urgency (Emergency, Urgent, or Non-Urgent) before completing this consultation.',
-            ]);
-            exit;
-        }
-        $finalUrgencyNote = trim((string) ($_POST['final_urgency_note'] ?? ''));
         $aiSupport = provider_consultation_clinical_support(
             $pdo,
             (int) $data['consultation_id'],
             (int) $data['patient_id']
         );
-        $aiBucket = provider_clinical_support_normalize_bucket((string) ($aiSupport['ai_urgency_bucket'] ?? ''));
-        if ($aiBucket !== 'unknown' && $finalUrgencyBucket !== $aiBucket && strlen($finalUrgencyNote) < 3) {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Add a brief clinical reason when final urgency differs from the AI preliminary result.',
-            ]);
-            exit;
+        $savedDoctorBucket = '';
+        $savedOverrideRow = provider_clinical_support_latest_override_row($pdo, (int) $data['consultation_id']);
+        if ($savedOverrideRow && !empty($aiSupport['manual_urgency'])) {
+            $savedBucketCandidate = provider_clinical_support_normalize_bucket((string) ($aiSupport['doctor_urgency_bucket'] ?? ''));
+            if (in_array($savedBucketCandidate, ['emergency', 'urgent', 'non_urgent'], true)) {
+                $savedDoctorBucket = $savedBucketCandidate;
+            }
         }
-        if ($finalUrgencyNote === '') {
-            $finalUrgencyNote = 'Doctor-confirmed Final Assessment at consultation finalize.';
+        $postedUrgencyBucket = provider_clinical_support_normalize_bucket((string) ($_POST['final_urgency_bucket'] ?? ''));
+
+        if ($savedDoctorBucket !== '') {
+            // The saved doctor override (and its reason) is the Final Doctor Assessment.
+            if (in_array($postedUrgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)
+                && $postedUrgencyBucket !== $savedDoctorBucket) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'The saved Final Doctor Assessment is '
+                        . provider_clinical_support_caps_label($savedDoctorBucket)
+                        . '. Reload the page to review the saved urgency before finalizing.',
+                ]);
+                exit;
+            }
+            $data['final_urgency_bucket'] = $savedDoctorBucket;
+            $data['final_urgency_note'] = trim((string) ($savedOverrideRow['audit_note'] ?? ''));
+            $data['final_urgency_from_saved_override'] = true;
+        } else {
+            $finalUrgencyBucket = $postedUrgencyBucket;
+            if (!in_array($finalUrgencyBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Final Assessment required: select the final case urgency (Emergency, Urgent, or Non-Urgent) before completing this consultation.',
+                ]);
+                exit;
+            }
+            $finalUrgencyNote = trim((string) ($_POST['final_urgency_note'] ?? ''));
+            $aiBucket = provider_clinical_support_normalize_bucket((string) ($aiSupport['ai_urgency_bucket'] ?? ''));
+            if ($aiBucket !== 'unknown' && $finalUrgencyBucket !== $aiBucket && strlen($finalUrgencyNote) < 3) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Add a brief clinical reason when final urgency differs from the AI preliminary result.',
+                ]);
+                exit;
+            }
+            if ($finalUrgencyNote === '') {
+                $finalUrgencyNote = 'Doctor-confirmed Final Assessment at consultation finalize.';
+            }
+            $data['final_urgency_bucket'] = $finalUrgencyBucket;
+            $data['final_urgency_note'] = $finalUrgencyNote;
         }
-        $data['final_urgency_bucket'] = $finalUrgencyBucket;
-        $data['final_urgency_note'] = $finalUrgencyNote;
 
         $storedPdf = clinical_note_signed_pdf_store($signedPdfUpload, (int) $data['consultation_id']);
         if (!$storedPdf['ok']) {
@@ -337,7 +364,8 @@ try {
 
     $finalUrgencyPersisted = null;
     $finalBucket = provider_clinical_support_normalize_bucket((string) ($data['final_urgency_bucket'] ?? ''));
-    if (in_array($finalBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
+    if (empty($data['final_urgency_from_saved_override'])
+        && in_array($finalBucket, ['emergency', 'urgent', 'non_urgent'], true)) {
         try {
             $providerNameForOverride = $providerName;
             $savedOverride = provider_clinical_support_persist_doctor_override(
