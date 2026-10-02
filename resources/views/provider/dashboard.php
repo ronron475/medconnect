@@ -97,13 +97,6 @@ $pending_triage_preview = provider_triage_pending_preview($triage_cases ?? [], 5
           <div class="prov-status-list">
             <div class="prov-status-item">
               <span class="prov-status-item__label">
-                <span class="prov-status-dot" style="background:#fbbf24;"></span>
-                Waiting
-              </span>
-              <strong data-live-status="waiting"><?= (int) ($stats['pending'] ?? 0) ?></strong>
-            </div>
-            <div class="prov-status-item">
-              <span class="prov-status-item__label">
                 <span class="prov-status-dot" style="background:#3b82f6;"></span>
                 In Consultation
               </span>

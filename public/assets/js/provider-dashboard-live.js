@@ -63,10 +63,8 @@
   function updateMetrics(stats) {
     if (!stats) return;
     setText('[data-live-stat="appointments"]', stats.appointments || 0);
-    setText('[data-live-stat="pending"]', stats.pending || 0);
     setText('[data-live-stat="ongoing"]', stats.ongoing || 0);
     setText('[data-live-stat="completed"]', stats.completed || 0);
-    setText('[data-live-status="waiting"]', stats.pending || 0);
     setText('[data-live-status="ongoing"]', stats.ongoing || 0);
     setText('[data-live-status="completed"]', stats.completed || 0);
 
