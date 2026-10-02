@@ -17,7 +17,6 @@ require __DIR__ . '/../partials/layout_open.php';
     </div>
     <div class="bhw-reports-export-btns no-print">
       <button type="button" class="bhw-btn-outline" data-export="csv" title="Download CSV">CSV</button>
-      <button type="button" class="bhw-btn-outline" data-export="excel" title="Download Excel file">Excel</button>
       <button type="button" class="bhw-btn-outline" data-export="print" title="Print activity log">Print</button>
     </div>
   </header>

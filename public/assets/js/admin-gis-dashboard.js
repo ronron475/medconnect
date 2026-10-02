@@ -2007,16 +2007,18 @@
       });
     });
 
-    if (els.exportCsv) {
-      els.exportCsv.addEventListener('click', function () {
-        window.location.href = exportUrl + '?' + filtersQuery();
-      });
+    function exportQuery() {
+      const params = new URLSearchParams(filtersQuery());
+      if (state.selectedBarangay) params.set('selected_barangay', state.selectedBarangay);
+      if (state.heatmapLayer && state.heatmapLayer !== 'all') params.set('triage_layer', state.heatmapLayer);
+      return params.toString();
     }
-    if (els.exportExcel) {
-      els.exportExcel.addEventListener('click', function () {
-        window.location.href = exportUrl + '?format=excel&' + filtersQuery();
+    [els.exportCsv, els.exportExcel].forEach(function (btn) {
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        window.location.href = exportUrl + '?' + exportQuery();
       });
-    }
+    });
     if (els.printBtn) {
       els.printBtn.addEventListener('click', function () {
         setView('table');

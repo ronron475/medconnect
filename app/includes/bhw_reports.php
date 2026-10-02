@@ -274,11 +274,11 @@ final class BhwReports
         ", $params);
 
         $genderDist = self::rows($pdo, "
-            SELECT CONCAT(UPPER(LEFT(pr.gender,1)), LOWER(SUBSTRING(pr.gender,2))) AS label, COUNT(*) AS value
+            SELECT CONCAT(UPPER(LEFT(TRIM(pr.gender),1)), LOWER(SUBSTRING(TRIM(pr.gender),2))) AS label, COUNT(*) AS value
             FROM patient_registrations pr
             JOIN users u ON u.email = pr.email AND u.role = 'patient'
             WHERE {$pw} AND pr.gender IS NOT NULL AND TRIM(pr.gender) != ''
-            GROUP BY LOWER(TRIM(pr.gender))
+            GROUP BY label
         ", $params);
 
         $purokCol = in_array('purok', bhw_pr_columns($pdo), true) ? 'pr.purok' : 'pr.barangay';
@@ -515,7 +515,7 @@ final class BhwReports
             WHERE {$clause} AND fu.status IN ('scheduled','missed') AND fu.followup_date < CURDATE()
         ", $params);
 
-        $requiring = self::rows($pdo, "
+        $requiring = self::recordRows($pdo, "
             SELECT CONCAT(u.first_name, ' ', u.last_name) AS patient_name, fu.followup_date, fu.status
             FROM followups fu
             JOIN users u ON u.id = fu.patient_id
@@ -777,6 +777,18 @@ final class BhwReports
             $stmt->execute($params);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return array_map(static fn ($r) => ['label' => (string) ($r['label'] ?? ''), 'value' => (int) ($r['value'] ?? 0)], $rows);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    /** @return list<array<string, mixed>> Full rows (rows() keeps only label/value). */
+    private static function recordRows(PDO $pdo, string $sql, array $params): array
+    {
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
             return [];
         }

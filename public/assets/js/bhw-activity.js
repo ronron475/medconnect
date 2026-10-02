@@ -177,8 +177,8 @@
     });
   }
 
-  function exportUrl(fmt) {
-    var q = new URLSearchParams(Object.assign({ format: fmt === 'excel' ? 'excel' : 'csv' }, filters()));
+  function exportUrl() {
+    var q = new URLSearchParams(filters());
     q.delete('page');
     q.delete('per_page');
     return base + '/app/api/bhw/export_activity.php?' + q.toString();
@@ -234,7 +234,7 @@
           window.print();
           return;
         }
-        triggerDownload(exportUrl(fmt));
+        triggerDownload(exportUrl());
       });
     });
   });
