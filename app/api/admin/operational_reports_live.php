@@ -1,7 +1,7 @@
 <?php
 /**
  * API: Operational Reports live refresh (Admin + Super Admin)
- * GET /app/api/admin/operational_reports_live.php?base=/path/analytics.php&<type>_page=N&users_barangay=ID
+ * GET /app/api/admin/operational_reports_live.php?base=/path/operational_reports.php&<type>_page=N&users_barangay=ID
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
@@ -24,7 +24,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 // Only same-site paths are used for pagination / filter links.
 $base = (string) ($_GET['base'] ?? '');
 if (!preg_match('#^/[A-Za-z0-9/_.\-]*$#', $base) || strpos($base, '//') !== false) {
-    $base = ASSET_BASE . '/views/admin/analytics.php';
+    $base = ASSET_BASE . '/views/admin/operational_reports.php';
 }
 
 try {
