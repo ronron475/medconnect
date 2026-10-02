@@ -105,6 +105,7 @@ try {
             'patient_name'    => (string) ($row['patient_name'] ?? ''),
             'timing_missed'   => !empty($row['timing_missed']),
             'patient_ever_joined' => !empty($row['patient_ever_joined']),
+            'waiting_label'   => consultation_timing_provider_wait_label($row),
         ];
     }
 

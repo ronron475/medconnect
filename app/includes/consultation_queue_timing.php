@@ -352,6 +352,42 @@ function consultation_timing_decorate_row(PDO $pdo, array $row, ?int $now = null
     return $row;
 }
 
+/**
+ * Elapsed wait shown on the provider consultation queue.
+ * Anchor is the scheduled slot start. Booking time (created_at) is not used.
+ * Empty when the visit is not currently waiting, including before the slot starts.
+ */
+function consultation_timing_provider_wait_label(array $row, ?int $now = null): string
+{
+    $now = $now ?? time();
+    $status = strtolower(trim((string) ($row['status'] ?? $row['consult_status'] ?? '')));
+    $status = str_replace(' ', '_', $status);
+    if ($status === 'waiting') {
+        $status = 'pending';
+    }
+    if (!in_array($status, ['pending', 'scheduled'], true) || !empty($row['timing_missed'])) {
+        return '';
+    }
+
+    $start = $row['timing_slot_start'] ?? null;
+    if (!is_int($start)) {
+        $start = (is_numeric($start) && (int) $start > 0)
+            ? (int) $start
+            : consultation_timing_slot_bounds($row)['start'];
+    }
+    if ($start === null || $now < $start) {
+        return '';
+    }
+
+    if (!function_exists('admin_queue_minutes_phrase')) {
+        require_once __DIR__ . '/admin_queue_live.php';
+    }
+
+    $minutes = (int) floor(($now - $start) / 60);
+
+    return 'Waiting: ' . admin_queue_minutes_phrase($minutes);
+}
+
 function consultation_timing_mark_patient_joined(PDO $pdo, int $consultationId): void
 {
     if ($consultationId <= 0) {
