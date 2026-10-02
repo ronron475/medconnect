@@ -1,1 +1,1 @@
-<?php require __DIR__ . '/_module.php';
+<?php require VIEWS_PATH . '/admin/analytics.php';

@@ -87,7 +87,9 @@ function admin_demographics_barangays(PDO $pdo): array
             $count = $pdo->prepare('SELECT COUNT(*) FROM (' . $sql . ') d');
             $count->execute($params);
             $option['patients'] = (int) $count->fetchColumn();
-            $cache[] = $option;
+            if ($option['patients'] > 0) {
+                $cache[] = $option;
+            }
         }
     } catch (Throwable $e) {
         error_log('admin_demographics_barangays: ' . $e->getMessage());
@@ -97,7 +99,7 @@ function admin_demographics_barangays(PDO $pdo): array
 }
 
 /**
- * Requested barangay when it has an assigned BHW, otherwise the one with the most patients.
+ * Requested barangay when it has an assigned BHW and patients, otherwise the one with the most patients.
  *
  * @return array{id:int,name:string,patients:int}|null
  */
@@ -131,18 +133,20 @@ function admin_demographics_sql(PDO $pdo, array $barangay): array
         'barangay_name' => $barangay['name'],
     ], 'pr');
     $cols = bhw_pr_columns($pdo);
-    $code = in_array('patient_code', $cols, true) ? 'pr.patient_code' : 'NULL';
     $purok = in_array('purok', $cols, true) ? 'pr.purok' : 'NULL';
+    $address = in_array('address', $cols, true) ? 'pr.address' : 'NULL';
+    $fullAddress = in_array('full_address', $cols, true) ? 'pr.full_address' : 'NULL';
     $join = bhw_pr_user_join('pr', 'u');
     $age = bhw_pr_age_sql('pr');
 
     $sql = "SELECT u.id AS patient_id,
-                   {$code} AS patient_code,
                    u.first_name,
                    u.last_name,
                    {$age} AS age,
                    pr.gender,
-                   {$purok} AS purok
+                   {$purok} AS purok,
+                   {$address} AS address,
+                   {$fullAddress} AS full_address
             FROM users u
             INNER JOIN patient_registrations pr ON {$join}
             WHERE u.role = 'patient' AND {$clause}";
@@ -168,7 +172,6 @@ function admin_demographics_summary(PDO $pdo, array $barangay): array
                SUM(d.age BETWEEN 13 AND 17) AS teens,
                SUM(d.age BETWEEN 18 AND 59) AS adults,
                SUM(d.age >= 60) AS seniors,
-               SUM(d.age IS NULL) AS age_unknown,
                SUM(LOWER(TRIM(d.gender)) IN ('male', 'm')) AS male,
                SUM(LOWER(TRIM(d.gender)) IN ('female', 'f')) AS female
         FROM ({$sql}) d
@@ -186,12 +189,10 @@ function admin_demographics_summary(PDO $pdo, array $barangay): array
             'Teens (13–17)' => (int) ($row['teens'] ?? 0),
             'Adults (18–59)' => (int) ($row['adults'] ?? 0),
             'Seniors (60+)' => (int) ($row['seniors'] ?? 0),
-            'Age not recorded' => (int) ($row['age_unknown'] ?? 0),
         ],
         'gender' => [
             'Male' => $male,
             'Female' => $female,
-            'Not specified' => max(0, $total - $male - $female),
         ],
     ];
 }
@@ -199,7 +200,7 @@ function admin_demographics_summary(PDO $pdo, array $barangay): array
 function admin_demographics_age_group(?int $age): string
 {
     if ($age === null) {
-        return 'Not recorded';
+        return '—';
     }
     if ($age <= 12) {
         return 'Children';
@@ -222,23 +223,49 @@ function admin_demographics_values(array $row): array
 {
     $age = isset($row['age']) && $row['age'] !== '' ? (int) $row['age'] : null;
     $name = trim((string) ($row['first_name'] ?? '') . ' ' . (string) ($row['last_name'] ?? ''));
-    $code = trim((string) ($row['patient_code'] ?? ''));
+    $code = 'MC-' . str_pad((string) (int) ($row['patient_id'] ?? 0), 6, '0', STR_PAD_LEFT);
     $gender = strtolower(trim((string) ($row['gender'] ?? '')));
     $sex = match ($gender) {
         'male', 'm' => 'Male',
         'female', 'f' => 'Female',
-        default => 'Not specified',
+        default => '—',
     };
-    $purok = trim((string) ($row['purok'] ?? ''));
 
     return [
-        $code !== '' ? $code : '—',
+        $code,
         $name !== '' ? $name : 'Patient #' . (int) ($row['patient_id'] ?? 0),
         $age !== null ? (string) $age : '—',
         admin_demographics_age_group($age),
         $sex,
-        $purok !== '' ? $purok : '—',
+        admin_demographics_purok($row),
     ];
+}
+
+/**
+ * Stored purok, else the "Purok …" part of the address (self-registered patients have no purok field).
+ *
+ * @param array<string, mixed> $row
+ */
+function admin_demographics_purok(array $row): string
+{
+    $purok = trim((string) ($row['purok'] ?? ''));
+    if ($purok !== '') {
+        return $purok;
+    }
+    require_once BASE_PATH . '/app/core/PatientAddressFormatter.php';
+    foreach (['address', 'full_address'] as $field) {
+        $text = trim((string) ($row[$field] ?? ''));
+        if ($text === '') {
+            continue;
+        }
+        foreach (PatientAddressFormatter::parts(['address' => $text]) as $part) {
+            if (preg_match('/^purok\s+/i', $part)) {
+                return $part;
+            }
+        }
+    }
+
+    return '—';
 }
 
 function admin_operational_report_resolve(string $type): string

@@ -11,7 +11,6 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 print_r($users);
 
 $aliases = [
-    'reports.php' => 'analytics.php',
     'user_activity.php' => 'audit_logs.php',
     'audit_trail.php' => 'audit_logs.php',
     'landing_page.php' => 'website_dashboard.php',

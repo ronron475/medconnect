@@ -11,7 +11,6 @@ define('MC_VIEW_PATH', 'superadmin/staff_management.php');
 
 $entry = portal_current_view_basename();
 $aliases = [
-    'reports.php' => 'analytics.php',
     'user_activity.php' => 'audit_logs.php',
     'audit_trail.php' => 'audit_logs.php',
     'landing_page.php' => 'website_dashboard.php',
@@ -27,7 +26,7 @@ echo "Admin file: {$adminFile}\n";
 echo "Readable: " . (is_readable($adminPath) ? 'yes' : 'NO') . "\n";
 
 $bridged = [
-    'staff_management.php', 'user_management.php', 'analytics.php', 'reports.php',
+    'staff_management.php', 'user_management.php', 'operational_reports.php',
     'gis_dashboard.php', 'system_health.php', 'live_consultation_monitor.php',
 ];
 $failed = [];
