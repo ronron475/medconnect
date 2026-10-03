@@ -4,6 +4,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_workflows.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_nav_inbox.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/upload_security.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/file_encryption.php';
 
 function bhw_residency_doc_columns(PDO $pdo): array
 {
@@ -266,6 +267,10 @@ try {
         if (!$validated['ok']) {
             Api::error($validated['message']);
         }
+        if (!mc_file_encryption_available()) {
+            mc_file_encryption_log('upload rejected: encryption key not configured');
+            Api::error('Secure document storage is not configured. Please contact the administrator.', 503);
+        }
         $dir = BASE_PATH . '/storage/residency';
         if (!upload_security_ensure_dir($dir, 0750)) {
             Api::error('Upload directory unavailable.');
@@ -273,10 +278,12 @@ try {
         upload_security_write_deny_htaccess($dir);
         $stored = upload_security_safe_filename('bhw_' . $patientId, $validated['ext']);
         $dest = $dir . DIRECTORY_SEPARATOR . $stored;
-        if (!move_uploaded_file($validated['tmp'], $dest)) {
+        try {
+            mc_file_store_encrypted($validated['tmp'], $dest);
+        } catch (MedconnectFileEncryptionException $e) {
+            mc_file_encryption_log('upload encryption failed: ' . $e->getMessage());
             Api::error('Upload failed.');
         }
-        @chmod($dest, 0640);
         $detectedMime = $validated['mime'];
         $size = $validated['size'];
         $orig = $validated['original_basename'];
@@ -313,6 +320,12 @@ try {
         if ($path === null) {
             Api::error('File missing on server.', 404);
         }
+        try {
+            $contents = mc_file_read_decrypted($path);
+        } catch (MedconnectFileEncryptionException $e) {
+            mc_file_encryption_log('download decryption failed: ' . $e->getMessage());
+            Api::error('This document could not be opened. Please contact the administrator.', 500);
+        }
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
@@ -320,8 +333,8 @@ try {
         $name = upload_security_original_basename((string) ($doc['original_name'] ?: $doc['file_name']));
         header('Content-Type: ' . $mime);
         header('Content-Disposition: inline; filename="' . str_replace('"', '', $name) . '"');
-        header('Content-Length: ' . (string) filesize($path));
-        readfile($path);
+        header('Content-Length: ' . (string) strlen($contents));
+        echo $contents;
         exit;
     } else {
         Api::error('Unknown action.', 400);

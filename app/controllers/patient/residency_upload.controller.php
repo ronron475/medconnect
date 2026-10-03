@@ -21,6 +21,7 @@
 require_once dirname(__DIR__, 3) . '/bootstrap/app.php';
 require_once BASE_PATH . '/config/db.php';
 require_once BASE_PATH . '/app/includes/auth_guard.php';
+require_once BASE_PATH . '/app/includes/file_encryption.php';
 
 $patientProfileUrl = ASSET_BASE . '/views/patient/profile.php';
 
@@ -198,12 +199,19 @@ $random    = bin2hex(random_bytes(16));   // 32-char hex, cryptographically rand
 $safe_name = "{$user_id}_{$timestamp}_{$random}.{$ext}";
 $dest_path = RU_UPLOAD_DIR . $safe_name;
 
-if (!move_uploaded_file($file['tmp_name'], $dest_path)) {
+if (!is_uploaded_file($file['tmp_name'])) {
     _fail('Failed to save the uploaded file. Please try again.');
 }
-
-// Restrict file permissions — readable by web server only, not world-readable
-@chmod($dest_path, 0640);
+if (!mc_file_encryption_available()) {
+    mc_file_encryption_log('residency upload rejected: encryption key not configured');
+    _fail('Secure document storage is not configured. Please contact the City Health Office.');
+}
+try {
+    mc_file_store_encrypted($file['tmp_name'], $dest_path);
+} catch (MedconnectFileEncryptionException $e) {
+    mc_file_encryption_log('residency upload encryption failed: ' . $e->getMessage());
+    _fail('Failed to save the uploaded file. Please try again.');
+}
 
 // Audit log — record the residency document upload
 require_once dirname(__DIR__, 2) . '/includes/audit_log.php';

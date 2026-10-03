@@ -7,6 +7,7 @@ require_once dirname(__DIR__, 3) . '/config/db.php';
 require_once dirname(__DIR__, 3) . '/config/ocr_config.php';
 require_once dirname(__DIR__, 3) . '/app/core/PhilSysOcrParser.php';
 require_once dirname(__DIR__, 3) . '/app/core/OcrFastApiClient.php';
+require_once dirname(__DIR__, 3) . '/app/includes/file_encryption.php';
 
 // A detected National ID card smaller than this cannot be read by OCR.space.
 const OCR_MIN_CARD_LONG_PX = 480;
@@ -1687,7 +1688,17 @@ if (!is_dir($upload_dir)) {
 $safe_ext      = in_array($ext, ['jpg','jpeg','png','pdf'], true) ? $ext : 'jpg';
 $stored_name   = bin2hex(random_bytes(16)) . '.' . $safe_ext;
 $stored_path   = $upload_dir . $stored_name;
-$stored_ok     = @copy($file['tmp_name'], $stored_path);
+$stored_ok     = false;
+if (mc_file_encryption_available()) {
+    try {
+        mc_file_store_encrypted($file['tmp_name'], $stored_path);
+        $stored_ok = true;
+    } catch (MedconnectFileEncryptionException $e) {
+        mc_file_encryption_log('ID image encryption failed: ' . $e->getMessage());
+    }
+} else {
+    mc_file_encryption_log('ID image not stored: encryption key not configured');
+}
 if ($stored_ok) {
     $_SESSION['ocr_id_document_path'] = 'storage/uploads/ids/' . $stored_name;
 } else {
