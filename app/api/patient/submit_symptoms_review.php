@@ -9,6 +9,9 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_chief_c
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/user_account_status.php';
 
 Api::startJson();
+// The interview calls Gemini, then can fall back to the local question bank.
+// 60s (api/php.ini) is shorter than a hung call plus that fallback.
+@set_time_limit(90);
 Api::requirePatientReady($pdo);
 
 $submissionCheck = patient_account_may_submit_consultation($pdo, (int) $_SESSION['user_id']);

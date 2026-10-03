@@ -7204,7 +7204,9 @@ PROMPT;
         if (!class_exists('AiServiceClient')) {
             throw new RuntimeException('ai client missing');
         }
-        $data = AiServiceClient::geminiGenerateContent($payload, $model, 45);
+        // Stay inside Hostinger's 60s limit so a slow model returns control
+        // to the NLP question bank instead of being killed mid-request.
+        $data = AiServiceClient::geminiGenerateContent($payload, $model, 20);
         if (!is_array($data)) {
             $hint = '';
             if (method_exists('AiServiceClient', 'lastHttpError')) {
@@ -7500,13 +7502,21 @@ PROMPT;
     }
 
     /**
-     * When AI_PROVIDER=bits, generate() uses campus Ollama with the Gemini interview payload.
+     * When AI_PROVIDER=bits and Railway is not configured, generate() uses campus
+     * Ollama with the Gemini interview payload. A configured Railway service wins,
+     * so the live interview uses Railway's Gemini model (gemini-3.5-flash-lite).
      */
     private static function bitsInterviewProviderSelected(): bool
     {
         $provider = strtolower(trim((string) (getenv('AI_PROVIDER') ?: ($_ENV['AI_PROVIDER'] ?? 'gemini'))));
+        if (!in_array($provider, ['bits', 'bits_ollama', 'ollama'], true)) {
+            return false;
+        }
+        if (self::$bitsTransportForTest !== null) {
+            return true;
+        }
 
-        return in_array($provider, ['bits', 'bits_ollama', 'ollama'], true);
+        return !self::shouldUseRailway();
     }
 
     private static function apiKey(): string

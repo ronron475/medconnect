@@ -201,12 +201,16 @@ final class AiServiceClient
                 return $data;
             }
             $msg = strtolower(self::$lastHttpError);
-            $transient = $msg === ''
+            // A timeout already used the whole wait. Retrying it stacks another
+            // full wait and the patient request dies at max_execution_time,
+            // which the browser shows as "Could not analyze your complaint."
+            $timedOut = str_contains($msg, 'timeout') || str_contains($msg, 'timed out');
+            $transient = !$timedOut && (
+                $msg === ''
                 || str_contains($msg, '503')
                 || str_contains($msg, 'high demand')
                 || str_contains($msg, 'unavailable')
-                || str_contains($msg, 'timeout')
-                || str_contains($msg, 'timed out');
+            );
             if (!$transient || self::httpErrorIsGeminiQuota()) {
                 break;
             }
