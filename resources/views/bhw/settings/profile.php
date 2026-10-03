@@ -49,11 +49,11 @@ $profile_role_label = 'Barangay Health Worker';
           <div class="bhw-form-grid">
             <div>
               <label class="form-label" for="pf_fn">First name <span class="bhw-req">*</span></label>
-              <input class="form-control" name="first_name" id="pf_fn" required autocomplete="given-name" placeholder="First name">
+              <input class="form-control" name="first_name" id="pf_fn" required maxlength="80" autocomplete="given-name" placeholder="First name">
             </div>
             <div>
               <label class="form-label" for="pf_ln">Last name <span class="bhw-req">*</span></label>
-              <input class="form-control" name="last_name" id="pf_ln" required autocomplete="family-name" placeholder="Last name">
+              <input class="form-control" name="last_name" id="pf_ln" required maxlength="80" autocomplete="family-name" placeholder="Last name">
             </div>
             <div>
               <label class="form-label" for="pf_phone">Phone number</label>
@@ -106,7 +106,7 @@ $profile_role_label = 'Barangay Health Worker';
           <div class="bhw-summary-avatar" id="pf_avatar" data-profile-avatar-wrap aria-hidden="true">
             <?= profile_picture_render($profile_initials, $profile_picture_url, '', 'lg') ?>
           </div>
-          <h3 class="bhw-summary-name" id="pf_sum_name">Barangay Health Worker</h3>
+          <h3 class="bhw-summary-name" id="pf_sum_name"><?= htmlspecialchars($profile_display_name) ?></h3>
           <p class="bhw-summary-id" id="pf_sum_id">User ID #—</p>
           <span class="bhw-summary-status" id="pf_sum_status">Active</span>
         </div>
@@ -234,10 +234,38 @@ ob_start();
     if (savedProfile) fillForm(savedProfile);
   });
 
+  function updateShellName(p) {
+    var fullName = ((p.first_name || '') + ' ' + (p.last_name || '')).trim();
+    document.querySelectorAll('.adm-profile-name').forEach(function (el) {
+      if (fullName) el.textContent = fullName;
+    });
+    document.querySelectorAll('.adm-profile [data-profile-avatar-wrap] .profile-avatar__initials').forEach(function (el) {
+      el.textContent = initials(p);
+    });
+  }
+
+  var saving = false;
+
   document.getElementById('bhwProfileForm').addEventListener('submit', function (e) {
     e.preventDefault();
+    if (saving) return;
+
+    var fnEl = document.getElementById('pf_fn');
+    var lnEl = document.getElementById('pf_ln');
+    fnEl.value = String(fnEl.value || '').trim();
+    lnEl.value = String(lnEl.value || '').trim();
+    if (!fnEl.value) {
+      BhwPortal.toast('First name is required.', false);
+      return;
+    }
+    if (!lnEl.value) {
+      BhwPortal.toast('Last name is required.', false);
+      return;
+    }
+
     var phoneEl = document.getElementById('pf_phone');
-    if (phoneEl && String(phoneEl.value || '').trim()) {
+    phoneEl.value = String(phoneEl.value || '').trim();
+    if (phoneEl.value) {
       if (window.MCContactValidation && !window.MCContactValidation.isValidPhone(phoneEl.value)) {
         BhwPortal.toast(window.MCContactValidation.validatePhone(phoneEl.value) || 'Please enter a valid Philippine mobile number.', false);
         return;
@@ -246,14 +274,30 @@ ob_start();
         phoneEl.value = window.MCContactValidation.canonicalPhone(phoneEl.value);
       }
     }
+
     var saveBtn = document.getElementById('pf_save_btn');
+    var resetBtn = document.getElementById('pf_reset_btn');
+    saving = true;
     saveBtn.disabled = true;
+    resetBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
-    BhwPortal.post('profile.php', new FormData(e.target)).then(function (r) {
+
+    var fd = new FormData(e.target);
+    fd.set('action', 'save');
+    BhwPortal.post('profile.php', fd).then(function (r) {
+      var ok = !!(r && r.success === true);
+      BhwPortal.toast(ok ? 'Profile updated successfully.' : ((r && r.message) || 'Could not save your profile. Please try again.'), ok);
+      if (ok) {
+        if (r.profile) updateShellName(r.profile);
+        loadProfile();
+      }
+    }).catch(function () {
+      BhwPortal.toast('Could not save your profile. Please check your connection and try again.', false);
+    }).then(function () {
+      saving = false;
       saveBtn.disabled = false;
+      resetBtn.disabled = false;
       saveBtn.textContent = 'Save Profile';
-      BhwPortal.toast(r.message, r.success);
-      if (r.success) loadProfile();
     });
   });
 

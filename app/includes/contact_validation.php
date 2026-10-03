@@ -165,8 +165,8 @@ function mc_users_phone_exists(PDO $pdo, string $phone, ?int $excludeUserId = nu
 
     $last10 = substr($canonical, -10);
     $sql = 'SELECT id FROM users
-            WHERE REPLACE(REPLACE(REPLACE(IFNULL(phone, ""), " ", ""), "-", ""), "+", "") LIKE ?
-               OR phone = ?';
+            WHERE (REPLACE(REPLACE(REPLACE(IFNULL(phone, ""), " ", ""), "-", ""), "+", "") LIKE ?
+               OR phone = ?)';
     $params = ['%' . $last10, $canonical];
     if ($excludeUserId !== null && $excludeUserId > 0) {
         $sql .= ' AND id != ?';
