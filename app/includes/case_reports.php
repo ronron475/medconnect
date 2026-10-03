@@ -388,8 +388,24 @@ function case_terminate(
     }
 
     $patientId = (int) ($case['patient_id'] ?? 0);
-    $access = provider_patient_assert_access($pdo, $providerId, $patientId, 0);
-    if (!$access['allowed']) {
+    $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
+    $hasTriageLink = in_array('triage_result_id', $consultCols, true);
+
+    // Only the provider responsible for this specific case may terminate it: the assigned
+    // reviewer, or (for unassigned cases) the provider of a consultation linked to it.
+    $assignedProviderId = (int) ($case['assigned_provider_id'] ?? 0);
+    if ($providerId <= 0) {
+        $responsible = false;
+    } elseif ($assignedProviderId > 0) {
+        $responsible = $assignedProviderId === $providerId;
+    } elseif ($hasTriageLink) {
+        $own = $pdo->prepare('SELECT 1 FROM consultations WHERE triage_result_id = ? AND provider_id = ? LIMIT 1');
+        $own->execute([$triageId, $providerId]);
+        $responsible = (bool) $own->fetchColumn();
+    } else {
+        $responsible = false;
+    }
+    if (!$responsible) {
         return ['success' => false, 'message' => 'Access denied.'];
     }
 
@@ -421,15 +437,15 @@ function case_terminate(
             WHERE id = ?
         ")->execute([$triageId]);
 
-        $consultCols = $pdo->query('SHOW COLUMNS FROM consultations')->fetchAll(PDO::FETCH_COLUMN);
-        if (in_array('triage_result_id', $consultCols, true)) {
+        if ($hasTriageLink) {
             $consults = $pdo->prepare("
                 SELECT id, patient_id, consult_date, consult_time
                 FROM consultations
                 WHERE triage_result_id = ?
+                  AND provider_id = ?
                   AND status NOT IN ('completed', 'cancelled')
             ");
-            $consults->execute([$triageId]);
+            $consults->execute([$triageId, $providerId]);
             foreach ($consults->fetchAll(PDO::FETCH_ASSOC) as $consult) {
                 $cid = (int) ($consult['id'] ?? 0);
                 if ($cid <= 0) {
