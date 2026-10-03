@@ -34,10 +34,10 @@ function bhw_nav_records_unread_count(PDO $pdo, int $bhwId, array $ctx): int
         $baseParams = array_merge([$bhwId, BHW_NAV_RELATED_RECORDS], $params);
 
         if ($hasConsultations) {
-            // related_id is either a patient id or a consultation id — never double-count.
+            // related_id is either a patient id or a consultation id — count each patient once.
             $stmt = $pdo->prepare("
-                SELECT COUNT(*) FROM (
-                    SELECT n.id
+                SELECT COUNT(DISTINCT unread_records.patient_id) FROM (
+                    SELECT n.id, u.id AS patient_id
                     FROM notifications n
                     INNER JOIN users u ON u.id = n.related_id AND u.role = 'patient'
                     INNER JOIN patient_registrations pr ON {$join}
@@ -51,7 +51,7 @@ function bhw_nav_records_unread_count(PDO $pdo, int $bhwId, array $ctx): int
                       AND NOT EXISTS (SELECT 1 FROM consultations cx WHERE cx.id = n.related_id)
                       AND {$clause}
                     UNION
-                    SELECT n.id
+                    SELECT n.id, u.id AS patient_id
                     FROM notifications n
                     INNER JOIN consultations c ON c.id = n.related_id
                     INNER JOIN users u ON u.id = c.patient_id AND u.role = 'patient'
@@ -71,7 +71,7 @@ function bhw_nav_records_unread_count(PDO $pdo, int $bhwId, array $ctx): int
         }
 
         $stmt = $pdo->prepare("
-            SELECT COUNT(DISTINCT n.id)
+            SELECT COUNT(DISTINCT u.id)
             FROM notifications n
             INNER JOIN users u ON u.id = n.related_id AND u.role = 'patient'
             INNER JOIN patient_registrations pr ON {$join}
