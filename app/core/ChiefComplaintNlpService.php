@@ -210,12 +210,30 @@ final class ChiefComplaintNlpService
             $prior = class_exists('GeminiPatientInterview')
                 ? GeminiPatientInterview::demoInterviewContext($priorContext)
                 : [];
-            // Same methods as the demo API. Do not pass checkbox symptoms into start/answer.
-            $pack = (class_exists('GeminiPatientInterview') && is_array(GeminiPatientInterview::$packOverrideForTest))
-                ? GeminiPatientInterview::$packOverrideForTest
-                : ($prior === []
-                    ? GeminiClinicalInterviewDemo::start($utterance)
-                    : GeminiClinicalInterviewDemo::answer($utterance, $prior));
+            // Opening "galupot" only. A Gemini 429 still runs start() first. Skip the
+            // OpenRouter → Groq → BITS recovery so that failure returns before Hostinger
+            // kills the request and the existing galupot fallback can emit JSON.
+            // Other complaints keep the full recovery chain. A successful Gemini reply
+            // never enters that chain. Clear first so a killed request cannot leave
+            // the process-wide flag set for the next complaint.
+            GeminiClinicalInterviewDemo::endSkipPhpOpenRouterQuotaFallback();
+            $skipGalupotProviderChain = $prior === []
+                && strcasecmp(trim($utterance), 'galupot') === 0;
+            if ($skipGalupotProviderChain) {
+                GeminiClinicalInterviewDemo::beginSkipPhpOpenRouterQuotaFallback();
+            }
+            try {
+                // Same methods as the demo API. Do not pass checkbox symptoms into start/answer.
+                $pack = (class_exists('GeminiPatientInterview') && is_array(GeminiPatientInterview::$packOverrideForTest))
+                    ? GeminiPatientInterview::$packOverrideForTest
+                    : ($prior === []
+                        ? GeminiClinicalInterviewDemo::start($utterance)
+                        : GeminiClinicalInterviewDemo::answer($utterance, $prior));
+            } finally {
+                if ($skipGalupotProviderChain) {
+                    GeminiClinicalInterviewDemo::endSkipPhpOpenRouterQuotaFallback();
+                }
+            }
 
             if (class_exists('GeminiPatientInterview')) {
                 return GeminiPatientInterview::mapPack($pack, $utterance, $prior, $checkboxSymptoms);
