@@ -210,29 +210,26 @@ final class ChiefComplaintNlpService
             $prior = class_exists('GeminiPatientInterview')
                 ? GeminiPatientInterview::demoInterviewContext($priorContext)
                 : [];
-            // Opening "galupot" only. A Gemini 429 still runs start() first. Skip the
-            // OpenRouter → Groq → BITS recovery so that failure returns before Hostinger
-            // kills the request and the existing galupot fallback can emit JSON.
-            // Other complaints keep the full recovery chain. A successful Gemini reply
-            // never enters that chain. Clear first so a killed request cannot leave
-            // the process-wide flag set for the next complaint.
-            GeminiClinicalInterviewDemo::endSkipPhpOpenRouterQuotaFallback();
-            $skipGalupotProviderChain = $prior === []
+            // Opening "galupot" does not call Gemini. Gemini is unavailable in production,
+            // and its 429 path outlives Hostinger's limit. mapPack() turns this
+            // unavailable pack into the existing galupot static questions.
+            $openingGalupot = $prior === []
                 && strcasecmp(trim($utterance), 'galupot') === 0;
-            if ($skipGalupotProviderChain) {
-                GeminiClinicalInterviewDemo::beginSkipPhpOpenRouterQuotaFallback();
-            }
-            try {
+            if ($openingGalupot && !(class_exists('GeminiPatientInterview') && is_array(GeminiPatientInterview::$packOverrideForTest))) {
+                $pack = [
+                    'error' => true,
+                    'status' => GeminiClinicalInterviewDemo::STATUS_ERROR,
+                    'code' => 'gemini_unavailable_or_invalid_json',
+                    'message' => 'Gemini unavailable; galupot static interview used.',
+                    'interview_context' => [],
+                ];
+            } else {
                 // Same methods as the demo API. Do not pass checkbox symptoms into start/answer.
                 $pack = (class_exists('GeminiPatientInterview') && is_array(GeminiPatientInterview::$packOverrideForTest))
                     ? GeminiPatientInterview::$packOverrideForTest
                     : ($prior === []
                         ? GeminiClinicalInterviewDemo::start($utterance)
                         : GeminiClinicalInterviewDemo::answer($utterance, $prior));
-            } finally {
-                if ($skipGalupotProviderChain) {
-                    GeminiClinicalInterviewDemo::endSkipPhpOpenRouterQuotaFallback();
-                }
             }
 
             if (class_exists('GeminiPatientInterview')) {
