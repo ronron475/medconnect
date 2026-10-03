@@ -194,6 +194,12 @@ final class ChiefComplaintNlpService
     public static function assessInterview(string $utterance, array $priorContext = [], array $checkboxSymptoms = []): array
     {
         try {
+            if (class_exists('GeminiPatientInterview')) {
+                $galupotStatic = GeminiPatientInterview::continueGalupotStaticIfActive($utterance, $priorContext);
+                if ($galupotStatic !== null) {
+                    return $galupotStatic;
+                }
+            }
             if (class_exists('GeminiPatientInterview') && GeminiPatientInterview::shouldUsePhpEngine($priorContext)) {
                 return ClinicalInterviewEngine::assess($utterance, $priorContext, $checkboxSymptoms);
             }

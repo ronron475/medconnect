@@ -299,7 +299,7 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
         $patientMessage = ClinicalFollowUpAnswerValidator::normalizeRetryMessage($patientMessage, $langKey);
     }
 
-    return [
+    $payload = [
         'assessment_in_progress' => true,
         'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
         'triage_id' => $triageId,
@@ -314,6 +314,14 @@ function patient_symptoms_review_interview_payload(int $triageId, array $assessm
             : [],
         'assigned_provider_id' => 0,
     ];
+    if (!empty($assessment['static_fallback_used'])) {
+        $payload['static_fallback_used'] = true;
+        $payload['gemini_generated'] = false;
+        $payload['interview_source'] = 'galupot_static_fallback';
+        $payload['fallback_reason'] = (string) ($assessment['static_fallback_reason'] ?? 'Gemini unavailable');
+    }
+
+    return $payload;
 }
 
 /**
@@ -975,16 +983,24 @@ function patient_submit_symptoms_for_review(
             $pdo->commit();
             $classification = (string) ($assessment['triage']['triage_classification'] ?? '');
 
+            $previewPayload = patient_symptoms_review_preview_payload(
+                $triageId,
+                $triageLevel,
+                $classification
+            );
+            if (!empty($assessment['static_fallback_used'])) {
+                $previewPayload['static_fallback_used'] = true;
+                $previewPayload['gemini_generated'] = false;
+                $previewPayload['interview_source'] = 'galupot_static_fallback';
+                $previewPayload['fallback_reason'] = (string) ($assessment['static_fallback_reason'] ?? 'Gemini unavailable');
+            }
+
             return [
                 'ok' => true,
                 'message' => 'Preliminary AI Assessment: '
                     . patient_symptoms_review_classification_label($triageLevel, $classification)
                     . '. Please click "Submit patient complaint" again to continue.',
-                'payload' => patient_symptoms_review_preview_payload(
-                    $triageId,
-                    $triageLevel,
-                    $classification
-                ),
+                'payload' => $previewPayload,
             ];
         }
 

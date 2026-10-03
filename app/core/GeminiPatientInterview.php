@@ -10,6 +10,9 @@ final class GeminiPatientInterview
 {
     public const CONTEXT_KEY = 'gemini_led_context';
 
+    /** Persisted only for the galupot static fallback. Not a Gemini interview context. */
+    public const GALUPOT_STATIC_KEY = 'galupot_static_fallback';
+
     /** @var array<string, mixed>|null */
     public static ?array $packOverrideForTest = null;
 
@@ -38,6 +41,9 @@ final class GeminiPatientInterview
      */
     public static function mapPack(array $pack, string $utterance, array $demoPrior = [], array $checkboxSymptoms = []): array
     {
+        if (self::shouldStartGalupotStatic($utterance, $demoPrior, $pack)) {
+            return self::startGalupotStatic(trim($utterance));
+        }
         if (self::isTransportFailure($pack)) {
             return self::phpFallback(
                 $utterance,
@@ -50,6 +56,24 @@ final class GeminiPatientInterview
         }
 
         return self::toPatientAssessment($pack);
+    }
+
+    /**
+     * Continue the galupot static script after it has already been activated.
+     * Returns null when this interview is not in that fallback, so the normal
+     * Gemini / PHP path is unchanged.
+     *
+     * @param array<string, mixed> $priorContext
+     * @return array<string, mixed>|null
+     */
+    public static function continueGalupotStaticIfActive(string $utterance, array $priorContext): ?array
+    {
+        $state = self::galupotStaticState($priorContext);
+        if ($state === null || empty($state['active'])) {
+            return null;
+        }
+
+        return self::advanceGalupotStatic($utterance, $state);
     }
 
     /**
@@ -521,6 +545,329 @@ final class GeminiPatientInterview
             'URGENT' => 'Consult a healthcare provider within 24 hours.',
             default => 'Monitor symptoms and schedule a routine consultation if symptoms persist.',
         };
+    }
+
+    /**
+     * Opening turn only, and only when Gemini Flash did not produce this pack.
+     * Quota recoveries (OpenRouter, Groq, BITS, NLP question bank) and transport
+     * errors are Gemini-unavailable for this one complaint. An interview Gemini
+     * already started is never replaced.
+     *
+     * @param array<string, mixed> $demoPrior
+     * @param array<string, mixed> $pack
+     */
+    private static function shouldStartGalupotStatic(string $utterance, array $demoPrior, array $pack): bool
+    {
+        if (!self::isExactGalupot($utterance) || self::geminiInterviewAlreadyStarted($demoPrior)) {
+            return false;
+        }
+        if ((string) ($pack['ai_provider_used'] ?? '') === 'Gemini Flash' && !self::isTransportFailure($pack)) {
+            return false;
+        }
+
+        return self::isTransportFailure($pack)
+            || self::isUnassistedQuestionBank($pack)
+            || self::isNonGeminiRecovery($pack);
+    }
+
+    /**
+     * @param array<string, mixed> $pack
+     */
+    private static function isNonGeminiRecovery(array $pack): bool
+    {
+        return in_array((string) ($pack['ai_provider_used'] ?? ''), [
+            'OpenRouter (Gemini quota fallback)',
+            'Groq (Gemini quota fallback)',
+            'BITS Ollama (Gemini quota fallback)',
+        ], true);
+    }
+
+    /**
+     * NLP question bank inside the demo class runs only after Gemini returns nothing.
+     * A real Gemini / OpenRouter / Groq / BITS question is not this fallback.
+     *
+     * @param array<string, mixed> $pack
+     */
+    private static function isUnassistedQuestionBank(array $pack): bool
+    {
+        $used = (string) ($pack['ai_provider_used'] ?? '');
+        if (in_array($used, [
+            'Gemini Flash',
+            'OpenRouter (Gemini quota fallback)',
+            'Groq (Gemini quota fallback)',
+            'BITS Ollama (Gemini quota fallback)',
+        ], true)) {
+            return false;
+        }
+        if ($used === 'Question bank (Gemini quota fallback)') {
+            return true;
+        }
+        $context = is_array($pack['interview_context'] ?? null) ? $pack['interview_context'] : [];
+        $note = (string) ($context['status_note'] ?? $pack['message'] ?? '');
+
+        return str_contains($note, 'continuing with the NLP question bank');
+    }
+
+    /**
+     * @param array<string, mixed> $demoPrior
+     */
+    private static function geminiInterviewAlreadyStarted(array $demoPrior): bool
+    {
+        if ($demoPrior === [] || self::galupotStaticState($demoPrior) !== null) {
+            return false;
+        }
+
+        return trim((string) ($demoPrior['chief_complaint'] ?? '')) !== ''
+            || trim((string) ($demoPrior['awaiting_question'] ?? '')) !== '';
+    }
+
+    private static function isExactGalupot(string $text): bool
+    {
+        return strcasecmp(trim($text), 'galupot') === 0;
+    }
+
+    /**
+     * @param array<string, mixed> $priorContext
+     * @return array<string, mixed>|null
+     */
+    private static function galupotStaticState(array $priorContext): ?array
+    {
+        $candidates = [
+            $priorContext[self::GALUPOT_STATIC_KEY] ?? null,
+            is_array($priorContext['interview'] ?? null) ? ($priorContext['interview'][self::GALUPOT_STATIC_KEY] ?? null) : null,
+        ];
+        foreach ($candidates as $raw) {
+            if (!is_array($raw) || $raw === []) {
+                continue;
+            }
+            if (!self::isExactGalupot((string) ($raw['original_complaint'] ?? ''))) {
+                continue;
+            }
+
+            return $raw;
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function startGalupotStatic(string $originalComplaint): array
+    {
+        $state = [
+            'active' => true,
+            'step' => 1,
+            'original_complaint' => $originalComplaint,
+            'interpretation' => self::galupotInterpretation($originalComplaint),
+            'reason' => 'Gemini unavailable',
+            'answers' => [],
+        ];
+
+        return self::galupotQuestionAssessment($state, 'Sano nagsugod?', false);
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    private static function advanceGalupotStatic(string $utterance, array $state): array
+    {
+        $answer = trim($utterance);
+        $step = (int) ($state['step'] ?? 1);
+        if ($step < 1) {
+            $step = 1;
+        }
+        $question = $step >= 2 ? 'May iban ka pa nga ginabatyan?' : 'Sano nagsugod?';
+        if ($answer === '') {
+            return self::galupotQuestionAssessment($state, $question, true);
+        }
+
+        $answers = self::stringList($state['answers'] ?? []);
+        $answers[] = $answer;
+        $state['answers'] = $answers;
+        if ($step < 2) {
+            $state['step'] = 2;
+            $state['active'] = true;
+
+            return self::galupotQuestionAssessment($state, 'May iban ka pa nga ginabatyan?', false);
+        }
+
+        $state['step'] = 3;
+        $state['active'] = false;
+
+        return self::galupotCompletedAssessment($state);
+    }
+
+    private static function galupotInterpretation(string $complaint): string
+    {
+        if (class_exists('HiligaynonMedicalKnowledgeBase')) {
+            try {
+                $entry = HiligaynonMedicalKnowledgeBase::lookup($complaint);
+                if (is_array($entry)) {
+                    foreach (['normalized_symptom', 'english'] as $key) {
+                        $value = trim((string) ($entry[$key] ?? ''));
+                        if (strcasecmp($value, 'diarrhea') === 0) {
+                            return 'diarrhea';
+                        }
+                    }
+                }
+            } catch (Throwable) {
+                // The controlled fallback interpretation is still diarrhea.
+            }
+        }
+
+        return 'diarrhea';
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    private static function galupotQuestionAssessment(array $state, string $questionText, bool $retry): array
+    {
+        $complaint = (string) ($state['original_complaint'] ?? 'galupot');
+        $interpretation = (string) ($state['interpretation'] ?? 'diarrhea');
+        $question = [
+            'question_id' => '',
+            'text' => $questionText,
+            'language' => 'hiligaynon',
+        ];
+        $assessment = [
+            'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
+            'followup_required' => true,
+            'followup_question' => $question,
+            'patient_message' => $retry
+                ? 'Please answer the question above.'
+                : $questionText,
+            'retry_current_question' => $retry,
+            'answer_rejected' => $retry,
+            'chief_complaint' => $complaint,
+            'original_chief_complaint' => $complaint,
+            'english_translation' => $interpretation,
+            'detected_language' => 'hiligaynon',
+            'question_language' => 'hiligaynon',
+            'detected_symptoms' => [$interpretation],
+            'clinical_transcript' => self::galupotTranscript($complaint, $state),
+            'triage' => [
+                'triage_classification' => '',
+                'triage_display' => '',
+                'assessment_status' => ClinicalInterviewEngine::STATUS_IN_PROGRESS,
+                'db_level' => 'pending',
+                'urgency_label' => 'Assessment in progress',
+                'final_authority' => 'galupot_static_fallback',
+            ],
+            'db_level' => 'pending',
+            'urgency_label' => 'Assessment in progress',
+            'engine' => 'galupot-static-fallback',
+            'gemini_generated' => false,
+            'static_fallback_used' => true,
+            'static_fallback_reason' => (string) ($state['reason'] ?? 'Gemini unavailable'),
+            self::GALUPOT_STATIC_KEY => $state,
+        ];
+        $assessment['interview'] = self::galupotInterviewBlock($assessment, $state, $question);
+
+        return $assessment;
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     * @return array<string, mixed>
+     */
+    private static function galupotCompletedAssessment(array $state): array
+    {
+        $complaint = (string) ($state['original_complaint'] ?? 'galupot');
+        $interpretation = (string) ($state['interpretation'] ?? 'diarrhea');
+        $display = 'NON-URGENT';
+        $action = class_exists('ClinicalInterviewEngine')
+            ? ClinicalInterviewEngine::patientMessage($display)
+            : $display;
+        $reason = 'Static fallback used because Gemini was unavailable. Original complaint "'
+            . $complaint
+            . '" is interpreted as diarrhea. This is not a Gemini-generated result.';
+        $assessment = [
+            'assessment_status' => ClinicalInterviewEngine::STATUS_COMPLETED,
+            'followup_required' => false,
+            'followup_question' => null,
+            'patient_message' => $action,
+            'chief_complaint' => $complaint,
+            'original_chief_complaint' => $complaint,
+            'english_translation' => $interpretation,
+            'detected_language' => 'hiligaynon',
+            'detected_symptoms' => [$interpretation],
+            'clinical_transcript' => self::galupotTranscript($complaint, $state),
+            'recommended_action' => $action,
+            'recommendations' => [$action],
+            'confidence' => [
+                'score' => 0,
+                'level' => 'review_needed',
+            ],
+            'triage' => [
+                'triage_display' => $display,
+                'triage_classification' => 'NON_URGENT',
+                'triage_level' => 'LOW',
+                'gis_triage_level' => 'non_urgent',
+                'db_level' => '3',
+                'assessment_status' => ClinicalInterviewEngine::STATUS_COMPLETED,
+                'final_authority' => 'galupot_static_fallback',
+                'reason' => $reason,
+                'recommended_action' => $action,
+                'red_flags' => [],
+                'confidence_score' => 0,
+            ],
+            'db_level' => '3',
+            'urgency_label' => 'Non-Urgent (Routine)',
+            'engine' => 'galupot-static-fallback',
+            'gemini_generated' => false,
+            'static_fallback_used' => true,
+            'static_fallback_reason' => (string) ($state['reason'] ?? 'Gemini unavailable'),
+            self::GALUPOT_STATIC_KEY => $state,
+        ];
+        $assessment['interview'] = self::galupotInterviewBlock($assessment, $state, null);
+
+        return $assessment;
+    }
+
+    /**
+     * @param array<string, mixed> $assessment
+     * @param array<string, mixed> $state
+     * @param array<string, mixed>|null $question
+     * @return array<string, mixed>
+     */
+    private static function galupotInterviewBlock(array $assessment, array $state, ?array $question): array
+    {
+        $interpretation = (string) ($state['interpretation'] ?? 'diarrhea');
+
+        return [
+            'assessment_status' => $assessment['assessment_status'],
+            'chief_complaint' => (string) ($assessment['chief_complaint'] ?? ''),
+            'detected_language' => 'hiligaynon',
+            'question_language' => 'hiligaynon',
+            'normalized_complaints' => [[
+                'id' => 'DIARRHEA',
+                'name' => $interpretation,
+                'family_key' => 'gastrointestinal',
+            ]],
+            'patient_turns' => self::stringList($state['answers'] ?? []),
+            'last_followup_question' => $question,
+            'next_question' => $question,
+            'retry_current_question' => !empty($assessment['retry_current_question']),
+            'answer_rejected' => !empty($assessment['answer_rejected']),
+            self::GALUPOT_STATIC_KEY => $state,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $state
+     */
+    private static function galupotTranscript(string $complaint, array $state): string
+    {
+        $parts = [$complaint];
+        foreach (self::stringList($state['answers'] ?? []) as $answer) {
+            $parts[] = $answer;
+        }
+
+        return implode('. ', $parts);
     }
 
     /**
