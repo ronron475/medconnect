@@ -42,6 +42,8 @@ $envString = static function (string $key): ?string {
     return (string) $value;
 };
 
+$dbPort = (int) ($envString('DB_PORT') ?: $envString('MYSQLPORT') ?: 3306);
+
 if ($isLocal) {
     $dbHost = 'localhost';
     $dbName = 'medconnect';
@@ -57,22 +59,50 @@ if ($isLocal) {
         }
     }
 } else {
-    // Hostinger PHP on the same server uses localhost. Env values override these defaults.
-    $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
-    $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
-    $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
-    $dbPass = (string) ($envString('DB_PASS') ?? '');
-    if ($dbHost === '') {
-        http_response_code(500);
-        header('Content-Type: text/plain; charset=utf-8');
-        echo "Database is not configured.\n\n"
-            . "Set DB_HOST for the remote database connection.";
-        exit;
+    // Detect Railway cloud deployment
+    $isRailway = getenv('RAILWAY_ENVIRONMENT') !== false
+        || getenv('RAILWAY_PROJECT_ID') !== false
+        || getenv('RAILWAY_SERVICE_ID') !== false
+        || !empty($_ENV['RAILWAY_ENVIRONMENT'])
+        || !empty($_ENV['RAILWAY_PROJECT_ID'])
+        || $envString('MYSQLHOST') !== null;
+
+    if ($isRailway) {
+        // Railway: explicitly require environment variables (DB_* or Railway's native MYSQL*).
+        // Never reuse example or Hostinger credentials in a containerized environment.
+        $dbHost = $envString('DB_HOST') ?: $envString('MYSQLHOST') ?: '';
+        $dbName = $envString('DB_NAME') ?: $envString('MYSQLDATABASE') ?: '';
+        $dbUser = $envString('DB_USER') ?: $envString('MYSQLUSER') ?: '';
+        $dbPass = (string) ($envString('DB_PASS') ?? $envString('MYSQLPASSWORD') ?? '');
+
+        if ($dbHost === '' || $dbName === '' || $dbUser === '') {
+            http_response_code(500);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo "Railway MySQL is not configured.\n\n"
+                . "Please set DB_HOST, DB_NAME, DB_USER, and DB_PASS (or link a Railway MySQL service).";
+            exit;
+        }
+    } else {
+        // Hostinger PHP on the same server uses localhost. Env values override these defaults.
+        $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
+        $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
+        $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
+        $dbPass = (string) ($envString('DB_PASS') ?? '');
+        if ($dbHost === '') {
+            http_response_code(500);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo "Database is not configured.\n\n"
+                . "Set DB_HOST for the remote database connection.";
+            exit;
+        }
     }
 }
 
 if (!defined('DB_HOST')) {
     define('DB_HOST', $dbHost);
+}
+if (!defined('DB_PORT')) {
+    define('DB_PORT', $dbPort);
 }
 if (!defined('DB_NAME')) {
     define('DB_NAME', $dbName);
@@ -87,7 +117,7 @@ if (!defined('DB_CHARSET')) {
     define('DB_CHARSET', 'utf8mb4');
 }
 
-$dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
+$dsn = 'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=' . DB_CHARSET;
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,

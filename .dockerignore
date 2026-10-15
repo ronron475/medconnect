@@ -1,0 +1,65 @@
+# Version control
+.git/
+.gitignore
+.gitlab-ci.yml
+
+# Environment files and credentials (never in image)
+.env
+.env.*
+storage/ai_provider_runtime.env
+*.key
+*.pem
+*.crt
+
+# Database dumps
+database/exports/
+*.sql
+!database/schema.sql
+
+# Dependencies (installed cleanly inside image)
+vendor/
+node_modules/
+ai_service/.venv/
+ai_service/__pycache__/
+**/__pycache__/
+
+# Private storage and runtime data
+storage/uploads/ids/*
+storage/uploads/bhw_applications/*
+storage/uploads/doctor_applications/*
+storage/uploads/soap_signed/*
+storage/residency/*
+storage/backups/*
+storage/logs/*
+storage/recordings/*
+storage/ratelimit/*
+storage/temp/*
+
+# IDE and OS files
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Android / mobile builds
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/android/**/*.apk
+mobile/android/**/*.aab
+
+# Local dev/test scripts (never in production image)
+public/genhash.php
+public/setup_admin.php
+public/seed_provider.php
+public/test_db_connection.php
+public/debug_profile.php
+public/delete_user.php
+public/app/
+.vercel
