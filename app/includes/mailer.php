@@ -12,7 +12,7 @@ if (!defined('BASE_PATH')) {
     require_once dirname(__DIR__, 2) . '/bootstrap/app.php';
 }
 
-const MEDCONNECT_RAILWAY_EMAIL_URL = 'https://medconnect-production-f2b7.up.railway.app/email/send';
+const MEDCONNECT_RAILWAY_EMAIL_URL = 'https://medconnect-production-ab04.up.railway.app/email/send';
 
 function medconnect_mail_env(string $key): string
 {
