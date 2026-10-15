@@ -51,7 +51,7 @@ class Settings:
     """Runtime settings for the medConnect Python API."""
 
     app_name: str = "medConnect AI API"
-    app_version: str = "2.0.0"
+    app_version: str = "2.0.1"
     host: str = os.environ.get("MEDCONNECT_AI_HOST", "127.0.0.1")
     # Prefer platform PORT (Railway) so the public proxy matches the listener.
     # Local/dev can still set MEDCONNECT_AI_PORT when PORT is unset.

@@ -1,4 +1,4 @@
-"""medConnect unified FastAPI application."""
+"""medConnect unified FastAPI application — v2.0.1."""
 
 from __future__ import annotations
 
