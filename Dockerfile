@@ -22,6 +22,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         opcache \
         bcmath \
     && a2enmod rewrite headers remoteip \
+    && (a2dismod mpm_event || true) \
+    && (a2dismod mpm_worker || true) \
+    && a2enmod mpm_prefork \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install Composer from official Composer image

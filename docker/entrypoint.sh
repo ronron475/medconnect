@@ -6,6 +6,11 @@ PORT="${PORT:-80}"
 
 echo "[MedConnect] Starting Apache web service on port ${PORT}..."
 
+# Ensure only one MPM module (mpm_prefork) is loaded (Railway fix for AH00534)
+a2dismod mpm_event 2>/dev/null || true
+a2dismod mpm_worker 2>/dev/null || true
+a2enmod mpm_prefork 2>/dev/null || true
+
 # Update Apache configuration to bind to the dynamic port
 sed -ri -e "s!^(\s*Listen)\s+[0-9]+!\1 ${PORT}!g" /etc/apache2/ports.conf
 sed -ri -e "s!<VirtualHost \*:[0-9]+>!<VirtualHost \*:${PORT}>!g" /etc/apache2/sites-available/000-default.conf
