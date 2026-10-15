@@ -61,10 +61,7 @@ if ($isLocal) {
     $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
     $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
     $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
-    $dbPass = $envString('DB_PASS');
-    if ($dbPass === null || $dbPass === '') {
-        $dbPass = '0#KQFw#m;p@V';
-    }
+    $dbPass = (string) ($envString('DB_PASS') ?? '');
     if ($dbHost === '') {
         http_response_code(500);
         header('Content-Type: text/plain; charset=utf-8');

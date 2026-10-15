@@ -6,11 +6,23 @@
  * NOTE: Does not store message content; only counters/timestamps.
  */
 
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', dirname(__DIR__, 2));
+}
+
 function mc_rate_limiter_key(string $name, ?int $userId = null): string
 {
-    $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-    $sid = (string) (session_id() ?: 'nosession');
-    return 'mc_rl:' . $name . ':' . $ip . ':' . $sid . ':' . (string) ($userId ?? 0);
+    if (function_exists('login_security_ip')) {
+        $ip = login_security_ip();
+    } else {
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    }
+    // Keying strictly by IP (and authenticated user ID when present)
+    // prevents attackers from bypassing limits by discarding or rotating session IDs.
+    if ($userId !== null && $userId > 0) {
+        return 'mc_rl:' . $name . ':u:' . $userId . ':ip:' . $ip;
+    }
+    return 'mc_rl:' . $name . ':ip:' . $ip;
 }
 
 /**

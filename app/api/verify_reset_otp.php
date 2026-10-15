@@ -14,6 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+$csrf = (string) ($_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '');
+if (empty($csrf) || empty($_SESSION['csrf_token']) || !hash_equals((string) $_SESSION['csrf_token'], $csrf)) {
+    http_response_code(419);
+    echo json_encode(['success' => false, 'message' => 'Invalid security token. Please refresh and try again.']);
+    exit;
+}
+
 $email = strtolower(trim($_POST['email'] ?? ''));
 $otp   = trim($_POST['otp'] ?? '');
 

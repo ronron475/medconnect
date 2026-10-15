@@ -65,67 +65,32 @@ RewriteRule ^philippine-address-selector-main/(.*)$ modules/address_selector/$1 
 
 
 # ── Block internal application directories (before serving existing files) ─
-RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules)/ - [F,L]
+RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules|ai_service)/ - [F,L]
 RewriteRule ^app/(core|includes|models)/ - [F,L]
-
-# ── Serve real files and directories directly ──────────────────
-
-RewriteCond %{REQUEST_FILENAME} -f
-
-RewriteRule ^ - [L]
-
-
-
-RewriteCond %{REQUEST_FILENAME} -d
-
-RewriteRule ^ - [L]
-
-
-
-# ── Ensure trailing-slash requests don't break POST APIs ───────
-
-RewriteCond %{REQUEST_URI} /app/api/(.+)\.php/$
-
-RewriteRule ^app/api/(.+)\.php/$ app/api/$1.php [L]
-
-
-
-# ── AI health check aliases ────────────────────────────────────
-
-RewriteRule ^api/health$ app/api/ai/health.php [L]
-
-RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
-
-
-
-# ── Block internal application directories ─────────────────────
-
-RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules)/ - [F,L]
-
-RewriteRule ^app/(core|includes|models)/ - [F,L]
-
-
-
-# config/ — database credentials and API keys
-
-RewriteRule ^config/ - [F,L]
-
-
-
-# bootstrap.php — internal only
-
 RewriteRule ^bootstrap\.php$ - [F,L]
 
-RewriteRule ^bootstrap/ - [F,L]
+# ── Serve real files and directories directly ──────────────────
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
 
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
+# ── Ensure trailing-slash requests don't break POST APIs ───────
+RewriteCond %{REQUEST_URI} /app/api/(.+)\.php/$
+RewriteRule ^app/api/(.+)\.php/$ app/api/$1.php [L]
 
-# ── Block sensitive file types ─────────────────────────────────
+# ── AI health check aliases ────────────────────────────────────
+RewriteRule ^api/health$ app/api/ai/health.php [L]
+RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
 
-<FilesMatch "\.(env|sql|log|md|lock|git|sh|bak)$">
-
+# ── Block sensitive file types and metadata ────────────────────
+<FilesMatch "(^\.env|^\.git|\.(env|sql|log|md|lock|git|sh|bak|ini|ya?ml|conf|key|pem|crt))$">
     Require all denied
+</FilesMatch>
 
+<FilesMatch "^(composer|package(-lock)?)\.json$">
+    Require all denied
 </FilesMatch>
 
 

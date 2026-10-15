@@ -25,7 +25,20 @@
   }
 
   async function postForm(path, fd) {
-    const res = await fetch(api(path), { method: 'POST', body: fd, credentials: 'same-origin' });
+    const csrf = window.CSRF_TOKEN || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    if (csrf && !fd.has('csrf_token')) {
+      fd.append('csrf_token', csrf);
+    }
+    const headers = {};
+    if (csrf) {
+      headers['X-CSRF-TOKEN'] = csrf;
+    }
+    const res = await fetch(api(path), {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: headers
+    });
     const text = await res.text();
     try {
       return text ? JSON.parse(text) : { success: false, message: 'Empty server response.' };

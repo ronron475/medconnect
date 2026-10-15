@@ -9,6 +9,10 @@
     return (global.ASSET_BASE || global.APP_BASE || document.body?.dataset?.assetBase || '').replace(/\/$/, '');
   }
 
+  function getCsrfToken() {
+    return global.CSRF_TOKEN || document.body?.dataset?.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+  }
+
   function performLogout() {
     if (global.MedConnectLoginLoading && typeof global.MedConnectLoginLoading.performLogout === 'function') {
       global.MedConnectLoginLoading.performLogout();
@@ -19,14 +23,20 @@
       return;
     }
     var base = assetBase();
+    var token = getCsrfToken();
+    var headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+      'X-MC-No-Loader': '1',
+    };
+    if (token) {
+      headers['X-CSRF-TOKEN'] = token;
+    }
     fetch(base + '/app/api/logout.php', {
-      method: 'GET',
+      method: 'POST',
       credentials: 'same-origin',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        Accept: 'application/json',
-        'X-MC-No-Loader': '1',
-      },
+      headers: headers,
+      body: new URLSearchParams({ csrf_token: token }),
     })
       .then(function (res) { return res.json().catch(function () { return null; }); })
       .then(function (data) {
@@ -44,7 +54,7 @@
             global.MedConnectAuthSync.notifyLogout();
           }
         } catch (_) { /* ignore */ }
-        global.location.href = base + '/app/api/logout.php';
+        global.location.href = base + '/app/api/logout.php' + (token ? ('?csrf_token=' + encodeURIComponent(token)) : '');
       });
   }
 

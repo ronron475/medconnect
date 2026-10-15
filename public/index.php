@@ -21,4 +21,8 @@ $landing_maintenance = LandingPageConfig::maintenance($pdo);
 require_once BASE_PATH . '/app/includes/auth_guard.php';
 auth_redirect_if_logged_in();
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 require VIEWS_PATH . '/landing/home.php';

@@ -62,6 +62,7 @@ storage/cache/*
 storage/ai_provider_runtime.env
 storage/temp/*
 !storage/temp/.gitkeep
+storage/backups/**
 storage/logs/*
 !storage/logs/.gitkeep
 !storage/logs/audit/.gitkeep

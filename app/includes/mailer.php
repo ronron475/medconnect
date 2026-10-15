@@ -78,13 +78,8 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-    // Hostinger does not expose these to PHP. Env and the server .env still win when present.
-    $fallbacks = [
-        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
-        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
-    ];
-
-    return $fallbacks[$key] ?? '';
+    // No hardcoded secrets. Tokens must be configured via environment or .env file.
+    return '';
 }
 
 function medconnect_direct_smtp_available(): bool
@@ -167,23 +162,15 @@ function medconnect_smtp_deliver(string $to, string $subject, string $html, stri
     if ($fromName === '') {
         $fromName = 'MedConnect Bago City';
     }
-    $fallbackUser = 'medconnect678@gmail.com';
-    $fallbackPass = 'lvmtaupmkvenauvm';
     if ($user === '' || $pass === '') {
-        medconnect_smtp_deliver_with($to, $subject, $html, $text, $fallbackUser, $fallbackPass, $fallbackUser, 'MedConnect Bago City');
-        return;
+        error_log('MedConnect Mailer: MAIL_USERNAME or MAIL_PASSWORD is not configured in environment.');
+        throw new Exception('Email service is not configured.');
     }
     try {
         medconnect_smtp_deliver_with($to, $subject, $html, $text, $user, $pass, $from, $fromName);
     } catch (Exception $e) {
-        if ($e->getMessage() !== 'smtp-auth' || ($user === $fallbackUser && $pass === $fallbackPass)) {
-            throw new Exception('Email could not be sent.');
-        }
-        try {
-            medconnect_smtp_deliver_with($to, $subject, $html, $text, $fallbackUser, $fallbackPass, $fallbackUser, 'MedConnect Bago City');
-        } catch (Exception $e2) {
-            throw new Exception('Email could not be sent.');
-        }
+        error_log('SMTP delivery failed: ' . $e->getMessage());
+        throw new Exception('Email could not be sent.');
     }
 }
 

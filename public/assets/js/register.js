@@ -425,7 +425,9 @@ if (navbar) {
     setLoading(btnVerify, document.getElementById('verify-otp-btn-text'), document.getElementById('verify-otp-spinner'), true);
     try {
       const fd = new FormData();
-      fd.append('otp', otp); fd.append('email', email);
+      fd.append('otp', otp);
+      fd.append('email', email);
+      fd.append('csrf_token', (window.CSRF_TOKEN || ''));
       const base = (typeof window.APP_BASE !== 'undefined') ? window.APP_BASE : '';
       const res  = await fetch(base + '/app/api/verify_otp.php', { method: 'POST', body: fd });
       const text = await res.text();

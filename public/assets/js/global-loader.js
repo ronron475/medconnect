@@ -308,17 +308,23 @@
 
   function performLogout() {
     const base = assetBase();
+    const token = global.CSRF_TOKEN || document.body?.dataset?.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const headers = {
+      'X-Requested-With': 'XMLHttpRequest',
+      Accept: 'application/json',
+      'X-MC-No-Loader': '1',
+    };
+    if (token) {
+      headers['X-CSRF-TOKEN'] = token;
+    }
     showTransition(base + '/index.php', {
       mode: 'logout',
       prefetch: false,
       beforeRedirect: fetch(base + '/app/api/logout.php', {
-        method: 'GET',
+        method: 'POST',
         credentials: 'same-origin',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          Accept: 'application/json',
-          'X-MC-No-Loader': '1',
-        },
+        headers: headers,
+        body: new URLSearchParams({ csrf_token: token }),
       })
         .then(function (res) { return res.json(); })
         .then(function (data) {

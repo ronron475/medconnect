@@ -39,6 +39,15 @@ if ($stmt->fetch()) {
     exit;
 }
 
+// Check if currently locked out due to excessive failed attempts
+$lockoutUntil = (int) ($_SESSION['otp_lockout_until'] ?? 0);
+if ($lockoutUntil > time()) {
+    $remaining = $lockoutUntil - time();
+    http_response_code(429);
+    echo json_encode(['success' => false, 'message' => "Too many incorrect attempts. Please wait {$remaining} seconds before requesting a new OTP."]);
+    exit;
+}
+
 // Rate limit — max 3 OTP requests per email per 10 minutes
 if (isset($_SESSION['otp_email']) && $_SESSION['otp_email'] === $email) {
     $attempts = $_SESSION['otp_attempts'] ?? 0;
@@ -64,6 +73,8 @@ $_SESSION['otp_expiry']    = $expiry;
 $_SESSION['otp_verified']  = false;
 $_SESSION['otp_attempts']  = ($_SESSION['otp_attempts'] ?? 0) + 1;
 $_SESSION['otp_last_sent'] = time();
+$_SESSION['otp_failures']  = 0;
+$_SESSION['otp_verify_hits'] = 0;
 
 // Send email
 $mail = initMailer();

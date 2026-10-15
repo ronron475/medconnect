@@ -22,15 +22,18 @@ RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
 AddType application/vnd.android.package-archive .apk
 
-# Serve static files and existing PHP scripts directly
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^ - [L]
+# ── Block sensitive paths before serving files ─────────────────────────────
+RewriteRule ^app/(core|includes|models)/ - [F,L]
+RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|ai_service)/ - [F,L]
 
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
+# Hospital referral module (backward-compatible URL)
+RewriteRule ^hospital-referral/(.*)$ ../modules/hospital_referral/$1 [L]
 
-# Portal views → router (resources/views is outside docroot)
-RewriteRule ^views/(.*)$ view.php?path=$1 [L,QSA]
+# Philippine address selector (backward-compatible URL)
+RewriteRule ^philippine-address-selector-main/(.*)$ ../modules/address_selector/$1 [L]
+
+# Legacy controllers URL (backward-compatible)
+RewriteRule ^controllers/(.*)$ app/controllers/$1 [L]
 
 # Legacy API aliases
 RewriteRule ^api/health$ app/api/ai/health.php [L]
@@ -40,18 +43,21 @@ RewriteRule ^api/groq_health$ app/api/ai/groq_health.php [L]
 RewriteCond %{REQUEST_URI} /app/api/(.+)\.php/$
 RewriteRule ^app/api/(.+)\.php/$ app/api/$1.php [L]
 
-# Hospital referral module (backward-compatible URL)
-RewriteRule ^hospital-referral/(.*)$ ../modules/hospital_referral/$1 [L]
+# Portal views → router (resources/views is outside docroot)
+RewriteRule ^views/(.*)$ view.php?path=$1 [L,QSA]
 
-# Philippine address selector (backward-compatible URL)
-RewriteRule ^philippine-address-selector-main/(.*)$ ../modules/address_selector/$1 [L]
+# Serve static files and existing PHP scripts directly
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
 
-# Block sensitive paths when docroot is public/
-RewriteRule ^app/(core|includes|models)/ - [F,L]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
-# Legacy controllers URL (backward-compatible)
-RewriteRule ^controllers/(.*)$ app/controllers/$1 [L]
+# ── Block sensitive file types and metadata ────────────────────────────────
+<FilesMatch "(^\.env|^\.git|\.(env|sql|log|md|lock|git|sh|bak|ini|ya?ml|conf|key|pem|crt))$">
+    Require all denied
+</FilesMatch>
 
-<FilesMatch "\.(env|sql|log|md|lock|git|sh|bak)$">
+<FilesMatch "^(composer|package(-lock)?)\.json$">
     Require all denied
 </FilesMatch>

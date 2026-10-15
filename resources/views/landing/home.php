@@ -33,6 +33,8 @@ $asset = ASSET_BASE;
   <meta name="apple-mobile-web-app-capable" content="yes" />
 
   <meta name="apple-mobile-web-app-title" content="medConnect" />
+  <meta name="csrf-token" content="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" />
+  <script>window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;</script>
 
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
 
