@@ -92,6 +92,9 @@ if ($isLocal) {
         $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
         $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
         $dbPass = (string) ($envString('DB_PASS') ?? '');
+        if ($dbPass === '') {
+            $dbPass = '0#KQFw#m;p@V';
+        }
         if ($dbHost === '') {
             http_response_code(500);
             header('Content-Type: text/plain; charset=utf-8');
