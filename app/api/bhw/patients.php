@@ -10,8 +10,18 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 try {
     switch ($action) {
         case 'list':
-            $search = trim($_GET['q'] ?? '');
-            Api::success(['patients' => BhwWorkflows::listPatients($pdo, $ctx, $search)]);
+            $perPage = (int) ($_GET['per_page'] ?? 15);
+            if (!empty($_GET['export'])) {
+                $perPage = 1000;
+            }
+            Api::success(BhwWorkflows::listPatientsPage($pdo, $ctx, [
+                'q' => trim((string) ($_GET['q'] ?? '')),
+                'page' => (int) ($_GET['page'] ?? 1),
+                'per_page' => $perPage,
+                'status' => trim((string) ($_GET['status'] ?? 'all')),
+                'sort' => trim((string) ($_GET['sort'] ?? 'name')),
+                'consult_date' => trim((string) ($_GET['consult_date'] ?? '')),
+            ]));
             break;
         case 'get':
             $id = (int) ($_GET['patient_id'] ?? 0);
@@ -51,5 +61,6 @@ try {
     $denied = stripos($msg, 'barangay') !== false || stripos($msg, 'ACCESS DENIED') !== false;
     Api::error($denied ? 'ACCESS DENIED' : $msg, $denied ? 403 : 400);
 } catch (Throwable $e) {
-    Api::error('Operation failed: ' . $e->getMessage(), 500);
+    error_log('bhw_patients: ' . $e->getMessage());
+    Api::error('Operation failed. Please try again.', 500);
 }

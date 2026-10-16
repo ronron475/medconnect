@@ -682,27 +682,6 @@ function user_account_status_change(
         user_account_status_invalidate_sessions($pdo, $targetUserId);
     }
 
-    if (($target['role'] ?? '') === 'provider' && in_array($action, ['approve', 'activate', 'reactivate'], true)) {
-        require_once __DIR__ . '/provider_verification.php';
-        provider_verification_ensure_schema($pdo);
-        $pdo->prepare("
-            UPDATE provider_profiles
-            SET verification_status = 'verified', verified_by = ?, verified_at = NOW(), updated_at = NOW()
-            WHERE user_id = ? AND verification_status IN ('pending', 'rejected')
-        ")->execute([$performedBy, $targetUserId]);
-    }
-
-    if (($target['role'] ?? '') === 'provider' && $action === 'reject') {
-        require_once __DIR__ . '/provider_verification.php';
-        provider_verification_ensure_schema($pdo);
-        $pdo->prepare("
-            UPDATE provider_profiles
-            SET verification_status = 'rejected', verified_by = ?, verified_at = NOW(),
-                rejection_note = ?, updated_at = NOW()
-            WHERE user_id = ?
-        ")->execute([$performedBy, $reason, $targetUserId]);
-    }
-
     $performerName = user_account_status_display_name($pdo, $performedBy);
     $targetName = trim($target['first_name'] . ' ' . $target['last_name']);
     $performerRole = user_account_status_user_role($pdo, $performedBy);

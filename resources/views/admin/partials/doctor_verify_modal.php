@@ -193,7 +193,7 @@
         pendingAction = { type: 'verify', userId: userId, name: name, prc: prc };
         eyebrowEl.textContent = 'PRC Verification';
         titleEl.textContent = 'Verify this doctor?';
-        messageEl.innerHTML = 'Confirm that <strong>' + escapeHtml(name) + '</strong> is a licensed doctor with PRC number <strong>' + escapeHtml(prc) + '</strong>. The account will be activated after verification.';
+        messageEl.innerHTML = 'Record a manual decision for <strong>' + escapeHtml(name) + '</strong>, PRC <strong>' + escapeHtml(prc) + '</strong>. MedConnect does not contact the PRC. Describe what you checked. This does not change the account status by itself.';
         rejectFields.style.display = 'none';
         if (verifyFields) verifyFields.style.display = 'block';
         iconEl.className = 'admin-action-icon admin-action-icon--verify';
@@ -208,7 +208,7 @@
         pendingAction = { type: 'reject', userId: userId, name: name };
         eyebrowEl.textContent = 'PRC Verification';
         titleEl.textContent = 'Reject this doctor?';
-        messageEl.innerHTML = 'Reject <strong>' + escapeHtml(name) + '</strong> and deactivate the account. A reason is required.';
+        messageEl.innerHTML = 'Record PRC status as Rejected for <strong>' + escapeHtml(name) + '</strong>. This does not deactivate the account. Use account actions for that. A reason is required.';
         rejectFields.style.display = 'block';
         if (verifyFields) verifyFields.style.display = 'none';
         iconEl.className = 'admin-action-icon admin-action-icon--reject';

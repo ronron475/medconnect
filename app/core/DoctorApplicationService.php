@@ -194,6 +194,11 @@ final class DoctorApplicationService
             return ['success' => false, 'message' => $dup];
         }
 
+        require_once dirname(__DIR__) . '/includes/provider_verification.php';
+        if ($lockErr = prc_license_lock_claim($this->pdo, (string) $app['prc_license_number'], 'application', $applicationId)) {
+            return ['success' => false, 'message' => $lockErr];
+        }
+
         $this->pdo->prepare("
             UPDATE doctor_applications SET
                 status = 'pending_approval',
@@ -253,9 +258,23 @@ final class DoctorApplicationService
             return ['success' => false, 'message' => $dup];
         }
 
+        require_once dirname(__DIR__) . '/includes/provider_verification.php';
+        provider_verification_ensure_schema($this->pdo);
+
         $this->pdo->beginTransaction();
         try {
             $userId = $this->createProviderUser($app, $superAdminId);
+            $lockErr = prc_license_lock_transfer(
+                $this->pdo,
+                (string) $app['prc_license_number'],
+                'application',
+                $applicationId,
+                'provider',
+                $userId
+            );
+            if ($lockErr) {
+                throw new RuntimeException($lockErr);
+            }
             $now = date('Y-m-d H:i:s');
 
             $this->pdo->prepare("
@@ -297,7 +316,11 @@ final class DoctorApplicationService
             require_once dirname(__DIR__) . '/includes/notification_events.php';
             NotificationEvents::doctorApplicationApproved($this->pdo, $applicationId, $userId, $name, $makerId, $superAdminId);
 
-            return ['success' => true, 'message' => 'Doctor account approved and activated.', 'user_id' => $userId];
+            return [
+                'success' => true,
+                'message' => 'Doctor account approved. PRC status is Needs Review until a Super Administrator records a verification decision. Sign-in stays blocked until that decision is Verified.',
+                'user_id' => $userId,
+            ];
         } catch (Throwable $e) {
             $this->pdo->rollBack();
 
@@ -348,6 +371,9 @@ final class DoctorApplicationService
             'rejection_reason'   => $reason,
             'prc_license_number' => $app['prc_license_number'],
         ]);
+
+        require_once dirname(__DIR__) . '/includes/provider_verification.php';
+        prc_license_lock_release($this->pdo, (string) $app['prc_license_number'], 'application', $applicationId);
 
         require_once dirname(__DIR__) . '/includes/notification_events.php';
         NotificationEvents::doctorApplicationRejected($this->pdo, $applicationId, $name, $makerId, $superAdminId, $reason, $app['email']);
@@ -678,7 +704,7 @@ final class DoctorApplicationService
         $userId = (int) $this->pdo->lastInsertId();
 
         $profileCols = ['user_id', 'prc_license_number', 'verification_status', 'verified_by', 'verified_at', 'created_by'];
-        $profileVals = [$userId, $app['prc_license_number'], 'verified', $verifiedBy, date('Y-m-d H:i:s'), (int) ($app['submitted_by'] ?? $app['created_by'])];
+        $profileVals = [$userId, $app['prc_license_number'], 'needs_review', null, null, (int) ($app['submitted_by'] ?? $app['created_by'])];
         $profilePlace = array_fill(0, count($profileCols), '?');
 
         $optionalProfile = [
@@ -699,6 +725,16 @@ final class DoctorApplicationService
 
         $sqlProfile = 'INSERT INTO provider_profiles (' . implode(', ', $profileCols) . ') VALUES (' . implode(', ', $profilePlace) . ')';
         $this->pdo->prepare($sqlProfile)->execute($profileVals);
+
+        require_once dirname(__DIR__) . '/includes/provider_verification.php';
+        prc_append_event(
+            $this->pdo,
+            $userId,
+            (string) $app['prc_license_number'],
+            'needs_review',
+            $verifiedBy,
+            'Account approved. PRC was not marked verified because a portal checkbox is not official PRC evidence. A Super Administrator must record a separate verification decision.'
+        );
 
         return $userId;
     }

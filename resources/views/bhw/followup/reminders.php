@@ -11,7 +11,7 @@ $bhw_subnav_active = 'followup/reminders.php';
 ?>
 <div class="bhw-followup-page">
   <header class="bhw-followup-header bhw-page-intro">
-    <p class="bhw-page-intro__desc">Send email reminders to the patient’s registered Gmail for upcoming doctor follow-ups. Each successful send is audited.</p>
+    <p class="bhw-page-intro__desc">Send an email reminder and a TextBee SMS reminder for an upcoming doctor follow-up. Live SMS stays off until TextBee is explicitly enabled. Each attempt is logged.</p>
   </header>
 
   <?php require __DIR__ . '/../partials/bhw_module_subnav.php'; ?>
@@ -64,7 +64,7 @@ ob_start();
             '<td data-label="Registered email">' + emailCell + '</td>' +
             '<td data-label="Actions"><div class="bhw-fu-actions">' +
               '<button type="button" class="bhw-btn-teal bhw-fu-remind"' + disabled +
-              ' data-id="' + f.id + '" data-email="' + esc(email) + '">Send email reminder</button>' +
+              ' data-id="' + f.id + '" data-email="' + esc(email) + '">Send reminder</button>' +
             '</div></td>' +
           '</tr>';
         }).join('') + '</tbody></table>';
@@ -87,12 +87,12 @@ ob_start();
               btn.textContent = 'Sent';
               btn.disabled = true;
             } else {
-              btn.textContent = 'Send email reminder';
+              btn.textContent = 'Send reminder';
               btn.disabled = false;
             }
           }).catch(function () {
             sending[id] = false;
-            btn.textContent = 'Send email reminder';
+            btn.textContent = 'Send reminder';
             btn.disabled = false;
             BhwPortal.toast('Could not send reminder. Please try again.', false);
           });

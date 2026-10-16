@@ -26,6 +26,7 @@ from app.routers import (
     ocr,
     profile,
     root,
+    sms,
     symptoms,
     transcription,
 )
@@ -93,6 +94,7 @@ def create_app() -> FastAPI:
     app.include_router(faq_chatbot.router)
     app.include_router(nlp_demo.router)
     app.include_router(email.router)
+    app.include_router(sms.router)
     app.include_router(care_tips.router)
 
     return app

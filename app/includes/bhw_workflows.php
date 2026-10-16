@@ -16,23 +16,26 @@ final class BhwWorkflows
 {
     public static function listPatients(PDO $pdo, array $ctx, string $search = ''): array
     {
+        $page = self::listPatientsPage($pdo, $ctx, ['q' => $search, 'page' => 1, 'per_page' => 500]);
+        return $page['patients'];
+    }
+
+    /**
+     * Barangay-scoped patient page. Filters and limits are applied in SQL.
+     *
+     * @param array{q?:string,page?:int,per_page?:int,status?:string,sort?:string,consult_date?:string} $filters
+     * @return array{patients:list<array<string,mixed>>,total:int,page:int,per_page:int}
+     */
+    public static function listPatientsPage(PDO $pdo, array $ctx, array $filters = []): array
+    {
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $join = bhw_pr_user_join('pr', 'u');
         $ageExpr = bhw_pr_age_sql('pr');
-        $sql = "
-            SELECT u.id, u.first_name, u.last_name, u.email, u.is_active, u.created_at,
-                   pr.contact_number, pr.barangay, pr.purok, {$ageExpr} AS age, pr.gender, pr.patient_code,
-                   COALESCE(NULLIF(pr.workflow_status, ''), 'registered') AS workflow_status,
-                   (SELECT MAX(c.consult_date) FROM consultations c WHERE c.patient_id = u.id) AS last_consult,
-                   (SELECT tr.urgency_label FROM triage_results tr WHERE tr.patient_id = u.id ORDER BY tr.assessed_at DESC LIMIT 1) AS risk_level,
-                   (SELECT CONCAT(prv.first_name, ' ', prv.last_name) FROM consultations c
-                    JOIN users prv ON prv.id = c.provider_id WHERE c.patient_id = u.id ORDER BY c.id DESC LIMIT 1) AS provider_name
-            FROM users u
-            INNER JOIN patient_registrations pr ON {$join}
-            WHERE u.role = 'patient' AND {$clause}
-        ";
+        $where = "u.role = 'patient' AND {$clause}";
+
+        $search = trim((string) ($filters['q'] ?? ''));
         if ($search !== '') {
-            $sql .= " AND (
+            $where .= " AND (
                 u.first_name LIKE ?
                 OR u.last_name LIKE ?
                 OR CONCAT(u.first_name, ' ', u.last_name) LIKE ?
@@ -43,10 +46,64 @@ final class BhwWorkflows
             $s = '%' . $search . '%';
             $params = array_merge($params, [$s, $s, $s, $s, $s, $s]);
         }
-        $sql .= ' ORDER BY u.last_name, u.first_name LIMIT 500';
+
+        $status = strtolower(trim((string) ($filters['status'] ?? 'all')));
+        if ($status === 'active') {
+            $where .= ' AND u.is_active = 1';
+        } elseif ($status === 'inactive') {
+            $where .= ' AND u.is_active = 0';
+        }
+
+        $consultDate = trim((string) ($filters['consult_date'] ?? ''));
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $consultDate)) {
+            $where .= ' AND EXISTS (SELECT 1 FROM consultations cdate WHERE cdate.patient_id = u.id AND cdate.consult_date = ?)';
+            $params[] = $consultDate;
+        }
+
+        $sort = strtolower(trim((string) ($filters['sort'] ?? 'name')));
+        $order = match ($sort) {
+            'registered' => 'u.created_at DESC, u.id DESC',
+            'name_desc' => 'u.last_name DESC, u.first_name DESC',
+            default => 'u.last_name ASC, u.first_name ASC',
+        };
+
+        $page = max(1, (int) ($filters['page'] ?? 1));
+        $perPage = (int) ($filters['per_page'] ?? 15);
+        if ($perPage < 1) {
+            $perPage = 15;
+        }
+        if ($perPage > 1000) {
+            $perPage = 1000;
+        }
+        $offset = ($page - 1) * $perPage;
+
+        $from = "
+            FROM users u
+            INNER JOIN patient_registrations pr ON {$join}
+            WHERE {$where}
+        ";
+        $count = $pdo->prepare('SELECT COUNT(*) ' . $from);
+        $count->execute($params);
+        $total = (int) $count->fetchColumn();
+
+        $sql = "
+            SELECT u.id, u.first_name, u.last_name, u.email, u.is_active, u.created_at,
+                   pr.contact_number, pr.barangay, pr.purok, {$ageExpr} AS age, pr.gender,
+                   COALESCE(NULLIF(pr.workflow_status, ''), 'registered') AS workflow_status,
+                   (SELECT tr.urgency_label FROM triage_results tr WHERE tr.patient_id = u.id ORDER BY tr.assessed_at DESC LIMIT 1) AS risk_level
+            {$from}
+            ORDER BY {$order}
+            LIMIT {$perPage} OFFSET {$offset}
+        ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'patients' => $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [],
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
     }
 
     public static function getPatient(PDO $pdo, array $ctx, int $patientId): ?array
@@ -54,7 +111,20 @@ final class BhwWorkflows
         if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
             return null;
         }
+        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $join = bhw_pr_user_join('pr', 'u');
+        // The sector clause is part of this query. An earlier ID check is not enough
+        // when one account has more than one registration row.
+        $matchSql = "
+            FROM users u
+            INNER JOIN patient_registrations pr ON {$join}
+            WHERE u.id = ? AND u.role = 'patient' AND {$clause}
+        ";
+        $count = $pdo->prepare('SELECT COUNT(*) ' . $matchSql);
+        $count->execute(array_merge([$patientId], $params));
+        if ((int) $count->fetchColumn() !== 1) {
+            return null;
+        }
         // Allow-list only: OCR payloads, ID document paths, national ID hashes, consent
         // and other registration columns must never reach BHW screens.
         $cols = bhw_pr_columns($pdo);
@@ -87,11 +157,10 @@ final class BhwWorkflows
         $stmt = $pdo->prepare("
             SELECT u.id, u.first_name, u.last_name, u.email, u.is_active,
                    {$prFields}
-            FROM users u
-            LEFT JOIN patient_registrations pr ON {$join}
-            WHERE u.id = ? LIMIT 1
+            {$matchSql}
+            LIMIT 1
         ");
-        $stmt->execute([$patientId]);
+        $stmt->execute(array_merge([$patientId], $params));
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
@@ -516,7 +585,6 @@ final class BhwWorkflows
     {
         require_once __DIR__ . '/consultation_followup.php';
         consultation_followup_ensure_schema($pdo);
-        bhw_clinical_ensure_schema($pdo);
 
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $join = bhw_pr_user_join('pr', 'p');
@@ -529,24 +597,20 @@ final class BhwWorkflows
         }
 
         $slotSelect = $hasSlots
-            ? ', s.start_time AS slot_start_time, s.end_time AS slot_end_time'
-            : ', NULL AS slot_start_time, NULL AS slot_end_time';
+            ? ', s.start_time AS slot_start_time'
+            : ', NULL AS slot_start_time';
         $slotJoin = $hasSlots
             ? 'LEFT JOIN appointment_slots s ON s.id = f.slot_id'
             : '';
 
         $sql = "
-            SELECT f.*,
+            SELECT f.id, f.followup_date, f.status,
                    CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
-                   p.email AS patient_email,
-                   TRIM(CONCAT(COALESCE(prov.first_name, ''), ' ', COALESCE(prov.last_name, ''))) AS provider_name,
-                   (SELECT COUNT(*) FROM bhw_home_visits hv WHERE hv.followup_id = f.id) AS home_visit_count,
-                   (SELECT MAX(hv.visit_date) FROM bhw_home_visits hv WHERE hv.followup_id = f.id) AS last_home_visit
+                   p.email AS patient_email
                    {$slotSelect}
             FROM followups f
             INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
             INNER JOIN patient_registrations pr ON {$join}
-            LEFT JOIN users prov ON prov.id = f.provider_id
             {$slotJoin}
             WHERE {$clause}
         ";
@@ -567,12 +631,22 @@ final class BhwWorkflows
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        foreach ($rows as &$row) {
+        $listed = [];
+        foreach ($rows as $row) {
             $row = self::normalizeFollowupRow($row);
+            $listed[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'patient_name' => (string) ($row['patient_name'] ?? ''),
+                'patient_email' => (string) ($row['patient_email'] ?? ''),
+                'followup_date' => (string) ($row['followup_date'] ?? ''),
+                'followup_datetime_label' => (string) ($row['followup_datetime_label'] ?? ''),
+                'status' => (string) ($row['status'] ?? ''),
+                'display_status' => (string) ($row['display_status'] ?? ''),
+                'display_status_key' => (string) ($row['display_status_key'] ?? ''),
+            ];
         }
-        unset($row);
 
-        return $rows;
+        return $listed;
     }
 
     /**
@@ -959,15 +1033,14 @@ final class BhwWorkflows
     }
 
     /**
-     * Single doctor follow-up for BHW (read-only clinical fields + home-visit activity).
+     * Single doctor follow-up for the BHW appointment detail screen.
      *
-     * @return array{followup: array<string, mixed>, visits: list<array<string, mixed>>}
+     * @return array{followup: array<string, mixed>}
      */
     public static function getFollowup(PDO $pdo, array $ctx, int $followupId): array
     {
         require_once __DIR__ . '/consultation_followup.php';
         consultation_followup_ensure_schema($pdo);
-        bhw_clinical_ensure_schema($pdo);
 
         if ($followupId <= 0) {
             throw new InvalidArgumentException('Follow-up ID required.');
@@ -983,19 +1056,16 @@ final class BhwWorkflows
             $hasSlots = false;
         }
         $slotSelect = $hasSlots
-            ? ', s.start_time AS slot_start_time, s.end_time AS slot_end_time'
-            : ', NULL AS slot_start_time, NULL AS slot_end_time';
+            ? ', s.start_time AS slot_start_time'
+            : ', NULL AS slot_start_time';
         $slotJoin = $hasSlots
             ? 'LEFT JOIN appointment_slots s ON s.id = f.slot_id'
             : '';
 
         $sql = "
-            SELECT f.*,
+            SELECT f.id, f.consultation_id, f.followup_date, f.status, f.message, f.notes,
                    CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
-                   p.email AS patient_email,
-                   TRIM(CONCAT(COALESCE(prov.first_name, ''), ' ', COALESCE(prov.last_name, ''))) AS provider_name,
-                   (SELECT COUNT(*) FROM bhw_home_visits hv WHERE hv.followup_id = f.id) AS home_visit_count,
-                   (SELECT MAX(hv.visit_date) FROM bhw_home_visits hv WHERE hv.followup_id = f.id) AS last_home_visit
+                   TRIM(CONCAT(COALESCE(prov.first_name, ''), ' ', COALESCE(prov.last_name, ''))) AS provider_name
                    {$slotSelect}
             FROM followups f
             INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
@@ -1012,27 +1082,34 @@ final class BhwWorkflows
             throw new InvalidArgumentException('Follow-up not found in your barangay.');
         }
 
+        $instructions = trim((string) ($row['message'] ?? ''));
+        if ($instructions === '') {
+            $instructions = trim((string) ($row['notes'] ?? ''));
+        }
         $followup = self::normalizeFollowupRow($row);
 
-        $vStmt = $pdo->prepare("
-            SELECT hv.*,
-                   CONCAT(b.first_name, ' ', b.last_name) AS bhw_name
-            FROM bhw_home_visits hv
-            LEFT JOIN users b ON b.id = hv.bhw_id
-            WHERE hv.followup_id = ?
-            ORDER BY hv.visit_date DESC, hv.id DESC
-            LIMIT 50
-        ");
-        $vStmt->execute([$followupId]);
-        $visits = $vStmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-        return ['followup' => $followup, 'visits' => $visits];
+        return [
+            'followup' => [
+                'id' => (int) ($followup['id'] ?? 0),
+                'patient_name' => (string) ($followup['patient_name'] ?? ''),
+                'provider_name' => (string) ($followup['provider_name'] ?? ''),
+                'followup_date' => (string) ($followup['followup_date'] ?? ''),
+                'followup_datetime_label' => (string) ($followup['followup_datetime_label'] ?? ''),
+                'status' => (string) ($followup['status'] ?? ''),
+                'display_status' => (string) ($followup['display_status'] ?? ''),
+                'consultation_id' => (int) ($followup['consultation_id'] ?? 0),
+                'instructions' => $instructions,
+            ],
+        ];
     }
 
+    /** @var null|callable(string,string,string,string,string,string):array */
+    public static $followupReminderMailer = null;
+
     /**
-     * Email a follow-up reminder to the patient's registered Gmail/email.
+     * Email and SMS are attempted separately. A failure on one channel does not skip the other.
      *
-     * @return array{success: bool, message: string, email?: string}
+     * @return array{success: bool, message: string, email?: string, email_sent?: bool, sms_status?: string, sms?: array}
      */
     public static function sendFollowupReminder(PDO $pdo, array $ctx, int $followupId): array
     {
@@ -1070,50 +1147,44 @@ final class BhwWorkflows
         }
 
         $email = trim((string) ($row['patient_email'] ?? ''));
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            throw new InvalidArgumentException('Patient has no valid registered email on file.');
-        }
-
-        // Prevent accidental duplicate sends within 15 minutes for the same follow-up.
-        try {
-            if ($pdo->query("SHOW TABLES LIKE 'patient_audit_logs'")->rowCount()) {
-                $dup = $pdo->prepare("
-                    SELECT id
-                    FROM patient_audit_logs
-                    WHERE patient_id = ?
-                      AND action_type = 'bhw_followup_reminder'
-                      AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
-                      AND (
-                        meta LIKE ?
-                        OR meta LIKE ?
-                        OR meta LIKE ?
-                        OR meta LIKE ?
-                      )
-                    ORDER BY id DESC
-                    LIMIT 1
-                ");
-                $dup->execute([
-                    (int) $row['patient_id'],
-                    '%"followup_id":' . $followupId . ',%',
-                    '%"followup_id":' . $followupId . '}%',
-                    '%"followup_id": ' . $followupId . ',%',
-                    '%"followup_id": ' . $followupId . '}%',
-                ]);
-                if ($dup->fetchColumn()) {
-                    throw new InvalidArgumentException(
-                        'A reminder was already sent for this follow-up in the last 15 minutes. Please wait before sending again.'
-                    );
-                }
-            }
-        } catch (InvalidArgumentException $e) {
-            throw $e;
-        } catch (Throwable $e) {
-            // non-fatal — continue to send
-        }
+        $emailValid = $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL);
 
         $date = trim((string) ($row['followup_date'] ?? ''));
         if ($date === '') {
-            throw new InvalidArgumentException('This follow-up has no scheduled date yet, so an email reminder cannot be sent.');
+            throw new InvalidArgumentException('This follow-up has no scheduled date yet, so a reminder cannot be sent.');
+        }
+
+        $emailRecent = false;
+        if ($emailValid) {
+            try {
+                if ($pdo->query("SHOW TABLES LIKE 'patient_audit_logs'")->rowCount()) {
+                    $dup = $pdo->prepare("
+                        SELECT id
+                        FROM patient_audit_logs
+                        WHERE patient_id = ?
+                          AND action_type = 'bhw_followup_reminder'
+                          AND created_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+                          AND (
+                            meta LIKE ?
+                            OR meta LIKE ?
+                            OR meta LIKE ?
+                            OR meta LIKE ?
+                          )
+                        ORDER BY id DESC
+                        LIMIT 1
+                    ");
+                    $dup->execute([
+                        (int) $row['patient_id'],
+                        '%"followup_id":' . $followupId . ',%',
+                        '%"followup_id":' . $followupId . '}%',
+                        '%"followup_id": ' . $followupId . ',%',
+                        '%"followup_id": ' . $followupId . '}%',
+                    ]);
+                    $emailRecent = (bool) $dup->fetchColumn();
+                }
+            } catch (Throwable $e) {
+                $emailRecent = false;
+            }
         }
 
         $slotStart = '';
@@ -1138,43 +1209,68 @@ final class BhwWorkflows
         $noteForEmail = $note !== '' ? ($note . "\n" . $refLine) : $refLine;
         $contact = trim((string) ($row['contact_number'] ?? ''));
 
-        $sent = sendFollowUpReminderEmail($email, $patientName, $date, $noteForEmail, $contact, $slotStart);
-        $ok = !empty($sent['success']);
-        $mailMsg = trim((string) ($sent['message'] ?? ''));
-
-        bhw_audit($pdo, (int) $row['patient_id'], $ok ? 'bhw_followup_reminder' : 'bhw_followup_reminder_failed',
-            $ok
-                ? 'BHW sent follow-up reminder email to ' . $email . '.'
-                : ('BHW follow-up reminder email failed: ' . ($mailMsg !== '' ? $mailMsg : 'unknown error')),
-            [
-                'followup_id' => $followupId,
-                'email' => $email,
-                'followup_date' => $date,
-                'slot_start_time' => $slotStart,
-                'slot_end_time' => $slotEnd,
-                'email_success' => $ok,
-                'email_message' => $mailMsg,
-            ]
-        );
-
-        if (!$ok) {
-            throw new RuntimeException($mailMsg !== '' ? $mailMsg : 'Failed to send reminder email.');
+        $emailSent = false;
+        $mailMsg = '';
+        if ($emailValid && !$emailRecent) {
+            $mailer = self::$followupReminderMailer;
+            $sent = $mailer !== null
+                ? $mailer($email, $patientName, $date, $noteForEmail, $contact, $slotStart)
+                : sendFollowUpReminderEmail($email, $patientName, $date, $noteForEmail, $contact, $slotStart);
+            $emailSent = !empty($sent['success']);
+            $mailMsg = trim((string) ($sent['message'] ?? ''));
+            bhw_audit($pdo, (int) $row['patient_id'], $emailSent ? 'bhw_followup_reminder' : 'bhw_followup_reminder_failed',
+                $emailSent
+                    ? 'BHW sent follow-up reminder email to ' . $email . '.'
+                    : ('BHW follow-up reminder email failed: ' . ($mailMsg !== '' ? $mailMsg : 'unknown error')),
+                [
+                    'followup_id' => $followupId,
+                    'email' => $email,
+                    'followup_date' => $date,
+                    'slot_start_time' => $slotStart,
+                    'slot_end_time' => $slotEnd,
+                    'email_success' => $emailSent,
+                    'email_message' => $mailMsg,
+                ]
+            );
         }
 
-        // In-app notice only after the email actually succeeds.
-        bhw_notify(
-            $pdo,
-            (int) $row['patient_id'],
-            'followup',
-            'Follow-Up Reminder',
-            'Reminder: follow-up on ' . date('M j, Y', strtotime($date)) . '. Ref #' . $followupId . '.',
-            ASSET_BASE . '/views/patient/dashboard.php#action-items'
-        );
+        require_once __DIR__ . '/followup_sms.php';
+        $actorId = (int) ($_SESSION['user_id'] ?? 0);
+        $sms = $actorId > 0
+            ? followup_sms_send($pdo, $followupId, $actorId)
+            : ['success' => false, 'status' => 'failed', 'message' => 'SMS reminder could not be sent.', 'mocked' => false];
+        $smsStatus = (string) ($sms['status'] ?? 'failed');
+        $smsMsg = trim((string) ($sms['message'] ?? ''));
+        $smsAccepted = $smsStatus === 'accepted';
+
+        if ($emailSent || $smsAccepted) {
+            bhw_notify(
+                $pdo,
+                (int) $row['patient_id'],
+                'followup',
+                'Follow-Up Reminder',
+                'Reminder: follow-up on ' . date('M j, Y', strtotime($date)) . '. Ref #' . $followupId . '.',
+                ASSET_BASE . '/views/patient/dashboard.php#action-items'
+            );
+        }
+
+        if ($emailSent) {
+            $emailPart = 'Reminder email sent to ' . $email . '.';
+        } elseif ($emailRecent) {
+            $emailPart = 'Email was not sent again. A reminder email was already sent in the last 15 minutes.';
+        } elseif (!$emailValid) {
+            $emailPart = 'Email was not sent. Patient has no valid registered email on file.';
+        } else {
+            $emailPart = 'Email was not sent.' . ($mailMsg !== '' ? ' ' . $mailMsg : '');
+        }
 
         return [
-            'success' => true,
-            'message' => 'Reminder email sent to ' . $email . '.',
-            'email' => $email,
+            'success' => $emailSent || $smsAccepted,
+            'message' => trim($emailPart . ' ' . $smsMsg),
+            'email' => $emailValid ? $email : '',
+            'email_sent' => $emailSent,
+            'sms_status' => $smsStatus,
+            'sms' => $sms,
         ];
     }
 
@@ -1259,28 +1355,70 @@ final class BhwWorkflows
         return $visitId;
     }
 
-    public static function listHomeVisits(PDO $pdo, array $ctx, ?int $patientId = null): array
+    public static function listHomeVisits(PDO $pdo, array $ctx, ?int $patientId = null, ?int $followupId = null): array
     {
         bhw_clinical_ensure_schema($pdo);
+        $patientId = (int) ($patientId ?? 0);
+        $followupId = (int) ($followupId ?? 0);
+        if ($patientId <= 0 && $followupId <= 0) {
+            throw new InvalidArgumentException('A patient or follow-up is required.');
+        }
+
+        if ($patientId > 0 && !bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
+            throw new InvalidArgumentException('Patient not in your barangay.');
+        }
+
+        $authorizedPatientId = $patientId;
+        if ($followupId > 0) {
+            [$fuClause, $fuParams] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
+            $fuJoin = bhw_pr_user_join('pr', 'p');
+            $fuStmt = $pdo->prepare("
+                SELECT f.patient_id
+                FROM followups f
+                INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
+                INNER JOIN patient_registrations pr ON {$fuJoin}
+                WHERE f.id = ? AND {$fuClause}
+            ");
+            $fuStmt->execute(array_merge([$followupId], $fuParams));
+            $patientIds = [];
+            foreach ($fuStmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $id) {
+                $id = (int) $id;
+                if ($id > 0) {
+                    $patientIds[$id] = true;
+                }
+            }
+            if (count($patientIds) !== 1) {
+                throw new InvalidArgumentException('Follow-up not found in your barangay.');
+            }
+            $followupPatientId = (int) array_key_first($patientIds);
+            if ($patientId > 0 && $followupPatientId !== $patientId) {
+                throw new InvalidArgumentException('Follow-up does not belong to this patient.');
+            }
+            $authorizedPatientId = $followupPatientId;
+        }
+
         [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
         $join = bhw_pr_user_join('pr', 'p');
         $sql = "
-            SELECT hv.*, CONCAT(p.first_name,' ',p.last_name) AS patient_name,
-                   CONCAT(b.first_name,' ',b.last_name) AS bhw_name
+            SELECT DISTINCT hv.id, hv.followup_id, hv.patient_id, hv.visit_date, hv.visit_type, hv.patient_status,
+                   CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
+                   CONCAT(b.first_name, ' ', b.last_name) AS bhw_name
             FROM bhw_home_visits hv
-            JOIN users p ON p.id = hv.patient_id
-            JOIN patient_registrations pr ON {$join}
-            JOIN users b ON b.id = hv.bhw_id
+            INNER JOIN users p ON p.id = hv.patient_id AND p.role = 'patient'
+            INNER JOIN patient_registrations pr ON {$join}
+            INNER JOIN users b ON b.id = hv.bhw_id
             WHERE {$clause}
+              AND hv.patient_id = ?
         ";
-        if ($patientId > 0) {
-            $sql .= ' AND hv.patient_id = ?';
-            $params[] = $patientId;
+        $params[] = $authorizedPatientId;
+        if ($followupId > 0) {
+            $sql .= ' AND hv.followup_id = ?';
+            $params[] = $followupId;
         }
         $sql .= ' ORDER BY hv.visit_date DESC, hv.id DESC LIMIT 200';
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
     public static function parseDashboardFilters(array $input): array

@@ -35,9 +35,17 @@ try {
         Api::success($payload);
     } elseif ($action === 'remind') {
         $result = BhwWorkflows::sendFollowupReminder($pdo, $ctx, (int) ($_POST['followup_id'] ?? 0));
-        Api::success([
-            'email' => $result['email'] ?? '',
-        ], (string) ($result['message'] ?? 'Reminder email sent.'));
+        $payload = [
+            'email' => (string) ($result['email'] ?? ''),
+            'email_sent' => !empty($result['email_sent']),
+            'sms_status' => (string) ($result['sms_status'] ?? ''),
+        ];
+        $message = (string) ($result['message'] ?? 'Reminder was not sent.');
+        if (!empty($result['success'])) {
+            Api::success($payload, $message);
+        } else {
+            Api::error($message, 400, $payload);
+        }
     } elseif ($action === 'log_visit') {
         bhw_api_require_patient_in_sector($pdo, $ctx, (int) ($_POST['patient_id'] ?? 0));
         $followupId = (int) ($_POST['followup_id'] ?? 0);
@@ -59,11 +67,16 @@ try {
             'bhw_followups' => bhw_nav_followups_unread_count($pdo, $bhwId, $ctx),
         ], 'Home visit logged.');
     } elseif ($action === 'visits') {
-        $patientId = (int) ($_GET['patient_id'] ?? 0);
-        if ($patientId > 0) {
-            bhw_api_require_patient_in_sector($pdo, $ctx, $patientId);
-        }
-        Api::success(['visits' => BhwWorkflows::listHomeVisits($pdo, $ctx, $patientId > 0 ? $patientId : null)]);
+        $patientId = (int) ($_GET['patient_id'] ?? $_POST['patient_id'] ?? 0);
+        $followupId = (int) ($_GET['followup_id'] ?? $_POST['followup_id'] ?? 0);
+        Api::success([
+            'visits' => BhwWorkflows::listHomeVisits(
+                $pdo,
+                $ctx,
+                $patientId > 0 ? $patientId : null,
+                $followupId > 0 ? $followupId : null
+            ),
+        ]);
     } else {
         Api::error('Unknown action.', 400);
     }
@@ -72,5 +85,6 @@ try {
     $denied = stripos($msg, 'barangay') !== false || stripos($msg, 'sector') !== false || strcasecmp($msg, 'ACCESS DENIED') === 0;
     Api::error($denied ? 'ACCESS DENIED' : $msg, $denied ? 403 : 400);
 } catch (Throwable $e) {
-    Api::error($e->getMessage(), 500);
+    error_log('bhw_followups: ' . $e->getMessage());
+    Api::error('Operation failed. Please try again.', 500);
 }

@@ -258,20 +258,12 @@ if (!user_account_login_allowed_for_row($user)) {
 }
 
 if ($user['role'] === 'provider') {
-    try {
-        provider_verification_ensure_schema($pdo);
-        $p_stmt = $pdo->prepare('SELECT verification_status FROM provider_profiles WHERE user_id = ? LIMIT 1');
-        $p_stmt->execute([(int) $user['id']]);
-        $verification = $p_stmt->fetchColumn();
-        if (!$verification || $verification !== 'verified') {
-            ob_clean();
-            $msg = $verification === 'rejected'
-                ? 'Your doctor account was rejected. Contact the administrator for assistance.'
-                : 'Your doctor account is not approved yet. A Super Administrator must verify PRC and approve the application before you can sign in.';
-            echo json_encode(['success' => false, 'message' => $msg, 'code' => 'doctor_not_approved']);
-            exit;
-        }
-    } catch (PDOException $e) { /* non-fatal */ }
+    $prcDenial = provider_login_verification_denial($pdo, (int) $user['id']);
+    if ($prcDenial !== null) {
+        ob_clean();
+        echo json_encode(['success' => false, 'message' => $prcDenial, 'code' => 'doctor_not_approved']);
+        exit;
+    }
 
     // Applications-only doctors cannot sign in until Super Admin approval activates the account.
     try {

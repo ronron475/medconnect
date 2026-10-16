@@ -17,62 +17,19 @@ if (!defined('MC_PORTAL_SHELL') || MC_PORTAL_SHELL !== 'superadmin') {
 
 $page_title = 'Patient Case Viewer';
 $patient_id = (int) ($_GET['patient_id'] ?? 0);
-$search = trim($_GET['q'] ?? '');
-
-$patientsQuery = "
-    SELECT u.id, u.first_name, u.last_name, u.email, u.is_active
-    FROM users u
-    WHERE u.role = 'patient'
-";
-$params = [];
-if ($search !== '') {
-    $patientsQuery .= " AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)";
-    $like = '%' . $search . '%';
-    $params = [$like, $like, $like];
-}
-$patientsQuery .= ' ORDER BY u.last_name, u.first_name LIMIT 200';
-$stmt = $pdo->prepare($patientsQuery);
-$stmt->execute($params);
-$patients = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-$profile = null;
-$consults = $triage = $referrals = $followups = $prescriptions = $location = [];
-
-if ($patient_id > 0) {
-    $s = $pdo->prepare("SELECT u.*, pr.* FROM users u LEFT JOIN patient_registrations pr ON pr.email = u.email WHERE u.id = ? AND u.role = 'patient'");
-    $s->execute([$patient_id]);
-    $profile = $s->fetch(PDO::FETCH_ASSOC);
-
-    if ($profile) {
-        $consults = $pdo->prepare('SELECT * FROM consultations WHERE patient_id = ? ORDER BY consult_date DESC');
-        $consults->execute([$patient_id]);
-        $consults = $consults->fetchAll(PDO::FETCH_ASSOC);
-
-        $triage = $pdo->prepare('SELECT * FROM triage_results WHERE patient_id = ? ORDER BY assessed_at DESC');
-        $triage->execute([$patient_id]);
-        $triage = $triage->fetchAll(PDO::FETCH_ASSOC);
-
-        $referrals = $pdo->prepare('SELECT * FROM digital_referrals WHERE patient_id = ? ORDER BY created_at DESC');
-        $referrals->execute([$patient_id]);
-        $referrals = $referrals->fetchAll(PDO::FETCH_ASSOC);
-
-        $followups = $pdo->prepare('SELECT * FROM followups WHERE patient_id = ? ORDER BY followup_date DESC');
-        $followups->execute([$patient_id]);
-        $followups = $followups->fetchAll(PDO::FETCH_ASSOC);
-
-        $prescriptions = $pdo->prepare('SELECT * FROM prescriptions WHERE patient_id = ? ORDER BY created_at DESC');
-        $prescriptions->execute([$patient_id]);
-        $prescriptions = $prescriptions->fetchAll(PDO::FETCH_ASSOC);
-
-        try {
-            $loc = $pdo->prepare('SELECT * FROM patient_locations WHERE patient_id = ?');
-            $loc->execute([$patient_id]);
-            $location = $loc->fetch(PDO::FETCH_ASSOC) ?: [];
-        } catch (PDOException $e) {
-            $location = [];
-        }
-    }
-}
+require_once BASE_PATH . '/app/includes/admin_patient_records.php';
+$recordFilters = admin_patient_records_normalize($_GET);
+$recordPage = admin_patient_records_list($pdo, $_GET);
+$patients = $recordPage['patients'];
+$search = $recordFilters['q'];
+$detail = admin_patient_records_detail($pdo, $patient_id, $recordFilters['consult_date']);
+$profile = $detail['profile'];
+$consults = $detail['consults'];
+$triage = $detail['triage'];
+$referrals = $detail['referrals'];
+$followups = $detail['followups'];
+$prescriptions = $detail['prescriptions'];
+$location = $detail['location'];
 
 function case_viewer_initials(string $first, string $last): string
 {
@@ -83,7 +40,16 @@ function case_viewer_initials(string $first, string $last): string
 
 function case_viewer_query(array $extra = []): string
 {
-    $params = array_filter(array_merge(['q' => $_GET['q'] ?? null], $extra), static fn($v) => $v !== null && $v !== '');
+    $keep = admin_patient_records_normalize($_GET);
+    $params = array_filter(array_merge([
+        'q' => $keep['q'],
+        'barangay' => $keep['barangay'],
+        'mobile' => $keep['mobile'],
+        'status' => $keep['status'] !== 'all' ? $keep['status'] : '',
+        'sort' => $keep['sort'] !== 'name' ? $keep['sort'] : '',
+        'consult_date' => $keep['consult_date'],
+        'page' => $keep['page'] > 1 ? (string) $keep['page'] : '',
+    ], $extra), static fn($v) => $v !== null && $v !== '');
     return $params ? ('?' . http_build_query($params)) : '';
 }
 
@@ -109,13 +75,27 @@ require_once __DIR__ . '/partials/layout_open.php';
 <div class="case-viewer-layout">
     <aside class="case-viewer-list-card" aria-label="Patient list">
         <div class="case-viewer-list-card__head">
-            <p class="case-viewer-list-card__title">Patients (<?= count($patients) ?>)</p>
+            <p class="case-viewer-list-card__title">Patients (<?= (int) $recordPage['total'] ?>)</p>
             <form method="GET" class="case-viewer-list-card__search">
                 <?php if ($patient_id > 0): ?>
                 <input type="hidden" name="patient_id" value="<?= $patient_id ?>">
                 <?php endif; ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search patients…" aria-label="Search patients">
+                <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Name or email" aria-label="Search patients">
+                <input type="search" name="mobile" value="<?= htmlspecialchars($recordFilters['mobile']) ?>" placeholder="Mobile number" aria-label="Mobile number">
+                <input type="search" name="barangay" value="<?= htmlspecialchars($recordFilters['barangay']) ?>" placeholder="Barangay" aria-label="Barangay">
+                <input type="date" name="consult_date" value="<?= htmlspecialchars($recordFilters['consult_date']) ?>" aria-label="Consultation date">
+                <select name="status" aria-label="Account status">
+                    <?php foreach (['all' => 'All statuses', 'active' => 'Active', 'inactive' => 'Inactive'] as $value => $label): ?>
+                    <option value="<?= $value ?>"<?= $recordFilters['status'] === $value ? ' selected' : '' ?>><?= $label ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="sort" aria-label="Sort">
+                    <?php foreach (['name' => 'Name A–Z', 'name_desc' => 'Name Z–A', 'newest' => 'Newest'] as $value => $label): ?>
+                    <option value="<?= $value ?>"<?= $recordFilters['sort'] === $value ? ' selected' : '' ?>><?= $label ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" class="mc-btn mc-btn--primary mc-btn--sm">Apply</button>
             </form>
         </div>
         <div class="case-viewer-list">
@@ -137,6 +117,21 @@ require_once __DIR__ . '/partials/layout_open.php';
             <?php endforeach; ?>
             <?php endif; ?>
         </div>
+        <?php
+        $recordPages = max(1, (int) ceil($recordPage['total'] / max(1, $recordPage['per_page'])));
+        $recordCurrent = min($recordFilters['page'], $recordPages);
+        ?>
+        <?php if ($recordPages > 1): ?>
+        <nav class="case-viewer-list-card__search" aria-label="Patient pages" style="display:flex;gap:8px;padding:12px;">
+            <?php if ($recordCurrent > 1): ?>
+            <a class="mc-btn mc-btn--outline mc-btn--sm" href="<?= htmlspecialchars(case_viewer_query(['page' => (string) ($recordCurrent - 1), 'patient_id' => $patient_id > 0 ? (string) $patient_id : ''])) ?>">Previous</a>
+            <?php endif; ?>
+            <span class="staff-apps-meta">Page <?= (int) $recordCurrent ?> of <?= (int) $recordPages ?></span>
+            <?php if ($recordCurrent < $recordPages): ?>
+            <a class="mc-btn mc-btn--outline mc-btn--sm" href="<?= htmlspecialchars(case_viewer_query(['page' => (string) ($recordCurrent + 1), 'patient_id' => $patient_id > 0 ? (string) $patient_id : ''])) ?>">Next</a>
+            <?php endif; ?>
+        </nav>
+        <?php endif; ?>
     </aside>
 
     <div class="case-viewer-detail">
@@ -201,7 +196,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             'Referrals' => [
                 'rows' => $referrals,
                 'render' => static function (array $row): string {
-                    $title = htmlspecialchars($row['facility_name'] ?? $row['reason'] ?? 'Referral');
+                    $title = htmlspecialchars($row['destination_facility'] ?? $row['reason'] ?? 'Referral');
                     $meta = htmlspecialchars(($row['created_at'] ?? '') . ' · ' . ($row['status'] ?? ''));
                     return '<p class="case-viewer-record__title">' . $title . '</p><p class="case-viewer-record__meta">' . $meta . '</p>';
                 },

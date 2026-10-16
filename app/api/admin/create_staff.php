@@ -87,6 +87,15 @@ if (strlen($password) < 8) {
 try {
     provider_verification_ensure_schema($pdo);
 
+    if ($role === 'provider' && !provider_verification_prc_unique_index_exists($pdo)) {
+        error_log('create_staff: provider profile insert refused because the PRC unique constraint is absent');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Doctor account could not be created because PRC license uniqueness is not enforced. Contact the administrator.',
+        ]);
+        exit;
+    }
+
     $stmt = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
@@ -140,13 +149,29 @@ try {
         $placeholders[] = '?';
     }
 
+    if ($role === 'provider') {
+        $pdo->beginTransaction();
+    }
+
     $sql = 'INSERT INTO users (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $placeholders) . ')';
     $pdo->prepare($sql)->execute($values);
     $new_user_id = (int) $pdo->lastInsertId();
 
     if ($role === 'provider') {
+        if (!provider_verification_prc_unique_index_exists($pdo)) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('create_staff: provider profile insert refused because the PRC unique constraint is absent');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Doctor account could not be created because PRC license uniqueness is not enforced. Contact the administrator.',
+            ]);
+            exit;
+        }
+
         $profileCols = ['user_id', 'prc_license_number', 'verification_status', 'verified_by', 'verified_at', 'created_by'];
-        $profileVals = [$new_user_id, $prc_license, 'verified', $admin_id, date('Y-m-d H:i:s'), $admin_id];
+        $profileVals = [$new_user_id, $prc_license, 'needs_review', null, null, $admin_id];
         $profilePlace = array_fill(0, count($profileCols), '?');
 
         $optionalProfile = [
@@ -167,6 +192,9 @@ try {
 
         $sqlProfile = 'INSERT INTO provider_profiles (' . implode(', ', $profileCols) . ') VALUES (' . implode(', ', $profilePlace) . ')';
         $pdo->prepare($sqlProfile)->execute($profileVals);
+        if ($pdo->inTransaction()) {
+            $pdo->commit();
+        }
     }
 
     $role_label = $role === 'provider' ? 'Doctor' : ucfirst($role);
@@ -201,7 +229,7 @@ try {
                 'email'                => $email,
                 'doctor_name'          => $role === 'provider' ? $doctor_display : null,
                 'prc_license_number'   => $role === 'provider' ? $prc_license : null,
-                'verification_status'  => $role === 'provider' ? 'verified' : null,
+                'verification_status'  => $role === 'provider' ? 'needs_review' : null,
                 'verified_by'          => $role === 'provider' ? $admin_id : null,
                 'verified_at'          => $role === 'provider' ? date('c') : null,
                 'admin_name'           => $admin_name,
@@ -226,5 +254,19 @@ try {
         'message' => $success_message,
     ]);
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+    if ($pdo->inTransaction()) {
+        try {
+            $pdo->rollBack();
+        } catch (Throwable $rollbackError) {
+            $rollbackInfo = $rollbackError instanceof PDOException ? ($rollbackError->errorInfo ?? []) : [];
+            $rollbackState = (string) ($rollbackInfo[0] ?? '');
+            $rollbackCode = (int) ($rollbackInfo[1] ?? 0);
+            error_log('create_staff rollback: SQLSTATE ' . ($rollbackState !== '' ? $rollbackState : 'none') . ' code ' . $rollbackCode);
+        }
+    }
+    $info = $e->errorInfo ?? [];
+    $state = (string) ($info[0] ?? '');
+    $code = (int) ($info[1] ?? 0);
+    error_log('create_staff: SQLSTATE ' . ($state !== '' ? $state : 'none') . ' code ' . $code);
+    echo json_encode(['success' => false, 'message' => 'Database error. Please try again.']);
 }

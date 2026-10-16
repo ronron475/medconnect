@@ -22,6 +22,7 @@ ob_start();
   var allPatients = [];
   var filtered = [];
   var page = 1;
+  var totalPatients = 0;
 
   var els = {
     search: document.getElementById('bhwPlSearch'),
@@ -103,19 +104,25 @@ ob_start();
     return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase();
   }
 
-  function applyFilters() {
-    filtered = allPatients.slice();
-    filtered.sort(function (a, b) {
-      return (a.last_name + a.first_name).localeCompare(b.last_name + b.first_name);
-    });
-
-    page = 1;
-    render();
+  function listQuery(pageNo, perPage, extra) {
+    var params = {
+      action: 'list',
+      q: (els.search.value || '').trim(),
+      page: pageNo || 1,
+      per_page: perPage || PAGE,
+      status: (document.getElementById('bhwPlStatus') || {}).value || 'all',
+      sort: (document.getElementById('bhwPlSort') || {}).value || 'name',
+      consult_date: (document.getElementById('bhwPlConsultDate') || {}).value || ''
+    };
+    if (extra) {
+      Object.keys(extra).forEach(function (key) { params[key] = extra[key]; });
+    }
+    return params;
   }
 
-  function pageSlice() {
-    var start = (page - 1) * PAGE;
-    return filtered.slice(start, start + PAGE);
+  function applyFilters() {
+    filtered = allPatients.slice();
+    render();
   }
 
   function renderTable(rows) {
@@ -150,12 +157,12 @@ ob_start();
   }
 
   function renderPagination() {
-    var pages = Math.max(1, Math.ceil(filtered.length / PAGE));
+    var pages = Math.max(1, Math.ceil(totalPatients / PAGE));
     if (page > pages) page = pages;
-    var start = filtered.length ? (page - 1) * PAGE + 1 : 0;
-    var end = Math.min(page * PAGE, filtered.length);
-    els.pageInfo.textContent = filtered.length
-      ? 'Showing ' + start + '–' + end + ' of ' + filtered.length + ' patients'
+    var start = totalPatients ? (page - 1) * PAGE + 1 : 0;
+    var end = Math.min(page * PAGE, totalPatients);
+    els.pageInfo.textContent = totalPatients
+      ? 'Showing ' + start + '–' + end + ' of ' + totalPatients + ' patients'
       : 'No patients to display';
 
     var html = '';
@@ -195,9 +202,8 @@ ob_start();
     }
     els.empty.style.display = 'none';
     els.tableWrap.style.display = 'block';
-    var slice = pageSlice();
-    renderTable(slice);
-    renderCards(slice);
+    renderTable(filtered);
+    renderCards(filtered);
     renderPagination();
     bindRowEvents();
   }
@@ -304,14 +310,16 @@ ob_start();
     els.drawerOverlay.classList.remove('is-open');
   }
 
-  function loadPatients() {
-    var q = (els.search.value || '').trim();
-    BhwPortal.get('patients.php', { action: 'list', q: q }).then(function (r) {
+  function loadPatients(nextPage) {
+    page = nextPage || 1;
+    BhwPortal.get('patients.php', listQuery(page, PAGE)).then(function (r) {
       if (!r.success) {
-        els.tbody.innerHTML = '<tr><td colspan="8">' + esc(r.message || 'Failed to load') + '</td></tr>';
+        els.tbody.innerHTML = '<tr><td colspan="9">' + esc(r.message || 'Failed to load') + '</td></tr>';
         return;
       }
       allPatients = r.patients || [];
+      totalPatients = parseInt(r.total, 10) || allPatients.length;
+      page = parseInt(r.page, 10) || page;
       applyFilters();
     });
   }
@@ -323,7 +331,7 @@ ob_start();
       year: 'numeric', month: 'short', day: 'numeric',
       hour: 'numeric', minute: '2-digit', hour12: true
     });
-    var count = filtered.length;
+    var count = totalPatients || filtered.length;
     meta.textContent = 'Brgy. <?= $barangay_label ?> · ' + count + ' patient' + (count === 1 ? '' : 's') + ' · ' + now;
   }
 
@@ -373,7 +381,7 @@ ob_start();
     return /^0\d{6,}$/.test(s.replace(/\s+/g, '')) ? "'" + s : s;
   }
 
-  function exportCsv() {
+  function writeCsv(rowsSource) {
     var now = new Date();
     var generated = now.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) +
       ' at ' + now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -381,11 +389,11 @@ ob_start();
       ['medConnect Patient List'],
       ['Barangay', BARANGAY_NAME],
       ['Generated', generated],
-      ['Total Patients', filtered.length],
+      ['Total Patients', rowsSource.length],
       [],
       ['Patient ID', 'Last Name', 'First Name', 'Email', 'Age', 'Sex', 'Purok', 'Barangay', 'Contact', 'Risk', 'Workflow', 'Account Status', 'Registered']
     ];
-    filtered.forEach(function (p) {
+    rowsSource.forEach(function (p) {
       rows.push([
         p.id, dash(p.last_name), dash(p.first_name), dash(p.email), dash(p.age), fmtGender(p.gender),
         dash(p.purok), dash(p.barangay || BARANGAY_NAME), phoneText(p.contact_number), p.risk_level || 'None',
@@ -406,12 +414,26 @@ ob_start();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
   }
 
+  function exportCsv() {
+    BhwPortal.get('patients.php', listQuery(1, 1000, { export: 1 })).then(function (r) {
+      if (!r.success) {
+        BhwPortal.toast(r.message || 'Could not export patients.', false);
+        return;
+      }
+      writeCsv(r.patients || []);
+    });
+  }
+
   var searchTimer = null;
   els.search.addEventListener('input', function () {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(loadPatients, 250);
+    searchTimer = setTimeout(function () { loadPatients(1); }, 250);
   });
-  els.refresh.addEventListener('click', loadPatients);
+  ['bhwPlStatus', 'bhwPlSort', 'bhwPlConsultDate'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', function () { loadPatients(1); });
+  });
+  els.refresh.addEventListener('click', function () { loadPatients(page); });
   els.exportCsv.addEventListener('click', exportCsv);
   els.exportPdf.addEventListener('click', function () {
     window.print();
@@ -419,11 +441,12 @@ ob_start();
   els.pagination.addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-page]');
     if (!btn) return;
-    var pages = Math.ceil(filtered.length / PAGE);
-    if (btn.dataset.page === 'prev') page = Math.max(1, page - 1);
-    else if (btn.dataset.page === 'next') page = Math.min(pages, page + 1);
-    else page = parseInt(btn.dataset.page, 10);
-    render();
+    var pages = Math.max(1, Math.ceil(totalPatients / PAGE));
+    var next = page;
+    if (btn.dataset.page === 'prev') next = Math.max(1, page - 1);
+    else if (btn.dataset.page === 'next') next = Math.min(pages, page + 1);
+    else next = parseInt(btn.dataset.page, 10);
+    if (next !== page) loadPatients(next);
   });
   document.getElementById('bhwPlDrawerClose').addEventListener('click', closeDrawer);
   els.drawerOverlay.addEventListener('click', closeDrawer);
@@ -464,6 +487,17 @@ $bhw_inline_script = ob_get_clean();
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="search" id="bhwPlSearch" placeholder="Search patient name, email, contact, ID…" aria-label="Search patients">
     </div>
+    <select id="bhwPlStatus" aria-label="Account status">
+      <option value="all">All statuses</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+    <input type="date" id="bhwPlConsultDate" aria-label="Consultation date">
+    <select id="bhwPlSort" aria-label="Sort patients">
+      <option value="name">Name A–Z</option>
+      <option value="name_desc">Name Z–A</option>
+      <option value="registered">Newest registered</option>
+    </select>
   </div>
 
   <div id="bhwPlEmpty" class="bhw-pl-table-wrap bhw-pl-empty" style="display:none;">

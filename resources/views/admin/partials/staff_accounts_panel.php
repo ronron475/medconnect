@@ -21,7 +21,7 @@ $hub_tab = $hub_tab ?? 'active';
 $hub_role = $hub_kind === 'doctor' ? 'provider' : 'bhw';
 $is_superadmin = portal_is_superadmin();
 $verify_filter = $_GET['verify'] ?? 'all';
-$allowed_verify = ['all', 'verified', 'pending', 'rejected'];
+$allowed_verify = ['all', 'verified', 'pending', 'needs_review', 'rejected'];
 if (!in_array($verify_filter, $allowed_verify, true)) {
     $verify_filter = 'all';
 }
@@ -174,7 +174,7 @@ $base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
     <div class="staff-mgmt-filter-group staff-mgmt-filter-group--prc">
         <div class="staff-mgmt-subfilters" role="group" aria-label="PRC verification status">
             <?php
-            foreach (['all' => 'All PRC Status', 'verified' => 'Verified', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $vf => $vfLabel):
+            foreach (['all' => 'All PRC Status', 'verified' => 'Verified', 'needs_review' => 'Needs Review', 'pending' => 'Pending', 'rejected' => 'Rejected'] as $vf => $vfLabel):
                 $sep = str_contains($base_tab_url, '?') ? '&' : '?';
                 $href = $base_tab_url . ($vf !== 'all' ? $sep . 'verify=' . urlencode($vf) : '');
             ?>
@@ -245,6 +245,7 @@ $base_tab_url = $hub_views_base . '/' . $hub_base . $tab_query;
                             $vStyles = match ($v) {
                                 'verified' => ['mc-badge--approved', 'Verified'],
                                 'rejected' => ['mc-badge--danger', 'Rejected'],
+                                'needs_review' => ['mc-badge--pending', 'Needs Review'],
                                 default => ['mc-badge--pending', 'Pending'],
                             };
                         ?>

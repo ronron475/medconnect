@@ -3,6 +3,7 @@
 !database/schema.sql
 !database/migrations/*.sql
 !database/exports/.gitkeep
+!scripts/dev/check_prc_migration_preflight.sql
 
 # Media / accidental artifacts
 *.mp3

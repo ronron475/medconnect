@@ -40,20 +40,40 @@ if ($date_to !== '') {
     $params[] = $date_to;
 }
 if ($search !== '') {
-    $sql .= ' AND (u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?)';
+    $sql .= ' AND (
+        u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?
+        OR EXISTS (
+            SELECT 1 FROM patient_registrations prs
+            WHERE (prs.user_id = u.id OR (prs.user_id IS NULL AND prs.email = u.email))
+              AND prs.contact_number LIKE ?
+        )
+    )';
     $s = '%' . $search . '%';
-    array_push($params, $s, $s, $s);
+    array_push($params, $s, $s, $s, $s);
 }
 $sql .= ' ORDER BY f.followup_date ASC, f.id DESC';
+$countSql = 'SELECT COUNT(*) FROM (' . $sql . ') fu_count';
+$fuPage = max(1, (int) ($_GET['page'] ?? 1));
+$fuPerPage = 20;
 
 $followups = [];
 $query_error = false;
+$fuTotal = 0;
 try {
-    $stmt = $pdo->prepare($sql);
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute($params);
+    $fuTotal = (int) $countStmt->fetchColumn();
+    $fuPages = max(1, (int) ceil($fuTotal / $fuPerPage));
+    if ($fuPage > $fuPages) {
+        $fuPage = $fuPages;
+    }
+    $pageSql = $sql . ' LIMIT ' . $fuPerPage . ' OFFSET ' . (($fuPage - 1) * $fuPerPage);
+    $stmt = $pdo->prepare($pageSql);
     $stmt->execute($params);
     $followups = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $query_error = true;
+    $fuPages = 1;
 }
 
 $followup_count = count($followups);
@@ -68,6 +88,7 @@ function fu_filter_url(array $overrides = []): string
         'from' => (string) ($_GET['from'] ?? ''),
         'to' => (string) ($_GET['to'] ?? ''),
         'q' => (string) ($_GET['q'] ?? ''),
+        'page' => (string) ($_GET['page'] ?? ''),
     ];
     foreach ($overrides as $key => $value) {
         $params[$key] = (string) $value;
@@ -112,9 +133,9 @@ function fu_display_status(array $row, string $filter): array
     </div>
     <div class="fu-hero__actions">
       <nav class="fu-filters" aria-label="Follow-up status filters">
-        <a href="<?= htmlspecialchars(fu_filter_url(['status' => 'upcoming'])) ?>" class="fu-filter<?= $status_filter === 'upcoming' ? ' is-active' : '' ?>">Upcoming</a>
-        <a href="<?= htmlspecialchars(fu_filter_url(['status' => 'completed'])) ?>" class="fu-filter<?= $status_filter === 'completed' ? ' is-active' : '' ?>">Completed</a>
-        <a href="<?= htmlspecialchars(fu_filter_url(['status' => 'missed'])) ?>" class="fu-filter<?= $status_filter === 'missed' ? ' is-active' : '' ?>">Missed</a>
+        <a href="<?= htmlspecialchars(fu_filter_url(['status' => 'upcoming', 'page' => ''])) ?>" class="fu-filter<?= $status_filter === 'upcoming' ? ' is-active' : '' ?>">Upcoming</a>
+        <a href="<?= htmlspecialchars(fu_filter_url(['status' => 'completed', 'page' => ''])) ?>" class="fu-filter<?= $status_filter === 'completed' ? ' is-active' : '' ?>">Completed</a>
+        <a href="<?= htmlspecialchars(fu_filter_url(['status' => 'missed', 'page' => ''])) ?>" class="fu-filter<?= $status_filter === 'missed' ? ' is-active' : '' ?>">Missed</a>
       </nav>
     </div>
   </header>
@@ -137,7 +158,7 @@ function fu_display_status(array $row, string $filter): array
     </div>
     <div class="fu-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search name or email…" autocomplete="off" aria-label="Search patient">
+      <input type="search" name="q" value="<?= htmlspecialchars($search) ?>" placeholder="Search name, email, or mobile…" autocomplete="off" aria-label="Search patient">
     </div>
     <button type="submit" class="mc-btn mc-btn--primary mc-btn--sm fu-apply">Apply</button>
   </form>
@@ -193,6 +214,7 @@ function fu_display_status(array $row, string $filter): array
                 data-date="<?= htmlspecialchars((string) $f['followup_date']) ?>"
                 data-patient="<?= htmlspecialchars(trim($f['first_name'] . ' ' . $f['last_name'])) ?>"
               >Reschedule</button>
+              <button type="button" class="mc-btn mc-btn--primary mc-btn--sm" data-sms="<?= (int) $f['id'] ?>">Send SMS reminder</button>
               <?php else: ?>
               <span class="fu-action-none">—</span>
               <?php endif; ?>
@@ -202,6 +224,17 @@ function fu_display_status(array $row, string $filter): array
         </tbody>
       </table>
     </div>
+    <?php if (!$query_error && $fuPages > 1): ?>
+    <nav class="fu-toolbar" aria-label="Follow-up pages">
+      <?php if ($fuPage > 1): ?>
+      <a class="mc-btn mc-btn--outline mc-btn--sm" href="<?= htmlspecialchars(fu_filter_url(['page' => (string) ($fuPage - 1)])) ?>">Previous</a>
+      <?php endif; ?>
+      <span>Page <?= (int) $fuPage ?> of <?= (int) $fuPages ?></span>
+      <?php if ($fuPage < $fuPages): ?>
+      <a class="mc-btn mc-btn--outline mc-btn--sm" href="<?= htmlspecialchars(fu_filter_url(['page' => (string) ($fuPage + 1)])) ?>">Next</a>
+      <?php endif; ?>
+    </nav>
+    <?php endif; ?>
   </div>
 </div>
 
@@ -263,6 +296,28 @@ function fu_display_status(array $row, string $filter): array
 
   document.querySelectorAll('[data-reschedule]').forEach(function (btn) {
     btn.addEventListener('click', function () { openModal(btn); });
+  });
+
+  document.querySelectorAll('[data-sms]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = parseInt(btn.getAttribute('data-sms') || '0', 10);
+      if (!id || btn.disabled) return;
+      btn.disabled = true;
+      var fd = new FormData();
+      fd.append('followup_id', String(id));
+      fd.append('csrf_token', document.body.dataset.csrf || '');
+      fetch('<?= ASSET_BASE ?>/app/api/provider/send_followup_sms.php', { method: 'POST', body: fd, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          window.alert((j && j.message) ? j.message : 'SMS reminder could not be sent.');
+          if (j && j.success) btn.textContent = 'SMS logged';
+          else btn.disabled = false;
+        })
+        .catch(function () {
+          window.alert('Network error. The SMS was not sent.');
+          btn.disabled = false;
+        });
+    });
   });
 
   if (modal) {

@@ -242,7 +242,7 @@ ob_start();
       }
       var when = f.followup_datetime_label || f.followup_date || 'Date TBD';
       var doctor = f.provider_name ? ('Dr. ' + String(f.provider_name).replace(/^dr\.?\s+/i, '')) : '—';
-      var reason = String(f.message || f.notes || '').trim();
+      var reason = String(f.instructions || '').trim();
       if (!detailBody) return;
       var statusKey = String(f.display_status || statusLabel || 'unknown').toLowerCase().replace(/\s+/g, '_');
       detailBody.innerHTML =

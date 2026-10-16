@@ -278,7 +278,7 @@ if (!defined('BASE_URL') || !defined('ASSET_BASE')) {
 // Application config
 require_once CONFIG_PATH . '/app.php';
 require_once CONFIG_PATH . '/ai_interpreter.php';
-require_once CONFIG_PATH . '/twilio.php';
+require_once CONFIG_PATH . '/textbee.php';
 date_default_timezone_set(APP_TIMEZONE);
 ini_set('default_charset', 'UTF-8');
 if (function_exists('mb_internal_encoding')) {
