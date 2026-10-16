@@ -72,7 +72,7 @@
       title: 'Patients',
       metrics: [
         ['total_patients', 'Registered'],
-        ['new_patients_month', 'New this month'],
+        ['new_patients_month', 'New this month', 'Current calendar month in this barangay. The report date range does not change this count.'],
         ['male_patients', 'Male'],
         ['female_patients', 'Female'],
       ],
@@ -105,15 +105,70 @@
     },
   ];
 
+  var supportsPurok = true;
+  var TAB_FILTERS = {
+    patients: { consult: false, referral: false },
+    consultations: { consult: true, referral: false },
+    triage: { consult: false, referral: false },
+    referrals: { consult: false, referral: true },
+    followups: { consult: false, referral: false },
+    disease: { consult: true, referral: false },
+  };
+
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : String(s);
+    return d.innerHTML;
+  }
+
+  function fieldValue(id) {
+    var el = document.getElementById(id);
+    if (!el || el.disabled) return '';
+    return el.value || '';
+  }
+
   function filters() {
     return {
-      date_from: document.getElementById('rf_date_from')?.value || '',
-      date_to: document.getElementById('rf_date_to')?.value || '',
-      month: document.getElementById('rf_month')?.value || '',
-      year: document.getElementById('rf_year')?.value || '',
-      gender: document.getElementById('rf_gender')?.value || '',
-      age_group: document.getElementById('rf_age')?.value || '',
+      date_from: fieldValue('rf_date_from'),
+      date_to: fieldValue('rf_date_to'),
+      month: fieldValue('rf_month'),
+      year: fieldValue('rf_year'),
+      gender: fieldValue('rf_gender'),
+      age_group: fieldValue('rf_age'),
+      purok: fieldValue('rf_purok'),
+      consultation_status: fieldValue('rf_consult_status'),
+      referral_status: fieldValue('rf_referral_status'),
     };
+  }
+
+  function setFilterEnabled(id, enabled, reason) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.disabled = !enabled;
+    el.title = enabled ? '' : reason;
+  }
+
+  function applyTabFilters() {
+    var spec = TAB_FILTERS[activeTab] || { consult: false, referral: false };
+    setFilterEnabled('rf_consult_status', spec.consult, 'Consultation status applies to consultation totals and the disease diagnosis chart.');
+    setFilterEnabled('rf_referral_status', spec.referral, 'Referral status applies to the Referrals tab.');
+    setFilterEnabled('rf_purok', supportsPurok, 'Purok is not recorded for patients in this barangay.');
+  }
+
+  function fillPuroks(list) {
+    var sel = document.getElementById('rf_purok');
+    if (!sel) return;
+    var current = sel.value;
+    sel.innerHTML = '<option value="">All puroks</option>';
+    (list || []).forEach(function (name) {
+      var label = String(name || '');
+      if (!label) return;
+      var option = document.createElement('option');
+      option.value = label;
+      option.textContent = label;
+      sel.appendChild(option);
+    });
+    if (current) sel.value = current;
   }
 
   function destroyChart(id) {
@@ -310,9 +365,11 @@
       var stats = group.metrics.map(function (pair) {
         var key = pair[0];
         var label = pair[1];
+        var title = pair[2] || summary[key + '_note'] || '';
         var val = summary[key] != null ? summary[key] : 0;
-        return '<li class="bhw-report-stat"><span class="bhw-report-stat-label">' + label + '</span>' +
-          '<span class="bhw-report-stat-val">' + val + '</span></li>';
+        return '<li class="bhw-report-stat"><span class="bhw-report-stat-label"' +
+          (title ? ' title="' + esc(title) + '"' : '') + '>' + esc(label) + '</span>' +
+          '<span class="bhw-report-stat-val">' + esc(val) + '</span></li>';
       }).join('');
       return '<article class="bhw-report-group">' +
         '<h3 class="bhw-report-group-title">' + group.title + '</h3>' +
@@ -322,16 +379,41 @@
     row.hidden = false;
   }
 
+  function showReportError(message) {
+    var el = document.getElementById('bhwReportsError');
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = message || 'Report data is unavailable.';
+  }
+
+  function clearReportError() {
+    var el = document.getElementById('bhwReportsError');
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = '';
+  }
+
   function loadSummary() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'summary' }, filters())).then(function (r) {
-      if (!r.success) return;
+      if (!r.success) {
+        showReportError(r.message);
+        return;
+      }
+      clearReportError();
+      if (typeof r.supports_purok === 'boolean') supportsPurok = r.supports_purok;
+      fillPuroks(r.puroks || []);
+      applyTabFilters();
       renderSummary(r.summary || {});
     });
   }
 
   function loadPatients() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'patients' }, filters())).then(function (r) {
-      if (!r.success || !r.report) return;
+      if (!r.success || !r.report) {
+        showReportError(r && r.message);
+        return;
+      }
+      clearReportError();
       lastReportData.patients = r.report;
       renderPatientsCharts(r.report);
     });
@@ -339,7 +421,11 @@
 
   function loadConsultations() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'consultations' }, filters())).then(function (r) {
-      if (!r.success || !r.report) return;
+      if (!r.success || !r.report) {
+        showReportError(r && r.message);
+        return;
+      }
+      clearReportError();
       lastReportData.consultations = r.report;
       renderConsultationsCharts(r.report);
     });
@@ -347,7 +433,11 @@
 
   function loadTriage() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'triage' }, filters())).then(function (r) {
-      if (!r.success || !r.report) return;
+      if (!r.success || !r.report) {
+        showReportError(r && r.message);
+        return;
+      }
+      clearReportError();
       lastReportData.triage = r.report;
       renderTriageCharts(r.report);
     });
@@ -355,7 +445,11 @@
 
   function loadReferrals() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'referrals' }, filters())).then(function (r) {
-      if (!r.success || !r.report) return;
+      if (!r.success || !r.report) {
+        showReportError(r && r.message);
+        return;
+      }
+      clearReportError();
       lastReportData.referrals = r.report;
       renderReferralsCharts(r.report);
     });
@@ -363,7 +457,11 @@
 
   function loadFollowups() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'followups' }, filters())).then(function (r) {
-      if (!r.success || !r.report) return;
+      if (!r.success || !r.report) {
+        showReportError(r && r.message);
+        return;
+      }
+      clearReportError();
       lastReportData.followups = r.report;
       var rep = r.report;
       renderFollowupsCharts(rep);
@@ -375,7 +473,7 @@
         } else {
           list.innerHTML = '<table class="table bhw-table"><thead><tr><th>Patient</th><th>Date</th><th>Status</th></tr></thead><tbody>' +
             rows.map(function (x) {
-              return '<tr><td>' + (x.patient_name || '—') + '</td><td>' + (x.followup_date || '—') + '</td><td>' + (x.status || '—') + '</td></tr>';
+              return '<tr><td>' + esc(x.patient_name || '—') + '</td><td>' + esc(x.followup_date || '—') + '</td><td>' + esc(x.status || '—') + '</td></tr>';
             }).join('') + '</tbody></table>';
         }
       }
@@ -384,7 +482,11 @@
 
   function loadDisease() {
     return BhwPortal.get('reports.php', Object.assign({ action: 'disease' }, filters())).then(function (r) {
-      if (!r.success || !r.report) return;
+      if (!r.success || !r.report) {
+        showReportError(r && r.message);
+        return;
+      }
+      clearReportError();
       lastReportData.disease = r.report;
       renderDiseaseCharts(r.report);
     });
@@ -438,13 +540,14 @@
   }
 
   function exportUrl() {
-    var q = new URLSearchParams(Object.assign({ type: activeTab }, filters()));
-    return base + '/app/api/bhw/export_report.php?' + q.toString();
+    var q = new URLSearchParams(Object.assign({ action: 'export', type: activeTab }, filters()));
+    return base + '/app/api/bhw/reports.php?' + q.toString();
   }
 
   ready(function () {
     var root = document.getElementById('bhwReportsRoot');
     if (!root) return;
+    applyTabFilters();
 
     whenChartReady().then(function () {
       if (typeof window.BhwPortal === 'undefined') {
@@ -465,7 +568,8 @@
         document.querySelectorAll('.bhw-reports-panel').forEach(function (p) {
           p.classList.toggle('is-active', p.dataset.panel === activeTab);
         });
-        loadTab(activeTab);
+        applyTabFilters();
+        loadSummary().then(function () { return loadTab(activeTab); });
       });
     });
 
@@ -474,7 +578,7 @@
     });
 
     document.getElementById('rf_reset')?.addEventListener('click', function () {
-      ['rf_date_from', 'rf_date_to', 'rf_month', 'rf_year', 'rf_gender', 'rf_age'].forEach(function (id) {
+      ['rf_date_from', 'rf_date_to', 'rf_month', 'rf_year', 'rf_gender', 'rf_age', 'rf_purok', 'rf_consult_status', 'rf_referral_status'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.value = '';
       });

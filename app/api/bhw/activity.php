@@ -3,7 +3,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_activity.php';
 
-$ctx = bhw_api_bootstrap($pdo, ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST');
+$ctx = bhw_api_bootstrap($pdo, ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST', true, false);
 $bhwId = (int) $_SESSION['user_id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
@@ -28,6 +28,9 @@ try {
                 'date_from' => trim($_GET['date_from'] ?? ''),
                 'date_to'   => trim($_GET['date_to'] ?? ''),
             ]);
+            if (!empty($result['unavailable'])) {
+                Api::error('Activity log is unavailable.', 500);
+            }
             Api::success($result);
             break;
         case 'get':
@@ -44,9 +47,13 @@ try {
                 'actions' => array_keys(bhw_activity_module_map()),
             ]);
             break;
+        case 'export':
+            bhw_activity_send_csv($pdo, $bhwId, $_GET);
+            break;
         default:
             Api::error('Unknown action.', 400);
     }
 } catch (Throwable $e) {
-    Api::error('Activity log failed: ' . $e->getMessage(), 500);
+    error_log('bhw activity: ' . $e->getMessage());
+    Api::error('Activity log failed.', 500);
 }

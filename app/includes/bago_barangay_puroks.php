@@ -47,6 +47,16 @@ final class BagoBarangayPuroks
     }
 
     /**
+     * Catalog names only. Does not create tables or insert rows.
+     *
+     * @return list<string>
+     */
+    public static function referenceLabels(string $barangayName): array
+    {
+        return self::referenceLabelsForName($barangayName);
+    }
+
+    /**
      * @return list<string>
      */
     public static function labelsForBarangay(PDO $pdo, ?int $barangayId, ?string $barangayName = null): array

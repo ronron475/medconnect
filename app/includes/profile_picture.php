@@ -77,6 +77,27 @@ function profile_picture_sync_session(PDO $pdo, int $user_id): void
 }
 
 /**
+ * Read the saved picture when the column already exists. Does not add columns.
+ */
+function profile_picture_sync_session_if_present(PDO $pdo, int $user_id): void
+{
+    try {
+        $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        if (!in_array('profile_picture', $cols, true)) {
+            return;
+        }
+        $stmt = $pdo->prepare('SELECT profile_picture FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$user_id]);
+        $value = $stmt->fetchColumn();
+        if ($value) {
+            $_SESSION['profile_picture'] = (string) $value;
+        }
+    } catch (PDOException $e) {
+        error_log('profile_picture read skipped: ' . $e->getMessage());
+    }
+}
+
+/**
  * @return array{success:bool,message:string,url?:string}
  */
 function profile_picture_upload(PDO $pdo, int $user_id, array $file): array

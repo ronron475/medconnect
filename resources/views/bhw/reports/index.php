@@ -75,10 +75,41 @@ require __DIR__ . '/../partials/layout_open.php';
             <option value="seniors">Seniors (60+)</option>
           </select>
         </div>
+        <div>
+          <label class="form-label" for="rf_purok">Purok</label>
+          <select class="form-select" id="rf_purok">
+            <option value="">All puroks</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="rf_consult_status">Consultation status</label>
+          <select class="form-select" id="rf_consult_status">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="in_consultation">In consultation</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="rf_referral_status">Referral status</label>
+          <select class="form-select" id="rf_referral_status">
+            <option value="">All</option>
+            <option value="pending">Pending</option>
+            <option value="accepted">Accepted</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
       </div>
+      <p class="bhw-reports-sub mb-0" id="rf_filter_hint">From and To combine with Year and Month. Consultation status applies to consultation totals and the disease diagnosis chart. Referral status applies to referrals. Disabled filters are not sent.</p>
     </details>
   </div>
 
+  <p class="bhw-reports-sub" id="bhwReportsError" hidden role="alert"></p>
   <div class="bhw-reports-summary" id="bhwSummaryCards" aria-live="polite">
     <div class="bhw-reports-skeleton-grid" id="bhwSummarySkeleton">
       <?php for ($i = 0; $i < 4; $i++): ?><div class="bhw-reports-skeleton-card"></div><?php endfor; ?>

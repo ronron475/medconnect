@@ -19,7 +19,10 @@ if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'bhw') {
 }
 
 require_once BASE_PATH . '/app/includes/barangays_bago.php';
-patient_registrations_ensure_barangay_id($pdo);
+$bhw_read_only_page = in_array((string) ($bhw_current_file ?? ''), ['reports/index.php', 'activity/index.php'], true);
+if (!$bhw_read_only_page) {
+    patient_registrations_ensure_barangay_id($pdo);
+}
 
 $bhw_context = bhw_resolve_context($pdo);
 $bhw_current_script = basename($_SERVER['SCRIPT_FILENAME'] ?? '');
@@ -39,5 +42,9 @@ if ($bhw_no_sector) {
     $bhw_barangay_name = (string) $bhw_context['barangay_name'];
 }
 
-profile_picture_ensure_schema($pdo);
-profile_picture_sync_session($pdo, (int) $_SESSION['user_id']);
+if ($bhw_read_only_page) {
+    profile_picture_sync_session_if_present($pdo, (int) $_SESSION['user_id']);
+} else {
+    profile_picture_ensure_schema($pdo);
+    profile_picture_sync_session($pdo, (int) $_SESSION['user_id']);
+}

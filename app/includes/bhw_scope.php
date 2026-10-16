@@ -13,7 +13,7 @@ require_once __DIR__ . '/barangays_bago.php';
  *                            Account-level endpoints pass false so an unassigned BHW
  *                            still loads their own page — with an empty data scope.
  */
-function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false, bool $requireSector = true): array
+function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false, bool $requireSector = true, bool $ensureSchema = true): array
 {
     require_once __DIR__ . '/../core/Api.php';
     require_once __DIR__ . '/auth_guard.php';
@@ -27,7 +27,10 @@ function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false, bool $requireSec
     if ($requirePost) {
         Api::requirePost();
     }
-    patient_registrations_ensure_barangay_id($pdo);
+    // Report and activity requests pass false. Schema changes belong in migrations.
+    if ($ensureSchema) {
+        patient_registrations_ensure_barangay_id($pdo);
+    }
     $ctx = bhw_resolve_context($pdo);
     if (!$ctx['allowed'] || (int) ($ctx['barangay_id'] ?? 0) <= 0) {
         if ($requireSector) {
@@ -36,8 +39,10 @@ function bhw_api_bootstrap(PDO $pdo, bool $requirePost = false, bool $requireSec
         // barangay_id 0 makes every scope clause resolve to "1 = 0" — zero patient rows.
         $ctx = ['allowed' => true, 'barangay_id' => 0, 'barangay_name' => 'Unassigned'];
     }
-    require_once __DIR__ . '/patient_account_security.php';
-    patient_security_ensure_schema($pdo);
+    if ($ensureSchema) {
+        require_once __DIR__ . '/patient_account_security.php';
+        patient_security_ensure_schema($pdo);
+    }
     return $ctx;
 }
 
@@ -92,9 +97,11 @@ function bhw_pr_columns(?PDO $pdo = null, bool $refresh = false): array
  *
  * @return array{0: string, 1: list<mixed>}
  */
-function bhw_patient_sector_clause(PDO $pdo, array $ctx, string $prAlias = 'pr'): array
+function bhw_patient_sector_clause(PDO $pdo, array $ctx, string $prAlias = 'pr', bool $ensureSchema = true): array
 {
-    patient_registrations_ensure_barangay_id($pdo);
+    if ($ensureSchema) {
+        patient_registrations_ensure_barangay_id($pdo);
+    }
 
     $barangayId = (int) ($ctx['barangay_id'] ?? 0);
     $barangayName = trim((string) ($ctx['barangay_name'] ?? ''));
@@ -130,11 +137,11 @@ function bhw_patient_sector_clause(PDO $pdo, array $ctx, string $prAlias = 'pr')
  *
  * @return array{0: string, 1: list<mixed>}
  */
-function bhw_patient_scope_clause(PDO $pdo, array $ctx, array $filters, string $prAlias = 'pr'): array
+function bhw_patient_scope_clause(PDO $pdo, array $ctx, array $filters, string $prAlias = 'pr', bool $ensureSchema = true): array
 {
     unset($filters);
 
-    return bhw_patient_sector_clause($pdo, $ctx, $prAlias);
+    return bhw_patient_sector_clause($pdo, $ctx, $prAlias, $ensureSchema);
 }
 
 function bhw_list_barangay_options(PDO $pdo): array

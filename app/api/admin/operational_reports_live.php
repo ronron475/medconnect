@@ -8,14 +8,29 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/api/admin/_auth.php';
 require_once BASE_PATH . '/app/includes/admin_operational_reports.php';
 
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
-
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
     http_response_code(405);
+    header('Content-Type: application/json; charset=utf-8');
     echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
     exit;
 }
+
+if ((string) ($_GET['export'] ?? '') === 'csv') {
+    try {
+        admin_operational_report_send_csv($pdo, $_GET);
+    } catch (Throwable $e) {
+        error_log('operational_reports_live csv: ' . $e->getMessage());
+        if (!headers_sent()) {
+            http_response_code(500);
+            header('Content-Type: text/plain; charset=utf-8');
+        }
+        echo 'Unable to export this report.';
+    }
+    exit;
+}
+
+header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store');
 
 if (session_status() === PHP_SESSION_ACTIVE) {
     session_write_close();

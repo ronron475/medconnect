@@ -11,15 +11,27 @@
     }
   }
 
+  function syncPeriodDates() {
+    var period = document.getElementById('act_period')?.value || '';
+    var locked = period !== '';
+    ['act_date_from', 'act_date_to'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = locked;
+      el.title = locked ? 'A selected period overrides the custom date range.' : '';
+    });
+  }
+
   function filters() {
+    syncPeriodDates();
     return {
       page: page,
       per_page: perPage,
       q: document.getElementById('act_search')?.value.trim() || '',
       module: document.getElementById('act_module')?.value || '',
       period: document.getElementById('act_period')?.value || '',
-      date_from: document.getElementById('act_date_from')?.value || '',
-      date_to: document.getElementById('act_date_to')?.value || '',
+      date_from: document.getElementById('act_date_from')?.disabled ? '' : (document.getElementById('act_date_from')?.value || ''),
+      date_to: document.getElementById('act_date_to')?.disabled ? '' : (document.getElementById('act_date_to')?.value || ''),
     };
   }
 
@@ -156,7 +168,12 @@
   function load() {
     var params = Object.assign({ action: 'list' }, filters());
     return BhwPortal.get('activity.php', params).then(function (r) {
-      if (!r.success) return;
+      if (!r.success) {
+        var meta = document.getElementById('actMeta');
+        if (meta) meta.textContent = r.message || 'Activity log is unavailable.';
+        renderRows([]);
+        return;
+      }
       renderRows(r.rows || []);
       renderMeta(r.total || 0, r.page || 1);
       renderPagination(r.total || 0, r.page || 1);
@@ -181,7 +198,8 @@
     var q = new URLSearchParams(filters());
     q.delete('page');
     q.delete('per_page');
-    return base + '/app/api/bhw/export_activity.php?' + q.toString();
+    q.set('action', 'export');
+    return base + '/app/api/bhw/activity.php?' + q.toString();
   }
 
   function triggerDownload(url) {
@@ -195,6 +213,8 @@
 
   ready(function () {
     if (!document.getElementById('bhwActivityRoot')) return;
+    syncPeriodDates();
+    document.getElementById('act_period')?.addEventListener('change', syncPeriodDates);
     loadModules();
     load();
 

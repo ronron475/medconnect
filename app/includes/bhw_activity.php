@@ -128,32 +128,189 @@ function bhw_activity_log(PDO $pdo, string $action, string $description, array $
 }
 
 /**
+ * A selected period overrides a custom range so the two cannot cancel each other out.
+ * Custom dates apply only when Period is All time.
+ *
+ * @param array<string, mixed> $filters
+ * @return array<string, mixed>
+ */
+function bhw_activity_resolve_dates(array $filters): array
+{
+    $period = strtolower(trim((string) ($filters['period'] ?? '')));
+    if (!in_array($period, ['today', 'week', 'month'], true)) {
+        $period = '';
+    }
+    $from = bhw_activity_valid_date((string) ($filters['date_from'] ?? ''));
+    $to = bhw_activity_valid_date((string) ($filters['date_to'] ?? ''));
+    if ($from !== '' && $to !== '' && $from > $to) {
+        [$from, $to] = [$to, $from];
+    }
+    if ($period !== '') {
+        $from = '';
+        $to = '';
+    }
+    $q = trim((string) ($filters['q'] ?? ''));
+    $filters['period'] = $period;
+    $filters['date_from'] = $from;
+    $filters['date_to'] = $to;
+    $filters['q'] = function_exists('mb_substr') ? mb_substr($q, 0, 80) : substr($q, 0, 80);
+
+    return $filters;
+}
+
+function bhw_activity_valid_date(string $value): string
+{
+    $value = trim($value);
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        return '';
+    }
+    $dt = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+
+    return ($dt && $dt->format('Y-m-d') === $value) ? $value : '';
+}
+
+function bhw_activity_like(string $value): string
+{
+    return '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value) . '%';
+}
+
+/**
+ * Search matches the activity placeholder: patient name, action, and module.
+ *
+ * @return array{sql:string,params:array<string,string>}
+ */
+function bhw_activity_search_clause(string $q): array
+{
+    $q = trim($q);
+    if ($q === '') {
+        return ['sql' => '', 'params' => []];
+    }
+    $like = bhw_activity_like($q);
+    $params = [
+        ':q1' => $like,
+        ':q2' => $like,
+        ':q3' => $like,
+        ':q4' => $like,
+        ':q5' => $like,
+    ];
+    $parts = [
+        "al.description LIKE :q1 ESCAPE '!'",
+        "al.action_type LIKE :q2 ESCAPE '!'",
+        "JSON_UNQUOTE(JSON_EXTRACT(al.meta, '$.patient_name')) LIKE :q3 ESCAPE '!'",
+        "JSON_UNQUOTE(JSON_EXTRACT(al.meta, '$.module')) LIKE :q4 ESCAPE '!'",
+        "TRIM(CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, ''))) LIKE :q5 ESCAPE '!'",
+    ];
+    $actions = [];
+    foreach (bhw_activity_module_map() as $action => $module) {
+        if (stripos(bhw_activity_label($action), $q) !== false || stripos((string) $module, $q) !== false || stripos((string) $action, $q) !== false) {
+            $actions[] = (string) $action;
+        }
+    }
+    foreach ($actions as $index => $action) {
+        $key = ':qa' . $index;
+        $params[$key] = $action;
+        $parts[] = 'al.action_type = ' . $key;
+    }
+
+    return ['sql' => '(' . implode(' OR ', $parts) . ')', 'params' => $params];
+}
+
+/**
  * @return array{rows: array, total: int, page: int, per_page: int}
  */
-function bhw_activity_list(PDO $pdo, int $bhwId, array $filters = []): array
+function bhw_activity_sql_literal(string $value): string
 {
-    bhw_activity_ensure_schema($pdo);
+    return "'" . str_replace("'", "''", $value) . "'";
+}
 
-    $page = max(1, (int) ($filters['page'] ?? 1));
-    // CSV export reads every matching row in one pass; the on-screen list stays paged at <= 50.
-    $maxPerPage = !empty($filters['export']) ? 10000 : 50;
-    $perPage = min($maxPerPage, max(10, (int) ($filters['per_page'] ?? 20)));
-    $offset = ($page - 1) * $perPage;
+function bhw_activity_display_module(array $meta, string $action): string
+{
+    $stored = trim((string) ($meta['module'] ?? ''));
+    if ($stored !== '') {
+        return $stored;
+    }
+    $map = bhw_activity_module_map();
 
+    return $map[$action] ?? 'BHW Portal';
+}
+
+function bhw_activity_displayed_module_sql(): string
+{
+    $cases = '';
+    foreach (bhw_activity_module_map() as $action => $module) {
+        $cases .= ' WHEN ' . bhw_activity_sql_literal((string) $action) . ' THEN ' . bhw_activity_sql_literal((string) $module);
+    }
+
+    return "COALESCE(NULLIF(TRIM(JSON_UNQUOTE(JSON_EXTRACT(al.meta, '$.module'))), ''), CASE al.action_type{$cases} ELSE 'BHW Portal' END)";
+}
+
+/**
+ * @param array<string, mixed> $row
+ * @return array<string, mixed>
+ */
+function bhw_activity_format_row(array $row, int $bhwId): array
+{
+    $meta = [];
+    if (!empty($row['meta'])) {
+        $decoded = json_decode((string) $row['meta'], true);
+        $meta = is_array($decoded) ? $decoded : [];
+    }
+    $ua = bhw_activity_parse_ua($row['user_agent'] ?? '');
+    $action = (string) ($row['action_type'] ?? '');
+    $patientName = '';
+    if (!empty($meta['patient_name'])) {
+        $patientName = (string) $meta['patient_name'];
+    } elseif ((int) ($row['patient_id'] ?? 0) !== $bhwId && trim((string) ($row['subject_name'] ?? '')) !== '') {
+        $patientName = trim((string) $row['subject_name']);
+    }
+
+    return [
+        'id'           => (int) ($row['id'] ?? 0),
+        'date'         => date('M j, Y', strtotime((string) ($row['created_at'] ?? 'now'))),
+        'time'         => date('g:i A', strtotime((string) ($row['created_at'] ?? 'now'))),
+        'action'       => bhw_activity_label($action),
+        'action_type'  => $action,
+        'patient_name' => $patientName !== '' ? $patientName : '—',
+        'module'       => bhw_activity_display_module($meta, $action),
+        'ip_address'   => $row['ip_address'] ?? '—',
+        'device'       => $ua['device'],
+        'browser'      => $ua['browser'],
+        'os'           => $ua['os'],
+        'status'       => $meta['status'] ?? 'success',
+        'description'  => $row['description'] ?? '',
+        'meta'         => $meta,
+        'created_at'   => $row['created_at'] ?? '',
+    ];
+}
+
+/**
+ * @param array<string, mixed> $filters
+ * @return array{0:string,1:array<string,mixed>}
+ */
+function bhw_activity_query_parts(int $bhwId, array $filters): array
+{
+    $filters = bhw_activity_resolve_dates($filters);
     $where = [
         "(JSON_UNQUOTE(JSON_EXTRACT(al.meta, '$.bhw_id')) = :bhw_id OR (al.patient_id = :bhw_id2 AND al.action_type IN ('login_success','logout','password_changed')))",
     ];
     $params = [':bhw_id' => (string) $bhwId, ':bhw_id2' => $bhwId];
 
-    if (!empty($filters['q'])) {
-        $where[] = '(al.description LIKE :q OR al.action_type LIKE :q2)';
-        $params[':q'] = '%' . $filters['q'] . '%';
-        $params[':q2'] = '%' . $filters['q'] . '%';
+    $search = bhw_activity_search_clause($filters['q'] ?? '');
+    if ($search['sql'] !== '') {
+        $where[] = $search['sql'];
+        foreach ($search['params'] as $key => $value) {
+            $params[$key] = $value;
+        }
     }
 
-    if (!empty($filters['module'])) {
-        $where[] = "JSON_UNQUOTE(JSON_EXTRACT(al.meta, '$.module')) = :module";
-        $params[':module'] = $filters['module'];
+    $module = trim((string) ($filters['module'] ?? ''));
+    if ($module !== '') {
+        if (!in_array($module, array_values(array_unique(bhw_activity_module_map())), true)) {
+            $where[] = '1 = 0';
+        } else {
+            $where[] = bhw_activity_displayed_module_sql() . ' = :module';
+            $params[':module'] = $module;
+        }
     }
 
     if (!empty($filters['action'])) {
@@ -161,84 +318,155 @@ function bhw_activity_list(PDO $pdo, int $bhwId, array $filters = []): array
         $params[':action'] = $filters['action'];
     }
 
-    $period = $filters['period'] ?? '';
+    $period = (string) ($filters['period'] ?? '');
     if ($period === 'today') {
         $where[] = 'DATE(al.created_at) = CURDATE()';
     } elseif ($period === 'week') {
         $where[] = 'al.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)';
     } elseif ($period === 'month') {
         $where[] = 'al.created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)';
+    } else {
+        if (!empty($filters['date_from'])) {
+            $where[] = 'al.created_at >= :date_from';
+            $params[':date_from'] = $filters['date_from'] . ' 00:00:00';
+        }
+        if (!empty($filters['date_to'])) {
+            $where[] = 'al.created_at <= :date_to';
+            $params[':date_to'] = $filters['date_to'] . ' 23:59:59';
+        }
     }
 
-    if (!empty($filters['date_from'])) {
-        $where[] = 'al.created_at >= :date_from';
-        $params[':date_from'] = $filters['date_from'] . ' 00:00:00';
-    }
-    if (!empty($filters['date_to'])) {
-        $where[] = 'al.created_at <= :date_to';
-        $params[':date_to'] = $filters['date_to'] . ' 23:59:59';
-    }
+    $params[':bhw_join'] = $bhwId;
 
-    $whereSql = implode(' AND ', $where);
+    return [implode(' AND ', $where), $params];
+}
+
+/**
+ * @return array{rows: array, total: int, page: int, per_page: int, unavailable?: bool}
+ */
+function bhw_activity_list(PDO $pdo, int $bhwId, array $filters = []): array
+{
+    $exporting = !empty($filters['export']);
+    $page = max(1, (int) ($filters['page'] ?? 1));
+    $perPage = min(50, max(10, (int) ($filters['per_page'] ?? 20)));
+    $offset = ($page - 1) * $perPage;
+
+    [$whereSql, $params] = bhw_activity_query_parts($bhwId, $filters);
+    $fromSql = 'FROM patient_audit_logs al
+        LEFT JOIN users u ON u.id = al.patient_id AND al.patient_id != :bhw_join';
+    $limitSql = $exporting ? '' : ' LIMIT ' . (int) $perPage . ' OFFSET ' . (int) $offset;
 
     try {
-        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM patient_audit_logs al WHERE {$whereSql}");
+        $countStmt = $pdo->prepare("SELECT COUNT(*) {$fromSql} WHERE {$whereSql}");
         $countStmt->execute($params);
         $total = (int) $countStmt->fetchColumn();
 
         $sql = "
             SELECT al.*,
                    CONCAT(COALESCE(u.first_name,''), ' ', COALESCE(u.last_name,'')) AS subject_name
-            FROM patient_audit_logs al
-            LEFT JOIN users u ON u.id = al.patient_id AND al.patient_id != :bhw_join
+            {$fromSql}
             WHERE {$whereSql}
-            ORDER BY al.created_at DESC
-            LIMIT {$perPage} OFFSET {$offset}
+            ORDER BY al.created_at DESC, al.id DESC
+            {$limitSql}
         ";
-        $params[':bhw_join'] = $bhwId;
         $stmt = $pdo->prepare($sql);
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
-        return ['rows' => [], 'total' => 0, 'page' => $page, 'per_page' => $perPage];
+        error_log('bhw_activity_list: ' . $e->getMessage());
+
+        return ['rows' => [], 'total' => 0, 'page' => $page, 'per_page' => $perPage, 'unavailable' => true];
     }
 
     $formatted = [];
     foreach ($rows as $row) {
-        $meta = [];
-        if (!empty($row['meta'])) {
-            $decoded = json_decode((string) $row['meta'], true);
-            $meta = is_array($decoded) ? $decoded : [];
-        }
-        $ua = bhw_activity_parse_ua($row['user_agent'] ?? '');
-        $action = (string) $row['action_type'];
-        $patientName = '';
-        if (!empty($meta['patient_name'])) {
-            $patientName = (string) $meta['patient_name'];
-        } elseif ((int) $row['patient_id'] !== $bhwId && trim($row['subject_name'] ?? '') !== '') {
-            $patientName = trim($row['subject_name']);
-        }
+        $formatted[] = bhw_activity_format_row($row, $bhwId);
+    }
 
-        $formatted[] = [
-            'id'           => (int) $row['id'],
-            'date'         => date('M j, Y', strtotime($row['created_at'])),
-            'time'         => date('g:i A', strtotime($row['created_at'])),
-            'action'       => bhw_activity_label($action),
-            'action_type'  => $action,
-            'patient_name' => $patientName ?: '—',
-            'module'       => $meta['module'] ?? (bhw_activity_module_map()[$action] ?? 'BHW Portal'),
-            'ip_address'   => $row['ip_address'] ?? '—',
-            'device'       => $ua['device'],
-            'browser'      => $ua['browser'],
-            'os'           => $ua['os'],
-            'status'       => $meta['status'] ?? 'success',
-            'description'  => $row['description'],
-            'meta'         => $meta,
-            'created_at'   => $row['created_at'],
-        ];
+    if ($exporting) {
+        $page = 1;
+        $perPage = max(1, count($formatted));
     }
 
     return ['rows' => $formatted, 'total' => $total, 'page' => $page, 'per_page' => $perPage];
+}
+
+function bhw_activity_send_csv(PDO $pdo, int $bhwId, array $query): void
+{
+    $role = (string) ($_SESSION['user_role'] ?? '');
+    if ($role !== 'bhw' || $bhwId <= 0) {
+        Api::error('Forbidden.', 403);
+    }
+    $filters = [
+        'q' => $query['q'] ?? '',
+        'module' => $query['module'] ?? '',
+        'period' => $query['period'] ?? '',
+        'date_from' => $query['date_from'] ?? '',
+        'date_to' => $query['date_to'] ?? '',
+    ];
+    [$whereSql, $params] = bhw_activity_query_parts($bhwId, $filters);
+    $fromSql = 'FROM patient_audit_logs al
+        LEFT JOIN users u ON u.id = al.patient_id AND al.patient_id != :bhw_join';
+    $batchSize = 200;
+    $cursorAt = null;
+    $cursorId = null;
+    $tmp = fopen('php://temp', 'w+');
+    if ($tmp === false) {
+        Api::error('Activity log is unavailable.', 500);
+    }
+    require_once __DIR__ . '/csv_export.php';
+    csv_export_row($tmp, ['Date', 'Time', 'Action', 'Patient', 'Module', 'IP Address', 'Device', 'Status']);
+    do {
+        $batchParams = $params;
+        $cursorSql = '';
+        if ($cursorAt !== null) {
+            $cursorSql = ' AND (al.created_at < :cursor_at OR (al.created_at = :cursor_at AND al.id < :cursor_id))';
+            $batchParams[':cursor_at'] = $cursorAt;
+            $batchParams[':cursor_id'] = $cursorId;
+        }
+        $sql = "
+            SELECT al.*,
+                   CONCAT(COALESCE(u.first_name,''), ' ', COALESCE(u.last_name,'')) AS subject_name
+            {$fromSql}
+            WHERE {$whereSql}{$cursorSql}
+            ORDER BY al.created_at DESC, al.id DESC
+            LIMIT {$batchSize}
+        ";
+        try {
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($batchParams);
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('bhw_activity_export: ' . $e->getMessage());
+            fclose($tmp);
+            Api::error('Activity log is unavailable.', 500);
+        }
+        foreach ($rows as $row) {
+            $formatted = bhw_activity_format_row($row, $bhwId);
+            csv_export_row($tmp, [
+                $formatted['date'] ?? '',
+                $formatted['time'] ?? '',
+                $formatted['action'] ?? '',
+                $formatted['patient_name'] ?? '',
+                $formatted['module'] ?? '',
+                $formatted['ip_address'] ?? '',
+                $formatted['device'] ?? '',
+                $formatted['status'] ?? '',
+            ]);
+            $cursorAt = $row['created_at'];
+            $cursorId = (int) $row['id'];
+        }
+    } while (count($rows) === $batchSize);
+
+    rewind($tmp);
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    $out = csv_export_begin('bhw-activity-log.csv');
+    stream_copy_to_stream($tmp, $out);
+    fclose($tmp);
+    fclose($out);
+    exit;
 }
 
 function bhw_activity_get(PDO $pdo, int $bhwId, int $logId): ?array

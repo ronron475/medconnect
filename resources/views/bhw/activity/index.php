@@ -31,9 +31,9 @@ require __DIR__ . '/../partials/layout_open.php';
         <label class="form-label" for="act_period">Period</label>
         <select class="form-select" id="act_period">
           <option value="">All time</option>
-          <option value="today">Today</option>
-          <option value="week">This week</option>
-          <option value="month">This month</option>
+          <option value="today" title="The current day">Today</option>
+          <option value="week" title="Rolling window ending today">Last 7 days</option>
+          <option value="month" title="Rolling window ending today">Last 30 days</option>
         </select>
       </div>
       <div class="bhw-activity-filter-field">
@@ -47,6 +47,7 @@ require __DIR__ . '/../partials/layout_open.php';
     </div>
     <details class="bhw-reports-filter-more bhw-activity-filter-more">
       <summary>Date range</summary>
+      <p class="bhw-reports-sub mb-2" id="act_range_hint">A selected period overrides the custom date range. Custom dates apply when Period is All time. Last 7 days and Last 30 days are rolling windows ending today.</p>
       <div class="bhw-activity-filter-secondary">
         <div class="bhw-activity-filter-field">
           <label class="form-label" for="act_date_from">From</label>
