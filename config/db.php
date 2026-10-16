@@ -31,15 +31,19 @@ $isLocal = match (true) {
 };
 
 $envString = static function (string $key): ?string {
-    $value = getenv($key);
-    if ($value === false || $value === '') {
-        if (!array_key_exists($key, $_ENV)) {
-            return null;
+    $candidates = [
+        getenv($key),
+        $_ENV[$key] ?? null,
+        $_SERVER[$key] ?? null,
+        $_SERVER['REDIRECT_' . $key] ?? null,
+    ];
+    foreach ($candidates as $candidate) {
+        if ($candidate !== false && $candidate !== null && trim((string) $candidate) !== '') {
+            return trim((string) $candidate);
         }
-        $value = (string) $_ENV[$key];
     }
 
-    return (string) $value;
+    return null;
 };
 
 $dbPort = (int) ($envString('DB_PORT') ?: $envString('MYSQLPORT') ?: 3306);
@@ -145,6 +149,7 @@ try {
         ));
     }
 } catch (PDOException $e) {
+    error_log('MedConnect DB connection failed: ' . $e->getMessage());
     http_response_code(500);
     // Never leak DB connection details to clients.
     $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');

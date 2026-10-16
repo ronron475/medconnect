@@ -41,7 +41,13 @@ if (!function_exists('medconnect_load_env_file')) {
         }
     }
 
-    medconnect_load_env_file(dirname(__DIR__) . '/.env');
+    $projectEnv = dirname(__DIR__) . '/.env';
+    $parentEnv  = dirname(__DIR__, 2) . '/.env';
+    if (is_readable($projectEnv)) {
+        medconnect_load_env_file($projectEnv);
+    } elseif (is_readable($parentEnv)) {
+        medconnect_load_env_file($parentEnv);
+    }
 
     // Admin AI provider toggles/models (non-secret). Loaded after .env so UI saves take effect.
     $aiRuntime = dirname(__DIR__) . '/storage/ai_provider_runtime.env';

@@ -105,14 +105,9 @@ foreach ($cases as $name => $case) {
 }
 
 echo "\n=== Database workflow (transaction rollback) ===\n";
-$pdo = null;
-try {
-    $pdo = new PDO('mysql:host=127.0.0.1;dbname=medconnect;charset=utf8mb4', 'root', '', [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-} catch (Throwable $e) {
-    echo "SKIP database: " . $e->getMessage() . "\n";
+// Reuse central PDO connection from config/db.php (loaded via bootstrap.php at line 6)
+if (!isset($pdo) || !($pdo instanceof PDO)) {
+    echo "SKIP database: Central PDO connection not available.\n";
     echo "\nHelper checks passed. Start XAMPP MySQL to run the live row test.\n";
     exit(0);
 }

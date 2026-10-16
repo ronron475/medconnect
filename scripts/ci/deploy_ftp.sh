@@ -13,14 +13,17 @@ USE_SSL="${DEPLOY_FTP_SSL:-true}"
 
 echo "Deploying to ${DEPLOY_FTP_HOST}:${PORT} → ${REMOTE_DIR}"
 
-SSL_OPTS=""
-if [ "$USE_SSL" = "true" ] || [ "$USE_SSL" = "1" ]; then
-  SSL_OPTS="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate no;"
-else
-  SSL_OPTS="set ftp:ssl-allow false;"
+if [ "$USE_SSL" != "true" ] && [ "$USE_SSL" != "1" ]; then
+  echo "ERROR: Insecure plaintext FTP deployment is prohibited. DEPLOY_FTP_SSL must be true." >&2
+  exit 1
 fi
 
-# Exclude secrets, tooling, local junk, and runtime upload dirs.
+SSL_OPTS="set ftp:ssl-force true; set ftp:ssl-protect-data true; set ssl:verify-certificate yes; set ssl:check-hostname yes;"
+if [ -n "${DEPLOY_FTP_CA_FILE:-}" ] && [ -f "${DEPLOY_FTP_CA_FILE:-}" ]; then
+  SSL_OPTS="${SSL_OPTS} set ssl:ca-file \"${DEPLOY_FTP_CA_FILE}\";"
+fi
+
+# Exclude secrets, tooling, local junk, database files, docker config, and runtime upload dirs.
 # No --delete: preserve server .env, storage uploads, and host-only files.
 lftp -c "
 set cmd:fail-exit true;
@@ -50,6 +53,12 @@ mirror -R --verbose --parallel=4 \
   --exclude-glob ai_service/.venv/** \
   --exclude-glob ai_service/__pycache__/ \
   --exclude-glob ai_service/**/__pycache__/ \
+  --exclude-glob database/ \
+  --exclude-glob database/** \
+  --exclude-glob docker/ \
+  --exclude-glob docker/** \
+  --exclude-glob Dockerfile \
+  --exclude-glob .dockerignore \
   --exclude-glob storage/uploads/ \
   --exclude-glob storage/uploads/** \
   --exclude-glob storage/logs/ \
@@ -60,6 +69,11 @@ mirror -R --verbose --parallel=4 \
   --exclude-glob storage/temp/** \
   --exclude-glob storage/recordings/ \
   --exclude-glob storage/recordings/** \
+  --exclude-glob storage/residency/ \
+  --exclude-glob storage/residency/** \
+  --exclude-glob storage/backups/ \
+  --exclude-glob storage/backups/** \
+  --exclude-glob storage/ai_provider_runtime.env \
   --exclude-glob **/*.bak \
   --exclude-glob **/*.prev \
   --exclude-glob public/genhash.php \

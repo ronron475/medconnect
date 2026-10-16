@@ -19,6 +19,11 @@ if ($host === '' || $user === '' || $pass === '') {
     exit(1);
 }
 
+if (!$useSsl) {
+    fwrite(STDERR, "Insecure plaintext FTP deployment is prohibited. DEPLOY_FTP_SSL must be true.\n");
+    exit(1);
+}
+
 $root = realpath(dirname(__DIR__, 2));
 if ($root === false) {
     fwrite(STDERR, "Could not resolve repo root.\n");
@@ -33,6 +38,10 @@ $excludeExact = [
     'node_modules',
     'vendor',
     '.venv',
+    'database',
+    'docker',
+    'Dockerfile',
+    '.dockerignore',
 ];
 $excludePrefixes = [
     'storage/uploads/',
@@ -40,9 +49,16 @@ $excludePrefixes = [
     'storage/cache/',
     'storage/temp/',
     'storage/recordings/',
+    'storage/residency/',
+    'storage/backups/',
+    'database/',
+    'docker/',
     'ai_service/.venv/',
 ];
 $excludeFiles = [
+    'Dockerfile',
+    '.dockerignore',
+    'storage/ai_provider_runtime.env',
     'public/genhash.php',
     'public/setup_admin.php',
     'public/seed_provider.php',
@@ -91,18 +107,16 @@ function deploy_excluded(string $rel, array $exact, array $prefixes, array $file
     return false;
 }
 
-echo "Deploying to {$host}:{$port} → {$remoteDir} (PHP FTP fallback)\n";
+echo "Deploying to {$host}:{$port} → {$remoteDir} (PHP FTPS secure sync)\n";
 
-$conn = $useSsl ? @ftp_ssl_connect($host, $port, 30) : @ftp_connect($host, $port, 30);
-if (!$conn) {
-    // Fall back to plain FTP if FTPS handshake fails.
-    if ($useSsl) {
-        echo "FTPS connect failed; retrying plain FTP…\n";
-        $conn = @ftp_connect($host, $port, 30);
-    }
+if (!function_exists('ftp_ssl_connect')) {
+    fwrite(STDERR, "PHP OpenSSL/FTP extension (ftp_ssl_connect) is required for secure FTPS deployment.\n");
+    exit(1);
 }
+
+$conn = @ftp_ssl_connect($host, $port, 30);
 if (!$conn) {
-    fwrite(STDERR, "Could not connect to FTP host {$host}:{$port}\n");
+    fwrite(STDERR, "Secure FTPS connection failed to {$host}:{$port}. Check host, port, network/firewall, and TLS certificate.\n");
     exit(1);
 }
 
