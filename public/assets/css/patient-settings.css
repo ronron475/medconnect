@@ -1292,3 +1292,349 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input {
 body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
   padding-right: 8px;
 }
+
+/* Settings shell — grouped menu and open panel */
+.patient-settings-page .pts-page {
+  gap: 0;
+}
+
+.pts-shell {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  min-height: 680px;
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+}
+
+.pts-menu {
+  padding: 28px 26px 24px;
+  border-right: 1px solid #eef2f6;
+  background: #fff;
+}
+
+.pts-menu__title {
+  margin: 0 0 28px;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #111827;
+}
+
+.pts-shell .pts-nav {
+  position: static;
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  gap: 0;
+}
+
+.pts-nav__group {
+  margin: 0 0 22px;
+}
+
+.pts-nav__group-label {
+  margin: 0 0 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9aa3af;
+}
+
+.pts-shell .pts-nav__item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 7px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #6b7280;
+  font-size: 0.98rem;
+  font-weight: 500;
+  text-align: left;
+  transform: none;
+}
+
+.pts-shell .pts-nav__item:hover {
+  background: transparent;
+  color: #111827;
+  transform: none;
+}
+
+.pts-shell .pts-nav__item.is-active {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #111827;
+  font-weight: 800;
+}
+
+.pts-nav__item[hidden],
+.pts-nav__group[hidden] {
+  display: none !important;
+}
+
+.pts-stage {
+  padding: 22px 32px 36px;
+  background: #fff;
+}
+
+.pts-stage__bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 18px;
+}
+
+.pts-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(260px, 100%);
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #9ca3af;
+}
+
+.pts-search input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.pts-search input::placeholder {
+  color: #9ca3af;
+}
+
+.pts-panel-head {
+  margin: 8px 0 22px;
+}
+
+.pts-panel-head h2 {
+  margin: 0 0 6px;
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #111827;
+}
+
+.pts-panel-head p {
+  margin: 0;
+  max-width: 46ch;
+  color: #6b7280;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.pts-pw-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+
+.pts-pw-box {
+  padding: 16px 16px 14px;
+  border: 1px solid #e6ebf0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.pts-pw-box > label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.pts-shell .pts-pw-box .pts-input-group,
+body.patient-portal .patient-settings-page .pts-pw-box .pts-input-group {
+  min-height: 48px;
+  padding: 0 6px 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #f4f7f8;
+  box-shadow: none;
+}
+
+.pts-input-lead {
+  display: inline-flex;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.pts-input-lead svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pts-select {
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #f4f7f8;
+  color: #111827;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.pts-pw-box .pts-validation {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.pts-pw-box .pts-validation__bar {
+  height: 4px;
+  margin-bottom: 8px;
+  background: #e5e7eb;
+}
+
+.pts-pw-box .pts-validation__title {
+  color: #0f766e;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.pts-pw-box .pts-validation__label {
+  color: #0f766e;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.pts-pw-box .pts-validation__grid {
+  margin-top: 10px;
+}
+
+.pts-btn--block {
+  width: 100%;
+  max-width: 640px;
+  min-height: 52px;
+  border-radius: 14px;
+  font-size: 1rem;
+}
+
+.pts-stage .pts-card {
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+  background: transparent;
+}
+
+.pts-stage .pts-card__head {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+body.patient-portal .patient-settings-page .pts-btn--block {
+  min-height: 52px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 1rem;
+}
+
+body.patient-portal .patient-settings-page .pts-pw-box .pts-input,
+body.patient-portal .patient-settings-page .pts-select {
+  min-height: 48px;
+  padding: 12px 8px;
+  font-size: 0.95rem;
+  border-radius: 12px;
+}
+
+body.patient-portal .patient-settings-page .pts-search input {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  font-size: 0.92rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.patient-portal .patient-settings-page .pts-menu__title,
+body.patient-portal .patient-settings-page .pts-panel-head h2 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+body.patient-portal .patient-settings-page .pts-shell .pts-nav {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  gap: 0;
+}
+
+body.patient-portal .patient-settings-page .pts-shell .pts-nav__item {
+  padding: 7px 0;
+  gap: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+@media (max-width: 860px) {
+  .pts-shell {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .pts-menu {
+    border-right: 0;
+    border-bottom: 1px solid #eef2f6;
+    padding: 20px 18px 8px;
+  }
+
+  .pts-menu__title {
+    margin-bottom: 16px;
+  }
+
+  .pts-shell .pts-nav {
+    display: block;
+    overflow: visible;
+  }
+
+  .pts-shell .pts-nav__item {
+    min-width: 0;
+    text-align: left;
+    flex-direction: row;
+  }
+
+  .pts-stage {
+    padding: 18px 16px 28px;
+  }
+
+  .pts-stage__bar {
+    justify-content: stretch;
+  }
+
+  .pts-search {
+    width: 100%;
+  }
+}

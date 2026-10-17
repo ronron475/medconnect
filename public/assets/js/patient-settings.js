@@ -107,6 +107,22 @@
     });
   });
 
+  const settingsSearch = document.getElementById('ptsSettingsSearch');
+  settingsSearch?.addEventListener('input', function () {
+    const query = settingsSearch.value.trim().toLowerCase();
+    document.querySelectorAll('.pts-nav__group').forEach(function (group) {
+      let visible = 0;
+      group.querySelectorAll('[data-pts-tab]').forEach(function (tab) {
+        const label = (tab.textContent || '').toLowerCase();
+        const extra = (tab.dataset.search || '').toLowerCase();
+        const show = !query || label.indexOf(query) !== -1 || extra.indexOf(query) !== -1;
+        tab.hidden = !show;
+        if (show) visible += 1;
+      });
+      group.hidden = visible === 0;
+    });
+  });
+
   const initialTab = page?.dataset.initialTab || 'security';
   if (initialTab !== 'security') {
     activateTab(initialTab);

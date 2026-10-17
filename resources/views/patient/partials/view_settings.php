@@ -9,10 +9,28 @@ $privacy = $settings['privacy'] ?? [];
 $sessions = $settings['sessions'] ?? [];
 $devices = $settings['devices'] ?? [];
 
+$allowed_tabs = ['security', 'profile', 'privacy', 'notifications', 'sessions', 'language'];
 $initial_tab = 'security';
-if (isset($_GET['tab']) && in_array($_GET['tab'], ['security', 'privacy', 'notifications', 'sessions'], true)) {
+if (isset($_GET['tab']) && in_array($_GET['tab'], $allowed_tabs, true)) {
     $initial_tab = $_GET['tab'];
 }
+
+$nav_groups = [
+    ['label' => 'Account', 'key' => 'group_account', 'items' => [
+        ['id' => 'profile', 'label' => 'Profile & preferences', 'i18n' => 'nav_profile', 'search' => 'profile preferences email login'],
+        ['id' => 'notifications', 'label' => 'Notifications', 'i18n' => 'nav_notifications', 'search' => 'notifications alerts email'],
+    ]],
+    ['label' => 'Connections', 'key' => 'group_connections', 'items' => [
+        ['id' => 'sessions', 'label' => 'Devices & sessions', 'i18n' => 'nav_devices', 'search' => 'devices sessions logout access'],
+    ]],
+    ['label' => 'Preferences', 'key' => 'group_preferences', 'items' => [
+        ['id' => 'language', 'label' => 'Language', 'i18n' => 'language', 'search' => 'language filipino hiligaynon english'],
+    ]],
+    ['label' => 'Security', 'key' => 'group_security', 'items' => [
+        ['id' => 'security', 'label' => 'Change password', 'i18n' => 'change_password', 'search' => 'change password security'],
+        ['id' => 'privacy', 'label' => 'Data privacy', 'i18n' => 'nav_data_privacy', 'search' => 'privacy data sharing consent'],
+    ]],
+];
 
 function pts_icon(string $name): string {
     $icons = [
@@ -28,93 +46,50 @@ function pts_icon(string $name): string {
     return $icons[$name] ?? '';
 }
 
-$nav_tabs = [
-    'security' => ['icon' => 'lock', 'label' => 'Account Security', 'desc' => 'Password & login'],
-    'privacy' => ['icon' => 'shield', 'label' => 'Privacy', 'desc' => 'Data sharing'],
-    'notifications' => ['icon' => 'bell', 'label' => 'Notifications', 'desc' => 'Alerts & email'],
-    'sessions' => ['icon' => 'monitor', 'label' => 'Sessions', 'desc' => 'Devices & access'],
-];
-
 $session_count = is_array($sessions) ? count($sessions) : 0;
 ?>
 <div class="pts-page" data-initial-tab="<?= htmlspecialchars($initial_tab) ?>">
-
-  <header class="pts-hero">
-    <div class="pts-hero__intro">
-      <p class="pts-hero__eyebrow" data-ui-i18n="account">Account</p>
-      <h2 class="pts-hero__title" data-ui-i18n="security_prefs">Security &amp; preferences</h2>
-      <p class="pts-hero__text" data-ui-i18n="security_prefs_text">
-        Update your password, privacy choices, alerts, and signed-in devices in one place.
-      </p>
-    </div>
-    <div class="pts-hero__chips" aria-label="Settings overview">
-      <span class="pts-chip pts-chip--teal">
-        <span class="pts-chip__dot" aria-hidden="true"></span>
-        <span data-ui-i18n="secure_account">Secure account</span>
-      </span>
-      <span class="pts-chip" data-ui-i18n="active_sessions" data-ui-count="<?= (int) $session_count ?>">
-        <?= (int) $session_count ?> active session<?= $session_count === 1 ? '' : 's' ?>
-      </span>
-    </div>
-  </header>
-
-  <section class="pts-card" aria-labelledby="ptsLanguageTitle">
-    <div class="pts-card__head">
-      <div class="pts-card__head-icon pts-card__head-icon--teal"><?= pts_icon('monitor') ?></div>
-      <div class="pts-card__head-copy">
-        <h3 class="pts-card__title" id="ptsLanguageTitle" data-ui-i18n="language">Language</h3>
-        <p class="pts-card__sub" data-ui-i18n="language_help">Your choice is saved to this account and applied immediately.</p>
-      </div>
-    </div>
-    <div id="ptsLanguageAlert" class="pts-alert" role="alert" hidden></div>
-    <form id="ptsLanguageForm" class="pts-form-grid">
-      <div class="pts-field">
-        <label for="ptsLanguage" data-ui-i18n="language">Language</label>
-        <select id="ptsLanguage" name="language" class="pts-input">
-          <?php foreach (['en' => 'English', 'fil' => 'Filipino', 'hil' => 'Hiligaynon'] as $code => $label): ?>
-          <option value="<?= $code ?>" <?= ($ui_language ?? 'en') === $code ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+  <div class="pts-shell">
+    <aside class="pts-menu">
+      <h2 class="pts-menu__title" data-ui-i18n="nav_settings">Settings</h2>
+      <nav class="pts-nav" aria-label="Settings sections">
+        <?php foreach ($nav_groups as $group): ?>
+        <div class="pts-nav__group">
+          <p class="pts-nav__group-label" data-ui-i18n="<?= htmlspecialchars($group['key'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($group['label']) ?></p>
+          <?php foreach ($group['items'] as $item): ?>
+          <button type="button"
+            class="pts-nav__item <?= $initial_tab === $item['id'] ? 'is-active' : '' ?>"
+            data-pts-tab="<?= htmlspecialchars($item['id'], ENT_QUOTES, 'UTF-8') ?>"
+            data-search="<?= htmlspecialchars($item['search'], ENT_QUOTES, 'UTF-8') ?>"
+            aria-selected="<?= $initial_tab === $item['id'] ? 'true' : 'false' ?>"
+            aria-controls="pts-panel-<?= htmlspecialchars($item['id'], ENT_QUOTES, 'UTF-8') ?>">
+            <span data-ui-i18n="<?= htmlspecialchars($item['i18n'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($item['label']) ?></span>
+          </button>
           <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="pts-form-actions pts-field--full">
-        <button type="submit" class="pts-btn pts-btn--primary" id="ptsLanguageSubmit">
-          <span class="pts-btn__text" data-ui-i18n="save_language">Save Language</span>
-          <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
-        </button>
-      </div>
-    </form>
-  </section>
-
-  <div class="pts-layout">
-    <aside class="pts-nav" role="tablist" aria-label="Settings sections">
-      <?php foreach ($nav_tabs as $id => $tab): ?>
-      <button type="button"
-        class="pts-nav__item <?= $initial_tab === $id ? 'is-active' : '' ?>"
-        data-pts-tab="<?= $id ?>"
-        role="tab"
-        aria-selected="<?= $initial_tab === $id ? 'true' : 'false' ?>"
-        aria-controls="pts-panel-<?= $id ?>">
-        <span class="pts-nav__icon"><?= pts_icon($tab['icon']) ?></span>
-        <span class="pts-nav__text">
-          <span class="pts-nav__label" data-ui-i18n="<?= htmlspecialchars($id === 'security' ? 'tab_security' : ($id === 'privacy' ? 'tab_privacy' : ($id === 'notifications' ? 'tab_notifications' : 'tab_sessions')), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($tab['label']) ?></span>
-          <span class="pts-nav__desc" data-ui-i18n="<?= htmlspecialchars($id === 'security' ? 'tab_security_desc' : ($id === 'privacy' ? 'tab_privacy_desc' : ($id === 'notifications' ? 'tab_notifications_desc' : 'tab_sessions_desc')), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($tab['desc']) ?></span>
-        </span>
-        <span class="pts-nav__chevron" aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-        </span>
-      </button>
-      <?php endforeach; ?>
+        </div>
+        <?php endforeach; ?>
+      </nav>
     </aside>
 
-    <div class="pts-content">
+    <div class="pts-stage">
+      <div class="pts-stage__bar">
+        <label class="pts-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="ptsSettingsSearch" placeholder="Search" data-ui-i18n="search_settings" data-ui-i18n-attr="placeholder" autocomplete="off" aria-label="Search settings">
+        </label>
+      </div>
 
-      <!-- Account Security -->
-      <section class="pts-panel <?= $initial_tab === 'security' ? 'is-active' : '' ?>"
-               data-pts-panel="security"
-               id="pts-panel-security"
+      <div class="pts-content">
+
+      <section class="pts-panel <?= $initial_tab === 'profile' ? 'is-active' : '' ?>"
+               data-pts-panel="profile"
+               id="pts-panel-profile"
                role="tabpanel"
-               <?= $initial_tab !== 'security' ? 'hidden' : '' ?>>
-
+               <?= $initial_tab !== 'profile' ? 'hidden' : '' ?>>
+        <header class="pts-panel-head">
+          <h2 data-ui-i18n="profile_title">Profile &amp; preferences</h2>
+          <p data-ui-i18n="profile_sub">Your account email and recent sign-in details.</p>
+        </header>
         <div class="pts-stats">
           <article class="pts-stat">
             <span class="pts-stat__icon pts-stat__icon--teal"><?= pts_icon('clock') ?></span>
@@ -138,57 +113,44 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
             </div>
           </article>
         </div>
+      </section>
 
-        <div class="pts-card pts-card--security">
-          <div class="pts-card__head">
-            <div class="pts-card__head-icon pts-card__head-icon--lock"><?= pts_icon('lock') ?></div>
-            <div class="pts-card__head-copy">
-              <h3 class="pts-card__title" data-ui-i18n="change_password">Change Password</h3>
-              <p class="pts-card__sub" data-ui-i18n="password_hint">Use at least 12 characters with uppercase, lowercase, a number, and a special character.</p>
+      <section class="pts-panel <?= $initial_tab === 'security' ? 'is-active' : '' ?>"
+               data-pts-panel="security"
+               id="pts-panel-security"
+               role="tabpanel"
+               <?= $initial_tab !== 'security' ? 'hidden' : '' ?>>
+        <header class="pts-panel-head">
+          <h2 data-ui-i18n="change_password">Change password</h2>
+          <p data-ui-i18n="password_lead">Keep your account secure by using a strong, unique password.</p>
+        </header>
+        <div id="ptsPasswordAlert" class="pts-alert" role="alert" hidden></div>
+        <form id="ptsPasswordForm" class="pts-pw-stack" novalidate>
+          <div class="pts-pw-box">
+            <label for="ptsCurrentPassword" data-ui-i18n="current_password">Current password</label>
+            <div class="pts-input-group">
+              <span class="pts-input-lead" aria-hidden="true"><?= pts_icon('lock') ?></span>
+              <input type="password" id="ptsCurrentPassword" name="current_password" class="pts-input pts-input--pw" autocomplete="current-password" required placeholder="Enter current password" data-ui-i18n="ph_current" data-ui-i18n-attr="placeholder">
+              <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsCurrentPassword" aria-label="Show current password" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
             </div>
           </div>
-
-          <div id="ptsPasswordAlert" class="pts-alert" role="alert" hidden></div>
-
-          <form id="ptsPasswordForm" class="pts-form-grid" novalidate>
-            <div class="pts-field pts-field--full">
-              <label for="ptsCurrentPassword" data-ui-i18n="current_password">Current password</label>
-              <div class="pts-input-group">
-                <input type="password" id="ptsCurrentPassword" name="current_password" class="pts-input pts-input--pw" autocomplete="current-password" required placeholder="Enter current password" data-ui-i18n="ph_current" data-ui-i18n-attr="placeholder">
-                <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsCurrentPassword" aria-label="Show current password" aria-pressed="false">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                </button>
-              </div>
+          <div class="pts-pw-box">
+            <label for="ptsNewPassword" data-ui-i18n="new_password">New password</label>
+            <div class="pts-input-group">
+              <input type="password" id="ptsNewPassword" name="new_password" class="pts-input pts-input--pw" autocomplete="new-password" required minlength="12" placeholder="Enter at least 12 characters" data-ui-i18n="ph_new" data-ui-i18n-attr="placeholder">
+              <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsNewPassword" aria-label="Show new password" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              </button>
             </div>
-
-            <div class="pts-field">
-              <label for="ptsNewPassword" data-ui-i18n="new_password">New password</label>
-              <div class="pts-input-group">
-                <input type="password" id="ptsNewPassword" name="new_password" class="pts-input pts-input--pw" autocomplete="new-password" required minlength="12" placeholder="At least 12 characters" data-ui-i18n="ph_new" data-ui-i18n-attr="placeholder">
-                <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsNewPassword" aria-label="Show new password" aria-pressed="false">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                </button>
+            <div class="pts-validation" aria-label="Password strength and requirements">
+              <div class="pts-validation__bar" aria-hidden="true">
+                <span id="ptsStrengthFill" class="pts-validation__fill"></span>
               </div>
-            </div>
-
-            <div class="pts-field">
-              <label for="ptsConfirmPassword" data-ui-i18n="confirm_password">Confirm new password</label>
-              <div class="pts-input-group">
-                <input type="password" id="ptsConfirmPassword" name="confirm_password" class="pts-input pts-input--pw" autocomplete="new-password" required placeholder="Re-enter new password" data-ui-i18n="ph_confirm" data-ui-i18n-attr="placeholder">
-                <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                </button>
-              </div>
-              <p id="ptsMatchHint" class="pts-match-hint" hidden></p>
-            </div>
-
-            <div class="pts-validation pts-field--full" aria-label="Password strength and requirements">
               <div class="pts-validation__head">
                 <div class="pts-validation__title" data-ui-i18n="password_strength">Password strength</div>
                 <div id="ptsStrengthLabel" class="pts-validation__label" aria-live="polite" data-ui-i18n="pw_weak">Weak</div>
-              </div>
-              <div class="pts-validation__bar" aria-hidden="true">
-                <span id="ptsStrengthFill" class="pts-validation__fill"></span>
               </div>
               <ul class="pts-validation__grid" id="ptsReqList" aria-label="Password requirements">
                 <li data-req="len"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_len">At least 12 characters</span></li>
@@ -198,15 +160,48 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
                 <li data-req="special"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_special">One special character</span></li>
               </ul>
             </div>
-
-            <div class="pts-form-actions pts-field--full">
-              <button type="submit" class="pts-btn pts-btn--primary" id="ptsPasswordSubmit">
-                <span class="pts-btn__text" data-ui-i18n="update_password">Update Password</span>
-                <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
+          </div>
+          <div class="pts-pw-box">
+            <label for="ptsConfirmPassword" data-ui-i18n="confirm_password">Confirm new password</label>
+            <div class="pts-input-group">
+              <input type="password" id="ptsConfirmPassword" name="confirm_password" class="pts-input pts-input--pw" autocomplete="new-password" required placeholder="Re-enter new password" data-ui-i18n="ph_confirm" data-ui-i18n-attr="placeholder">
+              <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
               </button>
             </div>
-          </form>
-        </div>
+            <p id="ptsMatchHint" class="pts-match-hint" hidden></p>
+          </div>
+          <button type="submit" class="pts-btn pts-btn--primary pts-btn--block" id="ptsPasswordSubmit">
+            <span class="pts-btn__text" data-ui-i18n="save_changes">Save changes</span>
+            <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
+          </button>
+        </form>
+      </section>
+
+      <section class="pts-panel <?= $initial_tab === 'language' ? 'is-active' : '' ?>"
+               data-pts-panel="language"
+               id="pts-panel-language"
+               role="tabpanel"
+               <?= $initial_tab !== 'language' ? 'hidden' : '' ?>>
+        <header class="pts-panel-head">
+          <h2 data-ui-i18n="language">Language</h2>
+          <p data-ui-i18n="language_help">Your choice is saved to this account and applied immediately.</p>
+        </header>
+        <div id="ptsLanguageAlert" class="pts-alert" role="alert" hidden></div>
+        <form id="ptsLanguageForm" class="pts-pw-stack">
+          <div class="pts-pw-box">
+            <label for="ptsLanguage" data-ui-i18n="language">Language</label>
+            <select id="ptsLanguage" name="language" class="pts-select">
+              <?php foreach (['en' => 'English', 'fil' => 'Filipino', 'hil' => 'Hiligaynon'] as $code => $label): ?>
+              <option value="<?= $code ?>" <?= ($ui_language ?? 'en') === $code ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <button type="submit" class="pts-btn pts-btn--primary pts-btn--block" id="ptsLanguageSubmit">
+            <span class="pts-btn__text" data-ui-i18n="save_changes">Save changes</span>
+            <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
+          </button>
+        </form>
       </section>
 
       <!-- Privacy -->
@@ -412,8 +407,9 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
         <?php endif; ?>
       </section>
 
-    </div><!-- /.pts-content -->
-  </div><!-- /.pts-layout -->
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="ptsConfirmModal" class="pts-modal" hidden role="dialog" aria-modal="true" aria-labelledby="ptsConfirmTitle">
