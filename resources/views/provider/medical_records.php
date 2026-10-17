@@ -5,6 +5,7 @@ $page_styles = ['provider-medical-records.css'];
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
 require_once BASE_PATH . '/app/includes/patient_health_summary.php';
+require_once BASE_PATH . '/app/includes/patient_privacy_access.php';
 require __DIR__.'/partials/layout_open.php';
 
 $requested_id = isset($_GET['patient_id']) ? (int)$_GET['patient_id'] : 0;
@@ -52,6 +53,9 @@ function mr_fetch_patient(PDO $pdo, int $id): ?array {
 
 if ($requested_id > 0) {
     $accessAllowed = provider_patient_has_consultation_history($pdo, $provider_id, $requested_id);
+    if ($accessAllowed && !patient_shares_medical_records_with_providers($pdo, $requested_id)) {
+        $accessAllowed = false;
+    }
     if ($accessAllowed) {
         $selected = mr_fetch_patient($pdo, $requested_id);
         if ($selected) {
@@ -85,7 +89,8 @@ if (!$selected && !$mr_access_denied && !empty($patients) && $view === 'patients
         if ($candidateId <= 0) {
             continue;
         }
-        if (provider_patient_has_consultation_history($pdo, $provider_id, $candidateId)) {
+        if (provider_patient_has_consultation_history($pdo, $provider_id, $candidateId)
+            && patient_shares_medical_records_with_providers($pdo, $candidateId)) {
             $fetched = mr_fetch_patient($pdo, $candidateId);
             if (!$fetched) {
                 continue;

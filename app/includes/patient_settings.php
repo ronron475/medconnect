@@ -452,15 +452,13 @@ function patient_settings_save_notifications(PDO $pdo, int $userId, array $input
 function patient_settings_save_privacy(PDO $pdo, int $userId, array $input): array
 {
     patient_settings_ensure_defaults($pdo, $userId);
+    require_once __DIR__ . '/patient_privacy_access.php';
 
-    $share = !empty($input['share_medical_records']) ? 1 : 0;
-    $emergency = !empty($input['emergency_access_consent']) ? 1 : 0;
-    $ack = !empty($input['data_privacy_acknowledged']) ? 1 : 0;
-    $sharePrescriptions = !empty($input['share_prescriptions_with_barangay_bhw']) ? 1 : 0;
-
-    if (!$ack) {
-        return ['success' => false, 'message' => 'You must acknowledge the data privacy policy to continue using medConnect.'];
-    }
+    $values = patient_privacy_values_from_input($input);
+    $share = $values['share_medical_records'];
+    $emergency = $values['emergency_access_consent'];
+    $ack = $values['data_privacy_acknowledged'];
+    $sharePrescriptions = $values['share_prescriptions_with_barangay_bhw'];
 
     $pdo->prepare("
         UPDATE patient_privacy_preferences SET
@@ -485,7 +483,11 @@ function patient_settings_save_privacy(PDO $pdo, int $userId, array $input): arr
         ],
     ]);
 
-    return ['success' => true, 'message' => 'Privacy preferences saved.'];
+    return [
+        'success' => true,
+        'message' => 'Privacy preferences saved.',
+        'data' => $values,
+    ];
 }
 
 function patient_settings_logout_all_devices(PDO $pdo, int $userId): array

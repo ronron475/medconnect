@@ -298,6 +298,7 @@ function patient_external_healthcare_visits_for_authorized_provider(
     int $consultationId = 0
 ): array {
     require_once __DIR__ . '/provider_patient_access.php';
+    require_once __DIR__ . '/patient_privacy_access.php';
     if ($consultationId > 0) {
         $owned = $pdo->prepare('SELECT id FROM consultations WHERE id = ? AND provider_id = ? AND patient_id = ? LIMIT 1');
         $owned->execute([$consultationId, $providerId, $patientId]);
@@ -307,6 +308,9 @@ function patient_external_healthcare_visits_for_authorized_provider(
     }
     if (!provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId)) {
         return ['allowed' => false, 'message' => 'Access denied.'];
+    }
+    if (!patient_shares_medical_records_with_providers($pdo, $patientId)) {
+        return ['allowed' => false, 'message' => 'The patient has not allowed provider access to medical records.'];
     }
 
     return [

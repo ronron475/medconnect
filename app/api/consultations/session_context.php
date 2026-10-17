@@ -7,6 +7,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/resources/views/provider/partials/queue_helpers.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_health_summary.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_privacy_access.php';
 
 Api::startJson();
 
@@ -127,13 +128,16 @@ $health = [
     'medications' => [],
     'blood_type' => '—',
 ];
-try {
-    $loaded = patient_health_summary_load($pdo, $patientId);
-    if (is_array($loaded)) {
-        $health = array_merge($health, $loaded);
+$providerMayReadRecords = !$isProvider || patient_shares_medical_records_with_providers($pdo, $patientId);
+if ($providerMayReadRecords) {
+    try {
+        $loaded = patient_health_summary_load($pdo, $patientId);
+        if (is_array($loaded)) {
+            $health = array_merge($health, $loaded);
+        }
+    } catch (Throwable $e) {
+        error_log('session_context health: ' . $e->getMessage());
     }
-} catch (Throwable $e) {
-    error_log('session_context health: ' . $e->getMessage());
 }
 
 $patientNumber = 'MC-' . str_pad((string) $patientId, 6, '0', STR_PAD_LEFT);

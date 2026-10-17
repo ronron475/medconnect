@@ -115,6 +115,18 @@ require __DIR__.'/partials/layout_open.php';
 
 $profile = patient_registration_profile_fields($pdo, (int) $c['patient_id']);
 $health_summary = patient_health_summary_load($pdo, (int) $c['patient_id']);
+require_once BASE_PATH . '/app/includes/patient_privacy_access.php';
+if (!patient_shares_medical_records_with_providers($pdo, (int) $c['patient_id'])) {
+    foreach (['blood_type', 'history', 'allergies', 'medications', 'existing_conditions', 'current_medications'] as $clinicalKey) {
+        if (array_key_exists($clinicalKey, $profile)) {
+            $profile[$clinicalKey] = '';
+        }
+    }
+    $health_summary['allergies'] = [];
+    $health_summary['conditions'] = [];
+    $health_summary['medications'] = [];
+    $health_summary['blood_type'] = '';
+}
 $bhw_activity = community_bhw_activity_load_for_provider($pdo, (int) $_SESSION['user_id'], (int) $c['patient_id']);
 $bhw_activity_variant = 'provider';
 $external_visit_access = patient_external_healthcare_visits_for_authorized_provider(

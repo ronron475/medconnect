@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/triage_assessment_schema.php';
+require_once __DIR__ . '/patient_privacy_access.php';
 
 /**
  * Assert that the provider is allowed to act on a patient/consultation.
@@ -84,7 +85,7 @@ function provider_patient_assert_access(PDO $pdo, int $providerId, int $patientI
             LIMIT 1
         ");
         $r->execute([$providerId, $patientId]);
-        if ($r->fetchColumn()) {
+        if ($r->fetchColumn() && patient_allows_emergency_record_access($pdo, $patientId)) {
             return ['allowed' => true, 'message' => 'ok', 'consultation_id' => 0];
         }
     } catch (PDOException $e) {
@@ -344,6 +345,7 @@ function provider_patient_caseload_directory(PDO $pdo, int $providerId): array
     }
 
     $rows = provider_patient_strip_hidden_bhw_clinical($pdo, $providerId, $rows);
+    $rows = patient_privacy_strip_withheld_clinical_rows($pdo, $rows, 'id');
 
     foreach ($rows as &$row) {
         $name = trim((string) ($row['name'] ?? ''));

@@ -1723,3 +1723,131 @@ html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts
 html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box .pts-validation__label {
   color: #99F6E4 !important;
 }
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle:hover,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle:focus-within {
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle__text strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle__text small {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle__track {
+  background: #334155 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle input:checked + .pts-toggle__track {
+  background: #0D9488 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-toggle__thumb {
+  background: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip:hover,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip:has(input:checked) {
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip:has(input:checked) {
+  border-color: #0D9488 !important;
+  background: rgba(13, 148, 136, 0.16) !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip__text strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip__text small,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-group__title {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-notif-chip__box {
+  background: transparent !important;
+  border-color: #334155 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item.is-current,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-device-item,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-empty-state {
+  background: #0D1E30 !important;
+  background-image: none !important;
+  border-color: #243347 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item__body strong,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-device-item strong {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item__body span,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-device-item span {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item__icon,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item__icon--mobile,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item__icon--tablet,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-session-item__icon--desktop,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-device-item__icon,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__icon,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__icon--teal,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__icon--violet,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__icon--blue {
+  background: #151F2E !important;
+  border-color: #243347 !important;
+  color: #5EEAD4 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-badge--current {
+  background: rgba(13, 148, 136, 0.2) !important;
+  color: #99F6E4 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-modal__card {
+  background: #151F2E !important;
+  border: 1px solid #243347 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-modal__title {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-modal__message {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-modal__icon {
+  background: rgba(245, 158, 11, 0.16) !important;
+  color: #fbbf24 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__value,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__value--email {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stat__label {
+  color: #8FAABF !important;
+}

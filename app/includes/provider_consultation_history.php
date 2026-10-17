@@ -5,6 +5,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/provider_patient_access.php';
+require_once __DIR__ . '/patient_privacy_access.php';
 require_once __DIR__ . '/consultation_video_history.php';
 
 /** Statuses that count toward total visits. */
@@ -111,7 +112,7 @@ function provider_consultation_history_patients(PDO $pdo, int $providerId, array
             }
         }
         unset($row);
-        return $rows;
+        return patient_privacy_strip_withheld_clinical_rows($pdo, $rows, 'patient_id');
     } catch (PDOException $e) {
         error_log('provider_consultation_history_patients: ' . $e->getMessage());
         return [];
@@ -236,6 +237,13 @@ function provider_consultation_history_patient_detail(PDO $pdo, int $providerId,
                 : '';
         }
         unset($consultRow);
+
+        if (!patient_shares_medical_records_with_providers($pdo, $patientId)) {
+            foreach ($consultations as &$consultRow) {
+                $consultRow = patient_privacy_blank_clinical_fields($consultRow);
+            }
+            unset($consultRow);
+        }
 
         return ['patient' => $patient, 'consultations' => $consultations];
     } catch (PDOException $e) {

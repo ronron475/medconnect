@@ -247,7 +247,7 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
               </span>
             </label>
             <label class="pts-toggle pts-toggle--required">
-              <input type="checkbox" name="data_privacy_acknowledged" value="1" <?= !empty($privacy['data_privacy_acknowledged']) ? 'checked' : '' ?> required>
+              <input type="checkbox" name="data_privacy_acknowledged" value="1" <?= !empty($privacy['data_privacy_acknowledged']) ? 'checked' : '' ?>>
               <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
               <span class="pts-toggle__text">
                 <strong data-ui-i18n="privacy_ack">Data privacy acknowledgment</strong>

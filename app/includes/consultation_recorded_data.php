@@ -582,6 +582,11 @@ function consultation_recorded_data_for_authorized_provider(
     }
     $patientId = $consultPatientId;
 
+    require_once __DIR__ . '/patient_privacy_access.php';
+    if (!patient_shares_medical_records_with_providers($pdo, $patientId)) {
+        return ['allowed' => false, 'message' => 'The patient has not allowed provider access to medical records.'];
+    }
+
     $recorded = consultation_recorded_data_for_doctor($pdo, $consultationId, $patientId);
     $history = !empty($recorded['available'])
         ? consultation_recorded_data_history($pdo, $consultationId, $patientId, $historyLimit)

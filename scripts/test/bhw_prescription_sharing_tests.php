@@ -233,6 +233,9 @@ rx_assert(str_contains($settings, 'NOT NULL DEFAULT 0'), 'the new preference col
 rx_assert(str_contains($settings, 'WHERE user_id = ?'), 'privacy settings are saved for the authenticated patient id');
 $saveApi = (string) file_get_contents($root . '/app/api/patient/settings/save_privacy.php');
 rx_assert(str_contains($saveApi, 'patient_settings_require_patient_ready') && !str_contains($saveApi, "\$_POST['user_id']"), 'the privacy save endpoint does not accept another patient id');
+$settingsJs = (string) file_get_contents($root . '/public/assets/js/patient-settings.js');
+rx_assert(str_contains($settingsJs, 'save_privacy.php') && str_contains($settingsJs, "getElementById('ptsPrivacyForm')"), 'privacy toggles save through Save Privacy Preferences');
+rx_assert(!str_contains($settingsJs, "addEventListener('change'"), 'privacy toggles are not saved before the Save Privacy Preferences button');
 
 echo "\n{$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);

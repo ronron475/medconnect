@@ -54,7 +54,8 @@ function community_bhw_activity_load(PDO $pdo, int $patientId): array
 function community_bhw_activity_load_for_provider(PDO $pdo, int $providerId, int $patientId): array
 {
     require_once __DIR__ . '/provider_patient_access.php';
-    if (!provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId)) {
+    require_once __DIR__ . '/patient_privacy_access.php';
+    if (!provider_may_view_bhw_clinical_data($pdo, $providerId, $patientId) || !patient_shares_medical_records_with_providers($pdo, $patientId)) {
         return [
             'documents'       => [],
             'visits'          => [],
