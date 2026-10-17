@@ -182,11 +182,14 @@ CREATE TABLE IF NOT EXISTS `prescriptions` (
     `frequency` VARCHAR(120) NOT NULL,
     `duration` VARCHAR(120) NOT NULL,
     `notes` TEXT NULL,
+    `verification_token` VARCHAR(64) NULL DEFAULT NULL,
+    `status` ENUM('active','revoked') NULL DEFAULT NULL,
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `idx_rx_patient` (`patient_id`),
     KEY `idx_rx_provider` (`provider_id`),
-    KEY `idx_rx_consultation` (`consultation_id`)
+    KEY `idx_rx_consultation` (`consultation_id`),
+    UNIQUE KEY `uq_rx_verification_token` (`verification_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 13. Initial Seed Data for Triage Rules

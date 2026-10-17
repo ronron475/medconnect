@@ -5,6 +5,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_verification.php';
 
 clinical_tables_ensure($pdo);
 
@@ -50,30 +51,47 @@ if (!$access['allowed']) {
 }
 $consultation_id = (int) ($access['consultation_id'] ?? $consultation_id);
 
-// Backward compatibility: if no consultation exists but a booked appointment relationship exists,
-// create a consultation record tied to this provider/patient so the prescription remains linked.
-if ($consultation_id <= 0) {
-    $pdo->prepare("
-        INSERT INTO consultations (patient_id, provider_id, consult_date, consult_time, status, provider_name)
-        VALUES (?, ?, CURDATE(), CURTIME(), 'completed', ?)
-    ")->execute([
+try {
+    $pdo->beginTransaction();
+
+    // Backward compatibility: if no consultation exists but a booked appointment relationship exists,
+    // create a consultation record tied to this provider/patient so the prescription remains linked.
+    if ($consultation_id <= 0) {
+        $pdo->prepare("
+            INSERT INTO consultations (patient_id, provider_id, consult_date, consult_time, status, provider_name)
+            VALUES (?, ?, CURDATE(), CURTIME(), 'completed', ?)
+        ")->execute([
+            $patient_id,
+            $provider_id,
+            trim((string)(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''))),
+        ]);
+        $consultation_id = (int) $pdo->lastInsertId();
+    }
+
+    prescription_issue(
+        $pdo,
+        $consultation_id,
         $patient_id,
         $provider_id,
-        trim((string)(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''))),
-    ]);
-    $consultation_id = (int) $pdo->lastInsertId();
-}
-
-try {
-    $stmt = $pdo->prepare("
-        INSERT INTO prescriptions (consultation_id, patient_id, provider_id, medication_name, dosage, frequency, duration, notes, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    ");
-    $stmt->execute([$consultation_id, $patient_id, $provider_id, $medication, $dosage, $frequency, $duration, $notes ?: null]);
-    require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
-    NotificationEvents::prescriptionAvailable($pdo, $patient_id, $provider_id, $provider_id);
-    echo json_encode(['success' => true, 'message' => 'Prescription saved to patient record.']);
-} catch (PDOException $e) {
+        $medication,
+        $dosage,
+        $frequency,
+        $duration,
+        $notes !== '' ? $notes : null
+    );
+    $pdo->commit();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+    error_log('create_prescription: ' . $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database error.']);
+    exit;
 }
+
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
+prescription_notify_quietly(static function () use ($pdo, $patient_id, $provider_id): void {
+    NotificationEvents::prescriptionAvailable($pdo, $patient_id, $provider_id, $provider_id);
+});
+echo json_encode(['success' => true, 'message' => 'Prescription saved to patient record.']);

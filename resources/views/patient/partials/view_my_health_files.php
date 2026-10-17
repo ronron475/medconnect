@@ -256,6 +256,9 @@ function pmh_soap_field_meta(string $key): array
           <p class="pmh-rx-notes__text"><?= nl2br(htmlspecialchars($notes)) ?></p>
         </div>
         <?php endif; ?>
+        <?php if (function_exists('prescription_verification_patient_html')): ?>
+          <?= prescription_verification_patient_html($r['verification_token'] ?? null, $r['prescription_status'] ?? null) ?>
+        <?php endif; ?>
 
       <?php elseif ($type === 'Referral'): ?>
         <?php

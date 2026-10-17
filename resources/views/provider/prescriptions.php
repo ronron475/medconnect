@@ -3,6 +3,8 @@ $active_page = 'prescriptions';
 $page_title  = 'e-Prescriptions';
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';
+require_once BASE_PATH . '/app/includes/clinical_tables.php';
+clinical_tables_ensure($pdo);
 require __DIR__.'/partials/layout_open.php';
 
 $provider_id = (int)$_SESSION['user_id'];
@@ -75,7 +77,14 @@ $patient_options = $patients ?? [];
         <td><?= htmlspecialchars($rx['dosage']) ?></td>
         <td><?= htmlspecialchars($rx['frequency']) ?></td>
         <td><?= htmlspecialchars($rx['duration']) ?></td>
-        <td><button type="button" class="mc-btn mc-btn--outline mc-btn--sm" onclick="window.print()">Print</button></td>
+        <td>
+          <button type="button" class="mc-btn mc-btn--outline mc-btn--sm" onclick="window.print()">Print</button>
+          <?php if ((string) ($rx['status'] ?? '') === 'active'): ?>
+          <button type="button" class="mc-btn mc-btn--outline mc-btn--sm" data-rx-revoke="<?= (int) $rx['id'] ?>">Revoke</button>
+          <?php elseif ((string) ($rx['status'] ?? '') === 'revoked'): ?>
+          <span class="text-xs text-muted">Revoked</span>
+          <?php endif; ?>
+        </td>
       </tr>
       <?php endforeach; endif; ?>
     </tbody>
@@ -93,6 +102,19 @@ document.getElementById('rxForm').addEventListener('submit', function (e) {
   fetch('<?= ASSET_BASE ?>/app/api/provider/create_prescription.php', { method: 'POST', body: fd })
     .then(function (r) { return r.json(); })
     .then(function (j) { alert(j.message || 'Done'); if (j.success) location.reload(); });
+});
+document.querySelectorAll('[data-rx-revoke]').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    if (!window.confirm('Revoke this prescription? It stays in the patient record, and verification will show it as revoked.')) {
+      return;
+    }
+    var fd = new FormData();
+    fd.append('csrf_token', document.body.dataset.csrf || '');
+    fd.append('prescription_id', btn.getAttribute('data-rx-revoke') || '');
+    fetch('<?= ASSET_BASE ?>/app/api/provider/revoke_prescription.php', { method: 'POST', body: fd })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { alert(j.message || 'Done'); if (j.success) location.reload(); });
+  });
 });
 </script>
 

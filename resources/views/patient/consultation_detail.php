@@ -408,6 +408,9 @@ $patient_page_stylesheets = [
               <strong><?= htmlspecialchars($rx['medication_name'] ?? '') ?></strong>
               <span><?= htmlspecialchars(trim(($rx['dosage'] ?? '') . ' · ' . ($rx['frequency'] ?? '') . ' · ' . ($rx['duration'] ?? ''))) ?></span>
               <?php if (!empty($rx['notes'])): ?><p><?= nl2br(htmlspecialchars($rx['notes'])) ?></p><?php endif; ?>
+              <?php if (function_exists('prescription_verification_patient_html')): ?>
+                <?= prescription_verification_patient_html($rx['verification_token'] ?? null, $rx['status'] ?? null) ?>
+              <?php endif; ?>
             </li>
             <?php endforeach; ?>
           </ul>

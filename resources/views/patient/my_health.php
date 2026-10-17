@@ -108,6 +108,7 @@ try {
     $s = $pdo->prepare("
         SELECT CONCAT(pr.medication_name, ' ', pr.dosage) AS record_name,
                pr.medication_name, pr.dosage, pr.frequency, pr.duration,
+               pr.verification_token, pr.status AS prescription_status,
                COALESCE(pr.notes, '') AS detail, DATE(pr.created_at) AS record_date,
                CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM prescriptions pr
@@ -118,7 +119,23 @@ try {
     ");
     $s->execute([$uid]);
     $prescriptions = $s->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) { /* optional */ }
+} catch (PDOException $e) {
+    try {
+        $s = $pdo->prepare("
+            SELECT CONCAT(pr.medication_name, ' ', pr.dosage) AS record_name,
+                   pr.medication_name, pr.dosage, pr.frequency, pr.duration,
+                   COALESCE(pr.notes, '') AS detail, DATE(pr.created_at) AS record_date,
+                   CONCAT(u.first_name, ' ', u.last_name) AS provider_name
+            FROM prescriptions pr
+            JOIN consultations c ON c.id = pr.consultation_id
+            JOIN users u ON u.id = pr.provider_id
+            WHERE pr.patient_id = ? AND c.status = 'completed'
+            ORDER BY pr.created_at DESC
+        ");
+        $s->execute([$uid]);
+        $prescriptions = $s->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) { /* optional */ }
+}
 
 try {
     $s = $pdo->prepare("

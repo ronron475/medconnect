@@ -58,6 +58,9 @@ function clinical_tables_ensure(PDO $pdo): void
         ");
     } catch (PDOException $e) { /* non-fatal */ }
 
+    require_once __DIR__ . '/prescription_verification.php';
+    prescription_verification_schema_ensure($pdo);
+
     try {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS clinical_notes (

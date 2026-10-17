@@ -13,6 +13,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_verification.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_signature.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/icd10_lookup.php';
@@ -325,11 +326,8 @@ try {
         if ($tableOk && $tableOk->rowCount() > 0) {
             $firstLine = trim((string) strtok(str_replace(["\r\n", "\r"], "\n", $rxText), "\n"));
             $medication = $firstLine !== '' ? mb_substr($firstLine, 0, 180) : 'Digital prescription';
-            $pdo->prepare("
-                INSERT INTO prescriptions
-                    (consultation_id, patient_id, provider_id, medication_name, dosage, frequency, duration, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-            ")->execute([
+            prescription_issue(
+                $pdo,
                 (int) $data['consultation_id'],
                 (int) $data['patient_id'],
                 (int) $data['provider_id'],
@@ -337,8 +335,8 @@ try {
                 'As directed',
                 'As directed',
                 'As directed',
-                $rxText,
-            ]);
+                $rxText
+            );
             $rxIssued = true;
         }
     }
@@ -413,30 +411,32 @@ try {
     }
 
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/notification_events.php';
-    NotificationEvents::soapNotesFinalized(
-        $pdo,
-        (int) $data['consultation_id'],
-        (int) $data['patient_id'],
-        (int) $data['provider_id']
-    );
-    NotificationEvents::consultationCompleted(
-        $pdo,
-        (int) $data['consultation_id'],
-        (int) $data['patient_id'],
-        (int) $data['provider_id'],
-        (int) $data['provider_id'],
-        $providerName,
-        $finalCaseLevel
-    );
-    if ($rxIssued) {
-        NotificationEvents::prescriptionAvailable(
+    prescription_notify_quietly(static function () use ($pdo, $data, $rxIssued, $providerName, $finalCaseLevel): void {
+        NotificationEvents::soapNotesFinalized(
             $pdo,
+            (int) $data['consultation_id'],
+            (int) $data['patient_id'],
+            (int) $data['provider_id']
+        );
+        NotificationEvents::consultationCompleted(
+            $pdo,
+            (int) $data['consultation_id'],
             (int) $data['patient_id'],
             (int) $data['provider_id'],
             (int) $data['provider_id'],
-            (int) $data['consultation_id']
+            $providerName,
+            $finalCaseLevel
         );
-    }
+        if ($rxIssued) {
+            NotificationEvents::prescriptionAvailable(
+                $pdo,
+                (int) $data['patient_id'],
+                (int) $data['provider_id'],
+                (int) $data['provider_id'],
+                (int) $data['consultation_id']
+            );
+        }
+    });
 
     require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/bhw_patient_workflow.php';
     BhwPatientWorkflow::onConsultationCompleted($pdo, (int) $data['patient_id'], 'provider_notes');
