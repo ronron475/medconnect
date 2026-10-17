@@ -12,7 +12,7 @@ $system = $settings['system'] ?? provider_settings_default_system();
 $sessions = $settings['sessions'] ?? [];
 $lang = $_SESSION['provider_language'] ?? ($system['language'] ?? 'en');
 
-$page_styles = ['provider-settings.css', 'provider_session_alert.css', 'messages-delete.css'];
+$page_styles = ['provider-settings.css', 'provider_session_alert.css', 'messages-delete.css', 'portal-settings-shell.css'];
 $provider_settings_css_ver = (int) @filemtime(ASSETS_PATH . '/css/provider-settings.css');
 
 require __DIR__.'/partials/layout_open.php';
@@ -23,13 +23,6 @@ $profile_initials = $profile['initials'] ?? $provider['initials'];
 $profile_picture_url = $profile['picture_url'] ?? $provider['picture_url'] ?? null;
 $profile_display_name = trim(($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? ''));
 $profile_role_label = $profile['specialty'] ?? $provider['role'] ?? 'General Medicine';
-
-$tabs = [
-    ['profile', 'user', 'profile_information', 'View your professional identity and contact details.'],
-    ['security', 'lock', 'security_password', 'Change your password and secure your account.'],
-    ['notifications', 'bell', 'notification_preferences', 'Choose how you receive clinical alerts.'],
-    ['system', 'monitor', 'system_preferences', 'Theme, language, and session preferences.'],
-];
 ?>
 
 <div
@@ -39,36 +32,44 @@ $tabs = [
   data-asset-base="<?= htmlspecialchars(ASSET_BASE) ?>"
   data-provider-theme="<?= htmlspecialchars($system['theme'] ?? 'system') ?>"
 >
-  <header class="ps-page-header provider-page-intro">
-    <span class="ps-verification-badge ps-verification-badge--header <?= htmlspecialchars($verification_class) ?>">
-      PRC <?= htmlspecialchars(ucfirst($verification)) ?>
-    </span>
-  </header>
-
-  <div class="ps-layout">
-    <aside class="ps-nav" aria-label="Settings sections">
-      <?php foreach ($tabs as [$id, $ic, $lblKey, $desc]):
-        $is_active = $id === 'profile';
-      ?>
-      <button
-        type="button"
-        class="ps-nav__item <?= $is_active ? 'is-active' : '' ?>"
-        data-settings-tab="<?= htmlspecialchars($id) ?>"
-        aria-selected="<?= $is_active ? 'true' : 'false' ?>"
-      >
-        <span class="ps-nav__icon"><?= icon($ic) ?></span>
-        <span class="ps-nav__text">
-          <span class="ps-nav__label" data-i18n="<?= htmlspecialchars($lblKey) ?>"><?= provider_i18n($lblKey, $lang) ?></span>
-          <span class="ps-nav__desc"><?= htmlspecialchars($desc) ?></span>
-        </span>
-      </button>
-      <?php endforeach; ?>
+  <div class="mcs" data-mc-settings data-initial-tab="profile">
+    <aside class="mcs-menu">
+      <h2 class="mcs-title">Settings</h2>
+      <nav aria-label="Settings sections">
+        <div class="mcs-group">
+          <p class="mcs-group-label">Account</p>
+          <button type="button" class="mcs-item is-active" data-mc-tab="profile" data-settings-tab="profile" data-search="profile information identity contact" aria-selected="true">Profile</button>
+          <button type="button" class="mcs-item" data-mc-tab="notifications" data-settings-tab="notifications" data-search="notifications alerts email sms" aria-selected="false">Notifications</button>
+        </div>
+        <div class="mcs-group">
+          <p class="mcs-group-label">Connections</p>
+          <button type="button" class="mcs-item" data-mc-tab="sessions" data-settings-tab="sessions" data-search="devices sessions logout access" aria-selected="false">Devices &amp; sessions</button>
+        </div>
+        <div class="mcs-group">
+          <p class="mcs-group-label">Preferences</p>
+          <button type="button" class="mcs-item" data-mc-tab="system" data-settings-tab="system" data-search="system theme language time date" aria-selected="false">System preferences</button>
+        </div>
+        <div class="mcs-group">
+          <p class="mcs-group-label">Security</p>
+          <button type="button" class="mcs-item" data-mc-tab="security" data-settings-tab="security" data-search="change password security" aria-selected="false">Change password</button>
+        </div>
+      </nav>
     </aside>
-
-    <div class="ps-content">
+    <div class="mcs-stage">
+      <div class="mcs-stage-bar">
+        <label class="mcs-search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" placeholder="Search" autocomplete="off" aria-label="Search settings">
+        </label>
+      </div>
+      <p class="mcs-empty" hidden>No matching settings.</p>
 
       <!-- Profile -->
-      <section class="ps-panel is-active" data-settings-panel="profile">
+      <section class="ps-panel mcs-panel is-active" data-settings-panel="profile" data-mc-panel="profile">
+        <header class="mcs-panel-head">
+          <h2>Profile</h2>
+          <p>Your professional identity and contact details. <span class="ps-verification-badge ps-verification-badge--header <?= htmlspecialchars($verification_class) ?>">PRC <?= htmlspecialchars(ucfirst($verification)) ?></span></p>
+        </header>
         <div class="ps-card">
           <div class="ps-card__head">
             <div>
@@ -150,7 +151,11 @@ $tabs = [
       </section>
 
       <!-- Security -->
-      <section class="ps-panel" data-settings-panel="security">
+      <section class="ps-panel mcs-panel" data-settings-panel="security" data-mc-panel="security">
+        <header class="mcs-panel-head">
+          <h2>Change password</h2>
+          <p>Keep your account secure by using a strong, unique password.</p>
+        </header>
         <div class="ps-card">
           <div class="ps-card__head">
             <div>
@@ -217,7 +222,14 @@ $tabs = [
           </div>
         </div>
 
-        <div class="ps-card" style="margin-top:16px;">
+      </section>
+
+      <section class="ps-panel mcs-panel" data-settings-panel="sessions" data-mc-panel="sessions">
+        <header class="mcs-panel-head">
+          <h2>Devices &amp; sessions</h2>
+          <p>Devices signed in to your provider account in the last 7 days.</p>
+        </header>
+        <div class="ps-card">
           <div class="ps-card__head ps-card__head--row">
             <div>
               <h3 class="ps-card__title"><?= icon('monitor') ?> Active Sessions</h3>
@@ -249,7 +261,11 @@ $tabs = [
       </section>
 
       <!-- Notifications -->
-      <section class="ps-panel" data-settings-panel="notifications">
+      <section class="ps-panel mcs-panel" data-settings-panel="notifications" data-mc-panel="notifications">
+        <header class="mcs-panel-head">
+          <h2>Notifications</h2>
+          <p>Choose which alerts you receive in the portal and by email or SMS.</p>
+        </header>
         <div class="ps-card">
           <div class="ps-card__head">
             <div>
@@ -293,7 +309,11 @@ $tabs = [
       </section>
 
       <!-- System -->
-      <section class="ps-panel" data-settings-panel="system">
+      <section class="ps-panel mcs-panel" data-settings-panel="system" data-mc-panel="system">
+        <header class="mcs-panel-head">
+          <h2>System preferences</h2>
+          <p>Personalize appearance, language, and session timeout. Your language choice is saved to this account.</p>
+        </header>
         <div class="ps-card">
           <div class="ps-card__head">
             <div>
@@ -371,6 +391,7 @@ $psJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-settings.js');
 $pwJsVer = (int) @filemtime(ASSETS_PATH . '/js/provider-password.js');
 $pwVisJsVer = (int) @filemtime(ASSETS_PATH . '/js/password-visibility.js');
 ?>
+<script src="<?= ASSET_BASE ?>/assets/js/portal-settings-shell.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/portal-settings-shell.js') ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/password-visibility.js?v=<?= $pwVisJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-settings.js?v=<?= $psJsVer ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/provider-password.js?v=<?= $pwJsVer ?>"></script>

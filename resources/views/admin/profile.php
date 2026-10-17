@@ -59,9 +59,42 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-portal-profile.css?v=1.1">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal-settings-shell.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/portal-settings-shell.css') ?>">
 
 <article class="portal-profile-page staff-apps-page">
+<div class="mcs" data-mc-settings data-initial-tab="profile">
+  <aside class="mcs-menu">
+    <h2 class="mcs-title">Settings</h2>
+    <nav aria-label="Settings sections">
+      <div class="mcs-group">
+        <p class="mcs-group-label">Account</p>
+        <button type="button" class="mcs-item is-active" data-mc-tab="profile" data-search="profile photo" aria-selected="true">Profile</button>
+        <button type="button" class="mcs-item" data-mc-tab="account" data-search="account details name email role" aria-selected="false">Account details</button>
+      </div>
+      <div class="mcs-group">
+        <p class="mcs-group-label">Connections</p>
+        <button type="button" class="mcs-item" data-mc-tab="sessions" data-search="devices sessions logout" aria-selected="false">Devices &amp; sessions</button>
+      </div>
+      <div class="mcs-group">
+        <p class="mcs-group-label">Preferences</p>
+        <button type="button" class="mcs-item" data-mc-tab="language" data-search="language english filipino hiligaynon" aria-selected="false">Language</button>
+      </div>
+    </nav>
+  </aside>
+  <div class="mcs-stage">
+    <div class="mcs-stage-bar">
+      <label class="mcs-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" placeholder="Search" autocomplete="off" aria-label="Search settings">
+      </label>
+    </div>
+    <p class="mcs-empty" hidden>No matching settings.</p>
 
+    <section class="mcs-panel is-active" data-mc-panel="profile">
+      <header class="mcs-panel-head">
+        <h2>Profile</h2>
+        <p>Your photo appears in the sidebar, header, and across the portal.</p>
+      </header>
 <div class="portal-profile-grid">
     <section class="portal-profile-card portal-profile-card--photo" aria-labelledby="portalProfilePhotoTitle">
         <div class="portal-profile-card__head">
@@ -86,7 +119,14 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
         </div>
     </section>
+</div>
+    </section>
 
+    <section class="mcs-panel" data-mc-panel="account">
+      <header class="mcs-panel-head">
+        <h2>Account details</h2>
+        <p>Contact your system owner if any of these details need to be changed.</p>
+      </header>
     <section class="portal-profile-card portal-profile-card--details" aria-labelledby="portalProfileDetailsTitle">
         <div class="portal-profile-card__head">
             <div class="portal-profile-card__icon portal-profile-card__icon--indigo" aria-hidden="true">
@@ -177,9 +217,18 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
         </div>
     </section>
-</div>
+    <div class="staff-apps-note" role="note">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span><strong>Profile photo only.</strong> You can update your photo here. For name, email, or role changes, contact the system owner or Super Administrator.</span>
+    </div>
+    </section>
 
-<section class="portal-profile-card" aria-labelledby="portalProfileLanguageTitle">
+    <section class="mcs-panel" data-mc-panel="language">
+      <header class="mcs-panel-head">
+        <h2>Language</h2>
+        <p>Choose English, Filipino, or Hiligaynon. Your choice is saved to this account.</p>
+      </header>
+    <section class="portal-profile-card">
     <div class="portal-profile-card__head">
         <div class="portal-profile-card__icon" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
@@ -205,8 +254,14 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
         </form>
     </div>
-</section>
+    </section>
+    </section>
 
+    <section class="mcs-panel" data-mc-panel="sessions">
+      <header class="mcs-panel-head">
+        <h2>Devices &amp; sessions</h2>
+        <p>Devices signed in to this account in the last 7 days.</p>
+      </header>
 <section class="portal-profile-card portal-profile-card--security" aria-labelledby="portalProfileSecurityTitle">
     <div class="portal-profile-card__head">
         <div class="portal-profile-card__icon portal-profile-card__icon--indigo" aria-hidden="true">
@@ -239,14 +294,12 @@ require_once __DIR__ . '/partials/layout_open.php';
         <?php endif; ?>
     </div>
 </section>
-
-<div class="staff-apps-note" role="note">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <span><strong>Profile photo only.</strong> You can update your photo here. For name, email, or role changes, contact the system owner or Super Administrator.</span>
+    </section>
+  </div>
 </div>
-
 </article>
 
+<script src="<?= ASSET_BASE ?>/assets/js/portal-settings-shell.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/portal-settings-shell.js') ?>"></script>
 <script src="<?= ASSET_BASE ?>/assets/js/admin-portal-profile.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/admin-portal-profile.js') ?>"></script>
 <script>
 document.getElementById('adminLanguageForm')?.addEventListener('submit', async function (e) {

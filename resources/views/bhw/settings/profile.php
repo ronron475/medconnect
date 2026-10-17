@@ -12,17 +12,37 @@ $profile_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?
 $profile_display_name = trim(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? '')) ?: 'Barangay Health Worker';
 $profile_role_label = 'Barangay Health Worker';
 ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal-settings-shell.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/portal-settings-shell.css') ?>">
 <div class="bhw-profile-page bhw-update-page">
-
-  <header class="bhw-update-header bhw-page-intro">
-    <div class="bhw-update-header-text">
-      <p class="bhw-page-intro__desc">Manage your account details for <strong>Brgy. <?= $barangay_label ?></strong>. Keep your name and contact number up to date so patients and providers can reach you.</p>
+<div class="mcs" data-mc-settings data-initial-tab="profile">
+  <aside class="mcs-menu">
+    <h2 class="mcs-title">Settings</h2>
+    <nav aria-label="Settings sections">
+      <div class="mcs-group">
+        <p class="mcs-group-label">Account</p>
+        <button type="button" class="mcs-item is-active" data-mc-tab="profile" data-search="profile photo name phone" aria-selected="true">Profile</button>
+        <button type="button" class="mcs-item" data-mc-tab="account" data-search="account assignment verification barangay" aria-selected="false">Account details</button>
+      </div>
+      <div class="mcs-group">
+        <p class="mcs-group-label">Preferences</p>
+        <button type="button" class="mcs-item" data-mc-tab="language" data-search="language english filipino hiligaynon" aria-selected="false">Language</button>
+      </div>
+    </nav>
+  </aside>
+  <div class="mcs-stage">
+    <div class="mcs-stage-bar">
+      <label class="mcs-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" placeholder="Search" autocomplete="off" aria-label="Search settings">
+      </label>
     </div>
-  </header>
+    <p class="mcs-empty" hidden>No matching settings.</p>
 
-  <div class="bhw-update-grid">
-
-    <div class="bhw-update-main">
+    <section class="mcs-panel is-active" data-mc-panel="profile">
+      <header class="mcs-panel-head">
+        <h2>Profile</h2>
+        <p>Manage your account details for <strong>Brgy. <?= $barangay_label ?></strong>. Keep your name and contact number up to date.</p>
+      </header>
 
       <div class="bhw-card bhw-form-card bhw-profile-photo-card">
         <h3 class="bhw-form-card-title">
@@ -74,9 +94,16 @@ $profile_role_label = 'Barangay Health Worker';
         </form>
       </div>
 
+    </section>
+
+    <section class="mcs-panel" data-mc-panel="language">
+      <header class="mcs-panel-head">
+        <h2>Language</h2>
+        <p>Choose English, Filipino, or Hiligaynon. Your choice is saved to this account.</p>
+      </header>
       <div class="bhw-card bhw-form-card">
         <h3 class="bhw-form-card-title">Language</h3>
-        <p class="bhw-form-card-sub">Choose English, Filipino, or Hiligaynon for this account. The rest of the portal stays in English for now.</p>
+        <p class="bhw-form-card-sub">Choose English, Filipino, or Hiligaynon for this account.</p>
         <form id="bhwLanguageForm">
           <div class="bhw-form-grid">
             <div>
@@ -94,7 +121,13 @@ $profile_role_label = 'Barangay Health Worker';
           </div>
         </form>
       </div>
+    </section>
 
+    <section class="mcs-panel" data-mc-panel="account">
+      <header class="mcs-panel-head">
+        <h2>Account details</h2>
+        <p>Your assignment, verification, and sector workload for Brgy. <?= $barangay_label ?>.</p>
+      </header>
       <div class="bhw-info-cards" aria-label="Account and assignment details">
         <div class="bhw-info-card">
           <h4 class="bhw-info-card-title">Assignment</h4>
@@ -121,9 +154,6 @@ $profile_role_label = 'Barangay Health Worker';
           </dl>
         </div>
       </div>
-    </div>
-
-    <aside class="bhw-update-sidebar" aria-label="Profile summary">
       <div class="bhw-card bhw-summary-card">
         <div class="bhw-summary-hero">
           <div class="bhw-summary-avatar" id="pf_avatar" data-profile-avatar-wrap aria-hidden="true">
@@ -165,10 +195,11 @@ $profile_role_label = 'Barangay Health Worker';
           </div>
         </div>
       </div>
-    </aside>
-
+    </section>
   </div>
 </div>
+</div>
+<script src="<?= ASSET_BASE ?>/assets/js/portal-settings-shell.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/portal-settings-shell.js') ?>"></script>
 <?php
 ob_start();
 ?>
