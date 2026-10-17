@@ -1,0 +1,256 @@
+.op-report--appointments {
+  padding: 18px 20px 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e7eef3;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.op-report--appointments .op-report__title {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #0f172a;
+}
+
+.op-report--appointments .op-report__desc {
+  margin: 0 0 14px;
+  color: #94a3b8;
+  font-size: 0.8125rem;
+}
+
+.op-appt__panel {
+  background: #f4fbfa;
+  border: 1px solid #e4f3ef;
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+}
+
+.op-appt__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 10px 12px;
+  align-items: end;
+}
+
+.op-appt__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.op-appt__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.op-appt__footer .op-appt__field {
+  width: 190px;
+  flex: 0 0 190px;
+}
+
+.op-appt__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.op-report--appointments .op-appt__control {
+  height: 36px;
+  width: 100%;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.8125rem;
+}
+
+.op-appt__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.op-appt__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.op-appt__btn--apply {
+  background: #14b8a6;
+  border: 1px solid #14b8a6;
+  color: #fff;
+}
+
+.op-appt__btn--apply:hover {
+  background: #0d9488;
+  border-color: #0d9488;
+}
+
+.op-appt__btn--ghost {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.op-appt__btn--ghost:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.op-report--appointments .mc-table-wrap {
+  margin-top: 14px;
+  border: 0;
+  overflow-x: auto;
+}
+
+.op-report--appointments .mc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.op-report--appointments .mc-table th {
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #eef2f6;
+  color: #94a3b8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.op-report--appointments .mc-table td {
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 0.8125rem;
+  vertical-align: middle;
+}
+
+.op-report--appointments .mc-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.op-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.op-status--completed {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.op-status--cancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.op-status--pending,
+.op-status--scheduled {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.op-status--in-consultation {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+@media (max-width: 1200px) {
+  .op-appt__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .op-appt__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .op-appt__footer .op-appt__field,
+  .op-appt__actions {
+    width: 100%;
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-report--appointments,
+html[data-theme-resolved='dark'] body.superadmin-body .op-report--appointments {
+  background: #151F2E !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-report--appointments .op-report__title,
+html[data-theme-resolved='dark'] body.superadmin-body .op-report--appointments .op-report__title {
+  color: #ffffff;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-report--appointments .op-report__desc,
+html[data-theme-resolved='dark'] body.superadmin-body .op-report--appointments .op-report__desc,
+html[data-theme-resolved='dark'] body.admin-body .op-appt__label,
+html[data-theme-resolved='dark'] body.superadmin-body .op-appt__label {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-appt__panel,
+html[data-theme-resolved='dark'] body.superadmin-body .op-appt__panel {
+  background: #0D1E30 !important;
+  border-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-appt__btn--ghost,
+html[data-theme-resolved='dark'] body.superadmin-body .op-appt__btn--ghost {
+  background: #151F2E !important;
+  border-color: #243347 !important;
+  color: #d4d4d8 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-report--appointments .mc-table th,
+html[data-theme-resolved='dark'] body.superadmin-body .op-report--appointments .mc-table th {
+  background: transparent !important;
+  color: #8FAABF !important;
+  border-bottom-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.admin-body .op-report--appointments .mc-table td,
+html[data-theme-resolved='dark'] body.superadmin-body .op-report--appointments .mc-table td {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border-bottom-color: #243347 !important;
+}

@@ -231,6 +231,14 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
               </span>
             </label>
             <label class="pts-toggle">
+              <input type="checkbox" name="share_prescriptions_with_barangay_bhw" value="1" <?= !empty($privacy['share_prescriptions_with_barangay_bhw']) ? 'checked' : '' ?>>
+              <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
+              <span class="pts-toggle__text">
+                <strong data-ui-i18n="privacy_bhw_rx">Barangay BHW prescription access</strong>
+                <small data-ui-i18n="privacy_bhw_rx_sub">Allow authorized Barangay Health Workers assigned to your barangay to view your prescription details for barangay healthcare assistance. You can turn this off at any time.</small>
+              </span>
+            </label>
+            <label class="pts-toggle">
               <input type="checkbox" name="emergency_access_consent" value="1" <?= !empty($privacy['emergency_access_consent']) ? 'checked' : '' ?>>
               <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
               <span class="pts-toggle__text">

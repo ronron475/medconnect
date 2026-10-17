@@ -531,6 +531,12 @@ function urgent_followup_submit(
  */
 function urgent_followup_book_appointment(PDO $pdo, int $patientId, int $caseId, int $slotId): array
 {
+    require_once __DIR__ . '/user_account_status.php';
+    $submission = patient_account_may_submit_consultation($pdo, $patientId);
+    if (!$submission['allowed']) {
+        throw new RuntimeException((string) $submission['message']);
+    }
+
     urgent_followup_ensure_schema($pdo);
     consultations_auto_expire($pdo, $patientId);
 

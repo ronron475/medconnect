@@ -483,8 +483,6 @@ function portal_nav_badge_key_for_item(string $role, string $file, ?string $item
 
     if ($role === 'bhw') {
         return match ($file) {
-            'consultations/index.php'  => 'bhw_consultations',
-            'referral/status.php'      => 'bhw_referrals',
             'records/index.php'        => 'bhw_records',
             'followup/track.php'       => 'bhw_followups',
             'patients/list.php'        => 'bhw_patients_pending',

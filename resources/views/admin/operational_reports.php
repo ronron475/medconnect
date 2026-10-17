@@ -23,7 +23,9 @@ if (!headers_sent()) {
 }
 
 require_once __DIR__ . '/partials/layout_open.php';
+$opReportCss = (int) @filemtime(ASSETS_PATH . '/css/admin-operational-reports.css');
 ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-operational-reports.css?v=<?= $opReportCss ?>">
 <div data-op-reports-live data-op-reports-api="<?= htmlspecialchars(ASSET_BASE . '/app/api/admin/operational_reports_live.php') ?>">
     <div style="display: flex; justify-content: flex-end; margin-bottom: 6px;">
         <span class="text-xs text-muted" data-op-live-sync aria-live="polite">Live</span>

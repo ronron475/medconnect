@@ -58,7 +58,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 ?>
 
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-staff-applications.css?v=1.1">
-<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-portal-profile.css?v=1.1">
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-portal-profile.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-portal-profile.css') ?>">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal-settings-shell.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/portal-settings-shell.css') ?>">
 
 <article class="portal-profile-page staff-apps-page">
@@ -71,6 +71,13 @@ require_once __DIR__ . '/partials/layout_open.php';
         <button type="button" class="mcs-item is-active" data-mc-tab="profile" data-search="profile photo" aria-selected="true">Profile</button>
         <button type="button" class="mcs-item" data-mc-tab="account" data-search="account details name email role" aria-selected="false">Account details</button>
       </div>
+      <?php if (!$is_superadmin_portal): ?>
+      <div class="mcs-group">
+        <p class="mcs-group-label">Security</p>
+        <button type="button" class="mcs-item" data-mc-tab="password" data-search="password change security" aria-selected="false">Password</button>
+        <button type="button" class="mcs-item" data-mc-tab="gmail" data-search="gmail email address" aria-selected="false">Gmail</button>
+      </div>
+      <?php endif; ?>
       <div class="mcs-group">
         <p class="mcs-group-label">Connections</p>
         <button type="button" class="mcs-item" data-mc-tab="sessions" data-search="devices sessions logout" aria-selected="false">Devices &amp; sessions</button>
@@ -106,17 +113,19 @@ require_once __DIR__ . '/partials/layout_open.php';
                 <p class="portal-profile-card__sub">Your photo appears in the sidebar, header, and across the portal.</p>
             </div>
         </div>
-        <div class="portal-profile-card__body">
-            <?php require VIEWS_PATH . '/partials/profile_upload_card.php'; ?>
-            <span class="portal-profile-role-badge<?= $is_superadmin_portal ? ' portal-profile-role-badge--super' : '' ?>"><?= htmlspecialchars($profile_role_label) ?></span>
-            <div class="portal-profile-photo-tips">
+        <div class="portal-profile-card__body portal-profile-photo-layout">
+            <div class="portal-profile-photo-main">
+                <?php require VIEWS_PATH . '/partials/profile_upload_card.php'; ?>
+                <span class="portal-profile-role-badge<?= $is_superadmin_portal ? ' portal-profile-role-badge--super' : '' ?>"><?= htmlspecialchars($profile_role_label) ?></span>
+            </div>
+            <aside class="portal-profile-photo-tips">
                 <p class="portal-profile-photo-tips__title">Photo guidelines</p>
                 <ul>
                     <li>Use a clear, professional headshot</li>
                     <li>JPG, PNG, or WEBP up to 2 MB</li>
                     <li>Square images work best</li>
                 </ul>
-            </div>
+            </aside>
         </div>
     </section>
 </div>
@@ -125,7 +134,7 @@ require_once __DIR__ . '/partials/layout_open.php';
     <section class="mcs-panel" data-mc-panel="account">
       <header class="mcs-panel-head">
         <h2>Account details</h2>
-        <p>Contact your system owner if any of these details need to be changed.</p>
+        <p><?php if (!$is_superadmin_portal): ?>Name and role are managed by a Super Administrator. Password and Gmail are under Security.<?php else: ?>Contact the system owner if any of these details need to be changed.<?php endif; ?></p>
       </header>
     <section class="portal-profile-card portal-profile-card--details" aria-labelledby="portalProfileDetailsTitle">
         <div class="portal-profile-card__head">
@@ -134,7 +143,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             </div>
             <div>
                 <h2 class="portal-profile-card__title" id="portalProfileDetailsTitle">Account Details</h2>
-                <p class="portal-profile-card__sub">Contact your system owner if any of these details need to be changed.</p>
+                <p class="portal-profile-card__sub"><?php if (!$is_superadmin_portal): ?>Name and role are managed by a Super Administrator.<?php else: ?>Contact the system owner if any of these details need to be changed.<?php endif; ?></p>
             </div>
         </div>
         <div class="portal-profile-card__body">
@@ -152,7 +161,7 @@ require_once __DIR__ . '/partials/layout_open.php';
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                         Email
                     </span>
-                    <span class="portal-profile-field__value"><?= htmlspecialchars($admin_user['email'] ?? '—') ?></span>
+                    <span class="portal-profile-field__value" id="adminAccountEmail"><?= htmlspecialchars($admin_user['email'] ?? '—') ?></span>
                 </div>
 
                 <div class="portal-profile-field">
@@ -219,9 +228,65 @@ require_once __DIR__ . '/partials/layout_open.php';
     </section>
     <div class="staff-apps-note" role="note">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span><strong>Profile photo only.</strong> You can update your photo here. For name, email, or role changes, contact the system owner or Super Administrator.</span>
+        <span><strong>Profile photo only.</strong> You can update your photo here.<?php if (!$is_superadmin_portal): ?> Change your password and Gmail under Security. Name and role still need a Super Administrator.<?php else: ?> For name, email, or role changes, contact the system owner.<?php endif; ?></span>
     </div>
     </section>
+
+    <?php if (!$is_superadmin_portal): ?>
+    <section class="mcs-panel" data-mc-panel="password">
+      <header class="mcs-panel-head">
+        <h2>Password</h2>
+        <p>Use at least 12 characters with uppercase, lowercase, a number, and a special character.</p>
+      </header>
+      <section class="portal-profile-card">
+        <div class="portal-profile-card__body">
+          <div id="adminPasswordAlert" class="portal-profile-alert" role="status" hidden></div>
+          <form id="adminPasswordForm" class="portal-profile-security-form" novalidate>
+            <label class="portal-profile-security-field">
+              <span>Current password</span>
+              <input type="password" name="current_password" autocomplete="current-password" required>
+            </label>
+            <label class="portal-profile-security-field">
+              <span>New password</span>
+              <input type="password" name="new_password" autocomplete="new-password" required minlength="12">
+            </label>
+            <label class="portal-profile-security-field">
+              <span>Confirm new password</span>
+              <input type="password" name="confirm_password" autocomplete="new-password" required>
+            </label>
+            <button type="submit" class="portal-profile-btn" id="adminPasswordSubmit">Save password</button>
+          </form>
+        </div>
+      </section>
+    </section>
+
+    <section class="mcs-panel" data-mc-panel="gmail">
+      <header class="mcs-panel-head">
+        <h2>Gmail</h2>
+        <p>This replaces the Gmail address you use to sign in. Enter your current password to confirm.</p>
+      </header>
+      <section class="portal-profile-card">
+        <div class="portal-profile-card__body">
+          <div id="adminGmailAlert" class="portal-profile-alert" role="status" hidden></div>
+          <form id="adminGmailForm" class="portal-profile-security-form" novalidate>
+            <label class="portal-profile-security-field">
+              <span>Current Gmail</span>
+              <input type="email" id="adminCurrentGmail" value="<?= htmlspecialchars((string) ($admin_user['email'] ?? '')) ?>" readonly>
+            </label>
+            <label class="portal-profile-security-field">
+              <span>New Gmail</span>
+              <input type="email" name="email" autocomplete="email" required placeholder="name@gmail.com">
+            </label>
+            <label class="portal-profile-security-field">
+              <span>Current password</span>
+              <input type="password" name="current_password" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="portal-profile-btn" id="adminGmailSubmit">Save Gmail</button>
+          </form>
+        </div>
+      </section>
+    </section>
+    <?php endif; ?>
 
     <section class="mcs-panel" data-mc-panel="language">
       <header class="mcs-panel-head">
@@ -281,7 +346,10 @@ require_once __DIR__ . '/partials/layout_open.php';
             <ul class="portal-profile-session-list">
                 <?php foreach ($admin_sessions as $sess): ?>
                 <li class="portal-profile-session-item<?= !empty($sess['is_current']) ? ' is-current' : '' ?>">
-                    <div>
+                    <span class="portal-profile-session-icon" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#fff"/><circle cx="12" cy="12" r="4.2" fill="#4285F4"/><path d="M12 2a10 10 0 0 1 8.7 5H12V2z" fill="#EA4335"/><path d="M21.5 8.2A10 10 0 0 1 12 22l-4.3-7.4 4.3-2.4h9.5z" fill="#FBBC05"/><path d="M2.5 8.2A10 10 0 0 0 12 22l4.3-7.6L12 12 2.5 8.2z" fill="#34A853"/></svg>
+                    </span>
+                    <div class="portal-profile-session-copy">
                         <strong><?= htmlspecialchars((string) ($sess['browser'] ?? 'Unknown browser')) ?></strong>
                         <span class="portal-profile-card__sub"><?= htmlspecialchars(ucfirst((string) ($sess['device'] ?? 'desktop'))) ?> · Last active <?= htmlspecialchars((string) ($sess['last_activity_label'] ?? '—')) ?></span>
                     </div>

@@ -1,4 +1,8 @@
 <?php
+/**
+ * Retired: BHW live video assistance is removed.
+ * Kept as a redirect so existing links and bookmarks land on the dashboard.
+ */
 if (!defined('BASE_PATH')) {
     $d = __DIR__;
     while ($d !== dirname($d)) {
@@ -9,5 +13,5 @@ if (!defined('BASE_PATH')) {
         $d = dirname($d);
     }
 }
-header('Location: ' . ASSET_BASE . '/views/bhw/consultations/index.php?filter=active', true, 302);
+header('Location: ' . ASSET_BASE . '/views/bhw/dashboard.php', true, 302);
 exit;

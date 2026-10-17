@@ -11,7 +11,7 @@ require_once __DIR__ . '/partials/layout_open.php';
 
 <div class="header-row admin-page-intro">
   <div>
-    <p class="admin-page-intro__desc text-muted">Create, edit, suspend, and manage system administrators. Super Admin accounts are protected.</p>
+    <p class="admin-page-intro__desc text-muted">Create, edit, suspend, and archive system administrators. Password and Gmail are changed by the administrator in Settings. Super Admin accounts are protected.</p>
   </div>
   <button type="button" class="mc-btn mc-btn--primary" id="btnAddAdmin">Add Administrator</button>
 </div>
@@ -41,7 +41,6 @@ require_once __DIR__ . '/partials/layout_open.php';
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button type="button" class="mc-btn mc-btn--outline mc-btn--info mc-btn--sm btn-edit" data-id="<?= (int) $a['id'] ?>" data-first="<?= htmlspecialchars($a['first_name']) ?>" data-last="<?= htmlspecialchars($a['last_name']) ?>" data-email="<?= htmlspecialchars($a['email']) ?>">Edit</button>
             <button type="button" class="mc-btn mc-btn--outline mc-btn--sm btn-toggle <?= $a['is_active'] ? 'mc-btn--warning' : 'mc-btn--success' ?>" data-id="<?= (int) $a['id'] ?>" data-status="<?= $a['is_active'] ? 0 : 1 ?>" data-name="<?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name'], ENT_QUOTES) ?>"><?= $a['is_active'] ? 'Suspend' : 'Reactivate' ?></button>
-            <button type="button" class="mc-btn mc-btn--outline mc-btn--neutral mc-btn--sm btn-reset" data-id="<?= (int) $a['id'] ?>">Reset PW</button>
             <button type="button" class="mc-btn mc-btn--outline mc-btn--warning mc-btn--sm btn-archive" data-id="<?= (int) $a['id'] ?>" data-name="<?= htmlspecialchars($a['first_name'] . ' ' . $a['last_name'], ENT_QUOTES) ?>">Archive</button>
           </div>
           <?php else: ?>
@@ -61,9 +60,10 @@ require_once __DIR__ . '/partials/layout_open.php';
       <input type="hidden" name="user_id" id="adminUserId" value="">
       <input type="text" name="first_name" id="adminFirst" placeholder="First name" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
       <input type="text" name="last_name" id="adminLast" placeholder="Last name" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
-      <input type="email" name="email" id="adminEmail" placeholder="Email" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
-      <div class="mc-pw-field" style="position:relative;">
-        <input type="password" name="password" id="adminPassword" placeholder="Password (create / reset)" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;width:100%;padding-right:44px;">
+      <input type="email" name="email" id="adminEmail" placeholder="name@gmail.com" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;" required>
+      <p id="adminEmailNote" class="text-xs text-muted" hidden style="margin:0;">Gmail is changed by the administrator in Settings.</p>
+      <div class="mc-pw-field" id="adminPasswordWrap" style="position:relative;">
+        <input type="password" name="password" id="adminPassword" placeholder="Initial password" class="mc-btn mc-btn--outline" style="background:#fff;text-align:left;width:100%;padding-right:44px;">
         <button type="button" class="toggle-pwd" data-mc-pw-toggle="adminPassword" aria-label="Show password" aria-pressed="false" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:none;background:transparent;color:#64748b;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
         </button>
@@ -91,11 +91,25 @@ require_once __DIR__ . '/partials/layout_open.php';
     return fetch(api, { method: 'POST', body: fd }).then(function (r) { return r.json(); });
   }
 
+  function setAccountFields(isCreate) {
+    var email = document.getElementById('adminEmail');
+    var note = document.getElementById('adminEmailNote');
+    var wrap = document.getElementById('adminPasswordWrap');
+    var pw = document.getElementById('adminPassword');
+    email.readOnly = !isCreate;
+    email.required = isCreate;
+    note.hidden = isCreate;
+    wrap.hidden = !isCreate;
+    pw.required = isCreate;
+    if (!isCreate) pw.value = '';
+  }
+
   document.getElementById('btnAddAdmin').onclick = function () {
     mode = 'create';
     document.getElementById('adminModalTitle').textContent = 'Add Administrator';
     form.reset();
     document.getElementById('adminUserId').value = '';
+    setAccountFields(true);
     var pw = document.getElementById('adminPassword');
     if (pw) pw.type = 'password';
     var toggle = form.querySelector('[data-mc-pw-toggle="adminPassword"]');
@@ -137,6 +151,7 @@ require_once __DIR__ . '/partials/layout_open.php';
       document.getElementById('adminFirst').value = btn.dataset.first;
       document.getElementById('adminLast').value = btn.dataset.last;
       document.getElementById('adminEmail').value = btn.dataset.email;
+      setAccountFields(false);
       modal.style.display = 'flex';
     };
   });
@@ -159,13 +174,6 @@ require_once __DIR__ . '/partials/layout_open.php';
       post('toggle_status', { user_id: btn.dataset.id, status: btn.dataset.status, reason: reason }).then(function (j) {
         alert(j.message); if (j.success) location.reload();
       });
-    };
-  });
-  document.querySelectorAll('.btn-reset').forEach(function (btn) {
-    btn.onclick = function () {
-      var pw = prompt('New password (min 8 characters):');
-      if (!pw) return;
-      post('reset_password', { user_id: btn.dataset.id, password: pw }).then(function (j) { alert(j.message); });
     };
   });
   document.querySelectorAll('.btn-archive').forEach(function (btn) {

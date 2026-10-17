@@ -19,8 +19,8 @@ function admin_operational_report_catalog(): array
     return [
         'appointments' => [
             'title' => 'Consultation & Appointment Report',
-            'description' => 'Overview of consultations, assigned providers, appointment dates, and consultation status. Date presets use Asia/Manila and the week starts on Monday. Custom from and to apply when Date is Custom range.',
-            'headers' => ['Consultation ID', 'Patient', 'Doctor', 'Patient Complaint', 'Date', 'Time', 'Status'],
+            'description' => 'Overview of consultations, assigned providers, appointment dates, and consultation status.',
+            'headers' => ['Consultation ID', 'Patient', 'Doctor', 'Date', 'Time', 'Status'],
             // Appointments are built by admin_consultation_report_statements() so filters stay parameterized.
             'sql' => '',
             'table' => 'consultations',
@@ -248,9 +248,9 @@ function admin_consultation_report_parse_filters(array $query, ?DateTimeImmutabl
         'provider_id' => max(0, (int) ($query['appt_provider'] ?? 0)),
         'bhw_id' => max(0, (int) ($query['appt_bhw'] ?? 0)),
         'status' => admin_consultation_report_whitelist((string) ($query['appt_status'] ?? ''), admin_consultation_report_statuses()),
-        'type' => admin_consultation_report_type_text((string) ($query['appt_type'] ?? '')),
+        'type' => '',
         'slot_status' => admin_consultation_report_whitelist((string) ($query['appt_slot'] ?? ''), admin_consultation_report_slot_statuses()),
-        'prescription' => admin_consultation_report_yes_no((string) ($query['appt_rx'] ?? '')),
+        'prescription' => '',
         'referral' => admin_consultation_report_yes_no((string) ($query['appt_ref'] ?? '')),
     ];
 }
@@ -286,14 +286,8 @@ function admin_consultation_report_query_params(array $filters): array
     if (($filters['status'] ?? '') !== '') {
         $params['appt_status'] = (string) $filters['status'];
     }
-    if (($filters['type'] ?? '') !== '') {
-        $params['appt_type'] = (string) $filters['type'];
-    }
     if (($filters['slot_status'] ?? '') !== '') {
         $params['appt_slot'] = (string) $filters['slot_status'];
-    }
-    if (($filters['prescription'] ?? '') !== '') {
-        $params['appt_rx'] = (string) $filters['prescription'];
     }
     if (($filters['referral'] ?? '') !== '') {
         $params['appt_ref'] = (string) $filters['referral'];
@@ -415,18 +409,9 @@ function admin_consultation_report_statements(array $filters, array $capabilitie
         $where[] = 'c.status = ?';
         $params[] = (string) $filters['status'];
     }
-    if (($filters['type'] ?? '') !== '') {
-        $where[] = 'c.consult_type LIKE ? ESCAPE \'!\'';
-        $params[] = admin_consultation_report_like_pattern((string) $filters['type']);
-    }
     if (!empty($capabilities['appointment_slots']) && ($filters['slot_status'] ?? '') !== '') {
         $where[] = 'EXISTS (SELECT 1 FROM appointment_slots s WHERE s.consultation_id = c.id AND s.status = ?)';
         $params[] = (string) $filters['slot_status'];
-    }
-    if (!empty($capabilities['prescriptions']) && ($filters['prescription'] ?? '') === 'yes') {
-        $where[] = 'EXISTS (SELECT 1 FROM prescriptions rx WHERE rx.consultation_id = c.id)';
-    } elseif (!empty($capabilities['prescriptions']) && ($filters['prescription'] ?? '') === 'no') {
-        $where[] = 'NOT EXISTS (SELECT 1 FROM prescriptions rx WHERE rx.consultation_id = c.id)';
     }
     if (!empty($capabilities['referrals']) && ($filters['referral'] ?? '') === 'yes') {
         $where[] = 'EXISTS (SELECT 1 FROM digital_referrals dr WHERE dr.consultation_id = c.id)';
@@ -442,7 +427,6 @@ function admin_consultation_report_statements(array $filters, array $capabilitie
                           NULLIF(TRIM(c.provider_name), ''),
                           TRIM(CONCAT(COALESCE(d.first_name, ''), ' ', COALESCE(d.last_name, '')))
                       ) AS doctor_name,
-                      c.consult_type AS patient_complaint,
                       c.consult_date,
                       c.consult_time,
                       c.status
@@ -508,7 +492,6 @@ function admin_consultation_report_view(PDO $pdo, array $filters, array $capabil
         'providers' => admin_consultation_report_people($pdo, 'provider'),
         'bhws' => !empty($capabilities['booked_by_bhw']) ? admin_consultation_report_people($pdo, 'bhw') : null,
         'slot_statuses' => !empty($capabilities['appointment_slots']) ? admin_consultation_report_slot_statuses() : null,
-        'supports_prescription' => !empty($capabilities['prescriptions']),
         'supports_referral' => !empty($capabilities['referrals']),
     ];
 }
@@ -805,8 +788,6 @@ function admin_operational_report_appointment_values(array $row): array
         $doctor = 'Dr. ' . $doctor;
     }
 
-    $complaint = trim(preg_replace('/\s+/', ' ', (string) ($row['patient_complaint'] ?? '')) ?? '');
-
     $date = trim((string) ($row['consult_date'] ?? ''));
     $dateTs = $date !== '' ? strtotime($date) : false;
     $time = trim((string) ($row['consult_time'] ?? ''));
@@ -818,7 +799,6 @@ function admin_operational_report_appointment_values(array $row): array
         (string) (int) ($row['consultation_id'] ?? 0),
         $patient,
         $doctor,
-        $complaint !== '' ? $complaint : '—',
         $dateTs !== false ? date('M j, Y', $dateTs) : ($date !== '' ? $date : '—'),
         $timeTs !== false ? date('g:i A', $timeTs) : ($time !== '' ? $time : '—'),
         $status !== '' ? ucwords(str_replace('_', ' ', strtolower($status))) : '—',

@@ -19,40 +19,19 @@ function bhw_nav_groups(): array
             'id' => 'patients',
             'icon' => '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
             'label' => 'Patient Management',
-            'description' => 'Assist and update registered patient information',
+            'description' => 'Find and register barangay patients',
             'children' => [
                 ['file' => 'patients/list.php', 'label' => 'Patient List', 'hint' => 'Search barangay patients', 'icon' => 'list', 'sidebar' => true],
                 ['file' => 'patients/register.php', 'label' => 'Patient Registration', 'hint' => 'Register a barangay patient', 'icon' => 'user-plus', 'sidebar' => true],
-                ['file' => 'patients/update.php', 'label' => 'Update Patient Info', 'hint' => 'Edit contact & medical data', 'icon' => 'edit', 'sidebar' => false],
-            ],
-        ],
-        [
-            'id' => 'consultations',
-            'icon' => '<path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>',
-            'label' => 'Consultations',
-            'description' => 'Schedule, status, and video assistance',
-            'children' => [
-                // Kept as a route; not shown in the final BHW sidebar.
-                ['file' => 'consultations/index.php', 'label' => 'Consultation Center', 'hint' => 'Schedule, status & video help', 'icon' => 'video', 'sidebar' => false],
             ],
         ],
         [
             'id' => 'records',
             'icon' => '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
             'label' => 'Records',
-            'description' => 'View and upload patient documents',
+            'description' => 'View follow-up history and shared prescriptions',
             'children' => [
-                ['file' => 'records/index.php', 'label' => 'Records', 'hint' => 'Documents & prescriptions', 'icon' => 'folder', 'sidebar' => true],
-                ['file' => 'records/upload.php', 'label' => 'Upload Documents', 'hint' => 'PDF, JPG, or PNG files', 'icon' => 'upload', 'sidebar' => false],
-            ],
-        ],
-        [
-            'id' => 'referral',
-            'icon' => '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>',
-            'label' => 'Referrals',
-            'description' => 'View doctor referrals for your barangay',
-            'children' => [
-                ['file' => 'referral/status.php', 'label' => 'View Referrals', 'hint' => 'Read-only barangay referrals', 'icon' => 'share', 'sidebar' => false],
+                ['file' => 'records/index.php', 'label' => 'Records', 'hint' => 'Follow-up history and prescriptions', 'icon' => 'folder', 'sidebar' => true],
             ],
         ],
         [
@@ -109,15 +88,17 @@ function bhw_nav_resolve_file(string $file): string
 {
     $legacy = [
         'appointments/book.php'      => 'patients/list.php',
-        'appointments/schedule.php'  => 'consultations/index.php',
-        'consultation/assist.php'    => 'consultations/index.php',
-        'consultation/status.php'    => 'consultations/index.php',
+        'appointments/schedule.php'  => 'dashboard.php',
+        'consultation/assist.php'    => 'dashboard.php',
+        'consultation/status.php'    => 'dashboard.php',
+        'consultations/index.php'    => 'dashboard.php',
         'triage/encode.php'          => 'patients/list.php',
         'triage/submit.php'          => 'patients/list.php',
         'patients/update.php'        => 'patients/list.php',
         'records/upload.php'         => 'records/index.php',
         'followup/reminders.php'     => 'followup/track.php',
-        'referral/create.php'        => 'referral/status.php',
+        'referral/create.php'        => 'dashboard.php',
+        'referral/status.php'        => 'dashboard.php',
     ];
     return $legacy[$file] ?? $file;
 }
@@ -211,7 +192,7 @@ function bhw_nav_sections(): array
         ]],
         // Final BHW sidebar order: Patient List → Patient Registration → Records → Appointment History
         ['section' => 'Barangay Operations', 'items' => $collectItems([
-            'patients', 'records', 'referral', 'followup',
+            'patients', 'records', 'followup',
         ])],
         // Reports section keeps My Activity Log only (do not remove).
         ['section' => 'Reports', 'items' => $collectItems(['reports'])],

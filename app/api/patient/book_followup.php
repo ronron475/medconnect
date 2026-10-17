@@ -10,6 +10,7 @@ Api::requirePost();
 Api::requireCsrf();
 
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/urgent_followup_workflow.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/user_account_status.php';
 
 $patientId = (int) $_SESSION['user_id'];
 $caseId = (int) ($_POST['case_id'] ?? 0);
@@ -20,6 +21,11 @@ if ($caseId <= 0) {
 }
 if ($slotId <= 0) {
     Api::error('Please select an available appointment slot.');
+}
+
+$submissionCheck = patient_account_may_submit_consultation($pdo, $patientId);
+if (!$submissionCheck['allowed']) {
+    Api::error($submissionCheck['message'], 403, ['code' => $submissionCheck['code'] ?? 'account_blocked']);
 }
 
 try {

@@ -46,37 +46,6 @@ try {
         } else {
             Api::error($message, 400, $payload);
         }
-    } elseif ($action === 'log_visit') {
-        bhw_api_require_patient_in_sector($pdo, $ctx, (int) ($_POST['patient_id'] ?? 0));
-        $followupId = (int) ($_POST['followup_id'] ?? 0);
-        $visitId = BhwWorkflows::logHomeVisit(
-            $pdo,
-            $ctx,
-            (int) ($_POST['patient_id'] ?? 0),
-            $followupId ?: null,
-            trim($_POST['visit_date'] ?? date('Y-m-d')),
-            trim($_POST['visit_type'] ?? 'follow_up'),
-            trim($_POST['patient_status'] ?? 'stable'),
-            trim($_POST['notes'] ?? '')
-        );
-        if ($bhwId > 0 && $followupId > 0) {
-            bhw_nav_mark_followups_read($pdo, $bhwId, $followupId);
-        }
-        Api::success([
-            'visit_id' => $visitId,
-            'bhw_followups' => bhw_nav_followups_unread_count($pdo, $bhwId, $ctx),
-        ], 'Home visit logged.');
-    } elseif ($action === 'visits') {
-        $patientId = (int) ($_GET['patient_id'] ?? $_POST['patient_id'] ?? 0);
-        $followupId = (int) ($_GET['followup_id'] ?? $_POST['followup_id'] ?? 0);
-        Api::success([
-            'visits' => BhwWorkflows::listHomeVisits(
-                $pdo,
-                $ctx,
-                $patientId > 0 ? $patientId : null,
-                $followupId > 0 ? $followupId : null
-            ),
-        ]);
     } else {
         Api::error('Unknown action.', 400);
     }

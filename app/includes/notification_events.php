@@ -300,7 +300,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_APPOINTMENT,
             'title'         => 'Consultation Cancelled',
             'message'       => 'A patient consultation has been cancelled.',
-            'action_url'    => '/views/bhw/consultations/index.php',
+            'action_url'    => '/views/bhw/followup/track.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -340,7 +340,7 @@ final class NotificationEvents
             'message'       => $oldDate
                 ? "Patient consultation moved from {$oldDate} to {$newDate}."
                 : "Patient consultation rescheduled to {$newDate}.",
-            'action_url'    => '/views/bhw/consultations/index.php',
+            'action_url'    => '/views/bhw/followup/track.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -453,7 +453,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => 'Referral Issued',
             'message'       => 'A doctor has issued a referral for your patient.',
-            'action_url'    => '/views/bhw/referral/status.php',
+            'action_url'    => '/views/bhw/dashboard.php',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -576,7 +576,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_REFERRAL,
             'title'         => $title,
             'message'       => "Referral for your patient is now: {$statusLabel}.",
-            'action_url'    => '/views/bhw/referral/status.php',
+            'action_url'    => '/views/bhw/dashboard.php',
             'related_table' => 'digital_referrals',
             'related_id'    => $referralId,
         ]);
@@ -608,7 +608,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_CONSULTATION,
             'title'         => 'Provider Scheduled Consultation',
             'message'       => "Consultation scheduled for {$when}.",
-            'action_url'    => '/views/bhw/consultations/index.php',
+            'action_url'    => '/views/bhw/followup/track.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -676,7 +676,7 @@ final class NotificationEvents
             'type'          => NotificationManager::TYPE_CONSULTATION,
             'title'         => 'Consultation Completed',
             'message'       => 'Patient consultation has been completed.',
-            'action_url'    => '/views/bhw/consultations/index.php',
+            'action_url'    => '/views/bhw/followup/track.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);
@@ -819,16 +819,19 @@ final class NotificationEvents
             'message'    => 'Prescription has been issued to patient.',
             'action_url' => '/views/provider/records.php',
         ]);
-        NotificationManager::notifyBhwForPatient($pdo, $patientId, [
-            'sender_id'     => $senderId,
-            'type'          => NotificationManager::TYPE_MEDICAL,
-            'title'         => 'Prescription updated',
-            'message'       => 'A prescription was issued for your patient. Open Records to review.',
-            'action_url'    => '/views/bhw/records/index.php?patient_id=' . $patientId,
-            'related_table' => BHW_NAV_RELATED_RECORDS,
-            'related_id'    => ($consultationId !== null && $consultationId > 0) ? $consultationId : $patientId,
-            'once'          => true,
-        ]);
+        require_once __DIR__ . '/bhw_prescription_access.php';
+        if (patient_shares_prescriptions_with_barangay_bhw($pdo, $patientId)) {
+            NotificationManager::notifyBhwForPatient($pdo, $patientId, [
+                'sender_id'     => $senderId,
+                'type'          => NotificationManager::TYPE_MEDICAL,
+                'title'         => 'Prescription updated',
+                'message'       => 'A prescription was issued for your patient. Open Records to review.',
+                'action_url'    => '/views/bhw/records/index.php?patient_id=' . $patientId,
+                'related_table' => BHW_NAV_RELATED_RECORDS,
+                'related_id'    => ($consultationId !== null && $consultationId > 0) ? $consultationId : $patientId,
+                'once'          => true,
+            ]);
+        }
     }
 
     public static function gisHotspotDetected(PDO $pdo, string $location, ?int $senderId = null): void
@@ -1111,7 +1114,7 @@ final class NotificationEvents
             'title'         => 'Emergency Patient Assigned',
             'message'       => 'Emergency consultation assigned for your patient.',
             'priority'      => 'emergency',
-            'action_url'    => '/views/bhw/consultations/index.php',
+            'action_url'    => '/views/bhw/followup/track.php',
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
         ]);

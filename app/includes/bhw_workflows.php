@@ -432,150 +432,6 @@ final class BhwWorkflows
         ];
     }
 
-    public static function updatePatient(PDO $pdo, array $ctx, int $patientId, array $data): void
-    {
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            throw new InvalidArgumentException('Patient not in your assigned barangay.');
-        }
-        $patient = self::getPatient($pdo, $ctx, $patientId);
-        if (!$patient) {
-            throw new InvalidArgumentException('Patient not found.');
-        }
-
-        // BHW cannot reassign patient barangay (Admin/Superadmin only).
-        unset($data['barangay'], $data['barangay_id']);
-
-        $email = trim($data['email'] ?? $patient['email'] ?? '');
-        $contact = trim($data['contact_number'] ?? '');
-        $blood = trim($data['blood_type'] ?? $patient['blood_type'] ?? 'Unknown');
-        $conditions = trim($data['existing_conditions'] ?? '');
-        $allergies = trim($data['allergies'] ?? '');
-        $medications = trim($data['medications'] ?? $data['current_medications'] ?? '');
-
-        require_once __DIR__ . '/contact_validation.php';
-        $email = mc_normalize_email($email);
-        if ($emailErr = mc_email_validation_error($email, true)) {
-            throw new InvalidArgumentException($emailErr);
-        }
-        if ($phoneErr = mc_phone_validation_error($contact, true)) {
-            throw new InvalidArgumentException($phoneErr);
-        }
-        $contact = mc_canonical_ph_mobile($contact);
-
-        $oldEmail = (string) $patient['email'];
-        if (strcasecmp($email, $oldEmail) !== 0) {
-            if (mc_users_email_exists($pdo, $email, $patientId)) {
-                throw new InvalidArgumentException(MC_MSG_EMAIL_DUP);
-            }
-        }
-
-        $bhwId = (int) ($_SESSION['user_id'] ?? 0);
-        if ($bhwId <= 0) {
-            throw new InvalidArgumentException('BHW session required.');
-        }
-
-        require_once __DIR__ . '/patient_settings.php';
-        patient_settings_ensure_schema($pdo);
-
-        $pdo->beginTransaction();
-        try {
-            if (strcasecmp($email, $oldEmail) !== 0) {
-                $pdo->prepare('UPDATE users SET email = ? WHERE id = ?')->execute([$email, $patientId]);
-                $pdo->prepare('UPDATE patient_registrations SET email = ?, contact_number = ?, blood_type = ?, existing_conditions = ?, allergies = ?, current_medications = ?, medical_profile_updated_at = NOW(), medical_profile_updated_by = ? WHERE email = ? OR user_id = ?')
-                    ->execute([$email, $contact, $blood ?: 'Unknown', $conditions ?: null, $allergies ?: null, $medications ?: null, $bhwId, $oldEmail, $patientId]);
-            } else {
-                $pdo->prepare('UPDATE patient_registrations SET contact_number = ?, blood_type = ?, existing_conditions = ?, allergies = ?, current_medications = ?, medical_profile_updated_at = NOW(), medical_profile_updated_by = ? WHERE email = ? OR user_id = ?')
-                    ->execute([$contact, $blood ?: 'Unknown', $conditions ?: null, $allergies ?: null, $medications ?: null, $bhwId, $oldEmail, $patientId]);
-            }
-            $pdo->commit();
-        } catch (Throwable $e) {
-            if ($pdo->inTransaction()) {
-                $pdo->rollBack();
-            }
-            throw $e;
-        }
-
-        bhw_audit($pdo, $patientId, 'bhw_patient_updated', 'BHW updated patient contact and medical profile.', [
-            'email' => $email,
-            'contact' => $contact,
-            'blood_type' => $blood,
-            'bhw_id' => $bhwId,
-        ]);
-        bhw_notify($pdo, $patientId, 'system', 'Profile Updated', 'Your contact or medical information was updated by your BHW.', ASSET_BASE . '/views/patient/profile.php');
-
-        require_once __DIR__ . '/notification_events.php';
-        NotificationEvents::bhwPatientProfileUpdated($pdo, $patientId, $bhwId);
-    }
-
-
-    public static function listConsultations(PDO $pdo, array $ctx, ?string $date = null, ?string $status = null): array
-    {
-        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
-        $date = $date ?: date('Y-m-d');
-        $sql = "
-            SELECT c.*, CONCAT(p.first_name,' ',p.last_name) AS patient_name,
-                   CONCAT(prv.first_name,' ',prv.last_name) AS provider_name,
-                   vs.room_token, vs.status AS video_status
-            FROM consultations c
-            JOIN users p ON p.id = c.patient_id
-            JOIN patient_registrations pr ON pr.email = p.email
-            LEFT JOIN users prv ON prv.id = c.provider_id
-            LEFT JOIN video_sessions vs ON vs.consultation_id = c.id AND vs.status = 'active'
-            WHERE {$clause} AND c.consult_date = ?
-        ";
-        if ($status !== null && $status !== '') {
-            $sql .= ' AND c.status = ?';
-            $params = array_merge($params, [$date, $status]);
-        } else {
-            $params = array_merge($params, [$date]);
-        }
-        $sql .= ' ORDER BY c.consult_time ASC';
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    /**
-     * Barangay-scoped read-only list of doctor clinical referrals.
-     * BHW may view only — never create, edit, or follow up on referrals here.
-     */
-    public static function listReferrals(PDO $pdo, array $ctx): array
-    {
-        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
-        $dest = self::referralDestColumn($pdo);
-        $join = bhw_pr_user_join('pr', 'p');
-        $sql = "
-            SELECT dr.*, CONCAT(p.first_name,' ',p.last_name) AS patient_name,
-                   COALESCE(dr.{$dest}, '') AS facility_display,
-                   TRIM(CONCAT(COALESCE(prov.first_name, ''), ' ', COALESCE(prov.last_name, ''))) AS provider_name
-            FROM digital_referrals dr
-            JOIN users p ON p.id = dr.patient_id
-            JOIN patient_registrations pr ON {$join}
-            LEFT JOIN users prov ON prov.id = dr.provider_id
-            WHERE {$clause}
-            ORDER BY dr.created_at DESC LIMIT 200
-        ";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
-
-    /**
-     * @deprecated BHW must not create clinical referrals. Doctors own digital_referrals.
-     */
-    public static function createReferral(PDO $pdo, array $ctx, int $patientId, string $type, string $reason, ?int $facilityId, ?string $facilityName): int
-    {
-        throw new InvalidArgumentException('BHW cannot create clinical referrals. View barangay referrals only.');
-    }
-
-    /**
-     * @deprecated BHW must not mutate digital_referrals.status.
-     */
-    public static function updateReferralStatus(PDO $pdo, array $ctx, int $referralId, string $status, string $note = ''): void
-    {
-        throw new InvalidArgumentException('BHW cannot change referral status. View only.');
-    }
-
     /**
      * Barangay-scoped doctor follow-ups (shared `followups` table — no BHW copies).
      *
@@ -679,7 +535,6 @@ final class BhwWorkflows
             $row['display_status_key'] = $raw !== '' ? $raw : 'unknown';
         }
 
-        $row['home_visit_count'] = (int) ($row['home_visit_count'] ?? 0);
         $row['id'] = (int) ($row['id'] ?? 0);
         $row['patient_id'] = (int) ($row['patient_id'] ?? 0);
         $row['provider_id'] = (int) ($row['provider_id'] ?? 0);
@@ -693,17 +548,6 @@ final class BhwWorkflows
             $row['followup_datetime_label'] = date('M j, Y', strtotime($date));
         } else {
             $row['followup_datetime_label'] = 'Date TBD';
-        }
-
-        $visits = (int) $row['home_visit_count'];
-        $last = trim((string) ($row['last_home_visit'] ?? ''));
-        if ($visits <= 0) {
-            $row['home_visit_label'] = 'No home visits yet';
-        } elseif ($last !== '') {
-            $row['home_visit_label'] = $visits . ' visit' . ($visits === 1 ? '' : 's')
-                . ' · last ' . date('M j, Y', strtotime($last));
-        } else {
-            $row['home_visit_label'] = $visits . ' visit' . ($visits === 1 ? '' : 's');
         }
 
         return $row;
@@ -1274,153 +1118,6 @@ final class BhwWorkflows
         ];
     }
 
-    public static function logHomeVisit(
-        PDO $pdo,
-        array $ctx,
-        int $patientId,
-        ?int $followupId,
-        string $visitDate,
-        string $visitType,
-        string $patientStatus,
-        string $notes = ''
-    ): int {
-        bhw_clinical_ensure_schema($pdo);
-        require_once __DIR__ . '/consultation_followup.php';
-        consultation_followup_ensure_schema($pdo);
-
-        if (!bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            throw new InvalidArgumentException('Patient not in your barangay.');
-        }
-
-        $bhwId = (int) ($_SESSION['user_id'] ?? 0);
-        $visitDateObj = DateTime::createFromFormat('Y-m-d', $visitDate);
-        if (!$visitDateObj || $visitDateObj->format('Y-m-d') !== $visitDate) {
-            throw new InvalidArgumentException('Invalid visit date.');
-        }
-
-        $allowedTypes = ['follow_up', 'monitoring', 'emergency_check', 'other'];
-        if (!in_array($visitType, $allowedTypes, true)) {
-            $visitType = 'follow_up';
-        }
-
-        $allowedStatus = ['improving', 'stable', 'worsening', 'referred', 'unknown'];
-        if (!in_array($patientStatus, $allowedStatus, true)) {
-            $patientStatus = 'stable';
-        }
-
-        if ($followupId && $followupId > 0) {
-            $chk = $pdo->prepare('SELECT f.id, f.patient_id FROM followups f WHERE f.id = ? LIMIT 1');
-            $chk->execute([$followupId]);
-            $fu = $chk->fetch(PDO::FETCH_ASSOC);
-            if (!$fu || (int) $fu['patient_id'] !== $patientId) {
-                throw new InvalidArgumentException('Follow-up not found for this patient.');
-            }
-            if (!bhw_assert_patient_in_sector($pdo, $ctx, (int) $fu['patient_id'])) {
-                throw new InvalidArgumentException('Follow-up not found in your barangay.');
-            }
-        } else {
-            $followupId = null;
-        }
-
-        $stmt = $pdo->prepare("
-            INSERT INTO bhw_home_visits (followup_id, patient_id, bhw_id, visit_date, visit_type, notes, patient_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ");
-        $stmt->execute([
-            $followupId,
-            $patientId,
-            $bhwId,
-            $visitDate,
-            $visitType,
-            $notes !== '' ? $notes : null,
-            $patientStatus,
-        ]);
-        $visitId = (int) $pdo->lastInsertId();
-
-        // Doctor follow-up record stays read-only — do not mutate clinical status here.
-
-        bhw_audit($pdo, $patientId, 'bhw_home_visit_logged', 'BHW logged home visit.', [
-            'visit_id' => $visitId,
-            'followup_id' => $followupId,
-            'visit_type' => $visitType,
-            'patient_status' => $patientStatus,
-        ]);
-
-        BhwPatientWorkflow::onFollowUpMonitoring($pdo, $patientId);
-
-        bhw_notify($pdo, $patientId, 'followup', 'Home Visit Completed',
-            'Your BHW completed a home follow-up visit on ' . date('M j, Y', strtotime($visitDate)) . '.',
-            ASSET_BASE . '/views/patient/dashboard.php#action-items');
-
-        return $visitId;
-    }
-
-    public static function listHomeVisits(PDO $pdo, array $ctx, ?int $patientId = null, ?int $followupId = null): array
-    {
-        bhw_clinical_ensure_schema($pdo);
-        $patientId = (int) ($patientId ?? 0);
-        $followupId = (int) ($followupId ?? 0);
-        if ($patientId <= 0 && $followupId <= 0) {
-            throw new InvalidArgumentException('A patient or follow-up is required.');
-        }
-
-        if ($patientId > 0 && !bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            throw new InvalidArgumentException('Patient not in your barangay.');
-        }
-
-        $authorizedPatientId = $patientId;
-        if ($followupId > 0) {
-            [$fuClause, $fuParams] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
-            $fuJoin = bhw_pr_user_join('pr', 'p');
-            $fuStmt = $pdo->prepare("
-                SELECT f.patient_id
-                FROM followups f
-                INNER JOIN users p ON p.id = f.patient_id AND p.role = 'patient'
-                INNER JOIN patient_registrations pr ON {$fuJoin}
-                WHERE f.id = ? AND {$fuClause}
-            ");
-            $fuStmt->execute(array_merge([$followupId], $fuParams));
-            $patientIds = [];
-            foreach ($fuStmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $id) {
-                $id = (int) $id;
-                if ($id > 0) {
-                    $patientIds[$id] = true;
-                }
-            }
-            if (count($patientIds) !== 1) {
-                throw new InvalidArgumentException('Follow-up not found in your barangay.');
-            }
-            $followupPatientId = (int) array_key_first($patientIds);
-            if ($patientId > 0 && $followupPatientId !== $patientId) {
-                throw new InvalidArgumentException('Follow-up does not belong to this patient.');
-            }
-            $authorizedPatientId = $followupPatientId;
-        }
-
-        [$clause, $params] = bhw_patient_sector_clause($pdo, $ctx, 'pr');
-        $join = bhw_pr_user_join('pr', 'p');
-        $sql = "
-            SELECT DISTINCT hv.id, hv.followup_id, hv.patient_id, hv.visit_date, hv.visit_type, hv.patient_status,
-                   CONCAT(p.first_name, ' ', p.last_name) AS patient_name,
-                   CONCAT(b.first_name, ' ', b.last_name) AS bhw_name
-            FROM bhw_home_visits hv
-            INNER JOIN users p ON p.id = hv.patient_id AND p.role = 'patient'
-            INNER JOIN patient_registrations pr ON {$join}
-            INNER JOIN users b ON b.id = hv.bhw_id
-            WHERE {$clause}
-              AND hv.patient_id = ?
-        ";
-        $params[] = $authorizedPatientId;
-        if ($followupId > 0) {
-            $sql .= ' AND hv.followup_id = ?';
-            $params[] = $followupId;
-        }
-        $sql .= ' ORDER BY hv.visit_date DESC, hv.id DESC LIMIT 200';
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-    }
-
     public static function parseDashboardFilters(array $input): array
     {
         $days = (int) ($input['days'] ?? 7);
@@ -1797,12 +1494,6 @@ final class BhwWorkflows
             }
         }
         return $out;
-    }
-
-    private static function referralDestColumn(PDO $pdo): string
-    {
-        return $pdo->query("SHOW COLUMNS FROM digital_referrals LIKE 'facility_name'")->fetch()
-            ? 'facility_name' : 'destination_facility';
     }
 
     private static function resolveProviderForPatient(PDO $pdo, int $patientId): int

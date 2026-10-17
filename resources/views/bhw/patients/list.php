@@ -504,7 +504,7 @@ $bhw_inline_script = ob_get_clean();
     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="11" x2="23" y2="11"/></svg>
     <h3>No registered patients found</h3>
     <p>Patients from this barangay appear here automatically after they complete the main registration.</p>
-    <a href="update.php" class="bhw-pl-btn bhw-pl-btn--primary">Assist Patient</a>
+    <a href="register.php" class="bhw-pl-btn bhw-pl-btn--primary">Register Patient</a>
   </div>
 
   <div class="bhw-pl-table-wrap" id="bhwPlTableWrap">

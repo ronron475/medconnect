@@ -62,29 +62,25 @@ switch ($action) {
     case 'update':
         $first = trim($_POST['first_name'] ?? '');
         $last = trim($_POST['last_name'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        if (!$userId || !$first || !$last || !$email) {
+        if (!$userId || !$first || !$last) {
             echo json_encode(['success' => false, 'message' => 'Invalid data.']);
-            exit;
-        }
-        require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/contact_validation.php';
-        $email = mc_normalize_email($email);
-        if ($emailErr = mc_email_validation_error($email, true)) {
-            echo json_encode(['success' => false, 'message' => $emailErr]);
             exit;
         }
         if (!portal_can_manage_user($pdo, $userId)) {
             echo json_encode(['success' => false, 'message' => 'Cannot modify this account.']);
             exit;
         }
-        if (mc_users_email_exists($pdo, $email, $userId)) {
-            echo json_encode(['success' => false, 'message' => MC_MSG_EMAIL_DUP]);
+        $roleStmt = $pdo->prepare('SELECT role FROM users WHERE id = ? LIMIT 1');
+        $roleStmt->execute([$userId]);
+        $targetRole = (string) ($roleStmt->fetchColumn() ?: '');
+        if ($targetRole !== 'admin') {
+            echo json_encode(['success' => false, 'message' => 'Only an administrator account can be updated here.']);
             exit;
         }
-        $pdo->prepare('UPDATE users SET first_name=?, last_name=?, email=?, updated_at=NOW() WHERE id=? AND role IN (\'admin\', \'superadmin\')')
-            ->execute([$first, $last, $email, $userId]);
+        $pdo->prepare('UPDATE users SET first_name=?, last_name=?, updated_at=NOW() WHERE id=? AND role = \'admin\'')
+            ->execute([$first, $last, $userId]);
         superadmin_security_log($pdo, 'admin_updated', 'administrators', 'success', "Updated admin #{$userId}");
-        echo json_encode(['success' => true, 'message' => 'Administrator updated.']);
+        echo json_encode(['success' => true, 'message' => 'Administrator updated. Password and Gmail stay with the administrator.']);
         break;
 
     case 'toggle_status':
@@ -121,19 +117,7 @@ switch ($action) {
         break;
 
     case 'reset_password':
-        $password = $_POST['password'] ?? '';
-        if (!$userId || strlen($password) < 8) {
-            echo json_encode(['success' => false, 'message' => 'Valid user and password (8+ chars) required.']);
-            exit;
-        }
-        if (!portal_can_manage_user($pdo, $userId)) {
-            echo json_encode(['success' => false, 'message' => 'Cannot modify this account.']);
-            exit;
-        }
-        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-        $pdo->prepare('UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?')->execute([$hash, $userId]);
-        superadmin_security_log($pdo, 'password_reset', 'administrators', 'warning', "Reset password for user #{$userId}");
-        echo json_encode(['success' => true, 'message' => 'Password reset successfully.']);
+        echo json_encode(['success' => false, 'message' => 'Administrators change their own password and Gmail in Settings.']);
         break;
 
     case 'delete':

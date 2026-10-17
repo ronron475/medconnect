@@ -9,10 +9,6 @@ $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 
 try {
     if ($action === 'log' && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
-        $event = trim($_POST['event'] ?? '');
-        if ($event === 'consultations_viewed') {
-            bhw_activity_log($pdo, 'bhw_consultations_viewed', 'BHW viewed consultation center.');
-        }
         Api::success([], 'Logged.');
     }
 

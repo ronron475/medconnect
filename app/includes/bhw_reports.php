@@ -8,6 +8,14 @@ require_once __DIR__ . '/bago_barangay_puroks.php';
 
 final class BhwReports
 {
+    /**
+     * Free-text chief-complaint and diagnosis labels are returned only when at
+     * least this many rows share the exact label. Smaller groups are omitted
+     * from JSON and are not written to CSV. They are not folded into another
+     * category. Coded urgency, level, and classification counts are unchanged.
+     */
+    public const IDENTIFYING_LABEL_MIN_COUNT = 5;
+
     private static bool $queryFailed = false;
 
     /**
@@ -35,6 +43,27 @@ final class BhwReports
     public static function accessAllowed(string $role, int $barangayId): bool
     {
         return $role === 'bhw' && $barangayId > 0;
+    }
+
+    /**
+     * Drop free-text groups that are small enough to identify a patient.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    public static function omitSmallIdentifyingGroups(array $rows): array
+    {
+        $out = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if ((int) ($row['value'] ?? 0) >= self::IDENTIFYING_LABEL_MIN_COUNT) {
+                $out[] = $row;
+            }
+        }
+
+        return $out;
     }
 
     /** @return list<string> */
@@ -581,6 +610,7 @@ final class BhwReports
             WHERE {$clause} {$extra}
             GROUP BY label ORDER BY value DESC LIMIT 10
         ", $params);
+        $symptoms = self::omitSmallIdentifyingGroups($symptoms);
 
         $low = $moderate = $high = $emergency = 0;
         foreach ($byUrgency as $row) {
@@ -745,6 +775,7 @@ final class BhwReports
             WHERE {$triageClause} AND tr.chief_complaint IS NOT NULL AND TRIM(tr.chief_complaint) != ''
             GROUP BY tr.chief_complaint ORDER BY value DESC LIMIT 10
         ", $triageParams);
+        $symptoms = self::omitSmallIdentifyingGroups($symptoms);
 
         $ageExpr = bhw_pr_age_sql('pr');
         $ageGroups = self::rows($pdo, "
@@ -775,6 +806,7 @@ final class BhwReports
             WHERE {$consultClause} AND c.diagnosis IS NOT NULL AND TRIM(c.diagnosis) != ''
             GROUP BY label ORDER BY value DESC LIMIT 10
         ", $consultParams);
+        $diagnoses = self::omitSmallIdentifyingGroups($diagnoses);
 
         $monthly = self::rows($pdo, "
             SELECT DATE_FORMAT(tr.assessed_at, '%Y-%m') AS label, COUNT(*) AS value
@@ -927,7 +959,9 @@ final class BhwReports
     }
 
     /**
-     * Aggregate rows for the active report. Patient names and diagnosis labels are omitted.
+     * Aggregate rows for the active report. Patient names, chief-complaint text,
+     * and diagnosis labels are omitted. Complaint and diagnosis groups below
+     * IDENTIFYING_LABEL_MIN_COUNT are already removed before this table is built.
      *
      * @param array<string, mixed> $report
      * @return array{headers:list<string>,rows:list<list<string>>}

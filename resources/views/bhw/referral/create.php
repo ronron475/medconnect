@@ -1,6 +1,17 @@
 <?php
 /**
- * BHW cannot create clinical referrals — view-only list.
+ * Retired: BHWs no longer view or create clinical referrals.
+ * Kept as a redirect so existing links and bookmarks land on the dashboard.
  */
-header('Location: status.php', true, 302);
+if (!defined('BASE_PATH')) {
+    $d = __DIR__;
+    while ($d !== dirname($d)) {
+        if (is_file($d . '/mc_load.php')) {
+            require_once $d . '/mc_load.php';
+            break;
+        }
+        $d = dirname($d);
+    }
+}
+header('Location: ' . ASSET_BASE . '/views/bhw/dashboard.php', true, 302);
 exit;

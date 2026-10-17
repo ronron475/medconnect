@@ -104,10 +104,20 @@ function patient_settings_ensure_schema(PDO $pdo): void
             share_medical_records TINYINT(1) NOT NULL DEFAULT 1,
             emergency_access_consent TINYINT(1) NOT NULL DEFAULT 1,
             data_privacy_acknowledged TINYINT(1) NOT NULL DEFAULT 1,
+            share_prescriptions_with_barangay_bhw TINYINT(1) NOT NULL DEFAULT 0,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (user_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    try {
+        $privacyCols = $pdo->query('SHOW COLUMNS FROM patient_privacy_preferences')->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        if (!in_array('share_prescriptions_with_barangay_bhw', $privacyCols, true)) {
+            $pdo->exec('ALTER TABLE patient_privacy_preferences ADD COLUMN share_prescriptions_with_barangay_bhw TINYINT(1) NOT NULL DEFAULT 0');
+        }
+    } catch (PDOException $e) {
+        error_log('patient_settings privacy sharing column: ' . $e->getMessage());
+    }
 
     $done = true;
 }
@@ -169,6 +179,7 @@ function patient_settings_default_privacy(): array
         'share_medical_records'     => 1,
         'emergency_access_consent'  => 1,
         'data_privacy_acknowledged' => 1,
+        'share_prescriptions_with_barangay_bhw' => 0,
     ];
 }
 
@@ -239,6 +250,7 @@ function patient_settings_load(PDO $pdo, int $userId): array
             'share_medical_records'     => (int) ($privacy['share_medical_records'] ?? 1),
             'emergency_access_consent'  => (int) ($privacy['emergency_access_consent'] ?? 1),
             'data_privacy_acknowledged' => (int) ($privacy['data_privacy_acknowledged'] ?? 1),
+            'share_prescriptions_with_barangay_bhw' => (int) ($privacy['share_prescriptions_with_barangay_bhw'] ?? 0),
         ],
         'sessions' => patient_settings_list_sessions($pdo, $userId),
         'devices' => patient_settings_list_devices($pdo, $userId),
@@ -444,6 +456,7 @@ function patient_settings_save_privacy(PDO $pdo, int $userId, array $input): arr
     $share = !empty($input['share_medical_records']) ? 1 : 0;
     $emergency = !empty($input['emergency_access_consent']) ? 1 : 0;
     $ack = !empty($input['data_privacy_acknowledged']) ? 1 : 0;
+    $sharePrescriptions = !empty($input['share_prescriptions_with_barangay_bhw']) ? 1 : 0;
 
     if (!$ack) {
         return ['success' => false, 'message' => 'You must acknowledge the data privacy policy to continue using medConnect.'];
@@ -454,9 +467,10 @@ function patient_settings_save_privacy(PDO $pdo, int $userId, array $input): arr
             share_medical_records = ?,
             emergency_access_consent = ?,
             data_privacy_acknowledged = ?,
+            share_prescriptions_with_barangay_bhw = ?,
             updated_at = NOW()
         WHERE user_id = ?
-    ")->execute([$share, $emergency, $ack, $userId]);
+    ")->execute([$share, $emergency, $ack, $sharePrescriptions, $userId]);
 
     require_once __DIR__ . '/audit_log.php';
     audit_log($pdo, [
@@ -467,6 +481,7 @@ function patient_settings_save_privacy(PDO $pdo, int $userId, array $input): arr
             'share_medical_records' => $share,
             'emergency_access_consent' => $emergency,
             'data_privacy_acknowledged' => $ack,
+            'share_prescriptions_with_barangay_bhw' => $sharePrescriptions,
         ],
     ]);
 

@@ -90,9 +90,6 @@ try {
         }
         unset($provider);
         Api::success(['providers' => $rows]);
-    } elseif ($action === 'schedule') {
-        $rows = BhwWorkflows::listConsultations($pdo, $ctx, $_GET['date'] ?? date('Y-m-d'));
-        Api::success(['consultations' => $rows]);
     } else {
         Api::error('Unknown action.', 400);
     }

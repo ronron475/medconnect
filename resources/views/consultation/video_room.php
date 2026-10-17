@@ -77,6 +77,12 @@ if (!$session) {
     if ($ended) {
         $isOwner = ($role === 'patient' && (int) $uid === (int) ($ended['patient_id'] ?? 0))
             || ($role === 'provider' && (int) $uid === (int) ($ended['provider_id'] ?? 0));
+        if (!$isOwner) {
+            http_response_code(403);
+            header('Content-Type: text/plain; charset=utf-8');
+            echo 'You are not authorized to join this consultation.';
+            exit;
+        }
         http_response_code(403);
         header('Content-Type: text/html; charset=utf-8');
         require_once BASE_PATH . '/app/includes/consultation_video_history.php';
@@ -130,16 +136,12 @@ if ($role === 'patient' && (int) $uid === (int) $session['patient_id']) {
     $authorized = true;
 } elseif ($role === 'provider' && (int) $uid === (int) $session['provider_id']) {
     $authorized = true;
-} elseif ($role === 'bhw') {
-    require_once VIEWS_PATH . '/bhw/partials/bhw_context.php';
-    require_once BASE_PATH . '/app/includes/bhw_scope.php';
-    $bhw_ctx = bhw_resolve_context($pdo);
-    if ($bhw_ctx['allowed'] && bhw_assert_patient_in_sector($pdo, $bhw_ctx, (int) $session['patient_id'])) {
-        $authorized = true;
-    }
 }
 if (!$authorized) {
-    die('You are not authorized to join this consultation.');
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo 'You are not authorized to join this consultation.';
+    exit;
 }
 
 if ($role === 'patient') {

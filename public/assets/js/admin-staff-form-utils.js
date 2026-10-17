@@ -422,6 +422,21 @@
       || wrap.closest('.admin-modal-dialog, .mc-card.admin-modal-dialog, .ann-modal__panel, .violation-dialog, .admin-action-dialog, .mc-modal__card, .mc-urgency-modal__card');
   }
 
+  function isAuditFilterSelect(select) {
+    return !!(select && (
+      select.classList.contains('audit-logs-filter')
+      || select.getAttribute('data-mc-select-prefer-below') === '1'
+    ));
+  }
+
+  function scrollOptionIntoMenu(menu, option) {
+    if (!menu || !option) return;
+    var top = option.offsetTop;
+    var bottom = top + option.offsetHeight;
+    if (top < menu.scrollTop) menu.scrollTop = top;
+    else if (bottom > menu.scrollTop + menu.clientHeight) menu.scrollTop = bottom - menu.clientHeight;
+  }
+
   function ensureSelectRoomBelow(toggle, neededPx) {
     var scroller = toggle.closest(MODAL_SCROLL_SELECTOR);
     if (!scroller) return;
@@ -454,10 +469,7 @@
     var preferBelow = spaceBelow >= 140 || spaceBelow >= spaceAbove;
     var available = preferBelow ? spaceBelow : spaceAbove;
     var maxH = Math.min(220, Math.max(112, available));
-    var isAuditFilter = !!(select && (
-      select.classList.contains('audit-logs-filter')
-      || select.getAttribute('data-mc-select-prefer-below') === '1'
-    ));
+    var isAuditFilter = isAuditFilterSelect(select);
 
     if (isAuditFilter) {
       // Audit Logs Action list is long — keep it compact and prefer opening downward.
@@ -594,8 +606,10 @@
       if (select.disabled) return;
       if (openModalSelect && openModalSelect !== wrap) closeModalSelect(openModalSelect);
       rebuildMenu();
-      ensureSelectRoomBelow(toggle, 200);
-      toggle.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+      if (!isAuditFilterSelect(select)) {
+        ensureSelectRoomBelow(toggle, 200);
+        toggle.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+      }
       wrap.classList.add('is-open');
       var field = wrap.closest('.mc-field');
       if (field) field.classList.add('is-select-open');
@@ -606,19 +620,17 @@
       } else if (menu.parentNode !== wrap) {
         wrap.appendChild(menu);
       }
+      menu.style.position = 'fixed';
+      menu.style.visibility = 'hidden';
       menu.hidden = false;
       openModalSelect = wrap;
       openModalSelectMenu = menu;
+      positionModalSelectMenu(wrap);
+      menu.style.visibility = '';
+      scrollOptionIntoMenu(menu, menu.querySelector('[aria-selected="true"]'));
       requestAnimationFrame(function () {
-        positionModalSelectMenu(wrap);
-        requestAnimationFrame(function () {
-          positionModalSelectMenu(wrap);
-        });
+        if (openModalSelect === wrap) positionModalSelectMenu(wrap);
       });
-      var selected = menu.querySelector('[aria-selected="true"]');
-      if (selected && typeof selected.scrollIntoView === 'function') {
-        selected.scrollIntoView({ block: 'nearest' });
-      }
     }
 
     toggle.addEventListener('click', function () {

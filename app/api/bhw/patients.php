@@ -44,15 +44,6 @@ try {
             $id = (int) ($_GET['patient_id'] ?? 0);
             Api::success(BhwWorkflows::registrationStatus($pdo, $ctx, $id));
             break;
-        case 'update':
-            if ($method !== 'POST') {
-                Api::error('Method not allowed.', 405);
-            }
-            $id = (int) ($_POST['patient_id'] ?? 0);
-            bhw_api_require_patient_in_sector($pdo, $ctx, $id);
-            BhwWorkflows::updatePatient($pdo, $ctx, $id, $_POST);
-            Api::success([], 'Patient contact and medical information updated.');
-            break;
         default:
             Api::error('Unknown action.', 400);
     }
