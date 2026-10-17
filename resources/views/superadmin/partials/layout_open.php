@@ -1,5 +1,14 @@
+<?php
+if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+    require_once BASE_PATH . '/app/includes/theme_preferences.php';
+    require_once BASE_PATH . '/app/includes/language_preferences.php';
+    $mc_layout_role = (string) ($_SESSION['user_role'] ?? 'superadmin');
+    theme_preferences_sync_session($pdo, (int) $_SESSION['user_id'], $mc_layout_role);
+    language_preferences_sync_session($pdo, (int) $_SESSION['user_id'], $mc_layout_role);
+}
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(function_exists('language_preferences_html_lang') ? language_preferences_html_lang() : 'en', ENT_QUOTES, 'UTF-8') ?>">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -8,13 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <?php
-  if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
-      require_once BASE_PATH . '/app/includes/theme_preferences.php';
-      theme_preferences_sync_session($pdo, (int) $_SESSION['user_id'], 'admin');
-  }
-  require_once VIEWS_PATH . '/partials/theme_init.php';
-  ?>
+  <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-mobile.css') ?>"/>

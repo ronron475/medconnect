@@ -53,7 +53,7 @@
 
   function applyLanguage(lang) {
     const strings = i18n[lang] || i18n.en;
-    document.documentElement.lang = lang === 'fil' ? 'fil' : 'en';
+    document.documentElement.lang = (lang === 'fil' || lang === 'hil') ? lang : 'en';
     document.querySelectorAll('[data-i18n]').forEach((el) => {
       const key = el.getAttribute('data-i18n');
       if (strings[key]) {

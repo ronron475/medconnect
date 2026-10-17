@@ -317,6 +317,8 @@ try {
         $provider_prefs = system_preferences_get($pdo, (int) $user['id']);
         system_preferences_apply_to_session($provider_prefs);
     }
+    require_once dirname(dirname(__DIR__)) . '/app/includes/language_preferences.php';
+    language_preferences_sync_session($pdo, (int) $user['id'], (string) $user['role']);
 } catch (Exception $e) { /* non-fatal */ }
 
 unset($_SESSION['user_barangay_id'], $_SESSION['user_barangay_name']);

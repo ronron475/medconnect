@@ -123,6 +123,8 @@ function provider_settings_load(PDO $pdo, int $userId): array
     $notifications = $nstmt->fetch(PDO::FETCH_ASSOC) ?: provider_settings_default_notifications();
 
     $system = system_preferences_get($pdo, $userId);
+    require_once __DIR__ . '/language_preferences.php';
+    $system['language'] = language_preferences_get($pdo, $userId, 'provider');
 
     $initials = profile_picture_initials($user['first_name'], $user['last_name']);
     $birthdate = (string) ($user['birthdate'] ?? '');

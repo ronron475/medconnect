@@ -22,6 +22,7 @@ function theme_preferences_ensure_schema(PDO $pdo): void
             user_id INT UNSIGNED NOT NULL,
             user_type ENUM('patient','provider','admin','bhw') NOT NULL,
             theme_preference ENUM('system','light','dark') NOT NULL DEFAULT 'system',
+            language VARCHAR(10) NOT NULL DEFAULT 'en',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (preference_id),
@@ -30,6 +31,13 @@ function theme_preferences_ensure_schema(PDO $pdo): void
             CONSTRAINT fk_uprefs_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     ");
+
+    $cols = $pdo->query('SHOW COLUMNS FROM user_preferences')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('language', $cols, true)) {
+        $pdo->exec("ALTER TABLE user_preferences ADD COLUMN language VARCHAR(10) NOT NULL DEFAULT 'en' AFTER theme_preference");
+        require_once __DIR__ . '/language_preferences.php';
+        language_preferences_backfill_from_provider($pdo);
+    }
 }
 
 function theme_preferences_validate(string $theme): bool
@@ -61,6 +69,11 @@ function theme_preferences_ensure_defaults(PDO $pdo, int $userId, string $userTy
         INSERT INTO user_preferences (user_id, user_type, theme_preference)
         VALUES (?, ?, ?)
     ')->execute([$userId, $userType, $theme]);
+
+    if ($userType === 'provider') {
+        require_once __DIR__ . '/language_preferences.php';
+        language_preferences_adopt_from_provider($pdo, $userId);
+    }
 }
 
 function theme_preferences_read_provider_legacy(PDO $pdo, int $providerId): string

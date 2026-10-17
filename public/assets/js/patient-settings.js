@@ -230,6 +230,21 @@
     }
   });
 
+  document.getElementById('ptsLanguageForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    fd.append('csrf_token', csrf);
+    const btn = document.getElementById('ptsLanguageSubmit');
+    try {
+      const data = await postForm((window.APP_BASE || '') + '/app/api/language/save.php', fd, btn);
+      const saved = (data.data && data.data.language) || fd.get('language') || 'en';
+      document.documentElement.lang = saved;
+      showPanelAlert('ptsLanguageAlert', data.message, 'success');
+    } catch (err) {
+      showPanelAlert('ptsLanguageAlert', err.message || 'Could not save.', 'error');
+    }
+  });
+
   document.getElementById('ptsPrivacyForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     const fd = new FormData(e.target);

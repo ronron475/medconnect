@@ -318,6 +318,7 @@ $tabs = [
                 <select class="ps-select" id="language" name="language">
                   <option value="en" <?= ($system['language'] ?? 'en') === 'en' ? 'selected' : '' ?>><?= provider_i18n('lang_en', $lang) ?></option>
                   <option value="fil" <?= ($system['language'] ?? 'en') === 'fil' ? 'selected' : '' ?>><?= provider_i18n('lang_fil', $lang) ?></option>
+                  <option value="hil" <?= ($system['language'] ?? 'en') === 'hil' ? 'selected' : '' ?>><?= provider_i18n('lang_hil', $lang) ?></option>
                 </select>
               </div>
               <div class="ps-field">

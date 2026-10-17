@@ -128,9 +128,13 @@ $messagesLayoutCssVer = (int) @filemtime(ASSETS_PATH . '/css/messages-layout.css
 $patient_page_stylesheets = [
     ASSET_BASE . '/assets/css/messages-delete.css?v=2',
 ];
+if (isset($pdo) && $pdo instanceof PDO && !empty($_SESSION['user_id'])) {
+    require_once BASE_PATH . '/app/includes/language_preferences.php';
+    language_preferences_sync_session($pdo, (int) $_SESSION['user_id'], 'patient');
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(function_exists('language_preferences_html_lang') ? language_preferences_html_lang() : 'en', ENT_QUOTES, 'UTF-8') ?>">
 <head>
 <?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
 <style>.msg-alert{display:none;margin:0;padding:7px 12px;font-size:12px;font-weight:700}.msg-alert.show{display:block}.msg-alert.error{background:#fef2f2;color:#991b1b;border-bottom:1px solid #fecaca}.msg-alert.success{background:#ecfdf5;color:#047857;border-bottom:1px solid #a7f3d0}</style>

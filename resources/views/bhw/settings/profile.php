@@ -2,8 +2,10 @@
 $page_title = 'Profile';
 $bhw_current_file = 'settings/profile.php';
 require __DIR__ . '/../partials/bhw_bootstrap.php';
-require __DIR__ . '/../partials/layout_open.php';
 require_once BASE_PATH . '/app/includes/profile_picture.php';
+require_once BASE_PATH . '/app/includes/language_preferences.php';
+$ui_language = language_preferences_get($pdo, (int) $_SESSION['user_id'], 'bhw');
+require __DIR__ . '/../partials/layout_open.php';
 $barangay_label = htmlspecialchars($bhw_barangay_name);
 $profile_initials = profile_picture_initials($_SESSION['first_name'] ?? '', $_SESSION['last_name'] ?? '');
 $profile_picture_url = profile_picture_public_url($_SESSION['profile_picture'] ?? null);
@@ -68,6 +70,27 @@ $profile_role_label = 'Barangay Health Worker';
           <div class="bhw-form-actions">
             <button type="button" class="bhw-btn-outline" id="pf_reset_btn">Reset</button>
             <button type="submit" class="bhw-btn-teal" id="pf_save_btn">Save Profile</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="bhw-card bhw-form-card">
+        <h3 class="bhw-form-card-title">Language</h3>
+        <p class="bhw-form-card-sub">Choose English, Filipino, or Hiligaynon for this account. The rest of the portal stays in English for now.</p>
+        <form id="bhwLanguageForm">
+          <div class="bhw-form-grid">
+            <div>
+              <label class="form-label" for="bhw_language">Language</label>
+              <select class="form-control" name="language" id="bhw_language">
+                <?php foreach (['en' => 'English', 'fil' => 'Filipino', 'hil' => 'Hiligaynon'] as $code => $label): ?>
+                <option value="<?= $code ?>" <?= $ui_language === $code ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+          <p id="bhwLanguageAlert" class="bhw-field-hint" role="status" hidden></p>
+          <div class="bhw-form-actions">
+            <button type="submit" class="bhw-btn-teal" id="bhw_language_btn">Save Language</button>
           </div>
         </form>
       </div>
@@ -302,6 +325,39 @@ ob_start();
   });
 
   loadProfile();
+
+  var languageForm = document.getElementById('bhwLanguageForm');
+  if (languageForm) {
+    languageForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var alertEl = document.getElementById('bhwLanguageAlert');
+      var btn = document.getElementById('bhw_language_btn');
+      var fd = new FormData(languageForm);
+      fd.append('csrf_token', document.body.dataset.csrf || '');
+      if (btn) btn.disabled = true;
+      fetch((document.body.dataset.assetBase || '') + '/app/api/language/save.php', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin'
+      }).then(function (res) { return res.json(); }).then(function (data) {
+        var ok = !!(data && data.success);
+        if (alertEl) {
+          alertEl.hidden = false;
+          alertEl.textContent = (data && data.message) || (ok ? 'Language saved.' : 'Could not save language.');
+        }
+        if (ok) {
+          document.documentElement.lang = (data.data && data.data.language) || fd.get('language') || 'en';
+        }
+      }).catch(function () {
+        if (alertEl) {
+          alertEl.hidden = false;
+          alertEl.textContent = 'Could not save language.';
+        }
+      }).then(function () {
+        if (btn) btn.disabled = false;
+      });
+    });
+  }
 })();
 <?php
 $bhw_inline_script = ob_get_clean();

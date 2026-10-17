@@ -156,7 +156,7 @@ $patient_page_stylesheets = [
 ];
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(language_preferences_html_lang(), ENT_QUOTES, 'UTF-8') ?>">
 <head>
 <?php require_once VIEWS_PATH . '/patient/partials/layout_head.php'; ?>
 </head>

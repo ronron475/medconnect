@@ -19,6 +19,9 @@ require_once BASE_PATH . '/app/includes/triage_assessment_schema.php';
 
 $uid = (int) $_SESSION['user_id'];
 
+require_once BASE_PATH . '/app/includes/language_preferences.php';
+language_preferences_sync_session($pdo, $uid, 'patient');
+
 if (patient_requires_account_setup($pdo, $uid)) {
     header('Location: ' . ASSET_BASE . '/views/patient/account_setup.php');
     exit;

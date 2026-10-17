@@ -2,9 +2,13 @@
 if (!headers_sent()) {
     header('Content-Type: text/html; charset=UTF-8');
 }
+if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+    require_once BASE_PATH . '/app/includes/language_preferences.php';
+    language_preferences_sync_session($pdo, (int) $_SESSION['user_id'], (string) ($_SESSION['user_role'] ?? 'provider'));
+}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(function_exists('language_preferences_html_lang') ? language_preferences_html_lang() : 'en', ENT_QUOTES, 'UTF-8') ?>">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>

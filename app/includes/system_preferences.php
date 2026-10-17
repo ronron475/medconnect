@@ -199,7 +199,7 @@ function system_preferences_validate_input(array $input): array
     }
 
     $language = (string) ($input['language'] ?? 'en');
-    if (!in_array($language, ['en', 'fil'], true)) {
+    if (!in_array($language, ['en', 'fil', 'hil'], true)) {
         return ['success' => false, 'message' => 'Invalid language selection.'];
     }
 
@@ -264,6 +264,15 @@ function system_preferences_save(PDO $pdo, int $providerId, array $input): array
 
     require_once __DIR__ . '/theme_preferences.php';
     theme_preferences_save($pdo, $providerId, 'provider', $data['theme_preference']);
+
+    require_once __DIR__ . '/language_preferences.php';
+    $languageSaved = language_preferences_save($pdo, $providerId, 'provider', $data['language']);
+    if (!$languageSaved['success']) {
+        return [
+            'success' => false,
+            'message' => $languageSaved['message'],
+        ];
+    }
 
     return [
         'success' => true,

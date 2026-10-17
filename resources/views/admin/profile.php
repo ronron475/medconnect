@@ -50,6 +50,9 @@ $last_updated = !empty($admin_user['updated_at'])
 $is_active = !empty($admin_user['is_active']);
 $is_verified = !empty($admin_user['is_email_verified']);
 $admin_sessions = admin_settings_list_sessions($pdo, $uid, (string) ($admin_user['role'] ?? $_SESSION['user_role'] ?? 'admin'));
+require_once BASE_PATH . '/app/includes/language_preferences.php';
+$ui_language_role = theme_preferences_normalize_role((string) ($admin_user['role'] ?? $_SESSION['user_role'] ?? 'admin')) ?? 'admin';
+$ui_language = language_preferences_get($pdo, $uid, $ui_language_role);
 
 require_once __DIR__ . '/partials/layout_open.php';
 ?>
@@ -176,6 +179,34 @@ require_once __DIR__ . '/partials/layout_open.php';
     </section>
 </div>
 
+<section class="portal-profile-card" aria-labelledby="portalProfileLanguageTitle">
+    <div class="portal-profile-card__head">
+        <div class="portal-profile-card__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div>
+            <h2 class="portal-profile-card__title" id="portalProfileLanguageTitle">Language</h2>
+            <p class="portal-profile-card__sub">Choose English, Filipino, or Hiligaynon for this account. The rest of the portal stays in English for now.</p>
+        </div>
+    </div>
+    <div class="portal-profile-card__body">
+        <div id="adminLanguageAlert" class="portal-profile-alert" role="status" hidden></div>
+        <form id="adminLanguageForm" class="portal-profile-fields">
+            <div class="portal-profile-field">
+                <label class="portal-profile-field__label" for="adminLanguage">Language</label>
+                <select id="adminLanguage" name="language" class="mc-btn mc-btn--outline" style="text-align:left;">
+                    <?php foreach (['en' => 'English', 'fil' => 'Filipino', 'hil' => 'Hiligaynon'] as $code => $label): ?>
+                    <option value="<?= $code ?>" <?= ($ui_language ?? 'en') === $code ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="portal-profile-field portal-profile-field--full">
+                <button type="submit" class="portal-profile-btn" id="adminLanguageSubmit">Save Language</button>
+            </div>
+        </form>
+    </div>
+</section>
+
 <section class="portal-profile-card portal-profile-card--security" aria-labelledby="portalProfileSecurityTitle">
     <div class="portal-profile-card__head">
         <div class="portal-profile-card__icon portal-profile-card__icon--indigo" aria-hidden="true">
@@ -217,5 +248,40 @@ require_once __DIR__ . '/partials/layout_open.php';
 </article>
 
 <script src="<?= ASSET_BASE ?>/assets/js/admin-portal-profile.js?v=<?= (int) @filemtime(ASSETS_PATH . '/js/admin-portal-profile.js') ?>"></script>
+<script>
+document.getElementById('adminLanguageForm')?.addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const alertEl = document.getElementById('adminLanguageAlert');
+  const btn = document.getElementById('adminLanguageSubmit');
+  const fd = new FormData(e.target);
+  fd.append('csrf_token', document.body.dataset.csrf || '');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch((document.body.dataset.assetBase || '') + '/app/api/language/save.php', {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin'
+    });
+    const data = await res.json();
+    if (alertEl) {
+      alertEl.hidden = false;
+      alertEl.textContent = data.message || (data.success ? 'Language saved.' : 'Could not save language.');
+      alertEl.classList.toggle('is-error', !data.success);
+      alertEl.classList.toggle('is-success', !!data.success);
+    }
+    if (data.success) {
+      document.documentElement.lang = (data.data && data.data.language) || fd.get('language') || 'en';
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.hidden = false;
+      alertEl.textContent = 'Could not save language.';
+      alertEl.classList.add('is-error');
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
+</script>
 
 <?php require_once __DIR__ . '/partials/layout_close.php'; ?>

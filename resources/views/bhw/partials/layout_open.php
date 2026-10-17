@@ -1,5 +1,14 @@
+<?php
+if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
+    require_once BASE_PATH . '/app/includes/theme_preferences.php';
+    require_once BASE_PATH . '/app/includes/language_preferences.php';
+    $mc_layout_role = (string) ($_SESSION['user_role'] ?? 'bhw');
+    theme_preferences_sync_session($pdo, (int) $_SESSION['user_id'], $mc_layout_role);
+    language_preferences_sync_session($pdo, (int) $_SESSION['user_id'], $mc_layout_role);
+}
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= htmlspecialchars(function_exists('language_preferences_html_lang') ? language_preferences_html_lang() : 'en', ENT_QUOTES, 'UTF-8') ?>">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
@@ -13,13 +22,7 @@
   <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   
-  <?php
-  if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
-      require_once BASE_PATH . '/app/includes/theme_preferences.php';
-      theme_preferences_sync_session($pdo, (int) $_SESSION['user_id'], (string) ($_SESSION['user_role'] ?? 'bhw'));
-  }
-  require_once VIEWS_PATH . '/partials/theme_init.php';
-  ?>
+  <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
   <!-- Unified Aqua Clinical Design System -->
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>

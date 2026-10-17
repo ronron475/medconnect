@@ -32,6 +32,8 @@ $provider_settings_row = provider_settings_load($pdo, (int) $_SESSION['user_id']
 if (!empty($provider_settings_row['system'])) {
     provider_settings_apply_system_to_session($provider_settings_row['system']);
 }
+require_once BASE_PATH . '/app/includes/language_preferences.php';
+language_preferences_sync_session($pdo, (int) $_SESSION['user_id'], 'provider');
 
 $provider = [
     'first_name'      => $_SESSION['first_name'] ?? 'Provider',

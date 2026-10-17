@@ -58,6 +58,33 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
     </div>
   </header>
 
+  <section class="pts-card" aria-labelledby="ptsLanguageTitle">
+    <div class="pts-card__head">
+      <div class="pts-card__head-icon pts-card__head-icon--teal"><?= pts_icon('monitor') ?></div>
+      <div class="pts-card__head-copy">
+        <h3 class="pts-card__title" id="ptsLanguageTitle">Language</h3>
+        <p class="pts-card__sub">Choose English, Filipino, or Hiligaynon for your account. This page stays in English for now.</p>
+      </div>
+    </div>
+    <div id="ptsLanguageAlert" class="pts-alert" role="alert" hidden></div>
+    <form id="ptsLanguageForm" class="pts-form-grid">
+      <div class="pts-field">
+        <label for="ptsLanguage">Language</label>
+        <select id="ptsLanguage" name="language" class="pts-input">
+          <?php foreach (['en' => 'English', 'fil' => 'Filipino', 'hil' => 'Hiligaynon'] as $code => $label): ?>
+          <option value="<?= $code ?>" <?= ($ui_language ?? 'en') === $code ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="pts-form-actions pts-field--full">
+        <button type="submit" class="pts-btn pts-btn--primary" id="ptsLanguageSubmit">
+          <span class="pts-btn__text">Save Language</span>
+          <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
+        </button>
+      </div>
+    </form>
+  </section>
+
   <div class="pts-layout">
     <aside class="pts-nav" role="tablist" aria-label="Settings sections">
       <?php foreach ($nav_tabs as $id => $tab): ?>
