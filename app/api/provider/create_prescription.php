@@ -41,6 +41,10 @@ if (!$patient_id || !$medication || !$dosage || !$frequency || !$duration) {
     echo json_encode(['success' => false, 'message' => 'Required fields missing.']);
     exit;
 }
+if (mb_strlen($medication) > 150 || mb_strlen($dosage) > 100 || mb_strlen($frequency) > 100 || mb_strlen($duration) > 100) {
+    echo json_encode(['success' => false, 'message' => 'One of the prescription fields is too long.']);
+    exit;
+}
 
 // IDOR protection: provider must be assigned to consultation/patient (or have an existing relationship).
 $access = provider_patient_assert_access($pdo, $provider_id, $patient_id, $consultation_id);

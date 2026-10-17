@@ -34,5 +34,8 @@ function medconnect_ai_service_auth_headers(): array
         return [];
     }
 
-    return ['Authorization: Bearer ' . $token];
+    return [
+        'Authorization: Bearer ' . $token,
+        'X-MedConnect-Service-Token: ' . $token,
+    ];
 }

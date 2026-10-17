@@ -5,6 +5,7 @@
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
+require_once BASE_PATH . '/app/includes/ai_service_provider_health.php';
 
 Api::startJson();
 ai_endpoint_rate_limit('ai_health', 60, 60);
@@ -38,13 +39,32 @@ if ($bits['enabled'] && $bits['url'] !== '' && function_exists('curl_init')) {
     }
 }
 
+$remoteHealth = is_array($diag['health'] ?? null) ? $diag['health'] : null;
+if ($online && $remoteHealth !== null) {
+    $geminiReport = ai_service_interpret_service_health('gemini', $remoteHealth);
+    $groqReport = ai_service_interpret_service_health('groq', $remoteHealth);
+    $geminiStatus = $geminiReport['status'] === 'online' ? 'connected' : ($geminiReport['status'] === 'not_configured' ? 'missing' : $geminiReport['status']);
+    $groqStatus = $groqReport['status'] === 'online' ? 'connected' : ($groqReport['status'] === 'not_configured' ? 'missing' : $groqReport['status']);
+    $geminiModel = (string) ($geminiReport['model'] ?? '');
+    $groqModel = (string) ($groqReport['model'] ?? '');
+} else {
+    $geminiStatus = 'unreachable';
+    $groqStatus = 'unreachable';
+    $geminiModel = '';
+    $groqModel = '';
+}
+
 $payload = [
     'status'    => $online ? 'online' : 'offline',
     'service'   => $online ? 'python-medical-profile-nlp' : 'php-validation-workflow',
     'online'    => $online,
     'port_open' => (bool) ($diag['port_open'] ?? false),
     'engine'    => (string) ($diag['engine'] ?? 'php-validation-workflow'),
-    'groq'      => $online && ($diag['groq_configured'] ?? false) ? 'connected' : (($diag['groq_configured'] ?? false) ? 'configured' : 'missing'),
+    'groq'      => $groqStatus,
+    'groq_model'=> $groqModel,
+    'gemini'    => $geminiStatus,
+    'gemini_model' => $geminiModel,
+    'service_token_configured' => medconnect_ai_service_token() !== '',
     'bits'      => $bits['online'] ? 'online' : ($bits['enabled'] ? 'offline' : 'disabled'),
     'bits_model'=> (string) $bits['model'],
 ];

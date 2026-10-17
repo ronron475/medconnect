@@ -1,63 +1,44 @@
 <?php
 /**
- * Gemini API health check (proxies Python /api/gemini_health when available,
- * otherwise uses the shared ai_providers tester — same keys as existing Gemini integration).
+ * Gemini API health check.
+ * Prefers Railway's authenticated /api/gemini_health, then Railway's public /health.
+ * Does not treat a Hostinger-side missing Gemini key as the AI service status.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once BASE_PATH . '/app/includes/ai_providers.php';
+require_once BASE_PATH . '/app/includes/ai_service_provider_health.php';
 require_once BASE_PATH . '/app/includes/ai_endpoint_security.php';
 
 Api::startJson();
 ai_endpoint_rate_limit('ai_gemini_health', 30, 60);
 
-$body = null;
-if (defined('AI_SERVICE_BASE_URL') && AI_SERVICE_BASE_URL !== '' && function_exists('curl_init')) {
-    $curl = curl_init(AI_SERVICE_BASE_URL . '/api/gemini_health');
-    if ($curl !== false) {
-        require_once BASE_PATH . '/app/includes/ai_service_auth.php';
-        curl_setopt_array($curl, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CONNECTTIMEOUT => 3,
-            CURLOPT_TIMEOUT        => 15,
-            CURLOPT_HTTPHEADER     => medconnect_ai_service_auth_headers(),
-        ]);
-        $raw = curl_exec($curl);
-        $code = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
-        if ($raw !== false && $code >= 200 && $code < 300) {
-            $decoded = json_decode((string) $raw, true);
-            if (is_array($decoded)) {
-                $body = $decoded;
-            }
-        }
-    }
-}
-
-if (is_array($body)) {
-    $online = !empty($body['gemini']) || (($body['status'] ?? '') === 'online');
+if (ai_service_base_is_remote()) {
+    $report = ai_service_provider_public_status('gemini');
     $payload = [
-        'gemini'     => $online,
-        'provider'   => $online ? 'gemini' : null,
-        'status'     => $online ? 'online' : (string) ($body['status'] ?? 'offline'),
-        'configured' => ai_providers_gemini_key_configured(),
+        'gemini' => (bool) $report['ok'],
+        'provider' => $report['ok'] ? 'gemini' : null,
+        'status' => (string) $report['status'],
+        'configured' => (bool) $report['configured'],
+        'model' => $report['model'],
+        'service_auth' => (string) $report['service_auth'],
     ];
     if (ai_endpoint_can_expose_debug()) {
-        $payload['model'] = (string) ($body['model'] ?? ai_providers_gemini_model());
-        $payload['error'] = $body['error'] ?? null;
+        $payload['error'] = $report['error'];
     }
-    Api::success($payload);
+    Api::success($payload, (string) $report['message']);
     exit;
 }
 
 $test = ai_providers_test_gemini(true);
 $payload = [
-    'gemini'     => (bool) ($test['ok'] ?? false),
-    'provider'   => ($test['ok'] ?? false) ? 'gemini' : null,
-    'status'     => (string) ($test['status'] ?? 'offline'),
+    'gemini' => (bool) ($test['ok'] ?? false),
+    'provider' => ($test['ok'] ?? false) ? 'gemini' : null,
+    'status' => (string) ($test['status'] ?? 'offline'),
     'configured' => ai_providers_gemini_key_configured(),
+    'model' => $test['model'] ?? null,
+    'service_auth' => 'not_checked',
 ];
 if (ai_endpoint_can_expose_debug()) {
-    $payload['model'] = (string) ($test['model'] ?? ai_providers_gemini_model());
     $payload['error'] = ($test['ok'] ?? false) ? null : 'Gemini unavailable';
 }
-Api::success($payload);
+Api::success($payload, (string) ($test['message'] ?? 'OK'));

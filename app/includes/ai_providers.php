@@ -20,6 +20,7 @@ define('MEDCONNECT_AI_PROVIDERS_LOADED', true);
 
 require_once __DIR__ . '/system_settings.php';
 require_once __DIR__ . '/gemini_config.php';
+require_once __DIR__ . '/ai_service_provider_health.php';
 
 /** @return list<string> */
 function ai_providers_runtime_allowlist(): array
@@ -399,10 +400,48 @@ function ai_providers_live_snapshot(bool $liveTest = false): array
         'state'       => $gemState,
     ]);
 
+    if (ai_service_base_is_remote()) {
+        foreach ($out as &$providerRow) {
+            $providerId = (string) ($providerRow['id'] ?? '');
+            if ($providerId !== 'gemini' && $providerId !== 'groq') {
+                continue;
+            }
+            $report = ai_service_provider_public_status($providerId);
+            if (empty($report['remote'])) {
+                continue;
+            }
+            $providerRow['configured'] = (bool) $report['configured'];
+            $providerRow['api_key_set'] = (bool) $report['configured'];
+            if (!empty($report['model'])) {
+                $providerRow['model'] = (string) $report['model'];
+            }
+            $providerRow['state'] = ai_service_admin_state($report);
+        }
+        unset($providerRow);
+    }
+
     return [
         'providers'    => $out,
         'generated_at' => gmdate('c'),
         'triage_note'  => 'ClinicalTriageEngine / TriageLevelService remain the final triage authority. AI providers do not independently set final triage.',
+    ];
+}
+
+/**
+ * @return array{ok:bool,status:string,message:string,model:?string,provider:string}
+ */
+function ai_providers_remote_test_result(string $provider, ?string $fallbackModel): array
+{
+    require_once __DIR__ . '/ai_service_provider_health.php';
+    $report = ai_service_provider_public_status($provider);
+    $state = ai_service_admin_state($report);
+
+    return [
+        'ok' => (bool) $report['ok'],
+        'status' => (string) $state['status'],
+        'message' => (string) $report['message'],
+        'model' => $report['model'] ?? $fallbackModel,
+        'provider' => $provider,
     ];
 }
 
@@ -475,6 +514,9 @@ function ai_providers_test_groq(bool $force = true): array
             'ok' => false, 'status' => 'disabled', 'message' => 'Groq interpreter is disabled.',
             'model' => $model, 'provider' => 'groq',
         ];
+    }
+    if (ai_service_base_is_remote()) {
+        return ai_providers_remote_test_result('groq', $model);
     }
     if (!$configured) {
         return [
@@ -550,6 +592,9 @@ function ai_providers_test_gemini(bool $force = true): array
             'ok' => false, 'status' => 'disabled', 'message' => 'Gemini is disabled (AI_ENABLED=false).',
             'model' => $model, 'provider' => 'gemini',
         ];
+    }
+    if (ai_service_base_is_remote()) {
+        return ai_providers_remote_test_result('gemini', $model);
     }
     if (!$configured) {
         return [

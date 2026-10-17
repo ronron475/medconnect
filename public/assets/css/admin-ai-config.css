@@ -247,12 +247,15 @@
 }
 
 .ai-provider-status--not_configured,
-.ai-provider-status--unavailable {
+.ai-provider-status--unavailable,
+.ai-provider-status--auth_failed,
+.ai-provider-status--quota_exceeded {
   background: #fee2e2;
   color: #b91c1c;
 }
 
-.ai-provider-status--disabled {
+.ai-provider-status--disabled,
+.ai-provider-status--unreachable {
   background: #f1f5f9;
   color: #64748b;
 }

@@ -255,6 +255,49 @@ function prescription_verification_public(PDO $pdo, string $token): array
     ];
 }
 
+/**
+ * Same public result, plus medication fields when the signed-in user is the
+ * patient who owns the prescription. Providers and other accounts do not
+ * receive those fields from this page.
+ *
+ * @return array{state:string,provider_name:string,issued_on:string,medication_name?:string,dosage?:string,frequency?:string,duration?:string}
+ */
+function prescription_verification_for_viewer(PDO $pdo, string $token, int $viewerId): array
+{
+    $result = prescription_verification_public($pdo, $token);
+    if ($viewerId <= 0 || ($result['state'] ?? '') === 'unavailable') {
+        return $result;
+    }
+
+    $presented = strtolower(trim($token));
+    if (!preg_match('/^[a-f0-9]{64}$/', $presented)) {
+        return $result;
+    }
+
+    $stmt = $pdo->prepare('
+        SELECT medication_name, dosage, frequency, duration, patient_id
+        FROM prescriptions
+        WHERE verification_token = ?
+        LIMIT 1
+    ');
+    $stmt->execute([$presented]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        return $result;
+    }
+
+    if ((int) ($row['patient_id'] ?? 0) !== $viewerId) {
+        return $result;
+    }
+
+    $result['medication_name'] = (string) ($row['medication_name'] ?? '');
+    $result['dosage'] = (string) ($row['dosage'] ?? '');
+    $result['frequency'] = (string) ($row['frequency'] ?? '');
+    $result['duration'] = (string) ($row['duration'] ?? '');
+
+    return $result;
+}
+
 function prescription_verification_qr_svg(string $url): string
 {
     $path = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2)) . '/lib/qrcode/qrcode.php';

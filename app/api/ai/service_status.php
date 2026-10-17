@@ -38,11 +38,20 @@ try {
     $payload['ai_enabled'] = (bool) ($aiStatus['enabled'] ?? true);
     $payload['model'] = (string) ($status['model'] ?? GROQ_MODEL);
     $payload['groq_model'] = GROQ_MODEL;
-    $payload['groq'] = ($status['groq_connected'] ?? false)
-        ? 'connected'
-        : (($status['groq'] ?? '') === 'failed'
-            ? 'failed'
-            : (($aiStatus['groq_configured'] ?? false) ? 'configured' : 'missing'));
+    $remoteHealth = is_array($status['diagnostics']['health'] ?? null) ? $status['diagnostics']['health'] : null;
+    if (!empty($status['online']) && $remoteHealth !== null) {
+        $payload['groq'] = (string) ($remoteHealth['groq'] ?? 'missing');
+        $payload['gemini'] = (string) ($remoteHealth['gemini'] ?? 'missing');
+        $payload['gemini_model'] = (string) ($remoteHealth['gemini_model'] ?? '');
+        if (!empty($remoteHealth['model'])) {
+            $payload['model'] = (string) $remoteHealth['model'];
+            $payload['groq_model'] = (string) $remoteHealth['model'];
+        }
+    } else {
+        $payload['groq'] = 'unreachable';
+        $payload['gemini'] = 'unreachable';
+        $payload['gemini_model'] = '';
+    }
 
     if (ai_endpoint_can_expose_debug()) {
         $payload['url'] = $status['url'] ?? AI_SERVICE_BASE_URL;

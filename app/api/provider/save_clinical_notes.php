@@ -325,7 +325,7 @@ try {
         $tableOk = $pdo->query("SHOW TABLES LIKE 'prescriptions'");
         if ($tableOk && $tableOk->rowCount() > 0) {
             $firstLine = trim((string) strtok(str_replace(["\r\n", "\r"], "\n", $rxText), "\n"));
-            $medication = $firstLine !== '' ? mb_substr($firstLine, 0, 180) : 'Digital prescription';
+            $medication = $firstLine !== '' ? mb_substr($firstLine, 0, 150) : 'Digital prescription';
             prescription_issue(
                 $pdo,
                 (int) $data['consultation_id'],

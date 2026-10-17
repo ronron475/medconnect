@@ -421,7 +421,7 @@ require_once __DIR__ . '/partials/layout_open.php';
             var badge = card.querySelector('[data-role="status-badge"]');
             if (badge) {
               badge.className = 'ai-provider-status ai-provider-status--' + status;
-              badge.textContent = ok ? 'Connected' : (status === 'not_configured' ? 'Not configured' : (status === 'disabled' ? 'Disabled' : 'Unavailable'));
+              badge.textContent = ok ? 'Connected' : (status === 'not_configured' ? 'Not configured' : (status === 'auth_failed' ? 'Authentication failed' : (status === 'unreachable' ? 'Unreachable' : (status === 'quota_exceeded' ? 'Quota exceeded' : (status === 'disabled' ? 'Disabled' : 'Unavailable')))));
             }
           }
           if (msg) msg.textContent = j.message || data.message || (ok ? 'Connected' : 'Failed');

@@ -1,8 +1,9 @@
 <?php
 /**
- * Public prescription verification.
- * Login is not required. The response is limited to validity, the issuing
- * provider's name, and the issue date.
+ * Prescription verification.
+ * Anyone with the token can see validity, the issuing provider's name, and
+ * the issue date. Medication details are added only when the signed-in user
+ * is the patient who owns the prescription.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
@@ -20,7 +21,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
 clinical_tables_ensure($pdo);
 
 $token = (string) ($_GET['t'] ?? '');
-$result = prescription_verification_public($pdo, $token);
+$viewerId = (int) ($_SESSION['user_id'] ?? 0);
+$result = prescription_verification_for_viewer($pdo, $token, $viewerId);
 $state = (string) ($result['state'] ?? 'unavailable');
 if (!in_array($state, ['valid', 'revoked', 'unavailable'], true)) {
     $state = 'unavailable';
@@ -69,8 +71,14 @@ header('X-Robots-Tag: noindex, nofollow');
     <?php if ($state !== 'unavailable'): ?>
         <p><strong>Issuing provider:</strong> <?= htmlspecialchars($provider !== '' ? $provider : 'Not available') ?></p>
         <p><strong>Issue date:</strong> <?= htmlspecialchars($issued !== '' ? $issued : 'Not available') ?></p>
+        <?php if (isset($result['medication_name'])): ?>
+        <p><strong>Medication:</strong> <?= htmlspecialchars((string) $result['medication_name']) ?></p>
+        <p><strong>Dosage:</strong> <?= htmlspecialchars((string) ($result['dosage'] ?? '')) ?></p>
+        <p><strong>Frequency:</strong> <?= htmlspecialchars((string) ($result['frequency'] ?? '')) ?></p>
+        <p><strong>Duration:</strong> <?= htmlspecialchars((string) ($result['duration'] ?? '')) ?></p>
+        <?php endif; ?>
     <?php endif; ?>
-    <p class="note">This page confirms the prescription record stored by medConnect. It does not verify a PRC license and does not show patient or medication details.</p>
+    <p class="note">This page confirms the prescription record stored by medConnect. It does not verify a PRC license. Medication details are shown only to the signed-in patient who owns the prescription. Patient name, notes, and diagnosis are not shown.</p>
 </main>
 </body>
 </html>
