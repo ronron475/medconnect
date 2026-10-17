@@ -1300,27 +1300,27 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
 
 .pts-shell {
   display: grid;
-  grid-template-columns: 248px minmax(0, 1fr);
-  min-height: 680px;
+  grid-template-columns: 220px minmax(0, 1fr);
   background: #fff;
-  border: 1px solid #e8edf2;
-  border-radius: 22px;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--pt-card-radius, 10px);
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--pt-shadow-card, 0 1px 2px rgba(15, 23, 42, 0.04));
 }
 
 .pts-menu {
-  padding: 28px 26px 24px;
+  padding: var(--pt-space-lg, 16px);
   border-right: 1px solid #eef2f6;
   background: #fff;
 }
 
 .pts-menu__title {
-  margin: 0 0 28px;
-  font-size: 1.7rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #111827;
+  margin: 0 0 var(--pt-space-lg, 16px);
+  font-size: var(--pt-font-page, 1.25rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: var(--pt-lh-tight, 1.3);
+  color: #0f172a;
 }
 
 .pts-shell .pts-nav {
@@ -1335,16 +1335,16 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
 }
 
 .pts-nav__group {
-  margin: 0 0 22px;
+  margin: 0 0 var(--pt-space-lg, 16px);
 }
 
 .pts-nav__group-label {
-  margin: 0 0 8px;
-  font-size: 0.68rem;
+  margin: 0 0 6px;
+  font-size: var(--pt-font-caption, 0.6875rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9aa3af;
+  color: #94a3b8;
 }
 
 .pts-shell .pts-nav__item {
@@ -1356,9 +1356,10 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: #6b7280;
-  font-size: 0.98rem;
-  font-weight: 500;
+  color: #64748b;
+  font-size: var(--pt-font-body, 0.8125rem);
+  font-weight: 600;
+  line-height: var(--pt-lh-body, 1.45);
   text-align: left;
   transform: none;
 }
@@ -1383,27 +1384,27 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
 }
 
 .pts-stage {
-  padding: 22px 32px 36px;
+  padding: var(--pt-space-lg, 16px);
   background: #fff;
 }
 
 .pts-stage__bar {
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 18px;
+  margin-bottom: var(--pt-space-md, 12px);
 }
 
 .pts-search {
   display: flex;
   align-items: center;
   gap: 8px;
-  width: min(260px, 100%);
-  min-height: 42px;
-  padding: 0 14px;
-  border: 1px solid #e5e7eb;
+  width: min(240px, 100%);
+  min-height: var(--pt-btn-height, 34px);
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
   border-radius: 999px;
   background: #f8fafc;
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .pts-search input {
@@ -1411,9 +1412,9 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
   border: 0;
   outline: none;
   background: transparent;
-  color: #111827;
+  color: #0f172a;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: var(--pt-font-body, 0.8125rem);
 }
 
 .pts-search input::placeholder {
@@ -1421,53 +1422,64 @@ body.patient-portal .patient-settings-page .pts-input-group .pts-input--pw {
 }
 
 .pts-panel-head {
-  margin: 8px 0 22px;
+  margin: 0 0 var(--pt-space-lg, 16px);
 }
 
 .pts-panel-head h2 {
-  margin: 0 0 6px;
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #111827;
+  margin: 0 0 4px;
+  font-size: var(--pt-font-page, 1.25rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: var(--pt-lh-tight, 1.3);
+  color: #0f172a;
 }
 
 .pts-panel-head p {
   margin: 0;
-  max-width: 46ch;
-  color: #6b7280;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  max-width: 62ch;
+  color: #64748b;
+  font-size: var(--pt-font-body, 0.8125rem);
+  line-height: var(--pt-lh-body, 1.45);
+}
+
+.pts-search-empty {
+  margin: 0 0 var(--pt-space-md, 12px);
+  font-size: var(--pt-font-body, 0.8125rem);
+  color: #64748b;
+}
+
+.pts-search-empty[hidden] {
+  display: none !important;
 }
 
 .pts-pw-stack {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--pt-space-md, 12px);
   max-width: 640px;
 }
 
 .pts-pw-box {
-  padding: 16px 16px 14px;
-  border: 1px solid #e6ebf0;
-  border-radius: 16px;
+  padding: var(--pt-card-pad, 14px);
+  border: 1px solid #e2e8f0;
+  border-radius: var(--pt-card-radius, 10px);
   background: #fff;
 }
 
 .pts-pw-box > label {
   display: block;
-  margin-bottom: 10px;
-  font-size: 0.98rem;
+  margin-bottom: var(--pt-space-sm, 8px);
+  font-size: var(--pt-font-body, 0.8125rem);
   font-weight: 700;
-  color: #111827;
+  color: #0f172a;
 }
 
 .pts-shell .pts-pw-box .pts-input-group,
 body.patient-portal .patient-settings-page .pts-pw-box .pts-input-group {
-  min-height: 48px;
-  padding: 0 6px 0 14px;
+  min-height: var(--pt-btn-height, 34px);
+  padding: 0 4px 0 12px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--pt-btn-radius, 8px);
   background: #f4f7f8;
   box-shadow: none;
 }
@@ -1485,14 +1497,14 @@ body.patient-portal .patient-settings-page .pts-pw-box .pts-input-group {
 
 .pts-select {
   width: 100%;
-  min-height: 48px;
-  padding: 12px 14px;
+  min-height: var(--pt-btn-height, 34px);
+  padding: 6px 12px;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--pt-btn-radius, 8px);
   background: #f4f7f8;
-  color: #111827;
+  color: #0f172a;
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--pt-font-body, 0.8125rem);
 }
 
 .pts-pw-box .pts-validation {
@@ -1530,9 +1542,6 @@ body.patient-portal .patient-settings-page .pts-pw-box .pts-input-group {
 .pts-btn--block {
   width: 100%;
   max-width: 640px;
-  min-height: 52px;
-  border-radius: 14px;
-  font-size: 1rem;
 }
 
 .pts-stage .pts-card {
@@ -1548,36 +1557,36 @@ body.patient-portal .patient-settings-page .pts-pw-box .pts-input-group {
 }
 
 body.patient-portal .patient-settings-page .pts-btn--block {
-  min-height: 52px;
-  padding: 14px 18px;
-  border-radius: 14px;
-  font-size: 1rem;
+  width: 100%;
+  max-width: 640px;
 }
 
 body.patient-portal .patient-settings-page .pts-pw-box .pts-input,
 body.patient-portal .patient-settings-page .pts-select {
-  min-height: 48px;
-  padding: 12px 8px;
-  font-size: 0.95rem;
-  border-radius: 12px;
+  min-height: var(--pt-btn-height, 34px);
+  padding: 6px 8px;
+  font-size: var(--pt-font-body, 0.8125rem);
+  border-radius: var(--pt-btn-radius, 8px);
 }
 
 body.patient-portal .patient-settings-page .pts-search input {
-  min-height: 0;
+  min-height: 0 !important;
   height: auto;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  font-size: 0.92rem;
-  background: transparent;
-  box-shadow: none;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  font-size: var(--pt-font-body, 0.8125rem) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: inherit !important;
 }
 
 body.patient-portal .patient-settings-page .pts-menu__title,
 body.patient-portal .patient-settings-page .pts-panel-head h2 {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: var(--pt-font-page, 1.25rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 body.patient-portal .patient-settings-page .pts-shell .pts-nav {
@@ -1637,4 +1646,80 @@ body.patient-portal .patient-settings-page .pts-shell .pts-nav__item {
   .pts-search {
     width: 100%;
   }
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-shell,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-menu,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-stage,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-panel,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-content {
+  background: #151F2E !important;
+  background-color: #151F2E !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #243347 !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-menu {
+  border-right-color: #243347 !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-menu__title,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-panel-head h2,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box > label,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-card__title,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-shell .pts-nav__item.is-active {
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-panel-head p,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-card__sub,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-nav__group-label,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-search-empty,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-shell .pts-nav__item {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-shell .pts-nav,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-shell .pts-nav__item,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-validation,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-validation__grid li {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-search,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box .pts-input-group,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-select {
+  background: #0D1E30 !important;
+  background-color: #0D1E30 !important;
+  border-color: #243347 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-search input,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box .pts-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #ffffff !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-search input::placeholder,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box .pts-input::placeholder {
+  color: #64748B !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-input-lead,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-input-action {
+  color: #8FAABF !important;
+}
+
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box .pts-validation__title,
+html[data-theme-resolved='dark'] body.patient-portal .patient-settings-page .pts-pw-box .pts-validation__label {
+  color: #99F6E4 !important;
 }

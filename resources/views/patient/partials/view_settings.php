@@ -78,6 +78,7 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
           <input type="search" id="ptsSettingsSearch" placeholder="Search" data-ui-i18n="search_settings" data-ui-i18n-attr="placeholder" autocomplete="off" aria-label="Search settings">
         </label>
       </div>
+      <p id="ptsSearchEmpty" class="pts-search-empty" hidden data-ui-i18n="search_empty">No matching settings.</p>
 
       <div class="pts-content">
 

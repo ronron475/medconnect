@@ -10,7 +10,13 @@
   }
 
   function getCsrfToken() {
-    return global.CSRF_TOKEN || document.body?.dataset?.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    var root = document.getElementById('medconnectThemeRoot');
+    return global.CSRF_TOKEN
+      || document.body?.dataset?.csrf
+      || root?.dataset?.csrf
+      || document.querySelector('[data-csrf]')?.dataset?.csrf
+      || document.querySelector('meta[name="csrf-token"]')?.content
+      || '';
   }
 
   function performLogout() {
@@ -38,15 +44,22 @@
       headers: headers,
       body: new URLSearchParams({ csrf_token: token }),
     })
-      .then(function (res) { return res.json().catch(function () { return null; }); })
-      .then(function (data) {
+      .then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data;
+        if (!result.ok || !data || !data.success) {
+          return;
+        }
         try {
           if (global.MedConnectAuthSync && typeof global.MedConnectAuthSync.notifyLogout === 'function') {
             global.MedConnectAuthSync.notifyLogout();
           }
         } catch (_) { /* ignore */ }
-        var next = (data && data.redirect) ? data.redirect : (base + '/index.php');
-        global.location.replace(next);
+        global.location.replace(data.redirect || (base + '/index.php'));
       })
       .catch(function () {
         try {

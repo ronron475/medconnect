@@ -101,26 +101,59 @@
     } catch (_) { /* ignore */ }
   }
 
+  let searchReturnTab = document.querySelector('[data-pts-tab].is-active')?.dataset.ptsTab || 'security';
+
   document.querySelectorAll('[data-pts-tab]').forEach(function (tab) {
     tab.addEventListener('click', function () {
+      searchReturnTab = tab.dataset.ptsTab;
       activateTab(tab.dataset.ptsTab);
     });
   });
 
   const settingsSearch = document.getElementById('ptsSettingsSearch');
+  const searchEmpty = document.getElementById('ptsSearchEmpty');
   settingsSearch?.addEventListener('input', function () {
     const query = settingsSearch.value.trim().toLowerCase();
+    let labelMatch = '';
+    let bodyMatch = '';
     document.querySelectorAll('.pts-nav__group').forEach(function (group) {
       let visible = 0;
       group.querySelectorAll('[data-pts-tab]').forEach(function (tab) {
-        const label = (tab.textContent || '').toLowerCase();
-        const extra = (tab.dataset.search || '').toLowerCase();
-        const show = !query || label.indexOf(query) !== -1 || extra.indexOf(query) !== -1;
+        const panel = document.getElementById('pts-panel-' + tab.dataset.ptsTab);
+        const label = ((tab.textContent || '') + ' ' + (tab.dataset.search || '')).toLowerCase();
+        const body = (panel ? panel.textContent : '').toLowerCase();
+        const inLabel = !query || label.indexOf(query) !== -1;
+        const inBody = !!query && body.indexOf(query) !== -1;
+        const show = inLabel || inBody;
         tab.hidden = !show;
-        if (show) visible += 1;
+        if (show) {
+          visible += 1;
+          if (inLabel && !labelMatch) labelMatch = tab.dataset.ptsTab;
+          else if (inBody && !bodyMatch) bodyMatch = tab.dataset.ptsTab;
+        }
       });
       group.hidden = visible === 0;
     });
+    const firstId = labelMatch || bodyMatch;
+    if (!query) {
+      if (searchEmpty) searchEmpty.hidden = true;
+      activateTab(searchReturnTab);
+      return;
+    }
+    if (firstId) {
+      if (searchEmpty) searchEmpty.hidden = true;
+      activateTab(firstId);
+      return;
+    }
+    document.querySelectorAll('[data-pts-panel]').forEach(function (panel) {
+      panel.classList.remove('is-active');
+      panel.hidden = true;
+    });
+    document.querySelectorAll('[data-pts-tab]').forEach(function (tab) {
+      tab.classList.remove('is-active');
+      tab.setAttribute('aria-selected', 'false');
+    });
+    if (searchEmpty) searchEmpty.hidden = false;
   });
 
   const initialTab = page?.dataset.initialTab || 'security';

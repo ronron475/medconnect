@@ -290,7 +290,7 @@
     const work = options.beforeRedirect
       ? options.beforeRedirect.then(function (nextUrl) {
           if (nextUrl && typeof nextUrl === 'string') redirectTarget = nextUrl;
-        }).catch(function () {})
+        })
       : Promise.resolve();
 
     const shouldWarmup = options.prefetch !== false && mode === 'login';
@@ -303,12 +303,21 @@
         }).catch(function () {})
       : Promise.resolve();
 
-    Promise.all([minWait, work, dashboardWarmup]).then(finishRedirect);
+    Promise.all([minWait, work, dashboardWarmup]).then(finishRedirect).catch(function () {
+      authActive = false;
+      hideLoaderElement(getOverlay(), true);
+    });
   }
 
   function performLogout() {
     const base = assetBase();
-    const token = global.CSRF_TOKEN || document.body?.dataset?.csrf || document.querySelector('meta[name="csrf-token"]')?.content || '';
+    const themeRoot = document.getElementById('medconnectThemeRoot');
+    const token = global.CSRF_TOKEN
+      || document.body?.dataset?.csrf
+      || themeRoot?.dataset?.csrf
+      || document.querySelector('[data-csrf]')?.dataset?.csrf
+      || document.querySelector('meta[name="csrf-token"]')?.content
+      || '';
     const headers = {
       'X-Requested-With': 'XMLHttpRequest',
       Accept: 'application/json',
@@ -333,8 +342,8 @@
               global.MedConnectAuthSync.notifyLogout();
             }
           } catch (_) { /* ignore */ }
-          if (data && data.success && data.redirect) return data.redirect;
-          return base + '/index.php';
+          if (data && data.success) return data.redirect || (base + '/index.php');
+          throw new Error((data && data.message) || 'Could not sign out.');
         }),
     });
   }

@@ -16,6 +16,8 @@ if (!empty($_SESSION['user_id']) && $pdo instanceof PDO) {
 }
 ?>
   <meta charset="UTF-8"/>
+  <meta name="csrf-token" content="<?= htmlspecialchars((string) ($_SESSION['csrf_token'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"/>
+  <script>window.CSRF_TOKEN = <?= json_encode((string) ($_SESSION['csrf_token'] ?? '')) ?>;</script>
   <?php require_once VIEWS_PATH . '/partials/theme_init.php'; ?>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title><?= htmlspecialchars($page_title) ?> — medConnect</title>
