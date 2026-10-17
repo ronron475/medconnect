@@ -46,8 +46,23 @@ $compact_topbar = $is_admin_portal
     </a>
     <?php endif; ?>
     <?php if ($is_patient_portal): ?>
+    <?php
+    $patientTitleKeys = [
+        'Settings' => 'nav_settings',
+        'Patient Dashboard' => 'nav_dashboard',
+        'Dashboard' => 'nav_dashboard',
+        'My Identity' => 'nav_identity',
+        'Health Summary' => 'nav_health_summary',
+        'My Sessions' => 'nav_my_sessions',
+        'Book Consultation' => 'nav_book',
+        'My Health' => 'nav_my_health',
+        'Messages' => 'nav_messages',
+        'Consultation Details' => 'page_consult_detail',
+    ];
+    $patientTitleKey = $patientTitleKeys[$page_title] ?? '';
+    ?>
     <div class="topbar-title-block">
-      <h1 class="topbar-title"><?= htmlspecialchars($page_title) ?></h1>
+      <h1 class="topbar-title"<?= $patientTitleKey !== '' ? ' data-ui-i18n="' . htmlspecialchars($patientTitleKey, ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($page_title) ?></h1>
     </div>
     <?php else: ?>
     <div class="topbar-title-block">

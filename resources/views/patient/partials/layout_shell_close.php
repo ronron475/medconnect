@@ -21,6 +21,8 @@ require_once VIEWS_PATH . '/partials/portal_dark_mode_close.php';
 <?php require_once VIEWS_PATH . '/components/medconnect_multitask.php'; ?>
 <?php require_once VIEWS_PATH . '/components/session_video_shell.php'; ?>
 <script>window.APP_BASE = window.APP_BASE || <?= json_encode(ASSET_BASE) ?>;</script>
+<?php $ptUiI18nJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-ui-i18n.js'); ?>
+<script src="<?= ASSET_BASE ?>/assets/js/patient-ui-i18n.js?v=<?= $ptUiI18nJsVer ?>"></script>
 <?php $ptI18nJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-triage-i18n.js'); ?>
 <script src="<?= ASSET_BASE ?>/assets/js/patient-triage-i18n.js?v=<?= $ptI18nJsVer ?>" defer></script>
 <?php $ptUrgencyJsVer = (int) @filemtime(ASSETS_PATH . '/js/patient-urgency-modal.js'); ?>

@@ -41,18 +41,18 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
 
   <header class="pts-hero">
     <div class="pts-hero__intro">
-      <p class="pts-hero__eyebrow">Account</p>
-      <h2 class="pts-hero__title">Security &amp; preferences</h2>
-      <p class="pts-hero__text">
+      <p class="pts-hero__eyebrow" data-ui-i18n="account">Account</p>
+      <h2 class="pts-hero__title" data-ui-i18n="security_prefs">Security &amp; preferences</h2>
+      <p class="pts-hero__text" data-ui-i18n="security_prefs_text">
         Update your password, privacy choices, alerts, and signed-in devices in one place.
       </p>
     </div>
     <div class="pts-hero__chips" aria-label="Settings overview">
       <span class="pts-chip pts-chip--teal">
         <span class="pts-chip__dot" aria-hidden="true"></span>
-        Secure account
+        <span data-ui-i18n="secure_account">Secure account</span>
       </span>
-      <span class="pts-chip">
+      <span class="pts-chip" data-ui-i18n="active_sessions" data-ui-count="<?= (int) $session_count ?>">
         <?= (int) $session_count ?> active session<?= $session_count === 1 ? '' : 's' ?>
       </span>
     </div>
@@ -62,14 +62,14 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
     <div class="pts-card__head">
       <div class="pts-card__head-icon pts-card__head-icon--teal"><?= pts_icon('monitor') ?></div>
       <div class="pts-card__head-copy">
-        <h3 class="pts-card__title" id="ptsLanguageTitle">Language</h3>
-        <p class="pts-card__sub">Choose English, Filipino, or Hiligaynon for your account. This page stays in English for now.</p>
+        <h3 class="pts-card__title" id="ptsLanguageTitle" data-ui-i18n="language">Language</h3>
+        <p class="pts-card__sub" data-ui-i18n="language_help">Your choice is saved to this account and applied immediately.</p>
       </div>
     </div>
     <div id="ptsLanguageAlert" class="pts-alert" role="alert" hidden></div>
     <form id="ptsLanguageForm" class="pts-form-grid">
       <div class="pts-field">
-        <label for="ptsLanguage">Language</label>
+        <label for="ptsLanguage" data-ui-i18n="language">Language</label>
         <select id="ptsLanguage" name="language" class="pts-input">
           <?php foreach (['en' => 'English', 'fil' => 'Filipino', 'hil' => 'Hiligaynon'] as $code => $label): ?>
           <option value="<?= $code ?>" <?= ($ui_language ?? 'en') === $code ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
@@ -78,7 +78,7 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
       </div>
       <div class="pts-form-actions pts-field--full">
         <button type="submit" class="pts-btn pts-btn--primary" id="ptsLanguageSubmit">
-          <span class="pts-btn__text">Save Language</span>
+          <span class="pts-btn__text" data-ui-i18n="save_language">Save Language</span>
           <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
         </button>
       </div>
@@ -96,8 +96,8 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
         aria-controls="pts-panel-<?= $id ?>">
         <span class="pts-nav__icon"><?= pts_icon($tab['icon']) ?></span>
         <span class="pts-nav__text">
-          <span class="pts-nav__label"><?= htmlspecialchars($tab['label']) ?></span>
-          <span class="pts-nav__desc"><?= htmlspecialchars($tab['desc']) ?></span>
+          <span class="pts-nav__label" data-ui-i18n="<?= htmlspecialchars($id === 'security' ? 'tab_security' : ($id === 'privacy' ? 'tab_privacy' : ($id === 'notifications' ? 'tab_notifications' : 'tab_sessions')), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($tab['label']) ?></span>
+          <span class="pts-nav__desc" data-ui-i18n="<?= htmlspecialchars($id === 'security' ? 'tab_security_desc' : ($id === 'privacy' ? 'tab_privacy_desc' : ($id === 'notifications' ? 'tab_notifications_desc' : 'tab_sessions_desc')), ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($tab['desc']) ?></span>
         </span>
         <span class="pts-nav__chevron" aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
@@ -119,21 +119,21 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
           <article class="pts-stat">
             <span class="pts-stat__icon pts-stat__icon--teal"><?= pts_icon('clock') ?></span>
             <div class="pts-stat__body">
-              <span class="pts-stat__label">Last login</span>
-              <strong class="pts-stat__value"><?= htmlspecialchars($sec['last_login_label'] ?? 'Not recorded') ?></strong>
+              <span class="pts-stat__label" data-ui-i18n="last_login">Last login</span>
+              <strong class="pts-stat__value"<?= (($sec['last_login_label'] ?? 'Not recorded') === 'Not recorded') ? ' data-ui-i18n="not_recorded"' : '' ?>><?= htmlspecialchars($sec['last_login_label'] ?? 'Not recorded') ?></strong>
             </div>
           </article>
           <article class="pts-stat">
             <span class="pts-stat__icon pts-stat__icon--violet"><?= pts_icon('key') ?></span>
             <div class="pts-stat__body">
-              <span class="pts-stat__label">Password changed</span>
-              <strong class="pts-stat__value"><?= htmlspecialchars($sec['password_changed_label'] ?? 'Not changed') ?></strong>
+              <span class="pts-stat__label" data-ui-i18n="password_changed">Password changed</span>
+              <strong class="pts-stat__value"<?= (($sec['password_changed_label'] ?? '') === 'Not changed since registration') ? ' data-ui-i18n="not_changed"' : '' ?>><?= htmlspecialchars($sec['password_changed_label'] ?? 'Not changed') ?></strong>
             </div>
           </article>
           <article class="pts-stat pts-stat--email">
             <span class="pts-stat__icon pts-stat__icon--blue"><?= pts_icon('mail') ?></span>
             <div class="pts-stat__body">
-              <span class="pts-stat__label">Account email</span>
+              <span class="pts-stat__label" data-ui-i18n="account_email">Account email</span>
               <strong class="pts-stat__value pts-stat__value--email"><?= htmlspecialchars($sec['email'] ?? '') ?></strong>
             </div>
           </article>
@@ -143,8 +143,8 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--lock"><?= pts_icon('lock') ?></div>
             <div class="pts-card__head-copy">
-              <h3 class="pts-card__title">Change Password</h3>
-              <p class="pts-card__sub">Use at least 12 characters with uppercase, lowercase, a number, and a special character.</p>
+              <h3 class="pts-card__title" data-ui-i18n="change_password">Change Password</h3>
+              <p class="pts-card__sub" data-ui-i18n="password_hint">Use at least 12 characters with uppercase, lowercase, a number, and a special character.</p>
             </div>
           </div>
 
@@ -152,9 +152,9 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
 
           <form id="ptsPasswordForm" class="pts-form-grid" novalidate>
             <div class="pts-field pts-field--full">
-              <label for="ptsCurrentPassword">Current password</label>
+              <label for="ptsCurrentPassword" data-ui-i18n="current_password">Current password</label>
               <div class="pts-input-group">
-                <input type="password" id="ptsCurrentPassword" name="current_password" class="pts-input pts-input--pw" autocomplete="current-password" required placeholder="Enter current password">
+                <input type="password" id="ptsCurrentPassword" name="current_password" class="pts-input pts-input--pw" autocomplete="current-password" required placeholder="Enter current password" data-ui-i18n="ph_current" data-ui-i18n-attr="placeholder">
                 <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsCurrentPassword" aria-label="Show current password" aria-pressed="false">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 </button>
@@ -162,9 +162,9 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
             </div>
 
             <div class="pts-field">
-              <label for="ptsNewPassword">New password</label>
+              <label for="ptsNewPassword" data-ui-i18n="new_password">New password</label>
               <div class="pts-input-group">
-                <input type="password" id="ptsNewPassword" name="new_password" class="pts-input pts-input--pw" autocomplete="new-password" required minlength="12" placeholder="At least 12 characters">
+                <input type="password" id="ptsNewPassword" name="new_password" class="pts-input pts-input--pw" autocomplete="new-password" required minlength="12" placeholder="At least 12 characters" data-ui-i18n="ph_new" data-ui-i18n-attr="placeholder">
                 <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsNewPassword" aria-label="Show new password" aria-pressed="false">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 </button>
@@ -172,9 +172,9 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
             </div>
 
             <div class="pts-field">
-              <label for="ptsConfirmPassword">Confirm new password</label>
+              <label for="ptsConfirmPassword" data-ui-i18n="confirm_password">Confirm new password</label>
               <div class="pts-input-group">
-                <input type="password" id="ptsConfirmPassword" name="confirm_password" class="pts-input pts-input--pw" autocomplete="new-password" required placeholder="Re-enter new password">
+                <input type="password" id="ptsConfirmPassword" name="confirm_password" class="pts-input pts-input--pw" autocomplete="new-password" required placeholder="Re-enter new password" data-ui-i18n="ph_confirm" data-ui-i18n-attr="placeholder">
                 <button type="button" class="pts-input-action pts-toggle-pw" data-target="ptsConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 </button>
@@ -184,24 +184,24 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
 
             <div class="pts-validation pts-field--full" aria-label="Password strength and requirements">
               <div class="pts-validation__head">
-                <div class="pts-validation__title">Password strength</div>
-                <div id="ptsStrengthLabel" class="pts-validation__label" aria-live="polite">Weak</div>
+                <div class="pts-validation__title" data-ui-i18n="password_strength">Password strength</div>
+                <div id="ptsStrengthLabel" class="pts-validation__label" aria-live="polite" data-ui-i18n="pw_weak">Weak</div>
               </div>
               <div class="pts-validation__bar" aria-hidden="true">
                 <span id="ptsStrengthFill" class="pts-validation__fill"></span>
               </div>
               <ul class="pts-validation__grid" id="ptsReqList" aria-label="Password requirements">
-                <li data-req="len"><span class="pts-req-dot" aria-hidden="true"></span>At least 12 characters</li>
-                <li data-req="upper"><span class="pts-req-dot" aria-hidden="true"></span>One uppercase letter</li>
-                <li data-req="lower"><span class="pts-req-dot" aria-hidden="true"></span>One lowercase letter</li>
-                <li data-req="digit"><span class="pts-req-dot" aria-hidden="true"></span>One number</li>
-                <li data-req="special"><span class="pts-req-dot" aria-hidden="true"></span>One special character</li>
+                <li data-req="len"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_len">At least 12 characters</span></li>
+                <li data-req="upper"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_upper">One uppercase letter</span></li>
+                <li data-req="lower"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_lower">One lowercase letter</span></li>
+                <li data-req="digit"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_digit">One number</span></li>
+                <li data-req="special"><span class="pts-req-dot" aria-hidden="true"></span><span data-ui-i18n="req_special">One special character</span></li>
               </ul>
             </div>
 
             <div class="pts-form-actions pts-field--full">
               <button type="submit" class="pts-btn pts-btn--primary" id="ptsPasswordSubmit">
-                <span class="pts-btn__text">Update Password</span>
+                <span class="pts-btn__text" data-ui-i18n="update_password">Update Password</span>
                 <span class="pts-btn__spinner" hidden aria-hidden="true"></span>
               </button>
             </div>
@@ -220,8 +220,8 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--shield"><?= pts_icon('shield') ?></div>
             <div class="pts-card__head-copy">
-              <h3 class="pts-card__title">Privacy Preferences</h3>
-              <p class="pts-card__sub">Control how your medical data is shared within the medConnect care network.</p>
+              <h3 class="pts-card__title" data-ui-i18n="privacy_title">Privacy Preferences</h3>
+              <p class="pts-card__sub" data-ui-i18n="privacy_sub">Control how your medical data is shared within the medConnect care network.</p>
             </div>
           </div>
           <div id="ptsPrivacyAlert" class="pts-alert" role="alert" hidden></div>
@@ -230,29 +230,29 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
               <input type="checkbox" name="share_medical_records" value="1" <?= !empty($privacy['share_medical_records']) ? 'checked' : '' ?>>
               <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
               <span class="pts-toggle__text">
-                <strong>Provider access to medical records</strong>
-                <small>Allow authorized healthcare providers to view your permanent profile and care records during consultations.</small>
+                <strong data-ui-i18n="privacy_records">Provider access to medical records</strong>
+                <small data-ui-i18n="privacy_records_sub">Allow authorized healthcare providers to view your permanent profile and care records during consultations.</small>
               </span>
             </label>
             <label class="pts-toggle">
               <input type="checkbox" name="emergency_access_consent" value="1" <?= !empty($privacy['emergency_access_consent']) ? 'checked' : '' ?>>
               <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
               <span class="pts-toggle__text">
-                <strong>Emergency access consent</strong>
-                <small>Allow emergency clinical staff to access critical health information when medically necessary.</small>
+                <strong data-ui-i18n="privacy_emergency">Emergency access consent</strong>
+                <small data-ui-i18n="privacy_emergency_sub">Allow emergency clinical staff to access critical health information when medically necessary.</small>
               </span>
             </label>
             <label class="pts-toggle pts-toggle--required">
               <input type="checkbox" name="data_privacy_acknowledged" value="1" <?= !empty($privacy['data_privacy_acknowledged']) ? 'checked' : '' ?> required>
               <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
               <span class="pts-toggle__text">
-                <strong>Data privacy acknowledgment</strong>
-                <small>I understand how medConnect collects, stores, and protects my personal health information.</small>
+                <strong data-ui-i18n="privacy_ack">Data privacy acknowledgment</strong>
+                <small data-ui-i18n="privacy_ack_sub">I understand how medConnect collects, stores, and protects my personal health information.</small>
               </span>
             </label>
             <div class="pts-form-actions">
               <button type="submit" class="pts-btn pts-btn--primary">
-                <span class="pts-btn__text">Save Privacy Preferences</span>
+                <span class="pts-btn__text" data-ui-i18n="save_privacy">Save Privacy Preferences</span>
                 <span class="pts-btn__spinner" hidden></span>
               </button>
             </div>
@@ -271,39 +271,39 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--bell"><?= pts_icon('bell') ?></div>
             <div class="pts-card__head-copy">
-              <h3 class="pts-card__title">Notification Settings</h3>
-              <p class="pts-card__sub">Choose which alerts you receive in-app and by email.</p>
+              <h3 class="pts-card__title" data-ui-i18n="notif_title">Notification Settings</h3>
+              <p class="pts-card__sub" data-ui-i18n="notif_sub">Choose which alerts you receive in-app and by email.</p>
             </div>
           </div>
           <div id="ptsNotifAlert" class="pts-alert" role="alert" hidden></div>
           <form id="ptsNotifForm">
             <div class="pts-notif-group">
-              <h4 class="pts-notif-group__title">Delivery channels</h4>
+              <h4 class="pts-notif-group__title" data-ui-i18n="delivery">Delivery channels</h4>
               <div class="pts-toggle-list pts-toggle-list--compact">
                 <label class="pts-toggle">
                   <input type="checkbox" name="in_app_notifications" value="1" <?= !empty($notif['in_app_notifications']) ? 'checked' : '' ?>>
                   <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
-                  <span class="pts-toggle__text"><strong>In-app notifications</strong><small>Bell alerts inside medConnect.</small></span>
+                  <span class="pts-toggle__text"><strong data-ui-i18n="in_app">In-app notifications</strong><small data-ui-i18n="in_app_sub">Bell alerts inside medConnect.</small></span>
                 </label>
                 <label class="pts-toggle">
                   <input type="checkbox" name="email_notifications" value="1" <?= !empty($notif['email_notifications']) ? 'checked' : '' ?>>
                   <span class="pts-toggle__track"><span class="pts-toggle__thumb"></span></span>
-                  <span class="pts-toggle__text"><strong>Email notifications</strong><small>Sent to your registered email when available.</small></span>
+                  <span class="pts-toggle__text"><strong data-ui-i18n="email_notif">Email notifications</strong><small data-ui-i18n="email_notif_sub">Sent to your registered email when available.</small></span>
                 </label>
               </div>
             </div>
             <div class="pts-notif-group">
-              <h4 class="pts-notif-group__title">Alert types</h4>
+              <h4 class="pts-notif-group__title" data-ui-i18n="alert_types">Alert types</h4>
               <div class="pts-notif-grid">
                 <?php
                 $notif_items = [
-                  'appointment_reminders' => ['Appointment reminders', 'Before scheduled visits'],
-                  'consultation_updates' => ['Consultation updates', 'Join links & status changes'],
-                  'followup_reminders' => ['Follow-up reminders', 'Provider action items'],
-                  'prescription_notifications' => ['Prescription notifications', 'New or updated prescriptions'],
-                  'system_announcements' => ['System announcements', 'Platform news & maintenance'],
+                  'appointment_reminders' => ['Appointment reminders', 'Before scheduled visits', 'appt_rem', 'appt_rem_sub'],
+                  'consultation_updates' => ['Consultation updates', 'Join links & status changes', 'consult_upd', 'consult_upd_sub'],
+                  'followup_reminders' => ['Follow-up reminders', 'Provider action items', 'follow_rem', 'follow_rem_sub'],
+                  'prescription_notifications' => ['Prescription notifications', 'New or updated prescriptions', 'rx_notif', 'rx_notif_sub'],
+                  'system_announcements' => ['System announcements', 'Platform news & maintenance', 'sys_ann', 'sys_ann_sub'],
                 ];
-                foreach ($notif_items as $key => [$title, $sub]):
+                foreach ($notif_items as $key => [$title, $sub, $titleKey, $subKey]):
                 ?>
                 <label class="pts-notif-chip">
                   <input type="checkbox" name="<?= $key ?>" value="1" <?= !empty($notif[$key]) ? 'checked' : '' ?>>
@@ -311,8 +311,8 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                   </span>
                   <span class="pts-notif-chip__text">
-                    <strong><?= htmlspecialchars($title) ?></strong>
-                    <small><?= htmlspecialchars($sub) ?></small>
+                    <strong data-ui-i18n="<?= htmlspecialchars($titleKey, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($title) ?></strong>
+                    <small data-ui-i18n="<?= htmlspecialchars($subKey, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($sub) ?></small>
                   </span>
                 </label>
                 <?php endforeach; ?>
@@ -320,7 +320,7 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
             </div>
             <div class="pts-form-actions">
               <button type="submit" class="pts-btn pts-btn--primary">
-                <span class="pts-btn__text">Save Notification Settings</span>
+                <span class="pts-btn__text" data-ui-i18n="save_notif">Save Notification Settings</span>
                 <span class="pts-btn__spinner" hidden></span>
               </button>
             </div>
@@ -340,18 +340,18 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
             <div class="pts-card__head-main">
               <div class="pts-card__head-icon pts-card__head-icon--monitor"><?= pts_icon('monitor') ?></div>
               <div class="pts-card__head-copy">
-                <h3 class="pts-card__title">Active Sessions</h3>
-                <p class="pts-card__sub">Devices signed in to your account in the last 7 days.</p>
+                <h3 class="pts-card__title" data-ui-i18n="active_sessions_title">Active Sessions</h3>
+                <p class="pts-card__sub" data-ui-i18n="active_sessions_sub">Devices signed in to your account in the last 7 days.</p>
               </div>
             </div>
-            <button type="button" class="pts-btn pts-btn--danger-outline" id="ptsLogoutAllBtn">Logout All Devices</button>
+            <button type="button" class="pts-btn pts-btn--danger-outline" id="ptsLogoutAllBtn" data-ui-i18n="logout_all">Logout All Devices</button>
           </div>
           <div id="ptsSessionsAlert" class="pts-alert" role="alert" hidden></div>
 
           <?php if (empty($sessions)): ?>
             <div class="pts-empty-state">
               <span class="pts-empty-state__icon"><?= pts_icon('monitor') ?></span>
-              <p>No active sessions recorded in the last 7 days.</p>
+              <p data-ui-i18n="no_sessions">No active sessions recorded in the last 7 days.</p>
             </div>
           <?php else: ?>
             <ul class="pts-session-list" id="ptsSessionList">
@@ -376,9 +376,9 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
                   <?php endif; ?>
                 </div>
                 <?php if (!empty($sess['is_current'])): ?>
-                  <span class="pts-badge pts-badge--current">This device</span>
+                  <span class="pts-badge pts-badge--current" data-ui-i18n="this_device">This device</span>
                 <?php else: ?>
-                  <button type="button" class="pts-btn pts-btn--ghost pts-session-end" data-session-id="<?= (int) $sess['id'] ?>">End session</button>
+                  <button type="button" class="pts-btn pts-btn--ghost pts-session-end" data-session-id="<?= (int) $sess['id'] ?>" data-ui-i18n="end_session">End session</button>
                 <?php endif; ?>
               </li>
               <?php endforeach; ?>
@@ -391,8 +391,8 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
           <div class="pts-card__head">
             <div class="pts-card__head-icon pts-card__head-icon--monitor"><?= pts_icon('monitor') ?></div>
             <div class="pts-card__head-copy">
-              <h3 class="pts-card__title">Known Devices</h3>
-              <p class="pts-card__sub">Browsers and devices previously used with this account.</p>
+              <h3 class="pts-card__title" data-ui-i18n="known_devices">Known Devices</h3>
+              <p class="pts-card__sub" data-ui-i18n="known_devices_sub">Browsers and devices previously used with this account.</p>
             </div>
           </div>
           <ul class="pts-device-list">

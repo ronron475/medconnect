@@ -139,8 +139,12 @@
 
     // Map 0..5 checks -> 0..4 levels with required labels.
     const level = met >= 5 ? 4 : met >= 4 ? 3 : met >= 3 ? 2 : met >= 2 ? 1 : 0;
-    const labels = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
-    return { met, level, label: pw ? labels[level] : 'Weak', checks: checks };
+    const labelKeys = ['pw_weak', 'pw_fair', 'pw_good', 'pw_strong', 'pw_vstrong'];
+    const fallbacks = ['Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    const label = window.McPatientUiI18n
+      ? window.McPatientUiI18n.t(pw ? labelKeys[level] : 'pw_weak')
+      : (pw ? fallbacks[level] : 'Weak');
+    return { met, level, label: label, checks: checks };
   }
 
   function updatePasswordUI() {
@@ -163,11 +167,11 @@
         matchHint.hidden = true;
       } else if (confirmPw.value === pw) {
         matchHint.hidden = false;
-        matchHint.textContent = 'Passwords match';
+        matchHint.textContent = window.McPatientUiI18n ? window.McPatientUiI18n.t('passwords_match') : 'Passwords match';
         matchHint.className = 'pts-match-hint is-ok';
       } else {
         matchHint.hidden = false;
-        matchHint.textContent = 'Passwords do not match';
+        matchHint.textContent = window.McPatientUiI18n ? window.McPatientUiI18n.t('passwords_mismatch') : 'Passwords do not match';
         matchHint.className = 'pts-match-hint is-bad';
       }
     }
@@ -175,6 +179,7 @@
 
   newPw?.addEventListener('input', updatePasswordUI);
   confirmPw?.addEventListener('input', updatePasswordUI);
+  document.addEventListener('mc-ui-language', updatePasswordUI);
 
   async function postForm(url, fd, btn) {
     setLoading(btn, true);
@@ -238,8 +243,8 @@
     try {
       const data = await postForm((window.APP_BASE || '') + '/app/api/language/save.php', fd, btn);
       const saved = (data.data && data.data.language) || fd.get('language') || 'en';
-      document.documentElement.lang = saved;
-      showPanelAlert('ptsLanguageAlert', data.message, 'success');
+      if (window.McPatientUiI18n) window.McPatientUiI18n.apply(saved);
+      showPanelAlert('ptsLanguageAlert', window.McPatientUiI18n ? window.McPatientUiI18n.t('language_saved') : data.message, 'success');
     } catch (err) {
       showPanelAlert('ptsLanguageAlert', err.message || 'Could not save.', 'error');
     }

@@ -68,7 +68,19 @@ $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'prof
            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <?= $icon ?>
       </svg>
-      <span class="sb-label"><?= htmlspecialchars($label) ?></span>
+      <?php
+      $navUiKey = [
+          'Dashboard' => 'nav_dashboard',
+          'My Identity' => 'nav_identity',
+          'Health Summary' => 'nav_health_summary',
+          'My Sessions' => 'nav_my_sessions',
+          'Book Consultation' => 'nav_book',
+          'My Health' => 'nav_my_health',
+          'Messages' => 'nav_messages',
+          'Settings' => 'nav_settings',
+      ][$label] ?? '';
+      ?>
+      <span class="sb-label"<?= $navUiKey !== '' ? ' data-ui-i18n="' . htmlspecialchars($navUiKey, ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($label) ?></span>
       <?php if ($badgeKey !== null):
           $portal_nav_badge_key = $badgeKey;
           $portal_nav_badge_count = portal_nav_badge_count_for_item('patient', $file, null, $portal_nav_badge_counts_data);
@@ -103,12 +115,12 @@ $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'prof
         <div class="sb-avatar" data-profile-avatar-wrap><?= profile_picture_render($initials, $sidebar_picture_url, '', 'sm') ?></div>
         <div class="sb-profile-info">
           <div class="sb-name"><?= htmlspecialchars($full_name) ?></div>
-          <div class="sb-role">Role: PATIENT</div>
+          <div class="sb-role" data-ui-i18n="role_patient">Role: PATIENT</div>
         </div>
       </div>
       <div class="sb-patient-badges">
         <span class="sb-patient-id"><?= htmlspecialchars($sidebar_patient_id) ?></span>
-        <span class="sb-patient-verified<?= $sidebar_patient_verified ? '' : ' sb-patient-verified--pending' ?>"><?= $sidebar_patient_verified ? 'VERIFIED' : 'PENDING' ?></span>
+        <span class="sb-patient-verified<?= $sidebar_patient_verified ? '' : ' sb-patient-verified--pending' ?>" data-ui-i18n="<?= $sidebar_patient_verified ? 'badge_verified' : 'badge_pending' ?>"><?= $sidebar_patient_verified ? 'VERIFIED' : 'PENDING' ?></span>
       </div>
     </div>
     <button id="sb-logout-btn" class="sb-logout" type="button" data-logout-trigger>
@@ -118,7 +130,7 @@ $patient_direct_pages = ['dashboard.php', 'messages.php', 'my_health.php', 'prof
         <polyline points="16 17 21 12 16 7"/>
         <line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
-      <span class="sb-label">Logout</span>
+      <span class="sb-label" data-ui-i18n="nav_logout">Logout</span>
     </button>
   </div>
   <?php endif; ?>

@@ -17,7 +17,7 @@ $icon = $current_theme === 'dark' ? '🌙' : ($current_theme === 'light' ? '☀'
     aria-expanded="false"
   >
     <span class="mc-theme-toggle__icon" aria-hidden="true"><?= $icon ?></span>
-    <span class="mc-theme-toggle__label">Theme</span>
+    <span class="mc-theme-toggle__label"<?= (($_SESSION['user_role'] ?? '') === 'patient') ? ' data-ui-i18n="theme"' : '' ?>>Theme</span>
   </button>
   <div class="mc-theme-toggle__menu" role="menu" aria-label="Theme options">
     <?php foreach ($theme_labels as $value => $meta): ?>
@@ -29,7 +29,7 @@ $icon = $current_theme === 'dark' ? '🌙' : ($current_theme === 'light' ? '☀'
       aria-checked="<?= $current_theme === $value ? 'true' : 'false' ?>"
     >
       <span aria-hidden="true"><?= $meta['icon'] ?></span>
-      <span><?= htmlspecialchars($meta['label']) ?></span>
+      <span<?= (($_SESSION['user_role'] ?? '') === 'patient') ? ' data-ui-i18n="' . htmlspecialchars($value === 'system' ? 'theme_system' : ($value === 'light' ? 'theme_light' : 'theme_dark'), ENT_QUOTES, 'UTF-8') . '"' : '' ?>><?= htmlspecialchars($meta['label']) ?></span>
     </button>
     <?php endforeach; ?>
   </div>
