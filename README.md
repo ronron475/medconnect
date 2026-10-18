@@ -25,7 +25,6 @@ medconnect/
 │   └── app/api/         # Junction to ../app/api (create on deploy)
 ├── resources/
 │   └── views/           # Portal templates (not directly web-accessible)
-├── routes/              # Route maps (web + api)
 ├── scripts/             # Dev tools and data builders
 ├── storage/             # Logs, uploads, cache, recordings
 ├── vendor/              # Composer dependencies (PHPMailer, etc.)

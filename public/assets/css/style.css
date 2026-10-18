@@ -254,8 +254,6 @@ body::before {
   text-transform: uppercase;
 }
 
-/* Hero search — see landing-hero-search.css */
-
 .visually-hidden {
   position: absolute;
   width: 1px;
