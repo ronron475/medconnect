@@ -1,7 +1,7 @@
 <?php
 /**
  * Stream the provider-signed SOAP PDF for a consultation.
- * Provider: owner of the consultation. Patient: owner, only after the consultation is finalized.
+ * The owning provider and the owning patient may download it only after the note is finalized.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
@@ -16,6 +16,9 @@ if ($uid <= 0 || $role === '') {
     exit;
 }
 
+// Ends the session and redirects when the account is gone, deactivated, or the role/epoch no longer matches.
+auth_ensure_session_user_valid($pdo);
+
 $consultationId = (int) ($_GET['consultation_id'] ?? 0);
 if ($consultationId <= 0) {
     http_response_code(400);
@@ -28,7 +31,7 @@ patient_consultation_records_schema_ensure($pdo);
 $stmt = $pdo->prepare('
     SELECT c.patient_id, c.provider_id, c.status,
            cn.provider_id AS note_provider_id, cn.signature_data, cn.finalized_at,
-           cn.signed_pdf_path, cn.signed_pdf_name
+           cn.signed_pdf_path, cn.signed_pdf_name, cn.signed_pdf_sha256
     FROM consultations c
     JOIN clinical_notes cn ON cn.consultation_id = c.id
     WHERE c.id = ?
@@ -51,16 +54,18 @@ $isFinalized = patient_consultation_is_finalized(
 
 $allowed = ($role === 'provider'
         && $uid === (int) ($row['provider_id'] ?? 0)
-        && $uid === (int) ($row['note_provider_id'] ?? 0))
+        && $uid === (int) ($row['note_provider_id'] ?? 0)
+        && $isFinalized)
     || ($role === 'patient' && $uid === (int) ($row['patient_id'] ?? 0) && $isFinalized);
 if (!$allowed) {
-    http_response_code(403);
-    echo 'Access denied.';
+    http_response_code(404);
+    echo 'Signed SOAP note not found.';
     exit;
 }
 
 $abs = clinical_note_signed_pdf_abs_path((string) ($row['signed_pdf_path'] ?? ''));
-if ($abs === null) {
+$storedHash = (string) ($row['signed_pdf_sha256'] ?? '');
+if ($abs === null || !clinical_note_signed_pdf_hash_matches($abs, $storedHash)) {
     http_response_code(404);
     echo 'The signed SOAP PDF is not available for this consultation.';
     exit;

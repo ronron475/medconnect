@@ -180,6 +180,54 @@ function clinical_note_signed_pdf_dir(): string
 }
 
 /**
+ * Extension, size, MIME, and PDF-header checks for a local file.
+ * HTTP upload status is enforced separately by clinical_note_signed_pdf_validate_upload().
+ *
+ * @return array{ok:bool,message:string}
+ */
+function clinical_note_signed_pdf_validate_file(string $path, string $originalName): array
+{
+    $missing = 'Please upload the signed SOAP note PDF before finalizing.';
+    $maxMb = (int) round(CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES / 1048576);
+    $tooLarge = 'The signed PDF is too large. Maximum size is ' . $maxMb . ' MB.';
+
+    if ($path === '' || !is_file($path)) {
+        return ['ok' => false, 'message' => $missing];
+    }
+
+    $size = (int) @filesize($path);
+    if ($size <= 0) {
+        return ['ok' => false, 'message' => 'The signed PDF is empty. Please choose another file.'];
+    }
+    if ($size > CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES) {
+        return ['ok' => false, 'message' => $tooLarge];
+    }
+
+    $ext = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+    if ($ext !== 'pdf') {
+        return ['ok' => false, 'message' => 'Only PDF files are accepted for the signed SOAP note.'];
+    }
+
+    if (class_exists('finfo')) {
+        $mime = (string) ((new finfo(FILEINFO_MIME_TYPE))->file($path) ?: '');
+        if (!in_array($mime, ['application/pdf', 'application/x-pdf'], true)) {
+            return ['ok' => false, 'message' => 'Only PDF files are accepted for the signed SOAP note.'];
+        }
+    }
+
+    $fh = @fopen($path, 'rb');
+    $head = $fh ? (string) fread($fh, 5) : '';
+    if ($fh) {
+        fclose($fh);
+    }
+    if ($head !== '%PDF-') {
+        return ['ok' => false, 'message' => 'The uploaded file is not a valid PDF.'];
+    }
+
+    return ['ok' => true, 'message' => ''];
+}
+
+/**
  * @param mixed $file One entry from $_FILES
  * @return array{ok:bool,message:string}
  */
@@ -209,36 +257,29 @@ function clinical_note_signed_pdf_validate_upload($file): array
         return ['ok' => false, 'message' => $missing];
     }
 
-    $size = (int) @filesize($tmp);
-    if ($size <= 0) {
-        return ['ok' => false, 'message' => 'The signed PDF is empty. Please choose another file.'];
+    return clinical_note_signed_pdf_validate_file($tmp, (string) ($file['name'] ?? ''));
+}
+
+/**
+ * Integrity check for a stored SOAP PDF. This compares bytes with the stored
+ * SHA-256; it does not prove who signed the document.
+ */
+function clinical_note_signed_pdf_hash_matches(string $abs, string $expected): bool
+{
+    $expected = strtolower(trim($expected));
+    if (!preg_match('/^[a-f0-9]{64}$/', $expected)) {
+        return false;
     }
-    if ($size > CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES) {
-        return ['ok' => false, 'message' => $tooLarge];
+    if ($abs === '' || !is_file($abs) || !is_readable($abs)) {
+        return false;
     }
 
-    $ext = strtolower((string) pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
-    if ($ext !== 'pdf') {
-        return ['ok' => false, 'message' => 'Only PDF files are accepted for the signed SOAP note.'];
+    $actual = @hash_file('sha256', $abs);
+    if (!is_string($actual) || !preg_match('/^[a-f0-9]{64}$/', strtolower($actual))) {
+        return false;
     }
 
-    if (class_exists('finfo')) {
-        $mime = (string) ((new finfo(FILEINFO_MIME_TYPE))->file($tmp) ?: '');
-        if (!in_array($mime, ['application/pdf', 'application/x-pdf'], true)) {
-            return ['ok' => false, 'message' => 'Only PDF files are accepted for the signed SOAP note.'];
-        }
-    }
-
-    $fh = @fopen($tmp, 'rb');
-    $head = $fh ? (string) fread($fh, 5) : '';
-    if ($fh) {
-        fclose($fh);
-    }
-    if ($head !== '%PDF-') {
-        return ['ok' => false, 'message' => 'The uploaded file is not a valid PDF.'];
-    }
-
-    return ['ok' => true, 'message' => ''];
+    return hash_equals($expected, strtolower($actual));
 }
 
 /**

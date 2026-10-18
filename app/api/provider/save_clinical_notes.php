@@ -216,18 +216,6 @@ if ($alreadyFinalized) {
             $data['final_urgency_bucket'] = $finalUrgencyBucket;
             $data['final_urgency_note'] = $finalUrgencyNote;
         }
-
-        $storedPdf = clinical_note_signed_pdf_store($signedPdfUpload, (int) $data['consultation_id']);
-        if (!$storedPdf['ok']) {
-            echo json_encode(['success' => false, 'message' => $storedPdf['message']]);
-            exit;
-        }
-        $data['signed_pdf_path'] = $storedPdf['path'];
-        $data['signed_pdf_abs'] = $storedPdf['abs'];
-        $data['signed_pdf_name'] = $storedPdf['name'];
-        $data['signed_pdf_size'] = $storedPdf['size'];
-        $data['signed_pdf_sha256'] = $storedPdf['sha256'];
-        $data['signature'] = 'signed_pdf:' . $storedPdf['sha256'];
     }
 
 try {
@@ -262,6 +250,61 @@ try {
     }
 
     $pdo->beginTransaction();
+
+    $lockConsult = $pdo->prepare('
+        SELECT id, patient_id, provider_id
+        FROM consultations
+        WHERE id = ? AND provider_id = ?
+        LIMIT 1
+        FOR UPDATE
+    ');
+    $lockConsult->execute([(int) $data['consultation_id'], (int) $data['provider_id']]);
+    $lockedConsult = $lockConsult->fetch(PDO::FETCH_ASSOC) ?: null;
+    if (!$lockedConsult || (int) ($lockedConsult['patient_id'] ?? 0) !== (int) $data['patient_id']) {
+        $pdo->rollBack();
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'You are not authorized to sign or finalize this SOAP note.']);
+        exit;
+    }
+
+    $lockNote = $pdo->prepare('
+        SELECT provider_id, signature_data, finalized_at, signed_pdf_path
+        FROM clinical_notes
+        WHERE consultation_id = ?
+        LIMIT 1
+        FOR UPDATE
+    ');
+    $lockNote->execute([(int) $data['consultation_id']]);
+    $lockedNote = $lockNote->fetch(PDO::FETCH_ASSOC) ?: null;
+    $lockedFinalized = $lockedNote && (
+        trim((string) ($lockedNote['finalized_at'] ?? '')) !== ''
+        || trim((string) ($lockedNote['signature_data'] ?? '')) !== ''
+        || trim((string) ($lockedNote['signed_pdf_path'] ?? '')) !== ''
+    );
+    if ($lockedNote && (int) ($lockedNote['provider_id'] ?? 0) !== (int) $data['provider_id']) {
+        $pdo->rollBack();
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'You are not authorized to sign or finalize this SOAP note.']);
+        exit;
+    }
+    if ($lockedFinalized) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'This SOAP note has already been finalized and cannot be edited.']);
+        exit;
+    }
+
+    $storedPdf = clinical_note_signed_pdf_store($signedPdfUpload, (int) $data['consultation_id']);
+    if (!$storedPdf['ok']) {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => $storedPdf['message']]);
+        exit;
+    }
+    $data['signed_pdf_path'] = $storedPdf['path'];
+    $data['signed_pdf_abs'] = $storedPdf['abs'];
+    $data['signed_pdf_name'] = $storedPdf['name'];
+    $data['signed_pdf_size'] = $storedPdf['size'];
+    $data['signed_pdf_sha256'] = $storedPdf['sha256'];
+    $data['signature'] = 'signed_pdf:' . $storedPdf['sha256'];
 
     $stmt = $pdo->prepare("
         INSERT INTO clinical_notes
