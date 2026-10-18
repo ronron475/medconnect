@@ -19,6 +19,7 @@ if (!defined('STORAGE_PATH')) {
 }
 
 require_once $root . '/app/includes/clinical_note_signature.php';
+require_once $root . '/app/includes/clinical_note_pdf.php';
 require_once $root . '/app/includes/patient_consultation_records.php';
 
 $pass = 0;
@@ -312,20 +313,132 @@ pdf_assert(substr_count($endpoint, 'http_response_code(404)') === 3, 'missing no
 pdf_assert(!str_contains($endpoint, 'Access denied.'), 'unauthorized notes no longer use a distinct denial message');
 pdf_assert(str_contains($endpoint, 'http_response_code(400)') && str_contains($endpoint, 'Consultation ID is required.'), 'an invalid consultation id stays HTTP 400');
 pdf_assert(str_contains($endpoint, 'The signed SOAP PDF is not available for this consultation.'), 'missing files and hash failures keep the generic unavailable response');
+pdf_assert(!str_contains($endpoint, 'signature_method'), 'an older uploaded PDF stays readable without a generated-pdf method check');
 
 $save = (string) file_get_contents($root . '/app/api/provider/save_clinical_notes.php');
 $txAt = strpos($save, '$pdo->beginTransaction()');
 $afterTx = $txAt === false ? '' : substr($save, $txAt);
 $consultLockAt = strpos($afterTx, 'FROM consultations');
 $noteLockAt = strpos($afterTx, 'FROM clinical_notes');
-$storeAt = strpos($afterTx, 'clinical_note_signed_pdf_store(');
+$renderAt = strpos($afterTx, 'clinical_note_pdf_render(');
+$emptyAt = strpos($afterTx, "if (\$pdfBytes === '')");
+$storeAt = strpos($afterTx, 'clinical_note_signed_pdf_store_contents(');
 $insertAt = $txAt === false ? false : strpos($save, 'signed_pdf_path, signed_pdf_name, signed_pdf_size, signed_pdf_sha256', $txAt);
-pdf_assert($txAt !== false && $consultLockAt !== false && $noteLockAt !== false && $storeAt !== false, 'finalize reaches a transaction, row locks, and PDF storage');
-pdf_assert($consultLockAt < $noteLockAt && $noteLockAt < $storeAt, 'finalize locks the consultation and note before storing the PDF');
+pdf_assert($txAt !== false && $consultLockAt !== false && $noteLockAt !== false && $renderAt !== false && $storeAt !== false, 'finalize reaches a transaction, row locks, PDF generation, and storage');
+pdf_assert($consultLockAt < $noteLockAt && $noteLockAt < $renderAt && $renderAt < $storeAt, 'finalize locks the consultation and note before generating and storing the PDF');
+pdf_assert($emptyAt !== false && $renderAt < $emptyAt && $emptyAt < $storeAt, 'failed PDF generation rolls back before a file is stored');
 pdf_assert(substr_count($save, 'FOR UPDATE') === 2, 'both locked reads use FOR UPDATE');
 pdf_assert($insertAt !== false && ($txAt + $storeAt) < $insertAt, 'the PDF is stored before the note row records its path');
+pdf_assert(str_contains($save, "'generated_pdf'"), 'finalization records the generated PDF method');
+pdf_assert(!str_contains($save, "\$_FILES['signed_pdf']"), 'finalization does not accept an uploaded PDF');
 pdf_assert(str_contains($save, 'already been finalized'), 'the locked section rechecks the finalized state');
 pdf_assert(str_contains($save, "unlink(\$data['signed_pdf_abs'])") || str_contains($save, 'unlink($data[\'signed_pdf_abs\'])'), 'rollback still removes only the file created by the failed request');
+
+$preview = (string) file_get_contents($root . '/app/api/provider/preview_soap_pdf.php');
+pdf_assert(str_contains($preview, "'preview' => true"), 'preview asks for a preview document');
+pdf_assert(str_contains($preview, 'clinical_note_pdf_render('), 'preview generates the PDF from the submitted note');
+pdf_assert(!str_contains($preview, 'prescription_issue('), 'preview does not issue a prescription');
+pdf_assert(!str_contains($preview, 'beginTransaction('), 'preview does not open a clinical-note transaction');
+pdf_assert(!str_contains($preview, 'clinical_note_signed_pdf_store'), 'preview does not store a signed PDF');
+pdf_assert(!str_contains($preview, 'INSERT INTO clinical_notes'), 'preview does not save a clinical note');
+
+$generated = clinical_note_pdf_render([
+    'consultation_id' => 501,
+    'subjective' => 'SUBJTOKEN9f3a',
+    'objective' => 'OBJTOKEN9f3a Niño',
+    'assessment' => 'ASSESS9f3a',
+    'plan' => 'PLANTOKEN9f3a',
+    'diagnosis' => 'A09 – Infectious gastroenteritis and colitis, unspecified',
+    'prescription' => 'RXTOKEN9f3a 500 mg',
+    'provider_name' => 'Ana Cruz',
+    'signed_at' => '2026-10-19 00:15:00',
+    'preview' => false,
+]);
+pdf_assert(str_starts_with($generated, '%PDF-'), 'the generator returns a PDF');
+pdf_assert(str_contains($generated, 'SUBJTOKEN9f3a'), 'the PDF contains the subjective text');
+pdf_assert(str_contains($generated, 'OBJTOKEN9f3a'), 'the PDF contains the objective text');
+pdf_assert(str_contains($generated, clinical_note_pdf_encode('Niño')), 'the PDF keeps a Latin-1 special character');
+pdf_assert(str_contains($generated, 'ASSESS9f3a'), 'the PDF contains the assessment text');
+pdf_assert(str_contains($generated, 'PLANTOKEN9f3a'), 'the PDF contains the plan text');
+pdf_assert(str_contains($generated, 'A09'), 'the PDF contains the ICD-10 code');
+pdf_assert(str_contains($generated, 'Infectious gastroenteritis and colitis, unspecified'), 'the PDF contains the diagnosis text');
+pdf_assert(str_contains($generated, 'RXTOKEN9f3a 500 mg'), 'the PDF contains the prescription text');
+pdf_assert(str_contains($generated, 'Dr. Ana Cruz'), 'the PDF names the provider account');
+pdf_assert(str_contains($generated, 'Consultation reference: 501'), 'the PDF names the consultation');
+pdf_assert(str_contains($generated, 'not a cryptographic digital signature'), 'the PDF states that the account name is not a cryptographic signature');
+pdf_assert(!str_contains($generated, 'No prescription was recorded'), 'a provided prescription replaces the empty-prescription line');
+pdf_assert(clinical_note_pdf_render(['consultation_id' => 0, 'subjective' => 'SUBJTOKEN9f3a']) === '', 'PDF generation fails closed without a consultation reference');
+
+$withoutPrescription = clinical_note_pdf_render([
+    'consultation_id' => 501,
+    'subjective' => 'SUBJTOKEN9f3a',
+    'objective' => 'OBJTOKEN9f3a',
+    'assessment' => 'ASSESS9f3a',
+    'plan' => 'PLANTOKEN9f3a',
+    'diagnosis' => 'A09 – Infectious gastroenteritis and colitis, unspecified',
+    'prescription' => '',
+    'provider_name' => 'Ana Cruz',
+    'signed_at' => '2026-10-19 00:15:00',
+    'preview' => true,
+]);
+$previewHeading = clinical_note_pdf_encode('Preview — not finalized');
+pdf_assert(str_contains($withoutPrescription, $previewHeading), 'the preview heading is encoded for the standard PDF font');
+pdf_assert(!str_contains($withoutPrescription, "\xE2\x80\x94"), 'the preview heading does not keep a raw UTF-8 em dash');
+$pesoPdf = clinical_note_pdf_render([
+    'consultation_id' => 501,
+    'subjective' => 'SUBJTOKEN9f3a',
+    'objective' => 'Niño',
+    'assessment' => 'ASSESS9f3a',
+    'plan' => 'PLANTOKEN9f3a',
+    'diagnosis' => 'A09 – Infectious gastroenteritis and colitis, unspecified',
+    'prescription' => "₱500",
+    'provider_name' => 'Ana Cruz',
+    'signed_at' => '2026-10-19 00:15:00',
+    'preview' => false,
+]);
+pdf_assert(str_contains($pesoPdf, 'PHP 500'), 'a peso amount stays visible as PHP plus the amount');
+pdf_assert(!str_contains($pesoPdf, 'PHP500') && str_contains($pesoPdf, '500'), 'the peso amount is not reduced to digits alone');
+pdf_assert(str_contains($pesoPdf, clinical_note_pdf_encode('Niño')), 'peso handling still keeps ñ in the same PDF');
+pdf_assert(str_contains($withoutPrescription, 'No prescription was recorded on this note.'), 'an empty prescription is stated');
+pdf_assert(!str_contains($withoutPrescription, 'verify.php'), 'the SOAP PDF does not link to prescription verification');
+
+$longPlan = str_repeat("PLANLINE9f3a wraps onto another page.\n", 80);
+$paged = clinical_note_pdf_render([
+    'consultation_id' => 501,
+    'subjective' => 'SUBJTOKEN9f3a',
+    'objective' => 'OBJTOKEN9f3a',
+    'assessment' => 'ASSESS9f3a',
+    'plan' => $longPlan,
+    'diagnosis' => 'A09 – Infectious gastroenteritis and colitis, unspecified',
+    'prescription' => '',
+    'provider_name' => 'Ana Cruz',
+    'signed_at' => '2026-10-19 00:15:00',
+    'preview' => false,
+]);
+pdf_assert(str_contains($paged, '/Count '), 'a long note records a page count');
+pdf_assert(!str_contains($paged, '/Count 1'), 'a long note continues onto another page');
+
+$stored = clinical_note_signed_pdf_store_contents($generated, 501);
+pdf_assert($stored['ok'] === true && !empty($stored['abs']) && is_file((string) $stored['abs']), 'generated PDF bytes are stored in the private directory');
+pdf_assert(
+    $stored['ok'] === true && hash_equals((string) $stored['sha256'], (string) hash_file('sha256', (string) $stored['abs'])),
+    'the stored SHA-256 matches the generated file'
+);
+pdf_assert(
+    $stored['ok'] === true && clinical_note_signed_pdf_hash_matches((string) $stored['abs'], (string) $stored['sha256']),
+    'the download hash check accepts the generated file'
+);
+if ($stored['ok'] === true && !empty($stored['abs'])) {
+    $altered = (string) file_get_contents((string) $stored['abs']);
+    $altered[strlen($altered) - 2] = $altered[strlen($altered) - 2] === 'F' ? '0' : 'F';
+    $alteredPath = $storage . DIRECTORY_SEPARATOR . 'altered-generated.pdf';
+    file_put_contents($alteredPath, $altered);
+    pdf_assert(!clinical_note_signed_pdf_hash_matches($alteredPath, (string) $stored['sha256']), 'an altered generated PDF fails the hash check');
+}
+$rejectedStore = clinical_note_signed_pdf_store_contents('', 501);
+pdf_assert($rejectedStore['ok'] === false, 'empty PDF bytes are not stored');
+$notPdfStore = clinical_note_signed_pdf_store_contents('not-a-pdf', 501);
+pdf_assert($notPdfStore['ok'] === false, 'non-PDF bytes are not stored');
 
 $providerPage = (string) file_get_contents($root . '/resources/views/provider/consultation_session.php');
 pdf_assert(str_contains($providerPage, 'clinical_note_is_image_payload('), 'the provider template retains the legacy image branch');

@@ -4,8 +4,8 @@
  * URL: /app/api/provider/save_clinical_notes.php
  *
  * Draft (default): saves notes without ending the consultation.
- * Finalize (finalize=1): requires an uploaded signed SOAP PDF (multipart field signed_pdf),
- * completes consult in one transaction.
+ * Finalize (finalize=1): generates the SOAP PDF from the validated note, stores it,
+ * and completes the consultation in one transaction.
  */
 require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
 header('Content-Type: application/json; charset=utf-8');
@@ -16,6 +16,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_verification.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_signature.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_pdf.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/icd10_lookup.php';
 
 clinical_tables_ensure($pdo);
@@ -151,14 +152,7 @@ if ($alreadyFinalized) {
             exit;
         }
 
-        $signedPdfUpload = $_FILES['signed_pdf'] ?? null;
-        $pdfCheck = clinical_note_signed_pdf_validate_upload($signedPdfUpload);
-        if (!$pdfCheck['ok']) {
-            echo json_encode(['success' => false, 'message' => $pdfCheck['message']]);
-            exit;
-        }
-
-        $data['signature_method'] = 'pdf_upload';
+        $data['signature_method'] = 'generated_pdf';
         $data['signature_name'] = $signatureName;
 
         require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_clinical_support.php';
@@ -293,12 +287,31 @@ try {
         exit;
     }
 
-    $storedPdf = clinical_note_signed_pdf_store($signedPdfUpload, (int) $data['consultation_id']);
+    $signedAt = date('Y-m-d H:i:s');
+    $pdfBytes = clinical_note_pdf_render([
+        'consultation_id' => (int) $data['consultation_id'],
+        'subjective' => (string) $data['subjective'],
+        'objective' => (string) $data['objective'],
+        'assessment' => (string) $data['assessment'],
+        'plan' => (string) $data['plan'],
+        'diagnosis' => (string) $data['diagnosis'],
+        'prescription' => (string) $data['prescription'],
+        'provider_name' => (string) $data['signature_name'],
+        'signed_at' => $signedAt,
+        'preview' => false,
+    ]);
+    if ($pdfBytes === '') {
+        $pdo->rollBack();
+        echo json_encode(['success' => false, 'message' => 'Could not generate the signed SOAP PDF. Please try again.']);
+        exit;
+    }
+    $storedPdf = clinical_note_signed_pdf_store_contents($pdfBytes, (int) $data['consultation_id']);
     if (!$storedPdf['ok']) {
         $pdo->rollBack();
         echo json_encode(['success' => false, 'message' => $storedPdf['message']]);
         exit;
     }
+    $data['signed_at'] = $signedAt;
     $data['signed_pdf_path'] = $storedPdf['path'];
     $data['signed_pdf_abs'] = $storedPdf['abs'];
     $data['signed_pdf_name'] = $storedPdf['name'];
@@ -310,7 +323,7 @@ try {
         INSERT INTO clinical_notes
         (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data, signature_method, signature_name, signed_at, finalized_at,
          signed_pdf_path, signed_pdf_name, signed_pdf_size, signed_pdf_sha256)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             subjective = VALUES(subjective),
             objective = VALUES(objective),
@@ -322,8 +335,8 @@ try {
             signature_data = VALUES(signature_data),
             signature_method = VALUES(signature_method),
             signature_name = VALUES(signature_name),
-            signed_at = NOW(),
-            finalized_at = NOW(),
+            signed_at = VALUES(signed_at),
+            finalized_at = VALUES(finalized_at),
             signed_pdf_path = VALUES(signed_pdf_path),
             signed_pdf_name = VALUES(signed_pdf_name),
             signed_pdf_size = VALUES(signed_pdf_size),
@@ -333,7 +346,7 @@ try {
         $data['consultation_id'], $data['patient_id'], $data['provider_id'],
         $data['subjective'], $data['objective'], $data['assessment'], $data['plan'],
         $data['diagnosis'], $data['treatment_plan'], $data['prescription'], $data['signature'],
-        $data['signature_method'], $data['signature_name'],
+        $data['signature_method'], $data['signature_name'], $data['signed_at'], $data['signed_at'],
         $data['signed_pdf_path'], $data['signed_pdf_name'], $data['signed_pdf_size'], $data['signed_pdf_sha256'],
     ]);
 

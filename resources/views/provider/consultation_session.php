@@ -3072,12 +3072,10 @@ body.final-assessment-modal-open {
 
                     <?php if (!$consultation_completed): ?>
                     <div class="soap-sign" id="soapSignature">
-                        <h3 class="soap-sign__title">Electronic Signature</h3>
+                        <h3 class="soap-sign__title">Attestation</h3>
                         <p class="soap-sign__doctor" id="soapProviderName"><?= htmlspecialchars($soap_esign_name !== '' ? $soap_esign_name : 'Provider name unavailable') ?></p>
-                        <label class="pd-label" for="soapSignedPdf">Signed SOAP note (PDF)</label>
-                        <input type="file" name="signed_pdf" id="soapSignedPdf" class="soap-sign__file" accept="application/pdf,.pdf">
-                        <p class="soap-sign__file-name" id="soapSignedPdfName" aria-live="polite"></p>
-                        <p class="soap-sign__hint">Upload the signed PDF of the completed SOAP note (PDF only, max <?= (int) round(CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES / 1048576) ?> MB). It is required before submission.</p>
+                        <p class="soap-sign__hint">medConnect generates the SOAP PDF from this form. Preview it, then return here if something needs to change. Finalizing attests the note with your provider account and stores that generated PDF. This is not a cryptographic digital signature.</p>
+                        <button type="button" class="session-btn" id="soapPreviewPdfBtn">Preview SOAP PDF</button>
 
                         <label class="soap-sign__confirm">
                             <input type="checkbox" name="soap_confirm" id="soapConfirm" value="1">
@@ -3891,7 +3889,7 @@ $soapFinalUrgencyNotePrefill = $soapSavedDoctorBucket !== ''
   <div class="soap-finalize-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="soapFinalizeTitle">
     <div class="soap-finalize-modal__body">
       <h2 id="soapFinalizeTitle" class="soap-finalize-modal__title">Finalize SOAP Note?</h2>
-      <p class="soap-finalize-modal__text">You are about to electronically sign and finalize this clinical record. After finalization, the SOAP note will become available to the patient and ordinary editing will be disabled.</p>
+      <p class="soap-finalize-modal__text">medConnect will generate the SOAP PDF from this form and attest it with your provider account. This is not a cryptographic digital signature. After finalization, the note will become available to the patient and ordinary editing will be disabled.</p>
       <div class="soap-finalize-urgency" style="margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
         <p class="soap-finalize-modal__text" style="margin-bottom:8px;"><strong>Final Assessment — case urgency</strong> (required)</p>
         <p class="soap-finalize-modal__text" style="margin-bottom:8px;font-size:13px;color:#64748b;">
@@ -5692,35 +5690,52 @@ let soapSavedDoctorUrgency = <?= json_encode([
 
 let soapUiReady = false;
 let soapFinalizeBusy = false;
-const SOAP_SIGNED_PDF_MAX_BYTES = <?= (int) CLINICAL_NOTE_SIGNED_PDF_MAX_BYTES ?>;
 
 function syncSoapSignatureFields() {
     const name = String(soapSignerNames.full || '').trim();
     const display = document.getElementById('soapProviderName');
     if (display && display.tagName !== 'INPUT') display.textContent = name || 'Provider name unavailable';
-    const input = document.getElementById('soapSignedPdf');
-    const label = document.getElementById('soapSignedPdfName');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if (label) label.textContent = file ? 'Selected: ' + file.name : '';
 }
 
-function soapSignedPdfValidationMessage() {
-    const input = document.getElementById('soapSignedPdf');
-    const file = input && input.files && input.files[0] ? input.files[0] : null;
-    if (!file) {
-        return 'Upload the signed SOAP note PDF before submitting.';
+async function previewSoapPdf() {
+    const form = document.getElementById('soapForm');
+    const err = document.getElementById('soapSignError');
+    const btn = document.getElementById('soapPreviewPdfBtn');
+    if (!form) return;
+    if (btn) btn.disabled = true;
+    if (err) err.textContent = '';
+    try {
+        const fd = new FormData(form);
+        fd.delete('signed_pdf');
+        fd.delete('finalize');
+        fd.append('csrf_token', sessionCsrf || document.body.dataset.csrf || '');
+        const res = await fetch('<?= ASSET_BASE ?>/app/api/provider/preview_soap_pdf.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin'
+        });
+        const type = String(res.headers.get('Content-Type') || '');
+        if (!res.ok || type.indexOf('application/pdf') === -1) {
+            let msg = 'Could not preview the SOAP PDF.';
+            try {
+                const data = await res.json();
+                if (data && data.message) msg = data.message;
+            } catch (e) {}
+            if (err) err.textContent = msg;
+            return;
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const opened = window.open(url, '_blank', 'noopener');
+        if (!opened && err) {
+            err.textContent = 'Allow pop-ups to preview the SOAP PDF.';
+        }
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+    } catch (e) {
+        if (err) err.textContent = 'Could not preview the SOAP PDF.';
+    } finally {
+        if (btn) btn.disabled = false;
     }
-    const isPdf = /\.pdf$/i.test(file.name || '') && (!file.type || file.type === 'application/pdf');
-    if (!isPdf) {
-        return 'Only PDF files are accepted for the signed SOAP note.';
-    }
-    if (file.size <= 0) {
-        return 'The signed PDF is empty. Please choose another file.';
-    }
-    if (file.size > SOAP_SIGNED_PDF_MAX_BYTES) {
-        return 'The signed PDF is too large. Maximum size is ' + Math.round(SOAP_SIGNED_PDF_MAX_BYTES / 1048576) + ' MB.';
-    }
-    return '';
 }
 
 function soapClientValidationMessage() {
@@ -5743,10 +5758,6 @@ function soapClientValidationMessage() {
         return 'Select a final diagnosis from the ICD-10 list.';
     }
     syncSoapSignatureFields();
-    const pdfMsg = soapSignedPdfValidationMessage();
-    if (pdfMsg) {
-        return pdfMsg;
-    }
     if (!String(soapSignerNames.full || '').trim()) {
         return 'Provider identity could not be verified. Please refresh and try again.';
     }
@@ -5875,11 +5886,10 @@ function initSoapSignatureUi() {
     if (soapUiReady) return;
     soapUiReady = true;
 
-    const signedPdfInput = document.getElementById('soapSignedPdf');
-    if (signedPdfInput) {
-        signedPdfInput.addEventListener('change', function () {
-            syncSoapSignatureFields();
-            updateSoapFinalizeReady();
+    const previewBtn = document.getElementById('soapPreviewPdfBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function () {
+            previewSoapPdf();
         });
     }
     initIcdSearch();
