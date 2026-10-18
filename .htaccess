@@ -69,6 +69,9 @@ RewriteRule ^(bootstrap|config|data|database|resources|storage|scripts|modules|a
 RewriteRule ^app/(core|includes|models)/ - [F,L]
 RewriteRule ^bootstrap\.php$ - [F,L]
 
+# Previous scheduled-video start URL.
+RewriteRule ^app/api/consultations/start_video\.php$ app/api/consultations/open_scheduled_video.php [L,QSA]
+
 # ── Serve real files and directories directly ──────────────────
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]

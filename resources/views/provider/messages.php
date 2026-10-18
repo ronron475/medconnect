@@ -782,7 +782,7 @@ videoButton.addEventListener('click', async () => {
   setAlert('Starting secure video room...', 'info');
 
   try {
-    const response = await fetch('<?= ASSET_BASE ?>/app/api/consultations/start_video.php', {
+    const response = await fetch('<?= ASSET_BASE ?>/app/api/consultations/open_scheduled_video.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({

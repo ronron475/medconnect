@@ -158,6 +158,232 @@ function consultation_provider_end_video_session(PDO $pdo, string $roomToken, in
     ];
 }
 
+/**
+ * Provider opens or resumes the live room for a consultation they own.
+ * Does not finalize SOAP and does not mark the consultation completed.
+ *
+ * Business-rule refusals use HTTP 200 so the consultation page can show the message.
+ * The caller still rejects a missing session, the wrong role, and a bad CSRF token.
+ *
+ * @return array{
+ *   success:bool,
+ *   message:string,
+ *   code:string,
+ *   http_status:int,
+ *   token:string,
+ *   consultation_id:int,
+ *   patient_id:int,
+ *   consultation_status:string,
+ *   created:bool
+ * }
+ */
+function consultation_provider_start_video_session(PDO $pdo, int $consultationId, int $providerId): array
+{
+    $fail = static function (string $message, string $code, int $status = 200): array {
+        return [
+            'success' => false,
+            'message' => $message,
+            'code' => $code,
+            'http_status' => $status,
+            'token' => '',
+            'consultation_id' => 0,
+            'patient_id' => 0,
+            'consultation_status' => '',
+            'created' => false,
+        ];
+    };
+
+    if ($consultationId <= 0 || $providerId <= 0) {
+        return $fail('Consultation ID required.', 'consultation_required');
+    }
+
+    require_once __DIR__ . '/clinical_tables.php';
+    require_once __DIR__ . '/consultation_queue_timing.php';
+    require_once dirname(__DIR__, 2) . '/resources/views/provider/partials/queue_helpers.php';
+
+    clinical_tables_ensure($pdo);
+    consultation_timing_ensure_schema($pdo);
+    consultation_timing_close_missed($pdo, null, $providerId);
+
+    $driver = (string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $lock = $driver === 'mysql' ? ' FOR UPDATE' : '';
+    $joinedSql = consultation_timing_latest_patient_joined_sql('c');
+
+    $stmt = $pdo->prepare("
+        SELECT c.id, c.patient_id, c.provider_id, c.consult_date, c.consult_time, c.status,
+               c.early_start_response,
+               s.slot_date, s.start_time AS slot_start, s.end_time AS slot_end,
+               {$joinedSql} AS patient_joined_at
+        FROM consultations c
+        LEFT JOIN appointment_slots s ON s.consultation_id = c.id AND s.status = 'booked'
+        WHERE c.id = ? AND c.provider_id = ?
+        LIMIT 1
+    ");
+    $stmt->execute([$consultationId, $providerId]);
+    $consultation = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$consultation) {
+        return $fail('Consultation not found or access denied.', 'not_owner', 403);
+    }
+
+    $consultStatus = strtolower(trim((string) ($consultation['status'] ?? '')));
+    if (in_array($consultStatus, ['completed', 'cancelled', 'canceled', 'ended', 'closed'], true)) {
+        return $fail(
+            'This consultation has already ended. You can only view its historical record.',
+            'consultation_ended'
+        );
+    }
+
+    $consultation = consultation_timing_decorate_row($pdo, $consultation);
+    $otherVideo = consultation_timing_other_active_video_id($pdo, $providerId, $consultationId);
+    $otherOpen = consultation_timing_other_open_consultation_id($pdo, $providerId, $consultationId);
+    $startDecision = consultation_timing_provider_start_decision(
+        time(),
+        isset($consultation['timing_slot_start']) ? $consultation['timing_slot_start'] : null,
+        isset($consultation['timing_slot_end']) ? $consultation['timing_slot_end'] : null,
+        $consultStatus,
+        $otherVideo > 0,
+        !empty($consultation['patient_ever_joined']),
+        !empty($consultation['timing_blocked_by_earlier']),
+        (string) ($consultation['early_start_response'] ?? ''),
+        false,
+        $otherOpen > 0
+    );
+    if (!$startDecision['allowed']) {
+        return $fail((string) $startDecision['reason'], (string) $startDecision['code']);
+    }
+
+    $sessionAccess = queue_session_access($consultation);
+    if (!$sessionAccess['allowed']) {
+        return $fail((string) $sessionAccess['reason'], 'schedule_window');
+    }
+
+    try {
+        $pdo->beginTransaction();
+
+        $pdo->prepare('SELECT id FROM users WHERE id = ? LIMIT 1' . $lock)->execute([$providerId]);
+        $lockedOpen = consultation_timing_other_open_consultation_id($pdo, $providerId, $consultationId);
+        if ($lockedOpen > 0) {
+            $pdo->rollBack();
+            return $fail(
+                'Finish the open consultation, including the SOAP note and final assessment, before starting the next patient.',
+                'clinical_active'
+            );
+        }
+
+        $lockedStmt = $pdo->prepare('
+            SELECT id, patient_id, status
+            FROM consultations
+            WHERE id = ? AND provider_id = ?
+            LIMIT 1' . $lock);
+        $lockedStmt->execute([$consultationId, $providerId]);
+        $locked = $lockedStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$locked || (int) ($locked['patient_id'] ?? 0) !== (int) $consultation['patient_id']) {
+            $pdo->rollBack();
+            return $fail('Consultation not found or access denied.', 'not_owner', 403);
+        }
+
+        $lockedStatus = strtolower(trim((string) ($locked['status'] ?? '')));
+        if (in_array($lockedStatus, ['completed', 'cancelled', 'canceled', 'ended', 'closed'], true)) {
+            $pdo->rollBack();
+            return $fail(
+                'This consultation has already ended. You can only view its historical record.',
+                'consultation_ended'
+            );
+        }
+
+        $roomStmt = $pdo->prepare('
+            SELECT id, room_token
+            FROM video_sessions
+            WHERE consultation_id = ? AND status = \'active\'
+            ORDER BY id ASC
+            LIMIT 1' . $lock);
+        $roomStmt->execute([$consultationId]);
+        $room = $roomStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+
+        $created = false;
+        if ($room) {
+            $token = (string) $room['room_token'];
+            $pdo->prepare("
+                UPDATE consultations
+                SET status = 'in_consultation'
+                WHERE id = ? AND provider_id = ? AND status IN ('scheduled', 'pending')
+            ")->execute([$consultationId, $providerId]);
+            $pdo->prepare("
+                UPDATE video_sessions
+                SET started_at = COALESCE(started_at, NOW())
+                WHERE id = ? AND status = 'active'
+            ")->execute([(int) $room['id']]);
+        } else {
+            if ($lockedStatus === 'in_consultation') {
+                $flagStmt = $pdo->prepare('SELECT c.status, ' . queue_documentation_flags_sql('c') . ' FROM consultations c WHERE c.id = ? LIMIT 1');
+                $flagStmt->execute([$consultationId]);
+                $flags = $flagStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                if (queue_is_documentation_pending(['status' => $lockedStatus, 'room_token' => ''] + $flags)) {
+                    $pdo->rollBack();
+                    return $fail(
+                        'Final Assessment is required before starting another video session.',
+                        'final_assessment_required'
+                    );
+                }
+            }
+
+            $token = '';
+            $inserted = false;
+            $lastError = null;
+            for ($attempt = 0; $attempt < 3 && !$inserted; $attempt++) {
+                $token = bin2hex(random_bytes(16));
+                try {
+                    $pdo->prepare("
+                        INSERT INTO video_sessions (consultation_id, room_token, status, started_at)
+                        VALUES (?, ?, 'active', NOW())
+                    ")->execute([$consultationId, $token]);
+                    $inserted = true;
+                } catch (PDOException $e) {
+                    $driverCode = (int) ($e->errorInfo[1] ?? 0);
+                    $duplicate = (string) $e->getCode() === '23000' || $driverCode === 1062 || $driverCode === 19;
+                    if (!$duplicate) {
+                        throw $e;
+                    }
+                    $lastError = $e;
+                }
+            }
+            if (!$inserted) {
+                throw $lastError ?? new RuntimeException('Could not store a video room.');
+            }
+
+            $pdo->prepare("
+                UPDATE consultations
+                SET status = 'in_consultation'
+                WHERE id = ? AND provider_id = ? AND status IN ('scheduled', 'pending')
+            ")->execute([$consultationId, $providerId]);
+            $created = true;
+        }
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('consultation_provider_start_video_session: ' . $e->getMessage());
+        return $fail('Could not start video session.', 'start_failed', 500);
+    }
+
+    $fresh = $pdo->prepare('SELECT status FROM consultations WHERE id = ? AND provider_id = ? LIMIT 1');
+    $fresh->execute([$consultationId, $providerId]);
+
+    return [
+        'success' => true,
+        'message' => 'Video room started. Patient can now join.',
+        'code' => $created ? 'created' : 'resumed',
+        'http_status' => 200,
+        'token' => $token,
+        'consultation_id' => $consultationId,
+        'patient_id' => (int) $consultation['patient_id'],
+        'consultation_status' => (string) ($fresh->fetchColumn() ?: 'in_consultation'),
+        'created' => $created,
+    ];
+}
+
 function consultation_video_sessions_ensure_patient_left_column(PDO $pdo): void
 {
     static $done = false;

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 $active_page = 'consultation';
 $page_title  = 'Tele-Consultation';
 require __DIR__.'/partials/icons.php';
@@ -9,6 +9,7 @@ require_once BASE_PATH . '/app/includes/provider_clinical_support.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
+require_once BASE_PATH . '/app/includes/prescription_lines.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 require_once BASE_PATH . '/app/includes/community_bhw_activity.php';
 require_once BASE_PATH . '/app/includes/consultation_recorded_data.php';
@@ -310,6 +311,24 @@ $videoEndedPendingFinal = !$soap_finalized
 .session-card-body {
     padding: 20px;
 }
+.soap-save-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 28px;
+    margin: 0 0 14px;
+}
+.soap-save-status {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #92400e;
+}
+.soap-save-status--saving { color: #1d4ed8; }
+.soap-save-status--saved { color: #166534; }
+.soap-save-status--failed { color: #b91c1c; }
+.soap-save-status--final { color: #065f46; }
+.soap-save-retry { padding: 4px 10px; min-height: 0; }
 .video-shell {
     position: relative;
     width: 100%;
@@ -971,6 +990,29 @@ body.consultation-mobile-call-fullscreen .mc-provider-video-dock iframe {
     padding: 0 12px;
     font-size: 13px;
     outline: none;
+}
+.soap-rx-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.soap-rx-actions { display: flex; gap: 8px; margin-top: 8px; }
+.soap-rx-legacy {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    color: #334155;
+    font-size: 13px;
+    white-space: pre-wrap;
+}
+.soap-rx-readonly { margin: 0; padding-left: 18px; }
+.soap-rx-readonly li { margin-bottom: 6px; }
+@media (max-width: 800px) {
+    .soap-rx-row { grid-template-columns: 1fr 1fr; }
+    .soap-rx-row .session-btn { grid-column: 1 / -1; }
 }
 .patient-head {
     display: flex;
@@ -3014,12 +3056,18 @@ body.final-assessment-modal-open {
                     <?php if ($consultation_completed): ?>
                     <span class="session-btn" style="background:#dcfce7;color:#166534;border:1px solid #86efac;cursor:default;">âœ“ SOAP Finalized</span>
                     <?php else: ?>
-                    <button class="session-btn primary" type="button" onclick="saveSOAP()">Save Draft</button>
+                    <button class="session-btn primary" type="button" id="soapSaveDraftBtn" onclick="soapSaveDraft()">Save Draft</button>
                     <button class="session-btn" type="button" onclick="document.getElementById('soapForm').reset()">Clear</button>
                     <?php endif; ?>
                 </div>
             </div>
             <div class="session-card-body">
+                <div class="soap-save-row">
+                    <p id="soapSaveStatus" class="soap-save-status<?= $soap_readonly ? ' soap-save-status--final' : '' ?>" role="status" aria-live="polite"><?php if ($soap_readonly): ?>Finalized — this note is read-only.<?php endif; ?></p>
+                    <?php if (!$soap_readonly): ?>
+                    <button type="button" class="session-btn soap-save-retry" id="soapSaveRetry" hidden>Retry</button>
+                    <?php endif; ?>
+                </div>
                 <?php if ($consultation_completed): ?>
                 <p class="text-sm" style="margin:0 0 16px;padding:12px 14px;border-radius:10px;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;">
                     This consultation has been finalized. SOAP notes are read-only. The patient can view this record in My Health.
@@ -3064,9 +3112,49 @@ body.final-assessment-modal-open {
                             <p class="soap-sign__hint">Choose a code from the list. Example: A09 – Infectious gastroenteritis and colitis, unspecified</p>
                             <?php endif; ?>
                         </div>
-                        <div>
+                        <div style="grid-column: 1 / -1;">
                             <label class="pd-label">Digital Prescription</label>
-                            <textarea name="prescription" class="pd-textarea" placeholder="Medication, Dosage, Frequency, Duration..."<?= $soap_readonly ? ' readonly' : '' ?>><?= htmlspecialchars((string) ($clinical_note['prescription'] ?? '')) ?></textarea>
+                            <?php
+                              $soapRxStored = (string) ($clinical_note['prescription'] ?? '');
+                              $soapRxDecoded = prescription_lines_decode($soapRxStored);
+                              $soapRxRows = $soapRxDecoded['rows'];
+                              $soapRxLegacy = prescription_lines_is_encoded($soapRxStored) ? $soapRxDecoded['legacy'] : $soapRxStored;
+                            ?>
+                            <?php if ($soap_readonly): ?>
+                              <?php if ($soapRxRows !== []): ?>
+                              <ul class="soap-rx-readonly">
+                                <?php foreach ($soapRxRows as $soapRxRow): ?>
+                                <li><?= htmlspecialchars($soapRxRow['medication'] . ' · ' . $soapRxRow['dosage'] . ' · ' . $soapRxRow['frequency'] . ' · ' . $soapRxRow['duration']) ?></li>
+                                <?php endforeach; ?>
+                              </ul>
+                              <?php elseif (trim($soapRxLegacy) === ''): ?>
+                              <p class="soap-sign__hint">No prescription was recorded on this note.</p>
+                              <?php endif; ?>
+                              <?php if (trim($soapRxLegacy) !== ''): ?>
+                              <div class="soap-rx-legacy"><?= nl2br(htmlspecialchars($soapRxLegacy)) ?></div>
+                              <?php endif; ?>
+                            <?php else: ?>
+                              <?php if ($soapRxRows === []): $soapRxRows = [['medication' => '', 'dosage' => '', 'frequency' => '', 'duration' => '']]; endif; ?>
+                              <div id="soapRxRows">
+                                <?php foreach ($soapRxRows as $soapRxRow): ?>
+                                <div class="soap-rx-row">
+                                  <input class="pd-input" name="rx_medication[]" value="<?= htmlspecialchars((string) $soapRxRow['medication']) ?>" placeholder="Medication" aria-label="Medication">
+                                  <input class="pd-input" name="rx_dosage[]" value="<?= htmlspecialchars((string) $soapRxRow['dosage']) ?>" placeholder="Dosage" aria-label="Dosage">
+                                  <input class="pd-input" name="rx_frequency[]" value="<?= htmlspecialchars((string) $soapRxRow['frequency']) ?>" placeholder="Frequency" aria-label="Frequency">
+                                  <input class="pd-input" name="rx_duration[]" value="<?= htmlspecialchars((string) $soapRxRow['duration']) ?>" placeholder="Duration" aria-label="Duration">
+                                  <button type="button" class="session-btn" data-rx-remove>Remove</button>
+                                </div>
+                                <?php endforeach; ?>
+                              </div>
+                              <div class="soap-rx-actions">
+                                <button type="button" class="session-btn" id="soapRxAdd">Add medication</button>
+                              </div>
+                              <p class="soap-sign__hint">These medications are issued when you finalize. A matching active prescription for this visit is not created again.</p>
+                              <?php if (trim($soapRxLegacy) !== ''): ?>
+                              <div class="soap-rx-legacy"><?= nl2br(htmlspecialchars($soapRxLegacy)) ?></div>
+                              <textarea name="prescription_legacy" hidden><?= htmlspecialchars($soapRxLegacy) ?></textarea>
+                              <?php endif; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -3942,6 +4030,7 @@ $soapFinalUrgencyNotePrefill = $soapSavedDoctorBucket !== ''
 </div>
 
 <script src="<?= ASSET_BASE ?>/assets/js/messages-delete.js?v=3"></script>
+<script src="<?= ASSET_BASE ?>/assets/js/soap-draft-autosave.js?v=1"></script>
 <script>
 // SESSION TIMER
 let seconds = <?= (int) $video_elapsed_seconds ?>;
@@ -5445,7 +5534,7 @@ async function startVideoCall() {
     }
     try {
         console.log("Starting video call for consultation:", <?= $consultation_id ?>);
-        const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/start_video.php', {
+        const res = await fetch('<?= ASSET_BASE ?>/app/api/consultations/open_scheduled_video.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: new URLSearchParams({
@@ -5640,26 +5729,132 @@ async function requestExtension() {
 }
 
 // SAVE SOAP NOTES (draft by default; finalize=true completes the visit)
-async function saveSOAP(finalize = false) {
+function soapDraftSnapshot() {
+    const form = document.getElementById('soapForm');
+    const names = ['subjective', 'objective', 'assessment', 'plan', 'diagnosis', 'prescription_legacy'];
+    const base = names.map(function (name) {
+        const field = form ? form.querySelector('[name="' + name + '"]') : null;
+        return name + '\n' + (field ? String(field.value || '') : '');
+    }).join('\n--\n');
+    const lines = [];
+    if (form) {
+        form.querySelectorAll('.soap-rx-row').forEach(function (row) {
+            lines.push(['rx_medication[]', 'rx_dosage[]', 'rx_frequency[]', 'rx_duration[]'].map(function (name) {
+                const field = row.querySelector('[name="' + name + '"]');
+                return field ? String(field.value || '') : '';
+            }).join('\t'));
+        });
+    }
+    return base + '\n--\n' + lines.join('\n');
+}
+
+function soapSavedStamp(value) {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+    if (!match) return '';
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+}
+
+function soapRenderSaveStatus(state, savedAt) {
+    const el = document.getElementById('soapSaveStatus');
+    const retry = document.getElementById('soapSaveRetry');
+    if (!el) return;
+    el.className = 'soap-save-status';
+    if (state === 'unsaved') {
+        el.textContent = 'Unsaved changes';
+    } else if (state === 'saving') {
+        el.classList.add('soap-save-status--saving');
+        el.textContent = 'Saving...';
+    } else if (state === 'saved') {
+        el.classList.add('soap-save-status--saved');
+        const stamp = soapSavedStamp(savedAt);
+        el.textContent = stamp ? ('Draft saved · ' + stamp) : 'Draft saved';
+    } else if (state === 'failed') {
+        el.classList.add('soap-save-status--failed');
+        el.textContent = 'Save failed — retry';
+    } else if (state === 'finalized') {
+        el.classList.add('soap-save-status--final');
+        el.textContent = 'Finalized — this note is read-only.';
+        soapLockDraftForm();
+    }
+    if (retry) retry.hidden = state !== 'failed';
+}
+
+function soapLockDraftForm() {
+    const form = document.getElementById('soapForm');
+    if (form) {
+        form.querySelectorAll('textarea, input').forEach(function (field) {
+            if (field.type === 'hidden') return;
+            field.readOnly = true;
+        });
+    }
+    ['soapSaveDraftBtn', 'soapPreviewPdfBtn', 'soapFinalizeBtn', 'soapRxAdd'].forEach(function (id) {
+        const button = document.getElementById(id);
+        if (button) button.disabled = true;
+    });
+    if (form) {
+        form.querySelectorAll('[data-rx-remove]').forEach(function (button) {
+            button.disabled = true;
+        });
+    }
+}
+
+function soapDraftNoteEdited() {
+    if (window.soapDraftSaver) window.soapDraftSaver.noteEdited();
+}
+
+function soapSaveDraft() {
+    if (window.soapDraftSaver) return window.soapDraftSaver.save(true);
+    return postClinicalNotes(false);
+}
+
+function initSoapDraftAutosave() {
+    if (window.soapDraftSaver || !window.MedconnectSoapDraft || !document.getElementById('soapForm')) return;
+    window.soapDraftSaver = MedconnectSoapDraft.createSoapDraftSaver({
+        delayMs: 2000,
+        finalized: <?= $soap_readonly ? 'true' : 'false' ?>,
+        initialSnapshot: soapDraftSnapshot(),
+        current: soapDraftSnapshot,
+        setTimer: function (fn, ms) { return window.setTimeout(fn, ms); },
+        clearTimer: function (id) { window.clearTimeout(id); },
+        post: function () { return postClinicalNotes(false); },
+        onStatus: soapRenderSaveStatus,
+    });
+    const retry = document.getElementById('soapSaveRetry');
+    if (retry) {
+        retry.addEventListener('click', function () {
+            window.soapDraftSaver.save(true);
+        });
+    }
+    window.addEventListener('beforeunload', function (event) {
+        if (!window.soapDraftSaver || !window.soapDraftSaver.shouldWarn()) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
+}
+
+async function postClinicalNotes(finalize) {
     const form = document.getElementById('soapForm');
     if (!form) return { success: false };
     syncSoapSignatureFields();
     const fd = new FormData(form);
-    fd.append('csrf_token', sessionCsrf || document.body.dataset.csrf || '');
+    fd.delete('signed_pdf');
+    fd.set('csrf_token', sessionCsrf || document.body.dataset.csrf || '');
     if (!finalize) {
-        fd.delete('signed_pdf');
-    }
-    if (finalize) {
-        fd.append('finalize', '1');
-        fd.append('soap_confirm', document.getElementById('soapConfirm') && document.getElementById('soapConfirm').checked ? '1' : '0');
+        fd.delete('finalize');
+        fd.delete('soap_confirm');
+    } else {
+        fd.set('finalize', '1');
+        fd.set('soap_confirm', document.getElementById('soapConfirm') && document.getElementById('soapConfirm').checked ? '1' : '0');
         if (soapHasSavedDoctorUrgency()) {
-            fd.append('final_urgency_bucket', soapSavedDoctorUrgency.bucket);
-            fd.append('final_urgency_note', soapSavedDoctorUrgency.reason);
+            fd.set('final_urgency_bucket', soapSavedDoctorUrgency.bucket);
+            fd.set('final_urgency_note', soapSavedDoctorUrgency.reason);
         } else {
             const urgencyEl = document.getElementById('soapFinalUrgency');
             const noteEl = document.getElementById('soapFinalUrgencyNote');
-            fd.append('final_urgency_bucket', urgencyEl ? String(urgencyEl.value || '') : '');
-            fd.append('final_urgency_note', noteEl ? String(noteEl.value || '').trim() : '');
+            fd.set('final_urgency_bucket', urgencyEl ? String(urgencyEl.value || '') : '');
+            fd.set('final_urgency_note', noteEl ? String(noteEl.value || '').trim() : '');
         }
     }
     try {
@@ -5667,16 +5862,18 @@ async function saveSOAP(finalize = false) {
             method: 'POST',
             body: fd,
             credentials: 'same-origin',
+            headers: { 'X-MC-No-Loader': '1' },
         });
         const data = await res.json();
-        if (!finalize) {
-            alert(data.message || (data.success ? 'Draft saved.' : 'Could not save notes.'));
-        }
-        return data;
+        return data && typeof data === 'object' ? data : { success: false };
     } catch (e) {
-        alert('Error saving notes.');
         return { success: false };
     }
+}
+
+async function saveSOAP(finalize = false) {
+    if (!finalize) return soapSaveDraft();
+    return postClinicalNotes(true);
 }
 
 const soapSignerNames = <?= json_encode([
@@ -5756,6 +5953,17 @@ function soapClientValidationMessage() {
     const diagnosis = document.getElementById('icdDiagnosis');
     if (!diagnosis || !String(diagnosis.value || '').trim()) {
         return 'Select a final diagnosis from the ICD-10 list.';
+    }
+    const rxRows = form.querySelectorAll('.soap-rx-row');
+    for (let r = 0; r < rxRows.length; r++) {
+        const parts = ['rx_medication[]', 'rx_dosage[]', 'rx_frequency[]', 'rx_duration[]'].map(function (name) {
+            const field = rxRows[r].querySelector('[name="' + name + '"]');
+            return field ? String(field.value || '').trim() : '';
+        });
+        const filled = parts.filter(function (part) { return part !== ''; }).length;
+        if (filled > 0 && filled < 4) {
+            return 'Each medication needs a dosage, frequency, and duration.';
+        }
     }
     syncSoapSignatureFields();
     if (!String(soapSignerNames.full || '').trim()) {
@@ -5885,6 +6093,7 @@ function closeSoapSuccessModal() {
 function initSoapSignatureUi() {
     if (soapUiReady) return;
     soapUiReady = true;
+    initSoapDraftAutosave();
 
     const previewBtn = document.getElementById('soapPreviewPdfBtn');
     if (previewBtn) {
@@ -5899,9 +6108,39 @@ function initSoapSignatureUi() {
     if (confirmEl) confirmEl.addEventListener('change', updateSoapFinalizeReady);
 
     const form = document.getElementById('soapForm');
+    const rxRows = document.getElementById('soapRxRows');
+    const rxAdd = document.getElementById('soapRxAdd');
+    if (rxRows && rxAdd) {
+        rxAdd.addEventListener('click', function () {
+            const row = rxRows.querySelector('.soap-rx-row');
+            if (!row) return;
+            const copy = row.cloneNode(true);
+            copy.querySelectorAll('input').forEach(function (input) { input.value = ''; });
+            rxRows.appendChild(copy);
+            soapDraftNoteEdited();
+        });
+        rxRows.addEventListener('click', function (event) {
+            const button = event.target.closest('[data-rx-remove]');
+            if (!button) return;
+            const rows = rxRows.querySelectorAll('.soap-rx-row');
+            if (rows.length <= 1) {
+                rows[0].querySelectorAll('input').forEach(function (input) { input.value = ''; });
+            } else {
+                const row = button.closest('.soap-rx-row');
+                if (row) row.remove();
+            }
+            soapDraftNoteEdited();
+        });
+    }
     if (form) {
-        form.addEventListener('input', updateSoapFinalizeReady);
-        form.addEventListener('change', updateSoapFinalizeReady);
+        form.addEventListener('input', function () {
+            updateSoapFinalizeReady();
+            soapDraftNoteEdited();
+        });
+        form.addEventListener('change', function () {
+            updateSoapFinalizeReady();
+            soapDraftNoteEdited();
+        });
         form.addEventListener('reset', function () {
             setTimeout(function () {
                 const diagnosis = document.getElementById('icdDiagnosis');
@@ -5910,6 +6149,7 @@ function initSoapSignatureUi() {
                 if (search) search.value = '';
                 syncSoapSignatureFields();
                 updateSoapFinalizeReady();
+                soapDraftNoteEdited();
             }, 0);
         });
     }
@@ -5998,6 +6238,7 @@ function initIcdSearch() {
         input.value = label;
         closeList();
         updateSoapFinalizeReady();
+        soapDraftNoteEdited();
     }
 
     function renderRows(rows) {
@@ -6110,6 +6351,10 @@ async function finalizeConsultation() {
     const confirmBtn = document.getElementById('soapFinalizeConfirm');
     const finalizeBtn = document.getElementById('soapFinalizeBtn');
     soapFinalizeBusy = true;
+    if (window.soapDraftSaver) {
+        soapDraftSaver.hold();
+        await soapDraftSaver.whenIdle();
+    }
     if (confirmBtn) {
         confirmBtn.disabled = true;
         confirmBtn.dataset.label = confirmBtn.dataset.label || confirmBtn.textContent;
@@ -6140,6 +6385,7 @@ async function finalizeConsultation() {
         return;
     }
     soapFinalizeBusy = false;
+    if (window.soapDraftSaver) soapDraftSaver.release();
     if (finalizeBtn) {
         finalizeBtn.textContent = finalizeBtn.dataset.label || 'Finalize SOAP Note';
     }
