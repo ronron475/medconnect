@@ -6,6 +6,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php'
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_verification.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_lines.php';
 
 clinical_tables_ensure($pdo);
 
@@ -37,7 +38,27 @@ $duration = trim($_POST['duration'] ?? '');
 $notes = trim($_POST['notes'] ?? '');
 $provider_id = (int)$_SESSION['user_id'];
 
-if (!$patient_id || !$medication || !$dosage || !$frequency || !$duration) {
+if ($consultation_id <= 0 || $patient_id <= 0) {
+    echo json_encode(['success' => false, 'message' => 'Select the consultation this prescription belongs to.']);
+    exit;
+}
+
+// IDOR protection: the consultation must belong to this provider and patient.
+$access = provider_patient_assert_access($pdo, $provider_id, $patient_id, $consultation_id);
+if (!$access['allowed']) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => $access['message']]);
+    exit;
+}
+$consultation_id = (int) ($access['consultation_id'] ?? 0);
+$gate = prescription_consultation_can_issue($pdo, $provider_id, $patient_id, $consultation_id);
+if (!$gate['ok']) {
+    http_response_code($gate['message'] === 'Access denied.' ? 403 : 422);
+    echo json_encode(['success' => false, 'message' => $gate['message']]);
+    exit;
+}
+
+if (!$medication || !$dosage || !$frequency || !$duration) {
     echo json_encode(['success' => false, 'message' => 'Required fields missing.']);
     exit;
 }
@@ -45,32 +66,18 @@ if (mb_strlen($medication) > 150 || mb_strlen($dosage) > 100 || mb_strlen($frequ
     echo json_encode(['success' => false, 'message' => 'One of the prescription fields is too long.']);
     exit;
 }
-
-// IDOR protection: provider must be assigned to consultation/patient (or have an existing relationship).
-$access = provider_patient_assert_access($pdo, $provider_id, $patient_id, $consultation_id);
-if (!$access['allowed']) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => $access['message']]);
+if (preg_match('/[\r\n\t]/', $medication . $dosage . $frequency . $duration)) {
+    echo json_encode(['success' => false, 'message' => 'Prescription fields cannot contain line breaks.']);
     exit;
 }
-$consultation_id = (int) ($access['consultation_id'] ?? $consultation_id);
+if (prescription_active_duplicate_exists($pdo, $consultation_id, $medication, $dosage, $frequency, $duration)) {
+    http_response_code(409);
+    echo json_encode(['success' => false, 'message' => 'This active prescription was already issued for this consultation.']);
+    exit;
+}
 
 try {
     $pdo->beginTransaction();
-
-    // Backward compatibility: if no consultation exists but a booked appointment relationship exists,
-    // create a consultation record tied to this provider/patient so the prescription remains linked.
-    if ($consultation_id <= 0) {
-        $pdo->prepare("
-            INSERT INTO consultations (patient_id, provider_id, consult_date, consult_time, status, provider_name)
-            VALUES (?, ?, CURDATE(), CURTIME(), 'completed', ?)
-        ")->execute([
-            $patient_id,
-            $provider_id,
-            trim((string)(($_SESSION['first_name'] ?? '') . ' ' . ($_SESSION['last_name'] ?? ''))),
-        ]);
-        $consultation_id = (int) $pdo->lastInsertId();
-    }
 
     prescription_issue(
         $pdo,

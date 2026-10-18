@@ -127,7 +127,10 @@ try {
             pr.notes                                    AS detail
         FROM prescriptions pr
         JOIN users u ON u.id = pr.provider_id
+        JOIN consultations c ON c.id = pr.consultation_id AND c.patient_id = pr.patient_id
+        JOIN clinical_notes cn ON cn.consultation_id = c.id
         WHERE pr.patient_id = ?
+          AND " . patient_consultation_record_visible_sql('c', 'cn') . "
         ORDER BY pr.created_at DESC
         LIMIT 20
     ");
@@ -212,7 +215,14 @@ $dash_greeting_time = $dash_hour < 12 ? 'Good morning' : ($dash_hour < 17 ? 'Goo
 $dash_med_count = 0;
 try {
     if ($pdo->query("SHOW TABLES LIKE 'prescriptions'")->rowCount()) {
-        $s = $pdo->prepare('SELECT COUNT(*) FROM prescriptions WHERE patient_id = ?');
+        $s = $pdo->prepare("
+            SELECT COUNT(*)
+            FROM prescriptions pr
+            JOIN consultations c ON c.id = pr.consultation_id AND c.patient_id = pr.patient_id
+            JOIN clinical_notes cn ON cn.consultation_id = c.id
+            WHERE pr.patient_id = ?
+              AND " . patient_consultation_record_visible_sql('c', 'cn') . "
+        ");
         $s->execute([$uid]);
         $dash_med_count = (int) $s->fetchColumn();
     }

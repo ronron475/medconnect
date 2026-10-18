@@ -36,6 +36,36 @@ function patient_consultation_is_finalized(string $consultationStatus, ?string $
     return trim((string) $signatureData) !== '';
 }
 
+/**
+ * Patient-facing visit status.
+ * Completed requires a completed consultation and a finalized clinical note.
+ * An ended video room or a draft note does not complete the visit.
+ */
+function patient_consultation_patient_status_label(string $consultationStatus, ?string $signatureData, ?string $finalizedAt = null): string
+{
+    $status = strtolower(trim(str_replace(' ', '_', $consultationStatus)));
+    if (in_array($status, ['cancelled', 'canceled'], true)) {
+        return 'Cancelled';
+    }
+    if (patient_consultation_is_finalized($consultationStatus, $signatureData, $finalizedAt)) {
+        return 'Completed';
+    }
+    if (in_array($status, ['in_consultation', 'completed', 'ended', 'closed'], true)) {
+        return 'In progress';
+    }
+
+    return 'Upcoming';
+}
+
+function patient_consultation_patient_status_chip(string $label): string
+{
+    return match ($label) {
+        'Cancelled' => 'cancelled',
+        'Completed' => 'completed',
+        default => 'live',
+    };
+}
+
 function patient_consultation_record_visible_sql(string $consultAlias = 'c', string $noteAlias = 'cn'): string
 {
     return "{$consultAlias}.status = 'completed'

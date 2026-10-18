@@ -7,6 +7,8 @@
  */
 declare(strict_types=1);
 
+require_once __DIR__ . '/patient_consultation_records.php';
+
 function patient_shares_prescriptions_with_barangay_bhw(PDO $pdo, int $patientId): bool
 {
     if ($patientId <= 0) {
@@ -34,9 +36,9 @@ function patient_shares_prescriptions_with_barangay_bhw(PDO $pdo, int $patientId
  *
  * The barangay gate runs again here, so sharing cannot bypass it.
  * Eligible rows match prescriptions the patient can already see in My Health:
- * the consultation is completed. Revoked rows and prescriptions on consultations
- * that are not completed are omitted. Provider notes and verification tokens
- * are not selected.
+ * the consultation is completed and its SOAP note is finalized. Revoked rows,
+ * in-progress visits, and completed visits without a finalized note are omitted.
+ * Provider notes and verification tokens are not selected.
  *
  * @param array{barangay_id?:int,barangay_name?:string} $ctx
  * @return array{shared:bool,denied:bool,prescriptions:list<array{medication_name:string,dosage:string,frequency:string,duration:string,created_at:string}>}
@@ -57,9 +59,11 @@ function bhw_records_prescription_view(PDO $pdo, array $ctx, int $patientId): ar
         INNER JOIN consultations c
             ON c.id = p.consultation_id
            AND c.patient_id = p.patient_id
+        INNER JOIN clinical_notes cn
+            ON cn.consultation_id = c.id
         WHERE p.patient_id = ?
-          AND c.status = 'completed'
           AND (p.status IS NULL OR p.status = 'active')
+          AND " . patient_consultation_record_visible_sql('c', 'cn') . "
         ORDER BY p.created_at DESC
         LIMIT 50
     ");

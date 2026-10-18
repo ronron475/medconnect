@@ -9,6 +9,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php'
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_signature.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_pdf.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_lines.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/icd10_lookup.php';
 
 if (empty($_SESSION['user_id']) || $_SESSION['user_role'] !== 'provider') {
@@ -65,6 +66,21 @@ if ($diagnosis !== '') {
     }
 }
 
+$rxPosted = prescription_lines_from_post($_POST);
+if ($rxPosted['error'] !== null) {
+    http_response_code(422);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'message' => $rxPosted['error']]);
+    exit;
+}
+if ($rxPosted['provided']) {
+    $prescriptionText = prescription_lines_display(
+        prescription_lines_encode($rxPosted['rows'], (string) ($_POST['prescription_legacy'] ?? ''))
+    );
+} else {
+    $prescriptionText = prescription_lines_display((string) ($_POST['prescription'] ?? ''));
+}
+
 $bytes = clinical_note_pdf_render([
     'consultation_id' => $consultationId,
     'subjective' => (string) ($_POST['subjective'] ?? ''),
@@ -72,7 +88,7 @@ $bytes = clinical_note_pdf_render([
     'assessment' => (string) ($_POST['assessment'] ?? ''),
     'plan' => (string) ($_POST['plan'] ?? ''),
     'diagnosis' => $diagnosis,
-    'prescription' => (string) ($_POST['prescription'] ?? ''),
+    'prescription' => $prescriptionText,
     'provider_name' => $providerName,
     'signed_at' => date('Y-m-d H:i:s'),
     'preview' => true,

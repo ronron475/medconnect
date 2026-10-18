@@ -30,7 +30,31 @@ try {
     $prescriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {}
 
-$patient_options = $patients ?? [];
+$consult_options = [];
+try {
+    $consultStmt = $pdo->prepare("
+        SELECT c.id, c.patient_id, c.consult_date, c.consult_time, c.status,
+               u.first_name, u.last_name
+        FROM consultations c
+        JOIN users u ON u.id = c.patient_id
+        LEFT JOIN clinical_notes cn ON cn.consultation_id = c.id
+        WHERE c.provider_id = ?
+          AND LOWER(COALESCE(c.status, '')) NOT IN ('cancelled', 'canceled', 'completed')
+          AND (
+            cn.consultation_id IS NULL
+            OR (
+              (cn.finalized_at IS NULL OR TRIM(cn.finalized_at) = '' OR cn.finalized_at = '0000-00-00 00:00:00')
+              AND (cn.signature_data IS NULL OR TRIM(cn.signature_data) = '')
+            )
+          )
+        ORDER BY c.id DESC
+        LIMIT 100
+    ");
+    $consultStmt->execute([$provider_id]);
+    $consult_options = $consultStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $consult_options = [];
+}
 ?>
 
 <div class="greeting-banner provider-page-intro">
@@ -42,13 +66,33 @@ $patient_options = $patients ?? [];
   <h3 class="text-h3 mb-md">Create Prescription</h3>
   <form id="rxForm" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
     <div style="grid-column:span 2;">
-      <label class="text-xs text-muted">Patient</label>
-      <select name="patient_id" required class="mc-btn mc-btn--outline" style="width:100%;background:#fff;display:block;">
-        <option value="">Select patient…</option>
-        <?php foreach ($patient_options as $p): ?>
-        <option value="<?= (int)$p['id'] ?>"><?= htmlspecialchars($p['name'] ?? '') ?></option>
+      <label class="text-xs text-muted">Consultation</label>
+      <select name="consultation_id" id="rxConsultationId" required class="mc-btn mc-btn--outline" style="width:100%;background:#fff;display:block;" <?= empty($consult_options) ? 'disabled' : '' ?>>
+        <option value="">Select consultation…</option>
+        <?php foreach ($consult_options as $consult): ?>
+        <?php
+          $consultPatient = trim((string) (($consult['first_name'] ?? '') . ' ' . ($consult['last_name'] ?? '')));
+          $consultWhen = trim((string) ($consult['consult_date'] ?? ''));
+          if (!empty($consult['consult_time'])) {
+              $consultWhen .= ' ' . substr((string) $consult['consult_time'], 0, 5);
+          }
+          $consultStatus = str_replace('_', ' ', (string) ($consult['status'] ?? ''));
+          $consultLabel = '#' . (int) $consult['id'];
+          if ($consultWhen !== '') {
+              $consultLabel .= ' · ' . $consultWhen;
+          }
+          $consultLabel .= ' · ' . ($consultPatient !== '' ? $consultPatient : 'Patient');
+          if ($consultStatus !== '') {
+              $consultLabel .= ' · ' . $consultStatus;
+          }
+        ?>
+        <option value="<?= (int) $consult['id'] ?>" data-patient="<?= (int) $consult['patient_id'] ?>"><?= htmlspecialchars($consultLabel) ?></option>
         <?php endforeach; ?>
       </select>
+      <input type="hidden" name="patient_id" id="rxPatientId" value="">
+      <?php if (empty($consult_options)): ?>
+      <p class="text-xs text-muted">No eligible consultation is available. A prescription can only be issued for an existing visit.</p>
+      <?php endif; ?>
     </div>
     <div><label class="text-xs text-muted">Medication</label><input name="medication_name" required class="mc-btn mc-btn--outline" style="width:100%;background:#fff;"></div>
     <div><label class="text-xs text-muted">Dosage</label><input name="dosage" required class="mc-btn mc-btn--outline" style="width:100%;background:#fff;"></div>
@@ -97,6 +141,10 @@ document.getElementById('rxOpenForm').addEventListener('click', function () {
 });
 document.getElementById('rxForm').addEventListener('submit', function (e) {
   e.preventDefault();
+  var select = document.getElementById('rxConsultationId');
+  var patient = document.getElementById('rxPatientId');
+  var option = select && select.selectedIndex >= 0 ? select.options[select.selectedIndex] : null;
+  if (patient) patient.value = option ? (option.getAttribute('data-patient') || '') : '';
   var fd = new FormData(e.target);
   fd.append('csrf_token', document.body.dataset.csrf || '');
   fetch('<?= ASSET_BASE ?>/app/api/provider/create_prescription.php', { method: 'POST', body: fd })

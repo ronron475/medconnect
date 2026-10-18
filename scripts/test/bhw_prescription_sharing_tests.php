@@ -126,6 +126,15 @@ $pdo->exec('
     )
 ');
 $pdo->exec('
+    CREATE TABLE clinical_notes (
+        id INTEGER PRIMARY KEY,
+        consultation_id INTEGER NOT NULL,
+        patient_id INTEGER NOT NULL,
+        finalized_at TEXT,
+        signature_data TEXT
+    )
+');
+$pdo->exec('
     CREATE TABLE prescriptions (
         id INTEGER PRIMARY KEY,
         consultation_id INTEGER,
@@ -148,6 +157,19 @@ $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, 
 $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([11, 1, 'completed']);
 $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([12, 1, 'in_consultation']);
 $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([13, 1, 'completed']);
+$pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([14, 1, 'completed']);
+$pdo->prepare('
+    INSERT INTO clinical_notes (id, consultation_id, patient_id, finalized_at, signature_data)
+    VALUES (?, ?, ?, ?, ?)
+')->execute([1, 10, 1, '2026-10-01 10:00:00', 'signed_pdf:amoxicillin']);
+$pdo->prepare('
+    INSERT INTO clinical_notes (id, consultation_id, patient_id, finalized_at, signature_data)
+    VALUES (?, ?, ?, ?, ?)
+')->execute([2, 13, 1, '2026-09-01 10:00:00', '']);
+$pdo->prepare('
+    INSERT INTO clinical_notes (id, consultation_id, patient_id, finalized_at, signature_data)
+    VALUES (?, ?, ?, ?, ?)
+')->execute([3, 14, 1, null, '']);
 
 $insertRx = $pdo->prepare('
     INSERT INTO prescriptions
@@ -158,6 +180,7 @@ $insertRx->execute([1, 10, 1, 9, 'Amoxicillin', '500 mg', '3x daily', '7 days', 
 $insertRx->execute([2, 11, 1, 9, 'RevokedMed', '10 mg', 'once', '1 day', 'Do not share', 'revokedtoken', 'revoked', '2026-10-02 09:00:00']);
 $insertRx->execute([3, 12, 1, 9, 'DraftMed', '5 mg', 'once', '1 day', 'Not finalized', 'drafttoken', 'active', '2026-10-03 09:00:00']);
 $insertRx->execute([4, 13, 1, 9, 'LegacyMed', '20 mg', 'daily', '5 days', 'Legacy note', null, null, '2026-09-01 09:00:00']);
+$insertRx->execute([5, 14, 1, 9, 'UnfinalizedMed', '15 mg', 'daily', '3 days', 'Completed without a finalized note', null, 'active', '2026-10-04 09:00:00']);
 
 $sameBarangay = ['barangay_id' => 5, 'barangay_name' => 'Test Norte'];
 $otherBarangay = ['barangay_id' => 9, 'barangay_name' => 'Other Barangay'];
@@ -177,6 +200,7 @@ rx_assert($on['denied'] === false && $on['shared'] === true, 'sharing on allows 
 rx_assert($names === ['Amoxicillin', 'LegacyMed'] || $names === ['LegacyMed', 'Amoxicillin'], 'the same-barangay BHW sees completed active and legacy prescriptions');
 rx_assert(!in_array('RevokedMed', $names, true), 'a revoked prescription is excluded');
 rx_assert(!in_array('DraftMed', $names, true), 'a prescription on a consultation that is not completed is excluded');
+rx_assert(!in_array('UnfinalizedMed', $names, true), 'a completed consultation without a finalized SOAP note is excluded');
 $visible = $on['prescriptions'][0];
 rx_assert(
     array_keys($visible) === ['medication_name', 'dosage', 'frequency', 'duration', 'created_at'],

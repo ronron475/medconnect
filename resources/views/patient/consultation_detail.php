@@ -13,6 +13,7 @@ require_once BASE_PATH . '/app/includes/patient_portal_bootstrap.php';
 require_once BASE_PATH . '/app/includes/patient_consultation_records.php';
 require_once BASE_PATH . '/app/includes/clinical_tables.php';
 require_once BASE_PATH . '/app/includes/clinical_note_signature.php';
+require_once BASE_PATH . '/app/includes/prescription_lines.php';
 require_once BASE_PATH . '/app/includes/consultation_video_history.php';
 $GLOBALS['pdo'] = $pdo;
 
@@ -56,11 +57,13 @@ $isFinalized = patient_consultation_is_finalized(
 );
 
 $prescriptions = [];
-try {
-    $rx = $pdo->prepare('SELECT * FROM prescriptions WHERE consultation_id = ? AND patient_id = ? ORDER BY created_at ASC');
-    $rx->execute([$consultationId, $uid]);
-    $prescriptions = $rx->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) { /* optional */ }
+if ($isFinalized) {
+    try {
+        $rx = $pdo->prepare('SELECT * FROM prescriptions WHERE consultation_id = ? AND patient_id = ? ORDER BY created_at ASC');
+        $rx->execute([$consultationId, $uid]);
+        $prescriptions = $rx->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) { /* optional */ }
+}
 
 $followups = [];
 try {
@@ -102,23 +105,14 @@ $durationLabel = (string) ($durationSnap['actual_duration_label'] ?? '');
 $startLabel = (string) ($durationSnap['started_label'] ?? '');
 $endLabel = (string) ($durationSnap['ended_label'] ?? '');
 $scheduledDurationLabel = (string) ($durationSnap['scheduled_duration_label'] ?? '');
-$endedEarly = !empty($durationSnap['ended_early']);
-
 $status = strtolower(trim((string) ($consult['status'] ?? '')));
 $isCancelled = in_array($status, ['cancelled', 'canceled'], true);
-if ($isCancelled) {
-    $statusLabel = 'Cancelled';
-    $statusChip = 'cancelled';
-} elseif ($isFinalized || $status === 'completed' || ($video && (string) ($video['status'] ?? '') === 'ended')) {
-    $statusLabel = $endedEarly ? 'Completed — Ended early' : 'Completed';
-    $statusChip = 'completed';
-} elseif ($status === 'in_consultation') {
-    $statusLabel = 'Active';
-    $statusChip = 'live';
-} else {
-    $statusLabel = 'Upcoming';
-    $statusChip = 'live';
-}
+$statusLabel = patient_consultation_patient_status_label(
+    (string) ($consult['status'] ?? ''),
+    isset($note['signature_data']) ? (string) $note['signature_data'] : '',
+    isset($note['finalized_at']) ? (string) $note['finalized_at'] : null
+);
+$statusChip = patient_consultation_patient_status_chip($statusLabel);
 
 $dateLabel = !empty($consult['consult_date']) ? date('F j, Y', strtotime($consult['consult_date'])) : '—';
 
@@ -267,7 +261,7 @@ $patient_page_stylesheets = [
         <?php endif; ?>
         <div class="pmh-kv-item pmh-kv-item--status">
           <dt>Status</dt>
-          <dd><?= htmlspecialchars($isCancelled ? 'Cancelled' : (string) ($videoHistory['status_label'] ?: $videoHistory['video_status_label'] ?: $statusLabel)) ?></dd>
+          <dd><?= htmlspecialchars($statusLabel) ?></dd>
         </div>
         <div class="pmh-kv-item">
           <dt>Provider</dt>
@@ -414,14 +408,22 @@ $patient_page_stylesheets = [
             </li>
             <?php endforeach; ?>
           </ul>
-          <?php if (trim((string) ($note['prescription'] ?? '')) !== '' && empty($prescriptions[0]['notes'])): ?>
-          <p><?= nl2br(htmlspecialchars($note['prescription'])) ?></p>
+          <?php
+            $storedRx = (string) ($note['prescription'] ?? '');
+            $legacyRx = prescription_lines_is_encoded($storedRx)
+                ? trim((string) (prescription_lines_decode($storedRx)['legacy'] ?? ''))
+                : '';
+          ?>
+          <?php if ($legacyRx !== ''): ?>
+          <p><?= nl2br(htmlspecialchars($legacyRx)) ?></p>
+          <?php elseif (trim($storedRx) !== '' && empty($prescriptions[0]['notes']) && !prescription_lines_is_encoded($storedRx)): ?>
+          <p><?= nl2br(htmlspecialchars($storedRx)) ?></p>
           <?php endif; ?>
         </div>
         <?php elseif (trim((string) ($note['prescription'] ?? '')) !== ''): ?>
         <div class="pmh-detail-docs__block">
           <h4 class="pmh-detail-docs__heading">Prescription</h4>
-          <p><?= nl2br(htmlspecialchars($note['prescription'])) ?></p>
+          <p><?= nl2br(htmlspecialchars(prescription_lines_display((string) $note['prescription']))) ?></p>
         </div>
         <?php endif; ?>
 

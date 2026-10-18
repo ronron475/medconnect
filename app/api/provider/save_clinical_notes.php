@@ -14,6 +14,7 @@ require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/auth_guard.php'
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_patient_access.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_tables.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_verification.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/prescription_lines.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/patient_consultation_records.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_signature.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/clinical_note_pdf.php';
@@ -107,6 +108,21 @@ $alreadyFinalized = trim((string) ($existingNote['finalized_at'] ?? '')) !== ''
 if ($alreadyFinalized) {
     echo json_encode(['success' => false, 'message' => 'This SOAP note has already been finalized and cannot be edited.']);
     exit;
+}
+
+$rxPosted = prescription_lines_from_post($_POST);
+if ($rxPosted['error'] !== null) {
+    echo json_encode(['success' => false, 'message' => $rxPosted['error']]);
+    exit;
+}
+if ($rxPosted['provided']) {
+    $data['prescription'] = prescription_lines_encode($rxPosted['rows'], (string) ($_POST['prescription_legacy'] ?? ''));
+    $data['rx_rows'] = $rxPosted['rows'];
+} elseif (!array_key_exists('prescription', $_POST)) {
+    $data['prescription'] = (string) ($existingNote['prescription'] ?? '');
+    $data['rx_rows'] = prescription_lines_decode($data['prescription'])['rows'];
+} else {
+    $data['rx_rows'] = prescription_lines_decode((string) $data['prescription'])['rows'];
 }
 
     $diagRaw = trim((string) ($data['diagnosis'] ?? ''));
@@ -214,32 +230,82 @@ if ($alreadyFinalized) {
 
 try {
     if (!$finalize) {
-        $stmt = $pdo->prepare("
-            INSERT INTO clinical_notes
-            (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '')
-            ON DUPLICATE KEY UPDATE
-                subjective = VALUES(subjective),
-                objective = VALUES(objective),
-                assessment = VALUES(assessment),
-                plan = VALUES(plan),
-                diagnosis = VALUES(diagnosis),
-                treatment_plan = VALUES(treatment_plan),
-                prescription = VALUES(prescription)
-        ");
-        $stmt->execute([
-            $data['consultation_id'], $data['patient_id'], $data['provider_id'],
+        $draftValues = [
             $data['subjective'], $data['objective'], $data['assessment'], $data['plan'],
             $data['diagnosis'], $data['treatment_plan'], $data['prescription'],
-        ]);
-
-        echo json_encode([
-            'success'          => true,
-            'message'          => 'Draft SOAP saved. The patient cannot see this note until you finalize it.',
-            'consultation_id'  => (int) $data['consultation_id'],
-            'status'           => $currentStatus,
-            'finalized'        => false,
-        ]);
+        ];
+        $draftUpdate = $pdo->prepare("
+            UPDATE clinical_notes
+            SET subjective = ?, objective = ?, assessment = ?, plan = ?,
+                diagnosis = ?, treatment_plan = ?, prescription = ?
+            WHERE consultation_id = ?
+              AND provider_id = ?
+              AND (finalized_at IS NULL OR TRIM(finalized_at) = '' OR finalized_at = '0000-00-00 00:00:00')
+              AND (signature_data IS NULL OR TRIM(signature_data) = '')
+        ");
+        $draftSaved = static function () use ($data, $currentStatus): void {
+            echo json_encode([
+                'success'          => true,
+                'message'          => 'Draft SOAP saved. The patient cannot see this note until you finalize it.',
+                'consultation_id'  => (int) $data['consultation_id'],
+                'status'           => $currentStatus,
+                'finalized'        => false,
+                'saved_at'         => date('Y-m-d H:i:s'),
+            ]);
+        };
+        $draftBlocked = static function () use ($data): void {
+            echo json_encode([
+                'success' => false,
+                'finalized' => true,
+                'message' => 'This SOAP note has already been finalized and cannot be edited.',
+                'consultation_id' => (int) $data['consultation_id'],
+            ]);
+        };
+        $writeDraft = static function () use ($pdo, $draftUpdate, $draftValues, $data, $draftSaved, $draftBlocked): void {
+            $draftUpdate->execute(array_merge($draftValues, [
+                (int) $data['consultation_id'],
+                (int) $data['provider_id'],
+            ]));
+            $check = $pdo->prepare('SELECT provider_id, finalized_at, signature_data FROM clinical_notes WHERE consultation_id = ? LIMIT 1');
+            $check->execute([(int) $data['consultation_id']]);
+            $row = $check->fetch(PDO::FETCH_ASSOC) ?: null;
+            if (!$row) {
+                $insert = $pdo->prepare("
+                    INSERT INTO clinical_notes
+                    (consultation_id, patient_id, provider_id, subjective, objective, assessment, plan, diagnosis, treatment_plan, prescription, signature_data)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '')
+                ");
+                $insert->execute([
+                    $data['consultation_id'], $data['patient_id'], $data['provider_id'],
+                    $data['subjective'], $data['objective'], $data['assessment'], $data['plan'],
+                    $data['diagnosis'], $data['treatment_plan'], $data['prescription'],
+                ]);
+                $draftSaved();
+                return;
+            }
+            if ((int) ($row['provider_id'] ?? 0) !== (int) $data['provider_id']) {
+                http_response_code(403);
+                echo json_encode(['success' => false, 'message' => 'You are not authorized to sign or finalize this SOAP note.']);
+                return;
+            }
+            $noteFinalized = trim((string) ($row['finalized_at'] ?? '')) !== ''
+                || trim((string) ($row['signature_data'] ?? '')) !== '';
+            if ($noteFinalized) {
+                $draftBlocked();
+                return;
+            }
+            $draftSaved();
+        };
+        try {
+            $writeDraft();
+        } catch (PDOException $duplicate) {
+            $sqlState = (string) ($duplicate->errorInfo[0] ?? '');
+            $driverCode = (int) ($duplicate->errorInfo[1] ?? 0);
+            if ($sqlState !== '23000' && $driverCode !== 1062) {
+                throw $duplicate;
+            }
+            $writeDraft();
+        }
         exit;
     }
 
@@ -295,7 +361,7 @@ try {
         'assessment' => (string) $data['assessment'],
         'plan' => (string) $data['plan'],
         'diagnosis' => (string) $data['diagnosis'],
-        'prescription' => (string) $data['prescription'],
+        'prescription' => prescription_lines_display((string) $data['prescription']),
         'provider_name' => (string) $data['signature_name'],
         'signed_at' => $signedAt,
         'preview' => false,
@@ -376,24 +442,18 @@ try {
     appointment_slot_set_consultation_status($pdo, (int) $data['consultation_id'], 'completed');
 
     $rxIssued = false;
-    $rxText = trim((string) ($data['prescription'] ?? ''));
-    if ($rxText !== '') {
+    $rxRows = is_array($data['rx_rows'] ?? null) ? $data['rx_rows'] : [];
+    if ($rxRows !== []) {
         $tableOk = $pdo->query("SHOW TABLES LIKE 'prescriptions'");
         if ($tableOk && $tableOk->rowCount() > 0) {
-            $firstLine = trim((string) strtok(str_replace(["\r\n", "\r"], "\n", $rxText), "\n"));
-            $medication = $firstLine !== '' ? mb_substr($firstLine, 0, 150) : 'Digital prescription';
-            prescription_issue(
+            $issued = prescription_issue_lines(
                 $pdo,
                 (int) $data['consultation_id'],
                 (int) $data['patient_id'],
                 (int) $data['provider_id'],
-                $medication,
-                'As directed',
-                'As directed',
-                'As directed',
-                $rxText
+                $rxRows
             );
-            $rxIssued = true;
+            $rxIssued = $issued > 0;
         }
     }
 

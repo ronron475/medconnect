@@ -86,6 +86,18 @@ try {
         (string) ($row['status'] ?? '')
     );
 
+    $statusLabel = (string) ($snap['status_label'] ?? '');
+    if ($role === 'patient') {
+        $noteStmt = $pdo->prepare('SELECT signature_data, finalized_at FROM clinical_notes WHERE consultation_id = ? AND patient_id = ? LIMIT 1');
+        $noteStmt->execute([$consultationId, $patientId]);
+        $note = $noteStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $statusLabel = patient_consultation_patient_status_label(
+            (string) ($row['status'] ?? ''),
+            isset($note['signature_data']) ? (string) $note['signature_data'] : '',
+            isset($note['finalized_at']) ? (string) $note['finalized_at'] : null
+        );
+    }
+
     $providerName = patient_provider_display_name((string) ($row['provider_display'] ?? ''));
     $chiefComplaint = $role === 'patient'
         ? patient_session_chief_complaint($pdo, $patientId, $row)
@@ -111,7 +123,7 @@ try {
         'actual_duration_label' => (string) ($snap['actual_duration_label'] ?? ''),
         'duration_label' => (string) ($snap['actual_duration_label'] ?? ''),
         'ended_early' => !empty($snap['ended_early']),
-        'status_label' => (string) ($snap['status_label'] ?? 'Completed'),
+        'status_label' => $statusLabel,
         'status' => (string) ($row['status'] ?? ''),
         'chief_complaint' => $chiefComplaint,
         'detail_url' => patient_consultation_detail_url($consultationId) . '&from=sessions',

@@ -59,9 +59,11 @@ if (!empty($history)) {
                 SELECT p.consultation_id, p.medication_name, p.dosage, p.frequency
                 FROM prescriptions p
                 JOIN consultations c ON c.id = p.consultation_id
+                JOIN clinical_notes cn ON cn.consultation_id = c.id
                 WHERE p.consultation_id IN ($placeholders)
                   AND c.patient_id = ?
                   AND c.status = 'completed'
+                  AND " . patient_consultation_record_visible_sql('c', 'cn') . "
             ");
             $rxStmt->execute(array_merge(array_values($ids), [$uid]));
             while ($row = $rxStmt->fetch(PDO::FETCH_ASSOC)) {
@@ -113,8 +115,10 @@ try {
                CONCAT(u.first_name, ' ', u.last_name) AS provider_name
         FROM prescriptions pr
         JOIN consultations c ON c.id = pr.consultation_id
+        JOIN clinical_notes cn ON cn.consultation_id = c.id
         JOIN users u ON u.id = pr.provider_id
         WHERE pr.patient_id = ? AND c.status = 'completed'
+          AND " . patient_consultation_record_visible_sql('c', 'cn') . "
         ORDER BY pr.created_at DESC
     ");
     $s->execute([$uid]);
@@ -128,8 +132,10 @@ try {
                    CONCAT(u.first_name, ' ', u.last_name) AS provider_name
             FROM prescriptions pr
             JOIN consultations c ON c.id = pr.consultation_id
+            JOIN clinical_notes cn ON cn.consultation_id = c.id
             JOIN users u ON u.id = pr.provider_id
             WHERE pr.patient_id = ? AND c.status = 'completed'
+              AND " . patient_consultation_record_visible_sql('c', 'cn') . "
             ORDER BY pr.created_at DESC
         ");
         $s->execute([$uid]);
