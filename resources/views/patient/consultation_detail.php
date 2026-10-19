@@ -344,7 +344,7 @@ $patient_page_stylesheets = [
     </section>
     <?php endif; ?>
 
-    <section class="pmh-panel pmh-detail-card pmh-detail-card--docs<?= (!$isFinalized && !$isCancelled) ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
+    <section id="providerDocumentation" class="pmh-panel pmh-detail-card pmh-detail-card--docs<?= (!$isFinalized && !$isCancelled) ? ' pmh-detail-card--pending' : '' ?>" aria-label="Provider documentation">
       <div class="pmh-detail-card__head">
         <h3 class="pmh-detail-card__title">Provider documentation</h3>
         <?php if ($isCancelled): ?>
@@ -361,11 +361,12 @@ $patient_page_stylesheets = [
       <div class="pmh-detail__pending">
         <p class="pmh-detail__pending-lead">Provider documentation is still in progress.</p>
         <p class="pmh-detail__pending-note">Released notes, diagnosis, and prescriptions will appear here and in My Health when ready.</p>
+        <p class="pmh-detail-card__hint" style="margin-top:8px;">You can manage your sharing options in your <a href="<?= htmlspecialchars(defined('ASSET_BASE') ? ASSET_BASE : '') ?>/views/patient/profile.php?tab=privacy">Privacy Settings</a>.</p>
       </div>
       <?php else: ?>
 
       <div class="pmh-detail-docs">
-        <div class="pmh-detail-docs__block">
+        <div id="soapDocumentation" class="pmh-detail-docs__block">
           <h4 class="pmh-detail-docs__heading">SOAP Note</h4>
           <dl class="pmh-soap-list">
             <div><dt>Subjective</dt><dd><?= nl2br(htmlspecialchars(trim((string) ($note['subjective'] ?? '')) ?: '—')) ?></dd></div>
@@ -394,7 +395,7 @@ $patient_page_stylesheets = [
         </div>
 
         <?php if (!empty($prescriptions)): ?>
-        <div class="pmh-detail-docs__block">
+        <div id="prescriptions" class="pmh-detail-docs__block">
           <h4 class="pmh-detail-docs__heading">Prescription</h4>
           <ul class="pmh-rx-list">
             <?php foreach ($prescriptions as $rx): ?>
@@ -421,14 +422,14 @@ $patient_page_stylesheets = [
           <?php endif; ?>
         </div>
         <?php elseif (trim((string) ($note['prescription'] ?? '')) !== ''): ?>
-        <div class="pmh-detail-docs__block">
+        <div id="prescriptions" class="pmh-detail-docs__block">
           <h4 class="pmh-detail-docs__heading">Prescription</h4>
           <p><?= nl2br(htmlspecialchars(prescription_lines_display((string) $note['prescription']))) ?></p>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($followups)): ?>
-        <div class="pmh-detail-docs__block">
+        <div id="followup" class="pmh-detail-docs__block">
           <h4 class="pmh-detail-docs__heading">Follow-up</h4>
           <ul class="pmh-rx-list">
             <?php foreach ($followups as $fu): ?>

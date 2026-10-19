@@ -75,10 +75,14 @@ function patient_consultation_record_visible_sql(string $consultAlias = 'c', str
         )";
 }
 
-function patient_consultation_detail_url(int $consultationId): string
+function patient_consultation_detail_url(int $consultationId, ?string $anchor = null): string
 {
     $base = defined('ASSET_BASE') ? (string) ASSET_BASE : '';
-    return $base . '/views/patient/consultation_detail.php?id=' . $consultationId;
+    $url = $base . '/views/patient/consultation_detail.php?id=' . $consultationId;
+    if ($anchor !== null && trim($anchor) !== '') {
+        $url .= '#' . ltrim(trim($anchor), '#');
+    }
+    return $url;
 }
 
 /** Patient My Health → Health Files tab (optional consultation anchor). */
