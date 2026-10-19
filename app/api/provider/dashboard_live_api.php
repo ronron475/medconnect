@@ -1,0 +1,25 @@
+<?php
+/**
+ * API: Provider dashboard live refresh
+ * GET /app/api/provider/dashboard_live.php
+ */
+require_once dirname(dirname(dirname(__DIR__))) . '/bootstrap.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/config/db.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/provider_dashboard_live.php';
+
+Api::startJson();
+Api::requireRole('provider');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+    Api::error('Method not allowed.', 405);
+}
+
+$providerId = (int) $_SESSION['user_id'];
+$period = provider_parse_dashboard_period($_GET['period'] ?? 'week');
+Api::releaseSession();
+
+try {
+    Api::success(provider_dashboard_live_payload($pdo, $providerId, $period));
+} catch (Throwable $e) {
+    Api::error('Could not load dashboard data.', 500);
+}

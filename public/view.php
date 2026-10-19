@@ -23,7 +23,16 @@ if ($path === '' || str_contains($path, '..') || !preg_match('/\.php$/i', $path)
     exit('Page not found.');
 }
 
-$viewFile = VIEWS_PATH . '/' . $path;
+$viewAliases = [
+    'provider/dashboard.php' => 'provider/dashboard_view.php',
+    'provider/queue.php'     => 'provider/queue_view.php',
+];
+$lookupPath = $path;
+if (!is_file(VIEWS_PATH . '/' . $lookupPath) && isset($viewAliases[$lookupPath])) {
+    $lookupPath = $viewAliases[$lookupPath];
+}
+
+$viewFile = VIEWS_PATH . '/' . $lookupPath;
 $viewsRoot = realpath(VIEWS_PATH);
 $resolved  = realpath($viewFile);
 

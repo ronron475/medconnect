@@ -72,6 +72,10 @@ RewriteRule ^bootstrap\.php$ - [F,L]
 # Previous scheduled-video start URL.
 RewriteRule ^app/api/consultations/start_video\.php$ app/api/consultations/open_scheduled_video.php [L,QSA]
 
+# Provider live API endpoints
+RewriteRule ^app/api/provider/dashboard_live\.php$ app/api/provider/dashboard_live_api.php [L,QSA]
+RewriteRule ^app/api/provider/queue_status\.php$ app/api/provider/queue_status_api.php [L,QSA]
+
 # ── Serve real files and directories directly ──────────────────
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
