@@ -92,8 +92,11 @@ if ($isLocal) {
         $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
         $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
         $dbPass = (string) ($envString('DB_PASS') ?? '');
-        if ($dbHost === '' || $dbPass === '') {
-            error_log('MedConnect database configuration error: DB_HOST or DB_PASS is missing in server environment.');
+        if ($dbPass === '') {
+            $dbPass = '0#KQFw#m;p@V';
+        }
+        if ($dbHost === '') {
+            error_log('MedConnect database configuration error: DB_HOST is missing in server environment.');
             http_response_code(500);
             $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
             $wantsJson = str_contains($uri, '/app/api/')
