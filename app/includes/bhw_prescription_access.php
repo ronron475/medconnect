@@ -24,7 +24,7 @@ function patient_shares_prescriptions_with_barangay_bhw(PDO $pdo, int $patientId
         ');
         $stmt->execute([$patientId]);
         $value = $stmt->fetchColumn();
-    } catch (Throwable $e) {
+    } catch (PDOException $e) {
         return false;
     }
 
@@ -45,49 +45,41 @@ function patient_shares_prescriptions_with_barangay_bhw(PDO $pdo, int $patientId
  */
 function bhw_records_prescription_view(PDO $pdo, array $ctx, int $patientId): array
 {
-    if ($patientId <= 0) {
+    if (!function_exists('bhw_assert_patient_in_sector') || !bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
         return ['shared' => false, 'denied' => true, 'prescriptions' => []];
     }
 
-    try {
-        if (!function_exists('bhw_assert_patient_in_sector') || !bhw_assert_patient_in_sector($pdo, $ctx, $patientId)) {
-            return ['shared' => false, 'denied' => true, 'prescriptions' => []];
-        }
-
-        if (!patient_shares_prescriptions_with_barangay_bhw($pdo, $patientId)) {
-            return ['shared' => false, 'denied' => false, 'prescriptions' => []];
-        }
-
-        $stmt = $pdo->prepare("
-            SELECT p.medication_name, p.dosage, p.frequency, p.duration, p.created_at
-            FROM prescriptions p
-            INNER JOIN consultations c
-                ON c.id = p.consultation_id
-               AND c.patient_id = p.patient_id
-            INNER JOIN clinical_notes cn
-                ON cn.consultation_id = c.id
-            WHERE p.patient_id = ?
-              AND (p.status IS NULL OR p.status = 'active')
-              AND " . patient_consultation_record_visible_sql('c', 'cn') . "
-            ORDER BY p.created_at DESC
-            LIMIT 50
-        ");
-        $stmt->execute([$patientId]);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-
-        $prescriptions = [];
-        foreach ($rows as $row) {
-            $prescriptions[] = [
-                'medication_name' => trim((string) ($row['medication_name'] ?? '')),
-                'dosage' => trim((string) ($row['dosage'] ?? '')),
-                'frequency' => trim((string) ($row['frequency'] ?? '')),
-                'duration' => trim((string) ($row['duration'] ?? '')),
-                'created_at' => trim((string) ($row['created_at'] ?? '')),
-            ];
-        }
-
-        return ['shared' => true, 'denied' => false, 'prescriptions' => $prescriptions];
-    } catch (Throwable $e) {
+    if (!patient_shares_prescriptions_with_barangay_bhw($pdo, $patientId)) {
         return ['shared' => false, 'denied' => false, 'prescriptions' => []];
     }
+
+    $stmt = $pdo->prepare("
+        SELECT p.medication_name, p.dosage, p.frequency, p.duration, p.created_at
+        FROM prescriptions p
+        INNER JOIN consultations c
+            ON c.id = p.consultation_id
+           AND c.patient_id = p.patient_id
+        INNER JOIN clinical_notes cn
+            ON cn.consultation_id = c.id
+        WHERE p.patient_id = ?
+          AND (p.status IS NULL OR p.status = 'active')
+          AND " . patient_consultation_record_visible_sql('c', 'cn') . "
+        ORDER BY p.created_at DESC
+        LIMIT 50
+    ");
+    $stmt->execute([$patientId]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+    $prescriptions = [];
+    foreach ($rows as $row) {
+        $prescriptions[] = [
+            'medication_name' => trim((string) ($row['medication_name'] ?? '')),
+            'dosage' => trim((string) ($row['dosage'] ?? '')),
+            'frequency' => trim((string) ($row['frequency'] ?? '')),
+            'duration' => trim((string) ($row['duration'] ?? '')),
+            'created_at' => trim((string) ($row['created_at'] ?? '')),
+        ];
+    }
+
+    return ['shared' => true, 'denied' => false, 'prescriptions' => $prescriptions];
 }

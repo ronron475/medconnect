@@ -80,10 +80,12 @@ function followup_sms_send(PDO $pdo, int $followupId, int $actorId): array
             return ['success' => false, 'status' => 'failed', 'message' => 'Only a scheduled follow-up with a date can be reminded by SMS.'];
         }
 
+        $sendEnabled = TextBeeSmsClient::sendEnabled();
+        $statusInSql = $sendEnabled ? "'accepted', 'pending'" : "'mocked', 'accepted', 'pending'";
         $existing = $pdo->prepare("
             SELECT id, status, created_at
             FROM followup_sms_logs
-            WHERE followup_id = ? AND status IN ('mocked', 'accepted', 'pending')
+            WHERE followup_id = ? AND status IN ({$statusInSql})
             ORDER BY id DESC
             LIMIT 1
         ");

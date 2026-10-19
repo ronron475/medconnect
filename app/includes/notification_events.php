@@ -625,12 +625,15 @@ final class NotificationEvents
     ): void {
         require_once __DIR__ . '/patient_consultation_records.php';
         require_once __DIR__ . '/bhw_nav_inbox.php';
+        $patientUrl = $consultationId > 0
+            ? patient_consultation_detail_url($consultationId, 'providerDocumentation')
+            : '/views/patient/my_health.php?tab=files';
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_MEDICAL,
             'title'         => 'Medical record updated',
             'message'       => 'Your doctor has finalized your consultation notes.',
-            'action_url'    => patient_health_files_url($consultationId),
+            'action_url'    => $patientUrl,
             'related_table' => 'consultations',
             'related_id'    => $consultationId,
             'once'          => true,
@@ -650,7 +653,9 @@ final class NotificationEvents
     public static function consultationCompleted(PDO $pdo, int $consultationId, int $patientId, int $providerId, ?int $senderId = null, ?string $providerName = null, ?string $finalCaseLevel = null): void
     {
         require_once __DIR__ . '/patient_consultation_records.php';
-        $detailUrl = patient_health_files_url($consultationId);
+        $detailUrl = $consultationId > 0
+            ? patient_consultation_detail_url($consultationId)
+            : '/views/patient/my_health.php?tab=files';
 
         NotificationManager::notifyPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
@@ -662,15 +667,27 @@ final class NotificationEvents
             'related_id'    => $consultationId,
             'once'          => true,
         ]);
-        NotificationManager::notifyProvider($pdo, $providerId, [
-            'sender_id'     => $senderId,
-            'type'          => NotificationManager::TYPE_CONSULTATION,
-            'title'         => 'Follow-Up Required',
-            'message'       => 'Consultation completed. Schedule follow-up if needed.',
-            'action_url'    => '/views/provider/records.php',
-            'related_table' => 'consultations',
-            'related_id'    => $consultationId,
-        ]);
+
+        $fuDecided = false;
+        try {
+            $cCheck = $pdo->prepare('SELECT follow_up_decided_at FROM consultations WHERE id = ? LIMIT 1');
+            $cCheck->execute([$consultationId]);
+            $fuDecided = !empty($cCheck->fetchColumn());
+        } catch (Throwable $e) {
+            $fuDecided = false;
+        }
+
+        if (!$fuDecided) {
+            NotificationManager::notifyProvider($pdo, $providerId, [
+                'sender_id'     => $senderId,
+                'type'          => NotificationManager::TYPE_CONSULTATION,
+                'title'         => 'Follow-Up Required',
+                'message'       => 'Consultation completed. Schedule follow-up if needed.',
+                'action_url'    => '/views/provider/records.php',
+                'related_table' => 'consultations',
+                'related_id'    => $consultationId,
+            ]);
+        }
         NotificationManager::notifyBhwForPatient($pdo, $patientId, [
             'sender_id'     => $senderId,
             'type'          => NotificationManager::TYPE_CONSULTATION,
@@ -799,7 +816,7 @@ final class NotificationEvents
         require_once __DIR__ . '/patient_consultation_records.php';
         require_once __DIR__ . '/bhw_nav_inbox.php';
         $actionUrl = $consultationId
-            ? patient_consultation_detail_url($consultationId)
+            ? patient_consultation_detail_url($consultationId, 'prescriptions')
             : '/views/patient/my_health.php?tab=files';
 
         NotificationManager::notifyPatient($pdo, $patientId, [
@@ -1044,7 +1061,7 @@ final class NotificationEvents
         $actionUrl = '/views/patient/my_health.php?tab=files';
         if ($consultationId !== null && $consultationId > 0) {
             require_once __DIR__ . '/patient_consultation_records.php';
-            $actionUrl = patient_health_files_url($consultationId);
+            $actionUrl = patient_consultation_detail_url($consultationId, 'followup');
         }
 
         $patientOpts = [

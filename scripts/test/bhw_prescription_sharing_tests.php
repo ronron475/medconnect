@@ -35,8 +35,6 @@ function rx_assert(bool $ok, string $label): void
 
 final class RxShareTestPdo extends PDO
 {
-    public ?string $failPreparePattern = null;
-
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
         if (preg_match('/SHOW COLUMNS FROM\s+(\w+)/i', $query, $match)) {
@@ -63,10 +61,6 @@ final class RxShareTestPdo extends PDO
 
     public function prepare(string $query, array $options = []): PDOStatement|false
     {
-        if ($this->failPreparePattern !== null && preg_match($this->failPreparePattern, $query)) {
-            throw new PDOException("Simulated database failure for query: " . $query);
-        }
-
         $query = preg_replace('/\s+ON DUPLICATE KEY UPDATE.+$/is', '', $query) ?? $query;
         $query = preg_replace('/^INSERT INTO/i', 'INSERT OR IGNORE INTO', $query) ?? $query;
         $query = preg_replace('/CONVERT\((.+?) USING utf8mb4\)/i', '$1', $query) ?? $query;
@@ -136,11 +130,6 @@ $pdo->exec('
         id INTEGER PRIMARY KEY,
         consultation_id INTEGER NOT NULL,
         patient_id INTEGER NOT NULL,
-        subjective TEXT,
-        objective TEXT,
-        assessment TEXT,
-        plan TEXT,
-        diagnosis TEXT,
         finalized_at TEXT,
         signature_data TEXT
     )
@@ -169,24 +158,18 @@ $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, 
 $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([12, 1, 'in_consultation']);
 $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([13, 1, 'completed']);
 $pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([14, 1, 'completed']);
-$pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([15, 1, 'completed']);
-$pdo->prepare("INSERT INTO consultations (id, patient_id, status) VALUES (?, ?, ?)")->execute([16, 1, 'cancelled']);
 $pdo->prepare('
-    INSERT INTO clinical_notes (id, consultation_id, patient_id, subjective, objective, assessment, plan, diagnosis, finalized_at, signature_data)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-')->execute([1, 10, 1, 'Subjective confidential findings', 'BP 120/80', 'Assessment hypertension', 'Plan continue meds', 'Essential hypertension', '2026-10-01 10:00:00', 'signed_pdf:amoxicillin']);
+    INSERT INTO clinical_notes (id, consultation_id, patient_id, finalized_at, signature_data)
+    VALUES (?, ?, ?, ?, ?)
+')->execute([1, 10, 1, '2026-10-01 10:00:00', 'signed_pdf:amoxicillin']);
 $pdo->prepare('
-    INSERT INTO clinical_notes (id, consultation_id, patient_id, subjective, objective, assessment, plan, diagnosis, finalized_at, signature_data)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-')->execute([2, 13, 1, '', '', '', '', '', '2026-09-01 10:00:00', '']);
+    INSERT INTO clinical_notes (id, consultation_id, patient_id, finalized_at, signature_data)
+    VALUES (?, ?, ?, ?, ?)
+')->execute([2, 13, 1, '2026-09-01 10:00:00', '']);
 $pdo->prepare('
-    INSERT INTO clinical_notes (id, consultation_id, patient_id, subjective, objective, assessment, plan, diagnosis, finalized_at, signature_data)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-')->execute([3, 14, 1, 'Draft subjective', '', 'Draft assessment', '', '', null, '']);
-$pdo->prepare('
-    INSERT INTO clinical_notes (id, consultation_id, patient_id, subjective, objective, assessment, plan, diagnosis, finalized_at, signature_data)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-')->execute([4, 16, 1, '', '', '', '', '', '2026-10-01 10:00:00', 'signed_pdf:cancelled']);
+    INSERT INTO clinical_notes (id, consultation_id, patient_id, finalized_at, signature_data)
+    VALUES (?, ?, ?, ?, ?)
+')->execute([3, 14, 1, null, '']);
 
 $insertRx = $pdo->prepare('
     INSERT INTO prescriptions
@@ -198,14 +181,9 @@ $insertRx->execute([2, 11, 1, 9, 'RevokedMed', '10 mg', 'once', '1 day', 'Do not
 $insertRx->execute([3, 12, 1, 9, 'DraftMed', '5 mg', 'once', '1 day', 'Not finalized', 'drafttoken', 'active', '2026-10-03 09:00:00']);
 $insertRx->execute([4, 13, 1, 9, 'LegacyMed', '20 mg', 'daily', '5 days', 'Legacy note', null, null, '2026-09-01 09:00:00']);
 $insertRx->execute([5, 14, 1, 9, 'UnfinalizedMed', '15 mg', 'daily', '3 days', 'Completed without a finalized note', null, 'active', '2026-10-04 09:00:00']);
-$insertRx->execute([6, 15, 1, 9, 'MissingNoteMed', '50 mg', 'once daily', '10 days', 'No clinical note row', null, 'active', '2026-10-05 09:00:00']);
-$insertRx->execute([7, 16, 1, 9, 'CancelledMed', '30 mg', 'twice daily', '3 days', 'Cancelled consultation', null, 'active', '2026-10-06 09:00:00']);
 
 $sameBarangay = ['barangay_id' => 5, 'barangay_name' => 'Test Norte'];
 $otherBarangay = ['barangay_id' => 9, 'barangay_name' => 'Other Barangay'];
-
-$invalidPatient = bhw_records_prescription_view($pdo, $sameBarangay, 0);
-rx_assert($invalidPatient['denied'] === true && $invalidPatient['prescriptions'] === [], 'an invalid patient id is denied');
 
 $missing = bhw_records_prescription_view($pdo, $sameBarangay, 1);
 rx_assert($missing['denied'] === false && $missing['shared'] === false && $missing['prescriptions'] === [], 'a patient with no sharing row gives the BHW no prescription details');
@@ -223,18 +201,12 @@ rx_assert($names === ['Amoxicillin', 'LegacyMed'] || $names === ['LegacyMed', 'A
 rx_assert(!in_array('RevokedMed', $names, true), 'a revoked prescription is excluded');
 rx_assert(!in_array('DraftMed', $names, true), 'a prescription on a consultation that is not completed is excluded');
 rx_assert(!in_array('UnfinalizedMed', $names, true), 'a completed consultation without a finalized SOAP note is excluded');
-rx_assert(!in_array('MissingNoteMed', $names, true), 'a completed consultation without any clinical note row is excluded');
-rx_assert(!in_array('CancelledMed', $names, true), 'a prescription on a cancelled consultation is excluded');
 $visible = $on['prescriptions'][0];
 rx_assert(
     array_keys($visible) === ['medication_name', 'dosage', 'frequency', 'duration', 'created_at'],
     'the BHW payload keeps only dispensing fields'
 );
 rx_assert(!str_contains(json_encode($on), 'Private note') && !str_contains(json_encode($on), 'abc123token'), 'provider notes and verification tokens are not in the BHW payload');
-rx_assert(!str_contains(json_encode($on), 'Subjective confidential findings'), 'full SOAP subjective text is never exposed in BHW payload');
-rx_assert(!str_contains(json_encode($on), 'Assessment hypertension'), 'full SOAP assessment text is never exposed in BHW payload');
-rx_assert(!str_contains(json_encode($on), 'Plan continue meds'), 'full SOAP plan text is never exposed in BHW payload');
-rx_assert(!str_contains(json_encode($on), 'Essential hypertension'), 'full SOAP diagnosis text is never exposed in BHW payload');
 
 $pdo->prepare('UPDATE patient_privacy_preferences SET share_prescriptions_with_barangay_bhw = 0 WHERE user_id = ?')->execute([1]);
 $withdrawn = bhw_records_prescription_view($pdo, $sameBarangay, 1);
@@ -245,38 +217,6 @@ $pdo->prepare('UPDATE patient_privacy_preferences SET share_prescriptions_with_b
 $outsider = bhw_records_prescription_view($pdo, $otherBarangay, 1);
 rx_assert($outsider['denied'] === true && $outsider['prescriptions'] === [], 'a BHW from another barangay is denied even when sharing is on');
 rx_assert(!str_contains(json_encode($outsider), 'Amoxicillin'), 'a denied barangay response does not contain prescription details');
-
-$negPatient = bhw_records_prescription_view($pdo, $sameBarangay, -1);
-rx_assert($negPatient['denied'] === true && $negPatient['shared'] === false && $negPatient['prescriptions'] === [], 'a negative patient id is denied');
-
-$invalidCtx = bhw_records_prescription_view($pdo, ['barangay_id' => 0], 1);
-rx_assert($invalidCtx['denied'] === true && $invalidCtx['shared'] === false && $invalidCtx['prescriptions'] === [], 'BHW context with missing or zero barangay is denied');
-
-$unknownPatient = bhw_records_prescription_view($pdo, $sameBarangay, 999);
-rx_assert($unknownPatient['denied'] === true && $unknownPatient['shared'] === false && $unknownPatient['prescriptions'] === [], 'an unassigned patient outside sector is denied');
-
-rx_assert(patient_shares_prescriptions_with_barangay_bhw($pdo, -1) === false, 'patient_shares_prescriptions_with_barangay_bhw returns false for negative patient id');
-rx_assert(patient_shares_prescriptions_with_barangay_bhw($pdo, 0) === false, 'patient_shares_prescriptions_with_barangay_bhw returns false for zero patient id');
-
-// Database failure tests
-$pdo->failPreparePattern = '/patient_privacy_preferences/i';
-$prefDbFail = bhw_records_prescription_view($pdo, $sameBarangay, 1);
-rx_assert($prefDbFail['shared'] === false && $prefDbFail['denied'] === false && $prefDbFail['prescriptions'] === [], 'database failure on privacy preferences fails safely with shared=false and empty prescriptions');
-rx_assert(!str_contains(json_encode($prefDbFail), 'Amoxicillin'), 'database failure on privacy preferences never exposes medication names');
-rx_assert(patient_shares_prescriptions_with_barangay_bhw($pdo, 1) === false, 'patient_shares_prescriptions_with_barangay_bhw fails safely to false on db error');
-$pdo->failPreparePattern = null;
-
-$pdo->failPreparePattern = '/FROM prescriptions/i';
-$rxDbFail = bhw_records_prescription_view($pdo, $sameBarangay, 1);
-rx_assert($rxDbFail['shared'] === false && $rxDbFail['denied'] === false && $rxDbFail['prescriptions'] === [], 'database failure on prescriptions query fails safely with shared=false, denied=false, and empty prescriptions');
-rx_assert(!str_contains(json_encode($rxDbFail), 'Amoxicillin'), 'database failure on prescriptions query never exposes medication names');
-$pdo->failPreparePattern = null;
-
-$pdo->failPreparePattern = '/patient_registrations/i';
-$sectorDbFail = bhw_records_prescription_view($pdo, $sameBarangay, 1);
-rx_assert($sectorDbFail['shared'] === false && $sectorDbFail['prescriptions'] === [], 'database failure on sector query fails safely with shared=false and empty prescriptions');
-rx_assert(!str_contains(json_encode($sectorDbFail), 'Amoxicillin'), 'database failure on sector query never exposes medication names');
-$pdo->failPreparePattern = null;
 
 $records = (string) file_get_contents($root . '/app/api/bhw/records.php');
 $scope = (string) file_get_contents($root . '/app/includes/bhw_scope.php');

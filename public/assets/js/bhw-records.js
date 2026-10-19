@@ -27,8 +27,8 @@
   function renderPrescriptions(items, shared) {
     if (shared === false) {
       return '<div class="bhw-records-empty">' +
-        '<strong>Prescription sharing is off</strong>' +
-        '<span>This patient has not allowed barangay health workers to view prescription details.</span>' +
+        '<strong>Prescription sharing is restricted by patient privacy settings</strong>' +
+        '<span>Under the Data Privacy Act (RA 10173), prescription details are confidential. If this patient requests community healthcare assistance, they can grant prescription viewing access from their Account Settings &rarr; Privacy Preferences.</span>' +
         '</div>';
     }
     if (!items || !items.length) {
