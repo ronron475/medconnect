@@ -12,6 +12,72 @@ if (!defined('BASE_PATH')) {
     require_once dirname(__DIR__, 2) . '/bootstrap/app.php';
 }
 
+/**
+ * Same env resolution style as config/db.php ($envString).
+ * Order: getenv → $_ENV → $_SERVER (never logs values).
+ */
+if (!function_exists('medconnect_mail_env_string')) {
+    function medconnect_mail_env_string(string $key): ?string
+    {
+        $candidates = [
+            getenv($key),
+            $_ENV[$key] ?? null,
+            $_SERVER[$key] ?? null,
+            $_SERVER['REDIRECT_' . $key] ?? null,
+        ];
+        foreach ($candidates as $candidate) {
+            if ($candidate !== false && $candidate !== null && trim((string) $candidate) !== '') {
+                return trim((string) $candidate);
+            }
+        }
+
+        return null;
+    }
+}
+
+// Resolve MAIL_* exactly like config/db.php: environment first, then temporary
+// Hostinger hardcoded fallbacks so production works without a server .env.
+// TODO(temporary-hostinger-recovery): Remove hardcoded mail fallbacks after
+// Hostinger administrator configures MAIL_* / EMAIL_API_KEY / MEDCONNECT_AI_SERVICE_TOKEN
+// in server .env. Env always wins.
+$mailHost = medconnect_mail_env_string('MAIL_HOST') ?: 'smtp.gmail.com';
+$mailPort = medconnect_mail_env_string('MAIL_PORT') ?: '587';
+$mailUser = medconnect_mail_env_string('MAIL_USERNAME') ?: 'medconnect678@gmail.com';
+$mailPass = (string) (medconnect_mail_env_string('MAIL_PASSWORD') ?? '');
+if ($mailPass === '') {
+    $mailPass = 'vvmjwpnmsifyzawq';
+}
+$mailFromEmail = medconnect_mail_env_string('MAIL_FROM_EMAIL') ?: $mailUser;
+$mailFromName = medconnect_mail_env_string('MAIL_FROM_NAME') ?: 'MedConnect Bago City';
+$mailEmailApiKey = medconnect_mail_env_string('EMAIL_API_KEY') ?: 'mc-email-7f92b8d4a1e6c3f0-2026';
+$mailAiToken = medconnect_mail_env_string('MEDCONNECT_AI_SERVICE_TOKEN')
+    ?: 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I';
+
+if (!defined('MAIL_HOST')) {
+    define('MAIL_HOST', $mailHost);
+}
+if (!defined('MAIL_PORT')) {
+    define('MAIL_PORT', $mailPort);
+}
+if (!defined('MAIL_USERNAME')) {
+    define('MAIL_USERNAME', $mailUser);
+}
+if (!defined('MAIL_PASSWORD')) {
+    define('MAIL_PASSWORD', $mailPass);
+}
+if (!defined('MAIL_FROM_EMAIL')) {
+    define('MAIL_FROM_EMAIL', $mailFromEmail);
+}
+if (!defined('MAIL_FROM_NAME')) {
+    define('MAIL_FROM_NAME', $mailFromName);
+}
+if (!defined('EMAIL_API_KEY')) {
+    define('EMAIL_API_KEY', $mailEmailApiKey);
+}
+if (!defined('MEDCONNECT_AI_SERVICE_TOKEN')) {
+    define('MEDCONNECT_AI_SERVICE_TOKEN', $mailAiToken);
+}
+
 if (!function_exists('medconnect_railway_email_url')) {
     function medconnect_railway_email_url(): string
     {
@@ -45,16 +111,24 @@ if (!defined('MEDCONNECT_RAILWAY_EMAIL_URL')) {
 
 function medconnect_mail_env(string $key): string
 {
-    $candidates = [getenv($key), $_ENV[$key] ?? null, $_SERVER[$key] ?? null];
-    if ($key === 'MEDCONNECT_AI_SERVICE_TOKEN' && defined('MEDCONNECT_AI_SERVICE_TOKEN')) {
-        $candidates[] = MEDCONNECT_AI_SERVICE_TOKEN;
+    // 1) Live environment (same as db.php $envString) — allows tests / runtime overrides.
+    $live = medconnect_mail_env_string($key);
+    if ($live !== null) {
+        return $live;
     }
-    foreach ($candidates as $candidate) {
-        if ($candidate !== false && $candidate !== null && trim((string) $candidate) !== '') {
-            return trim((string) $candidate);
+
+    // 2) Constants resolved at include time (db.php-style Hostinger fallbacks).
+    if (defined($key)) {
+        $constantValue = constant($key);
+        if (is_string($constantValue) || is_numeric($constantValue)) {
+            $trimmed = trim((string) $constantValue);
+            if ($trimmed !== '') {
+                return $trimmed;
+            }
         }
     }
 
+    // 3) Optional private PHP/env file overrides.
     $fromFile = medconnect_mail_env_from_file($key);
     if ($fromFile !== '') {
         return $fromFile;
@@ -141,21 +215,16 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-        // TODO(temporary-hostinger-recovery): Remove Gmail + Railway email credential fallbacks after
-        // Hostinger administrator configures MAIL_* / EMAIL_API_KEY / MEDCONNECT_AI_SERVICE_TOKEN in server .env.
-        // Env always wins. Railway /email/send is used when Hostinger blocks outbound SMTP.
-    static $defaults = [
-        'MAIL_HOST' => 'smtp.gmail.com',
-        'MAIL_PORT' => '587',
-        'MAIL_USERNAME' => 'medconnect678@gmail.com',
-        'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
-        'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
-        'MAIL_FROM_NAME' => 'MedConnect Bago City',
-        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
-        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
-    ];
+    // Credentials are resolved like config/db.php into MAIL_* / EMAIL_* constants above.
+    // Keep this helper for callers; values come from those constants when env is empty.
+    if (defined($key)) {
+        $constantValue = constant($key);
+        if (is_string($constantValue) || is_numeric($constantValue)) {
+            return trim((string) $constantValue);
+        }
+    }
 
-    return $defaults[$key] ?? '';
+    return '';
 }
 
 /** Safe log line for mail failures (never includes passwords, tokens, or SMTP auth text). */
