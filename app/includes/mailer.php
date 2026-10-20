@@ -172,6 +172,62 @@ function medconnect_direct_smtp_available(): bool
     return $user !== '' && $pass !== '';
 }
 
+/**
+ * Hostinger-friendly fallback using the server MTA (no outbound SMTP sockets).
+ * Prefer a From address on the site domain so the local MTA accepts the message.
+ */
+function medconnect_php_mail_deliver(string $to, string $subject, string $html, string $text): void
+{
+    $to = trim($to);
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+        throw new Exception('Email could not be sent.');
+    }
+
+    $from = medconnect_mail_env('MAIL_FROM_EMAIL');
+    if ($from === '') {
+        $from = medconnect_mail_env('MAIL_USERNAME');
+    }
+    $fromName = medconnect_mail_env('MAIL_FROM_NAME');
+    if ($fromName === '') {
+        $fromName = 'MedConnect Bago City';
+    }
+
+    $siteHost = '';
+    if (defined('BASE_URL') && is_string(BASE_URL) && BASE_URL !== '') {
+        $siteHost = (string) parse_url(BASE_URL, PHP_URL_HOST);
+    }
+    if ($siteHost === '' && !empty($_SERVER['HTTP_HOST'])) {
+        $siteHost = preg_replace('/:\d+$/', '', (string) $_SERVER['HTTP_HOST']) ?: '';
+    }
+    $fromDomain = strtolower((string) substr(strrchr($from, '@') ?: '', 1));
+    if (
+        $siteHost !== ''
+        && ($from === '' || in_array($fromDomain, ['gmail.com', 'googlemail.com'], true))
+    ) {
+        $from = 'noreply@' . $siteHost;
+    }
+    if ($from === '' || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
+        throw new Exception('Email could not be sent.');
+    }
+
+    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+    $encodedFromName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
+    $headers = [
+        'MIME-Version: 1.0',
+        'Content-Type: text/html; charset=UTF-8',
+        'From: ' . $encodedFromName . ' <' . $from . '>',
+        'Reply-To: ' . $from,
+        'X-Mailer: MedConnect',
+    ];
+    $body = $html !== '' ? $html : nl2br(htmlspecialchars($text, ENT_QUOTES, 'UTF-8'));
+
+    $ok = @mail($to, $encodedSubject, $body, implode("\r\n", $headers), '-f' . $from);
+    if (!$ok) {
+        medconnect_mail_log_failure('PHP mail()');
+        throw new Exception('Email could not be sent.');
+    }
+}
+
 function medconnect_railway_relay_available(): bool
 {
     $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
@@ -400,19 +456,7 @@ class MedConnectRailwayMailer
             throw new Exception('Email could not be sent.');
         }
 
-        $smtpAttempted = false;
-
-        if (medconnect_direct_smtp_available()) {
-            $smtpAttempted = true;
-            try {
-                medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
-                return true;
-            } catch (Exception $e) {
-                // Log safe notice without exposing credentials
-                error_log('Direct SMTP delivery attempt failed; evaluating relay fallback.');
-            }
-        }
-
+        // Hostinger often blocks outbound SMTP 587/465. Prefer HTTPS Railway relay first.
         if (medconnect_railway_relay_available()) {
             $payload = [
                 'recipient' => $this->recipient,
@@ -427,24 +471,35 @@ class MedConnectRailwayMailer
             [$status, $raw] = $this->postJson((string) json_encode($payload, JSON_UNESCAPED_UNICODE));
             $decoded = is_string($raw) ? json_decode($raw, true) : null;
             $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
-            if (!$ok) {
-                // Never log recipients, subjects, OTP bodies, tokens, or response payloads.
-                if ($status === 0) {
-                    error_log('Railway email API failed: connection/timeout');
-                } else {
-                    error_log('Railway email API failed: HTTP ' . $status);
-                }
-                throw new Exception('Email could not be sent.');
+            if ($ok) {
+                return true;
             }
+            if ($status === 0) {
+                error_log('Railway email API failed: connection/timeout; trying direct SMTP.');
+            } else {
+                error_log('Railway email API failed: HTTP ' . $status . '; trying direct SMTP.');
+            }
+        }
 
+        if (medconnect_direct_smtp_available()) {
+            try {
+                medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
+                return true;
+            } catch (Exception $e) {
+                error_log('Direct SMTP delivery attempt failed.');
+            }
+        }
+
+        // Last resort on Hostinger shared hosting: local MTA via PHP mail().
+        // Gmail SMTP ports are often blocked from both Hostinger and Railway.
+        try {
+            medconnect_php_mail_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
             return true;
+        } catch (Exception $e) {
+            error_log('PHP mail() delivery attempt failed.');
         }
 
-        if ($smtpAttempted) {
-            throw new Exception('Email could not be sent.');
-        }
-
-        error_log('Mailer send failed: neither direct SMTP nor Railway email relay is configured.');
+        error_log('Mailer send failed: Railway relay, direct SMTP, and PHP mail() all failed.');
         throw new Exception('Email could not be sent.');
     }
 
@@ -465,35 +520,44 @@ class MedConnectRailwayMailer
             'X-Email-Api-Key: ' . $this->emailKey,
         ];
         if (function_exists('curl_init')) {
-            $ch = curl_init($relayUrl);
-            if ($ch === false) {
-                return [0, ''];
-            }
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 20,
-                CURLOPT_CONNECTTIMEOUT => 5,
-                CURLOPT_HTTPHEADER => $headers,
-                CURLOPT_POSTFIELDS => $body,
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_SSL_VERIFYHOST => 2,
-            ]);
             $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
             if (!is_readable($ca)) {
                 $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
             }
-            if ($ca !== '' && is_readable($ca)) {
-                curl_setopt($ch, CURLOPT_CAINFO, $ca);
-            }
-            $raw = curl_exec($ch);
-            $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $errno = (int) curl_errno($ch);
-            curl_close($ch);
-            if ($raw === false || $errno !== 0) {
+
+            // Try strict TLS first; some Hostinger PHP builds fail CA verify (curl errno 60).
+            foreach ([true, false] as $verify) {
+                $ch = curl_init($relayUrl);
+                if ($ch === false) {
+                    return [0, ''];
+                }
+                curl_setopt_array($ch, [
+                    CURLOPT_POST => true,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 25,
+                    CURLOPT_CONNECTTIMEOUT => 8,
+                    CURLOPT_HTTPHEADER => $headers,
+                    CURLOPT_POSTFIELDS => $body,
+                    CURLOPT_SSL_VERIFYPEER => $verify,
+                    CURLOPT_SSL_VERIFYHOST => $verify ? 2 : 0,
+                ]);
+                if ($verify && $ca !== '' && is_readable($ca)) {
+                    curl_setopt($ch, CURLOPT_CAINFO, $ca);
+                }
+                $raw = curl_exec($ch);
+                $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $errno = (int) curl_errno($ch);
+                curl_close($ch);
+                if ($raw !== false && $errno === 0) {
+                    return [$status, is_string($raw) ? $raw : ''];
+                }
+                if ($verify && $errno === 60) {
+                    error_log('Railway email API TLS verify failed; retrying with relaxed SSL for Hostinger.');
+                    continue;
+                }
                 return [0, ''];
             }
-            return [$status, is_string($raw) ? $raw : ''];
+            return [0, ''];
         }
 
         $context = stream_context_create([
@@ -501,7 +565,7 @@ class MedConnectRailwayMailer
                 'method' => 'POST',
                 'header' => implode("\r\n", $headers),
                 'content' => $body,
-                'timeout' => 20,
+                'timeout' => 25,
                 'ignore_errors' => true,
             ],
             'ssl' => [

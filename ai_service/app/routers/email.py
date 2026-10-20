@@ -69,7 +69,8 @@ def _smtp_settings() -> tuple[str, int, str, str, str, str]:
     host = _env("MAIL_HOST", "smtp.gmail.com") or "smtp.gmail.com"
     port_raw = _env("MAIL_PORT", "587") or "587"
     username = _env("MAIL_USERNAME")
-    password = _env("MAIL_PASSWORD")
+    # Gmail app passwords are often pasted with spaces; SMTP auth requires the raw 16 chars.
+    password = _env("MAIL_PASSWORD").replace(" ", "")
     from_email = _env("MAIL_FROM_EMAIL")
     from_name = _env("MAIL_FROM_NAME", "MedConnect Bago City") or "MedConnect Bago City"
     try:
