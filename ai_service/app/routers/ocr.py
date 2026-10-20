@@ -60,7 +60,12 @@ async def ocr_extract(national_id_image: UploadFile = File(...)) -> dict:
                 status_code=422,
                 detail=result.get("message", "OCR extraction failed."),
             )
-        logger.info("OCR extract completed for %s", national_id_image.filename)
+        # Never log filenames, parsed ID text, or field values (patient documents).
+        logger.info(
+            "OCR extract completed ok=%s low_confidence=%s",
+            bool(result.get("success")),
+            bool(result.get("low_confidence")),
+        )
         return result
     finally:
         try:

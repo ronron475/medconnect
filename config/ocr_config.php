@@ -4,8 +4,8 @@
  * IMPORTANT: Never expose this file via a public URL.
  * Add /config/ to your .htaccess deny rules in production.
  *
- * Secrets: OCR_SPACE_API_KEY comes from the server environment / .env first,
- * then the server-side fallback. Never return the key in client responses or logs.
+ * Secrets: OCR_SPACE_API_KEY comes from the server environment / .env only.
+ * Never return the key in client responses or logs.
  */
 
 require_once __DIR__ . '/env_loader.php';
@@ -45,12 +45,7 @@ if (!function_exists('medconnect_ocr_env')) {
             }
         }
 
-        // Temporary Hostinger demo fallback when .env is missing on shared hosting.
-        $fallbacks = [
-            'OCR_SPACE_API_KEY' => 'K87282302688957',
-        ];
-
-        return $fallbacks[$key] ?? '';
+        return '';
     }
 }
 

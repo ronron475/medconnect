@@ -310,6 +310,11 @@ body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-chart-ca
   gap: 6px 8px;
 }
 
+/* Class display must not override the HTML hidden attribute. */
+.adm-chart-custom[hidden] {
+  display: none !important;
+}
+
 .adm-chart-period__date {
   min-width: 9.5rem;
   font-size: 12px;

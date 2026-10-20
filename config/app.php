@@ -30,16 +30,20 @@ if (!function_exists('medconnect_is_production_host')) {
 }
 
 if (!defined('MEDCONNECT_AI_SERVICE_TOKEN')) {
-    $__mcAiTok = trim((string) (getenv('MEDCONNECT_AI_SERVICE_TOKEN') ?: ''));
-    if ($__mcAiTok === '') {
-        // Temporary Hostinger demo token when .env is missing.
-        $__mcAiTok = 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I'; // TEMP_HOSTINGER_AI_TOKEN
+    // Shared secret for Hostinger PHP → Railway FastAPI. Env / .env only — never hardcode.
+    $__mcAiTok = getenv('MEDCONNECT_AI_SERVICE_TOKEN');
+    if ($__mcAiTok === false || trim((string) $__mcAiTok) === '') {
+        $__mcAiTok = $_ENV['MEDCONNECT_AI_SERVICE_TOKEN'] ?? '';
     }
-    define('MEDCONNECT_AI_SERVICE_TOKEN', $__mcAiTok);
+    define('MEDCONNECT_AI_SERVICE_TOKEN', trim((string) $__mcAiTok));
 }
 
 if (!defined('AI_SERVICE_BASE_URL')) {
-    $envUrl = trim((string) (getenv('MEDCONNECT_AI_SERVICE_URL') ?: ''));
+    $envUrl = getenv('MEDCONNECT_AI_SERVICE_URL');
+    if ($envUrl === false || trim((string) $envUrl) === '') {
+        $envUrl = $_ENV['MEDCONNECT_AI_SERVICE_URL'] ?? '';
+    }
+    $envUrl = trim((string) $envUrl);
     $envHost = strtolower((string) (parse_url($envUrl, PHP_URL_HOST) ?: ''));
     $envIsLocal = $envUrl === ''
         || in_array($envHost, ['127.0.0.1', 'localhost', '::1'], true);

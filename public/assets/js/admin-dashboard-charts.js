@@ -37,7 +37,16 @@
     return document.getElementById('admChartsTo');
   }
 
+  function ymdLocal(d) {
+    var y = d.getFullYear();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day;
+  }
+
   function isCustomMode() {
+    var el = root();
+    if (el && el.getAttribute('data-mode') === 'custom') return true;
     var sel = daysSelect();
     return !!(sel && sel.value === 'custom');
   }
@@ -45,7 +54,25 @@
   function syncCustomVisibility() {
     var box = customRangeEl();
     if (!box) return;
-    box.hidden = !isCustomMode();
+    var show = isCustomMode();
+    box.hidden = !show;
+    box.setAttribute('aria-hidden', show ? 'false' : 'true');
+  }
+
+  function readCustomBounds() {
+    var el = root();
+    var from = fromInput() ? String(fromInput().value || '').trim() : '';
+    var to = toInput() ? String(toInput().value || '').trim() : '';
+    if ((!from || !to) && el) {
+      from = from || String(el.getAttribute('data-from') || '').trim();
+      to = to || String(el.getAttribute('data-to') || '').trim();
+    }
+    if (from && to && from > to) {
+      var tmp = from;
+      from = to;
+      to = tmp;
+    }
+    return { from: from, to: to };
   }
 
   function apiUrl() {
@@ -56,11 +83,10 @@
     var params = [];
 
     if (isCustomMode()) {
-      var from = fromInput() ? String(fromInput().value || '').trim() : '';
-      var to = toInput() ? String(toInput().value || '').trim() : '';
-      if (from && to) {
-        params.push('from=' + encodeURIComponent(from));
-        params.push('to=' + encodeURIComponent(to));
+      var bounds = readCustomBounds();
+      if (bounds.from && bounds.to) {
+        params.push('from=' + encodeURIComponent(bounds.from));
+        params.push('to=' + encodeURIComponent(bounds.to));
       } else {
         // Incomplete custom range — fall back to last selected preset days.
         var days = el.getAttribute('data-days') || '30';
@@ -468,21 +494,22 @@
         if (data.to) el.setAttribute('data-to', data.to);
       } else {
         el.setAttribute('data-mode', 'preset');
+        el.removeAttribute('data-from');
+        el.removeAttribute('data-to');
         if (data.days != null) el.setAttribute('data-days', String(data.days));
       }
     }
 
     var daysSel = daysSelect();
-    if (daysSel && data.mode !== 'custom' && data.days != null && String(daysSel.value) !== String(data.days)) {
+    if (data.mode === 'custom' && daysSel) {
+      daysSel.value = 'custom';
+      if (fromInput() && data.from) fromInput().value = data.from;
+      if (toInput() && data.to) toInput().value = data.to;
+    } else if (daysSel && data.days != null) {
       var opt = daysSel.querySelector('option[value="' + data.days + '"]');
       if (opt) daysSel.value = String(data.days);
     }
-    if (data.mode === 'custom' && daysSel) {
-      daysSel.value = 'custom';
-      syncCustomVisibility();
-      if (fromInput() && data.from) fromInput().value = data.from;
-      if (toInput() && data.to) toInput().value = data.to;
-    }
+    syncCustomVisibility();
 
     setBusy(false);
   }
@@ -539,37 +566,56 @@
 
   function applyPresetDays(days) {
     var el = root();
+    var sel = daysSelect();
+    if (sel && String(sel.value) !== String(days)) {
+      sel.value = String(days);
+    }
     if (el) {
       el.setAttribute('data-days', String(days));
       el.setAttribute('data-mode', 'preset');
       el.removeAttribute('data-from');
       el.removeAttribute('data-to');
     }
+    syncCustomVisibility();
     fetchAndRender();
   }
 
+  function ensureCustomDefaults() {
+    if (fromInput() && !fromInput().value) {
+      var start = new Date();
+      start.setDate(start.getDate() - 29);
+      fromInput().value = ymdLocal(start);
+    }
+    if (toInput() && !toInput().value) {
+      toInput().value = ymdLocal(new Date());
+    }
+  }
+
   function applyCustomRange() {
-    var from = fromInput() ? String(fromInput().value || '').trim() : '';
-    var to = toInput() ? String(toInput().value || '').trim() : '';
+    var sel = daysSelect();
+    if (sel) sel.value = 'custom';
+    ensureCustomDefaults();
+
+    var bounds = readCustomBounds();
+    var from = bounds.from;
+    var to = bounds.to;
     var updated = document.getElementById('admChartsUpdated');
     if (!from || !to) {
       if (updated) updated.textContent = 'Select both From and To dates.';
       setChartState('admChartRegState', 'admChartRegWrap', 'error', 'Select both From and To dates.');
+      syncCustomVisibility();
       return;
     }
-    if (from > to) {
-      var tmp = from;
-      from = to;
-      to = tmp;
-      if (fromInput()) fromInput().value = from;
-      if (toInput()) toInput().value = to;
-    }
+    if (fromInput()) fromInput().value = from;
+    if (toInput()) toInput().value = to;
+
     var el = root();
     if (el) {
       el.setAttribute('data-mode', 'custom');
       el.setAttribute('data-from', from);
       el.setAttribute('data-to', to);
     }
+    syncCustomVisibility();
     fetchAndRender();
   }
 
@@ -592,25 +638,13 @@
     var daysSel = daysSelect();
     if (daysSel) {
       daysSel.addEventListener('change', function () {
-        syncCustomVisibility();
         if (daysSel.value === 'custom') {
-          var updated = document.getElementById('admChartsUpdated');
-          if (updated) updated.textContent = 'Choose a From–To date range, then Apply.';
-          // Prefill a sensible default range if empty (local calendar dates).
-          function ymdLocal(d) {
-            var y = d.getFullYear();
-            var m = String(d.getMonth() + 1).padStart(2, '0');
-            var day = String(d.getDate()).padStart(2, '0');
-            return y + '-' + m + '-' + day;
-          }
-          if (fromInput() && !fromInput().value) {
-            var start = new Date();
-            start.setDate(start.getDate() - 29);
-            fromInput().value = ymdLocal(start);
-          }
-          if (toInput() && !toInput().value) {
-            toInput().value = ymdLocal(new Date());
-          }
+          var el = root();
+          if (el) el.setAttribute('data-mode', 'custom');
+          ensureCustomDefaults();
+          syncCustomVisibility();
+          // Selecting Custom immediately loads the From–To range into the graph.
+          applyCustomRange();
           return;
         }
         applyPresetDays(daysSel.value);
@@ -623,6 +657,10 @@
     }
     [fromInput(), toInput()].forEach(function (input) {
       if (!input) return;
+      input.addEventListener('change', function () {
+        // Changing either date while custom is active refreshes the graph.
+        if (isCustomMode()) applyCustomRange();
+      });
       input.addEventListener('keydown', function (ev) {
         if (ev.key === 'Enter') {
           ev.preventDefault();

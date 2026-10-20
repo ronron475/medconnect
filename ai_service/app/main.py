@@ -75,6 +75,7 @@ def create_app() -> FastAPI:
             "Content-Type",
             "Accept",
             "X-MedConnect-Service-Token",
+            "X-Email-Api-Key",
         ],
     )
     app.add_middleware(SecurityHeadersMiddleware)
