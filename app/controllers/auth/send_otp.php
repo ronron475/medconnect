@@ -3,6 +3,9 @@ if (session_status() === PHP_SESSION_NONE) {
     require_once dirname(__DIR__, 2) . '/includes/session_cookie.php';
     medconnect_session_start();
 }
+require_once dirname(__DIR__, 2) . '/includes/superadmin/backup.php';
+superadmin_restore_barrier_enforce();
+
 header('Content-Type: application/json');
 require_once dirname(__DIR__, 3) . '/config/db.php';
 require_once dirname(__DIR__, 2) . '/includes/mailer.php';

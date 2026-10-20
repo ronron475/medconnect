@@ -44,12 +44,42 @@ switch ($action) {
         $result = superadmin_create_backup($pdo, $userId, 'manual');
         echo json_encode($result);
         break;
+    case 'validate':
+        $backupId = (int) ($_POST['backup_id'] ?? 0);
+        $res = superadmin_validate_backup($pdo, $backupId, $userId);
+        if (!empty($res['status_code'])) {
+            http_response_code((int) $res['status_code']);
+        }
+        echo json_encode($res);
+        break;
+    case 'test_recovery':
+        // Disposable DB only — never restores the live database.
+        $backupId = (int) ($_POST['backup_id'] ?? 0);
+        $currentPassword = (string) ($_POST['current_password'] ?? '');
+        $res = superadmin_test_recovery($pdo, $backupId, $userId, $currentPassword);
+        if (!empty($res['status_code'])) {
+            http_response_code((int) $res['status_code']);
+        }
+        echo json_encode($res);
+        break;
     case 'restore':
         // Manual restore only — never triggered by cron/schedule.
         $backupId = (int) ($_POST['backup_id'] ?? 0);
         $currentPassword = (string) ($_POST['current_password'] ?? '');
         $confirmText = (string) ($_POST['confirm_text'] ?? '');
-        echo json_encode(superadmin_restore_backup($pdo, $backupId, $userId, $currentPassword, $confirmText));
+        $res = superadmin_restore_backup($pdo, $backupId, $userId, $currentPassword, $confirmText);
+        if (!empty($res['status_code'])) {
+            http_response_code((int) $res['status_code']);
+        }
+        echo json_encode($res);
+        break;
+    case 'emergency_clear':
+        $currentPassword = (string) ($_POST['current_password'] ?? '');
+        $res = superadmin_restore_emergency_clear($pdo, $userId, $currentPassword);
+        if (!empty($res['status_code'])) {
+            http_response_code((int) $res['status_code']);
+        }
+        echo json_encode($res);
         break;
     case 'download':
         superadmin_ensure_schema($pdo);

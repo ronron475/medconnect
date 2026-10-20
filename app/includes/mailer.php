@@ -19,12 +19,21 @@ if (!function_exists('medconnect_railway_email_url')) {
         if ($custom !== false && trim((string) $custom) !== '') {
             return trim((string) $custom);
         }
+        $base = '';
         if (defined('AI_SERVICE_BASE_URL') && AI_SERVICE_BASE_URL !== '') {
-            return rtrim((string) AI_SERVICE_BASE_URL, '/') . '/email/send';
+            $base = rtrim((string) AI_SERVICE_BASE_URL, '/');
+        } else {
+            $aiUrl = getenv('MEDCONNECT_AI_SERVICE_URL') ?: '';
+            if ($aiUrl !== false && trim((string) $aiUrl) !== '') {
+                $base = rtrim(trim((string) $aiUrl), '/');
+            }
         }
-        $aiUrl = getenv('MEDCONNECT_AI_SERVICE_URL') ?: '';
-        if ($aiUrl !== false && trim((string) $aiUrl) !== '') {
-            return rtrim(trim((string) $aiUrl), '/') . '/email/send';
+        // Retired Railway hostname — use current production email relay.
+        if ($base !== '' && str_contains($base, 'medconnect-production-f2b7.up.railway.app')) {
+            $base = 'https://medconnect-production-ab04.up.railway.app';
+        }
+        if ($base !== '') {
+            return $base . '/email/send';
         }
         return 'https://medconnect-production-ab04.up.railway.app/email/send';
     }
@@ -203,6 +212,40 @@ function medconnect_smtp_deliver(string $to, string $subject, string $html, stri
     }
 }
 
+function medconnect_phpmailer_autoload(): bool
+{
+    if (class_exists(\PHPMailer\PHPMailer\PHPMailer::class, false)) {
+        return true;
+    }
+    $autoload = dirname(__DIR__, 2) . '/vendor/autoload.php';
+    if (is_readable($autoload)) {
+        require_once $autoload;
+    }
+    return class_exists(\PHPMailer\PHPMailer\PHPMailer::class);
+}
+
+/**
+ * Human-readable mail transport status (no secrets).
+ *
+ * @return array{smtp:bool,relay:bool,message:string}
+ */
+function medconnect_mailer_status(): array
+{
+    $smtp = medconnect_direct_smtp_available();
+    $relay = medconnect_railway_relay_available();
+    if ($smtp && $relay) {
+        $message = 'Direct SMTP and Railway email relay are configured.';
+    } elseif ($smtp) {
+        $message = 'Direct SMTP is configured. On Hostinger, outbound ports 587/465 are often blocked — Railway relay is recommended.';
+    } elseif ($relay) {
+        $message = 'Railway email relay is configured.';
+    } else {
+        $message = 'Email is not configured. Set MAIL_USERNAME and MAIL_PASSWORD for SMTP, or EMAIL_API_KEY and MEDCONNECT_AI_SERVICE_TOKEN for the Railway relay.';
+    }
+
+    return ['smtp' => $smtp, 'relay' => $relay, 'message' => $message];
+}
+
 function medconnect_smtp_deliver_with(
     string $to,
     string $subject,
@@ -213,75 +256,66 @@ function medconnect_smtp_deliver_with(
     string $from,
     string $fromName
 ): void {
-    try {
-        [$fp, $port] = medconnect_smtp_connect(true);
-    } catch (Exception $e) {
-        [$fp, $port] = medconnect_smtp_connect(false);
+    if (!medconnect_phpmailer_autoload()) {
+        error_log('MedConnect Mailer: PHPMailer library is missing (vendor/phpmailer).');
+        throw new Exception('Email service is not configured.');
     }
-    $banner = medconnect_smtp_code(medconnect_smtp_read($fp));
-    if ($banner !== 220) {
-        fclose($fp);
-        throw new Exception('Email could not be sent.');
-    }
-    medconnect_smtp_cmd($fp, 'EHLO medconnect.bccbsis.com', [250]);
-    if ($port !== 465) {
-        medconnect_smtp_cmd($fp, 'STARTTLS', [220]);
-        $crypto = @stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-        if ($crypto !== true) {
-            fclose($fp);
-            [$fp, $port] = medconnect_smtp_connect(false);
-            if (medconnect_smtp_code(medconnect_smtp_read($fp)) !== 220) {
-                fclose($fp);
-                throw new Exception('Email could not be sent.');
-            }
-            medconnect_smtp_cmd($fp, 'EHLO medconnect.bccbsis.com', [250]);
-            medconnect_smtp_cmd($fp, 'STARTTLS', [220]);
-            if (@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT) !== true) {
-                fclose($fp);
-                throw new Exception('Email could not be sent.');
-            }
-        }
-        medconnect_smtp_cmd($fp, 'EHLO medconnect.bccbsis.com', [250]);
-    }
-    medconnect_smtp_cmd($fp, 'AUTH LOGIN', [334]);
-    medconnect_smtp_cmd($fp, base64_encode($user), [334]);
-    fwrite($fp, base64_encode($pass) . "\r\n");
-    $authCode = medconnect_smtp_code(medconnect_smtp_read($fp));
-    if ($authCode === 535) {
-        fclose($fp);
-        throw new Exception('smtp-auth');
-    }
-    if ($authCode !== 235) {
-        fclose($fp);
-        error_log('Direct SMTP failed: code ' . $authCode);
-        throw new Exception('Email could not be sent.');
-    }
-    medconnect_smtp_cmd($fp, 'MAIL FROM:<' . $from . '>', [250]);
-    medconnect_smtp_cmd($fp, 'RCPT TO:<' . $to . '>', [250, 251]);
 
-    $encodedName = '=?UTF-8?B?' . base64_encode($fromName) . '?=';
-    $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
-    $boundary = 'mc_' . bin2hex(random_bytes(8));
-    $body = "From: {$encodedName} <{$from}>\r\n";
-    $body .= "To: <{$to}>\r\n";
-    $body .= "Subject: {$encodedSubject}\r\n";
-    $body .= "MIME-Version: 1.0\r\n";
-    if (trim($text) !== '') {
-        $body .= "Content-Type: multipart/alternative; boundary=\"{$boundary}\"\r\n\r\n";
-        $body .= "--{$boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n{$text}\r\n";
-        $body .= "--{$boundary}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n{$html}\r\n";
-        $body .= "--{$boundary}--\r\n";
-    } else {
-        $body .= "Content-Type: text/html; charset=UTF-8\r\n\r\n{$html}\r\n";
+    $host = medconnect_mail_env('MAIL_HOST');
+    if ($host === '') {
+        $host = 'smtp.gmail.com';
     }
-    $body = preg_replace("/\r\n\./", "\r\n..", $body);
-    medconnect_smtp_cmd($fp, 'DATA', [354]);
-    fwrite($fp, $body . "\r\n.\r\n");
-    $code = medconnect_smtp_code(medconnect_smtp_read($fp));
-    medconnect_smtp_cmd($fp, 'QUIT', [221]);
-    fclose($fp);
-    if ($code !== 250) {
-        error_log('Direct SMTP failed: code ' . $code);
+    $port = (int) medconnect_mail_env('MAIL_PORT');
+    if ($port <= 0) {
+        $port = 587;
+    }
+
+    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+    try {
+        $mail->isSMTP();
+        $mail->Host = $host;
+        $mail->SMTPAuth = true;
+        $mail->Username = $user;
+        $mail->Password = $pass;
+        $mail->Port = $port;
+        $mail->CharSet = 'UTF-8';
+        $mail->Timeout = 15;
+        if ($port === 465) {
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+        }
+
+        $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+        if (is_readable($ca)) {
+            $mail->SMTPOptions = [
+                'ssl' => [
+                    'verify_peer' => true,
+                    'verify_peer_name' => true,
+                    'allow_self_signed' => false,
+                    'cafile' => $ca,
+                ],
+            ];
+        }
+
+        $mail->setFrom($from, $fromName);
+        $mail->addAddress($to);
+        $mail->Subject = $subject;
+        $mail->isHTML(true);
+        $mail->Body = $html;
+        $mail->AltBody = $text !== '' ? $text : strip_tags($html);
+        $mail->send();
+    } catch (\PHPMailer\PHPMailer\Exception $e) {
+        // Never log passwords / full SMTP conversation; keep ErrorInfo high-level.
+        $info = trim((string) $mail->ErrorInfo);
+        if ($info !== '' && !str_contains(strtolower($info), 'password')) {
+            error_log('PHPMailer SMTP failed: ' . $info);
+        } else {
+            error_log('PHPMailer SMTP failed.');
+        }
+        if (stripos($info, 'authenticate') !== false || stripos($info, '535') !== false) {
+            throw new Exception('smtp-auth');
+        }
         throw new Exception('Email could not be sent.');
     }
 }
@@ -425,7 +459,8 @@ function initMailer(): ?MedConnectRailwayMailer
     $relayAvailable = medconnect_railway_relay_available();
 
     if (!$smtpAvailable && !$relayAvailable) {
-        error_log('Mailer init failed: neither direct SMTP nor Railway email relay is configured in environment.');
+        $status = medconnect_mailer_status();
+        error_log('Mailer init failed: ' . $status['message']);
         return null;
     }
 
@@ -437,7 +472,9 @@ function initMailer(): ?MedConnectRailwayMailer
 
 function sendVerificationEmail($to, $verificationToken, $fullName) {
     $mail = initMailer();
-    if (!$mail) return ['success' => false, 'message' => 'Failed to initialize mailer.'];
+    if (!$mail) {
+        return ['success' => false, 'message' => medconnect_mailer_status()['message']];
+    }
     try {
         $url = BASE_URL . '/public/verify.php?token=' . urlencode($verificationToken);
         $mail->addAddress($to);
@@ -461,7 +498,7 @@ function sendPatientWelcomeEmail(string $to, string $fullName, string $patientCo
 {
     $mail = initMailer();
     if (!$mail) {
-        return ['success' => false, 'message' => 'Failed to initialize mailer.'];
+        return ['success' => false, 'message' => medconnect_mailer_status()['message']];
     }
 
     $setupUrl = BASE_URL . '/public/setup_password.php?token=' . urlencode($setupToken);
@@ -516,7 +553,7 @@ function sendBhwInviteEmail(
 ): array {
     $mail = initMailer();
     if (!$mail) {
-        return ['success' => false, 'message' => 'Failed to initialize mailer.'];
+        return ['success' => false, 'message' => medconnect_mailer_status()['message']];
     }
 
     $activateUrl = BASE_URL . '/public/bhw_activate.php?token=' . urlencode($inviteToken);
@@ -569,7 +606,7 @@ function sendBhwCorrectionEmail(string $to, string $fullName, string $token, str
 {
     $mail = initMailer();
     if (!$mail) {
-        return ['success' => false, 'message' => 'Failed to initialize mailer.'];
+        return ['success' => false, 'message' => medconnect_mailer_status()['message']];
     }
 
     $url = BASE_URL . '/public/bhw_onboarding.php?token=' . urlencode($token);
@@ -673,7 +710,7 @@ function sendFollowUpReminderEmail(
 ): array {
     $mail = initMailer();
     if (!$mail) {
-        return ['success' => false, 'message' => 'Failed to initialize Gmail mailer.'];
+        return ['success' => false, 'message' => medconnect_mailer_status()['message']];
     }
 
     $parts = followUpReminderEmailParts($fullName, $followupDate, $providerNote, $contactNumber, $appointmentStart);

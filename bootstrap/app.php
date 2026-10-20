@@ -292,6 +292,10 @@ if (PHP_SAPI !== 'cli' && !headers_sent()) {
     }
 }
 
+// Maintenance barrier check: block all conflicting write routes during active restore or emergency lockdown
+require_once BASE_PATH . '/app/includes/superadmin/backup.php';
+superadmin_restore_barrier_enforce();
+
 require_once CONFIG_PATH . '/db.php';
 
 require_once BASE_PATH . '/app/includes/remember_me.php';

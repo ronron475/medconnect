@@ -661,6 +661,8 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
                   <td>
                     <?php if ($canAct): ?>
                       <div class="backup-action-btns">
+                        <button type="button" class="backup-btn-outline btn-validate" data-id="<?= (int) $b['id'] ?>">Validate</button>
+                        <button type="button" class="backup-btn-outline btn-test-recovery" data-id="<?= (int) $b['id'] ?>">Test recovery</button>
                         <button type="button" class="backup-btn-outline btn-download" data-id="<?= (int) $b['id'] ?>" data-filename="<?= htmlspecialchars((string) ($b['filename'] ?? 'backup.sql'), ENT_QUOTES, 'UTF-8') ?>">Download</button>
                         <button type="button" class="backup-btn-outline btn-restore" data-id="<?= (int) $b['id'] ?>">Restore</button>
                       </div>
@@ -717,7 +719,7 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
 
           <div class="backup-sec-row">
             <div class="backup-sec-k">Backup integrity</div>
-            <div class="backup-sec-v">SHA-256 verified</div>
+            <div class="backup-sec-v">SHA-256 verified (Validate / Test recovery never touch live data)</div>
           </div>
 
           <div class="backup-sec-row">
@@ -787,6 +789,27 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
   </div>
 </div>
 
+<!-- Test Recovery Modal (disposable DB only — never live restore) -->
+<div id="backupTestRecoveryModal" class="backup-modal-backdrop">
+  <div class="backup-modal-card">
+    <h3 style="font-size:16px;font-weight:700;margin:0 0 12px;color:#0f172a;">Test recovery</h3>
+    <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:12px;margin-bottom:14px;color:#065f46;font-size:12px;line-height:1.45;font-weight:600;">
+      Safe test only: restores into a temporary disposable database when the host allows it. Live patient data is never overwritten. On Hostinger single-DB plans this may validate integrity only.
+    </div>
+    <form id="backupTestRecoveryForm" style="display:flex;flex-direction:column;gap:14px;">
+      <input type="hidden" name="backup_id" id="testRecoveryBackupId" value="">
+      <label class="backup-field-wrap">
+        <span class="backup-field-label">Current <?= htmlspecialchars($roleName ?? 'Admin') ?> Password</span>
+        <input type="password" name="current_password" id="testRecoveryPassword" class="backup-input" autocomplete="current-password" required placeholder="Enter your password">
+      </label>
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px;">
+        <button type="button" class="backup-btn-outline" id="backupTestRecoveryClose" style="padding:8px 16px;">Cancel</button>
+        <button type="submit" class="backup-btn-teal" style="padding:8px 18px;">Run safe test</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <script>
 (function () {
   var api = <?= json_encode($api) ?>;
@@ -795,8 +818,10 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
   var weekWrap = document.getElementById('backupWeekdayWrap');
   var restoreModal = document.getElementById('backupRestoreModal');
   var downloadModal = document.getElementById('backupDownloadModal');
+  var testRecoveryModal = document.getElementById('backupTestRecoveryModal');
   var restoreForm = document.getElementById('backupRestoreForm');
   var downloadForm = document.getElementById('backupDownloadForm');
+  var testRecoveryForm = document.getElementById('backupTestRecoveryForm');
 
   function getCsrfToken() {
     return document.body.dataset.csrf || '';
@@ -813,8 +838,10 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
   function closeModals() {
     if (restoreModal) restoreModal.style.display = 'none';
     if (downloadModal) downloadModal.style.display = 'none';
+    if (testRecoveryModal) testRecoveryModal.style.display = 'none';
     if (restoreForm) restoreForm.reset();
     if (downloadForm) downloadForm.reset();
+    if (testRecoveryForm) testRecoveryForm.reset();
   }
 
   var btnBackup = document.getElementById('btnBackup');
@@ -843,6 +870,37 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
     };
   }
 
+  document.querySelectorAll('.btn-validate').forEach(function (b) {
+    b.onclick = function () {
+      var fd = new FormData();
+      fd.append('action', 'validate');
+      fd.append('backup_id', b.dataset.id || '');
+      var csrf = getCsrfToken();
+      if (csrf) fd.append('csrf_token', csrf);
+      b.disabled = true;
+      fetch(api, { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          alert(j.message || 'Done');
+        })
+        .catch(function () {
+          alert('Network or server error while validating backup.');
+        })
+        .finally(function () {
+          b.disabled = false;
+        });
+    };
+  });
+
+  document.querySelectorAll('.btn-test-recovery').forEach(function (b) {
+    b.onclick = function () {
+      document.getElementById('testRecoveryBackupId').value = b.dataset.id || '';
+      document.getElementById('testRecoveryPassword').value = '';
+      testRecoveryModal.style.display = 'flex';
+      document.getElementById('testRecoveryPassword').focus();
+    };
+  });
+
   document.querySelectorAll('.btn-restore').forEach(function (b) {
     b.onclick = function () {
       if (!confirm('Restore will overwrite the current live database. This is manual only and cannot be undone easily. Continue?')) return;
@@ -868,13 +926,37 @@ html[data-theme-resolved='dark'] .backup-btn-outline:hover {
   if (rClose) rClose.onclick = closeModals;
   var dClose = document.getElementById('backupDownloadClose');
   if (dClose) dClose.onclick = closeModals;
+  var tClose = document.getElementById('backupTestRecoveryClose');
+  if (tClose) tClose.onclick = closeModals;
 
   // Click outside to close modals
   window.addEventListener('click', function (e) {
-    if (e.target === restoreModal || e.target === downloadModal) {
+    if (e.target === restoreModal || e.target === downloadModal || e.target === testRecoveryModal) {
       closeModals();
     }
   });
+
+  if (testRecoveryForm) {
+    testRecoveryForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fd = new FormData(testRecoveryForm);
+      fd.append('action', 'test_recovery');
+      var csrf = getCsrfToken();
+      if (csrf && !fd.has('csrf_token')) fd.append('csrf_token', csrf);
+      fetch(api, { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          alert(j.message || 'Done');
+          if (j.success) closeModals();
+        })
+        .catch(function () {
+          alert('Error running safe recovery test.');
+        })
+        .finally(function () {
+          document.getElementById('testRecoveryPassword').value = '';
+        });
+    });
+  }
 
   if (restoreForm) {
     restoreForm.addEventListener('submit', function (e) {

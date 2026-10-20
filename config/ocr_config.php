@@ -84,14 +84,26 @@ if (!defined('OCR_DEBUG')) {
 }
 
 // FastAPI OCR — unified on main AI service (same URL as AI_SERVICE_BASE_URL when set)
+$_ocr_prod_fallback = defined('MEDCONNECT_PRODUCTION_AI_SERVICE_URL')
+    ? MEDCONNECT_PRODUCTION_AI_SERVICE_URL
+    : 'https://medconnect-production-ab04.up.railway.app';
+$_ocr_host = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+$_ocr_host = preg_replace('/:\d+$/', '', $_ocr_host) ?: '';
+$_ocr_is_prod_host = (function_exists('medconnect_is_production_host') && medconnect_is_production_host())
+    || $_ocr_host === 'medconnect.bccbsis.com'
+    || str_ends_with($_ocr_host, '.bccbsis.com');
+
 $_ai_service_url = getenv('MEDCONNECT_OCR_SERVICE_URL')
     ?: (defined('AI_SERVICE_BASE_URL') ? AI_SERVICE_BASE_URL : '')
     ?: (getenv('MEDCONNECT_AI_SERVICE_URL') ?: '')
-    ?: (function_exists('medconnect_is_production_host') && medconnect_is_production_host()
-        ? (defined('MEDCONNECT_PRODUCTION_AI_SERVICE_URL') ? MEDCONNECT_PRODUCTION_AI_SERVICE_URL : 'https://medconnect-production-ab04.up.railway.app')
-        : 'http://127.0.0.1:8765');
+    ?: ($_ocr_is_prod_host ? $_ocr_prod_fallback : 'http://127.0.0.1:8765');
+$_ai_service_url = rtrim((string) $_ai_service_url, '/');
+// Retired Railway hostname (always 404) — remap to current production OCR/AI service.
+if (str_contains($_ai_service_url, 'medconnect-production-f2b7.up.railway.app')) {
+    $_ai_service_url = rtrim((string) $_ocr_prod_fallback, '/');
+}
 if (!defined('OCR_FASTAPI_URL')) {
-    define('OCR_FASTAPI_URL', rtrim((string) $_ai_service_url, '/'));
+    define('OCR_FASTAPI_URL', $_ai_service_url);
 }
 if (!defined('OCR_USE_FASTAPI')) {
     define('OCR_USE_FASTAPI', filter_var(getenv('MEDCONNECT_OCR_SERVICE_ENABLED') ?: 'true', FILTER_VALIDATE_BOOLEAN));

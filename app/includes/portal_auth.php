@@ -35,6 +35,9 @@ function portal_api_require_mutation_csrf(): void
     if (!in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
         return;
     }
+    if (function_exists('superadmin_restore_barrier_enforce')) {
+        superadmin_restore_barrier_enforce();
+    }
     if (!function_exists('auth_csrf_require')) {
         require_once __DIR__ . '/auth_guard.php';
     }

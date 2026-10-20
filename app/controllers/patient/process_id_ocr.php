@@ -2,8 +2,14 @@
 ob_start(); // buffer all output — prevents PHP notices from corrupting JSON
 require_once dirname(__DIR__, 3) . '/app/includes/session_cookie.php';
 medconnect_session_start();
+require_once dirname(__DIR__, 3) . '/app/includes/superadmin/backup.php';
+superadmin_restore_barrier_enforce();
+
 header('Content-Type: application/json');
 require_once dirname(__DIR__, 3) . '/config/db.php';
+// Load app.php before OCR config so production Hostinger gets Railway AI/OCR URL
+// (process_id_ocr is called directly and does not go through bootstrap/app.php).
+require_once dirname(__DIR__, 3) . '/config/app.php';
 require_once dirname(__DIR__, 3) . '/config/ocr_config.php';
 require_once dirname(__DIR__, 3) . '/app/core/PhilSysOcrParser.php';
 require_once dirname(__DIR__, 3) . '/app/core/OcrFastApiClient.php';

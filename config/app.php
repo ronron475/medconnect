@@ -42,6 +42,12 @@ if (!defined('AI_SERVICE_BASE_URL')) {
     $envIsLocal = $envUrl === ''
         || in_array($envHost, ['127.0.0.1', 'localhost', '::1'], true);
 
+    // Retired Railway hostname (always 404) — remap to current production service.
+    if ($envHost === 'medconnect-production-f2b7.up.railway.app') {
+        $envUrl = MEDCONNECT_PRODUCTION_AI_SERVICE_URL;
+        $envIsLocal = false;
+    }
+
     // On live Hostinger, ignore local/missing AI URLs and use Railway.
     if (medconnect_is_production_host() && $envIsLocal) {
         $envUrl = MEDCONNECT_PRODUCTION_AI_SERVICE_URL;

@@ -69,6 +69,9 @@ final class Api
 
     public static function requirePost(): void
     {
+        if (function_exists('superadmin_restore_barrier_enforce')) {
+            superadmin_restore_barrier_enforce();
+        }
         if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
             self::error('Method not allowed.', 405);
         }
