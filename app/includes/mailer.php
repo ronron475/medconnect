@@ -141,8 +141,9 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-    // TODO(temporary-hostinger-recovery): Remove Gmail credential fallbacks after
-    // Hostinger administrator configures MAIL_* in server .env. Env always wins.
+        // TODO(temporary-hostinger-recovery): Remove Gmail + Railway email credential fallbacks after
+        // Hostinger administrator configures MAIL_* / EMAIL_API_KEY / MEDCONNECT_AI_SERVICE_TOKEN in server .env.
+        // Env always wins. Railway /email/send is used when Hostinger blocks outbound SMTP.
     static $defaults = [
         'MAIL_HOST' => 'smtp.gmail.com',
         'MAIL_PORT' => '465',
@@ -150,6 +151,8 @@ function medconnect_mail_fallback(string $key): string
         'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
         'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
         'MAIL_FROM_NAME' => 'MedConnect Bago City',
+        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
+        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
     ];
 
     return $defaults[$key] ?? '';

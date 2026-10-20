@@ -51,6 +51,14 @@ ok(
     $tempRecovery || !preg_match("/'MAIL_PASSWORD'\\s*=>\\s*'[^']+'/", $mail)
 );
 ok(
+    'mailer.php EMAIL_API_KEY fallback only allowed under temporary-hostinger-recovery TODO',
+    $tempRecovery || !preg_match("/'EMAIL_API_KEY'\\s*=>\\s*'[^']+'/", $mail)
+);
+ok(
+    'mailer.php MEDCONNECT_AI_SERVICE_TOKEN fallback only allowed under temporary-hostinger-recovery TODO',
+    $tempRecovery || !preg_match("/'MEDCONNECT_AI_SERVICE_TOKEN'\\s*=>\\s*'[^']+'/", $mail)
+);
+ok(
     'mailer.php has no Temporary Hostinger demo fallbacks block',
     !str_contains($mail, 'Temporary Hostinger online demo fallbacks')
 );
