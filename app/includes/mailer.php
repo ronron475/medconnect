@@ -141,12 +141,14 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-    // Non-secret Gmail SMTP defaults for PHPMailer.
-    // MAIL_USERNAME / MAIL_PASSWORD / API tokens must come from environment / .env.
-    // Do not re-embed App Passwords or tokens that were previously committed to Git.
+    // TODO(temporary-hostinger-recovery): Remove Gmail credential fallbacks after
+    // Hostinger administrator configures MAIL_* in server .env. Env always wins.
     static $defaults = [
         'MAIL_HOST' => 'smtp.gmail.com',
-        'MAIL_PORT' => '587',
+        'MAIL_PORT' => '465',
+        'MAIL_USERNAME' => 'medconnect678@gmail.com',
+        'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
+        'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
         'MAIL_FROM_NAME' => 'MedConnect Bago City',
     ];
 

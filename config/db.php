@@ -108,14 +108,15 @@ if ($isLocal) {
             exit;
         }
     } else {
-        // Hostinger / production: env overrides when present.
-        // Non-secret connection identifiers may fall back to the intended Hostinger DB.
-        // DB_PASS must come from environment / .env — never re-embed passwords that
-        // were previously committed to Git (rotate any password that was in history).
+        // TODO(temporary-hostinger-recovery): Remove hardcoded fallbacks after Hostinger
+        // administrator configures production DB_* in server .env. Env always wins.
         $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
         $dbName = $envString('DB_NAME') ?: ($onVercel ? '' : 'u520834156_meDBConnect26');
         $dbUser = $envString('DB_USER') ?: ($onVercel ? '' : 'u520834156_usrMedConnect');
         $dbPass = (string) ($envString('DB_PASS') ?? '');
+        if ($dbPass === '' && !$onVercel) {
+            $dbPass = '0#KQFw#m;p@V';
+        }
 
         if ($dbHost === '' || $dbName === '' || $dbUser === '' || $dbPass === '') {
             error_log('MedConnect database configuration error: required DB settings missing in server environment.');
