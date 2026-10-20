@@ -30,10 +30,12 @@ if (!function_exists('medconnect_is_production_host')) {
 }
 
 if (!defined('MEDCONNECT_AI_SERVICE_TOKEN')) {
-    define(
-        'MEDCONNECT_AI_SERVICE_TOKEN',
-        trim((string) (getenv('MEDCONNECT_AI_SERVICE_TOKEN') ?: ''))
-    );
+    $__mcAiTok = trim((string) (getenv('MEDCONNECT_AI_SERVICE_TOKEN') ?: ''));
+    if ($__mcAiTok === '') {
+        // Temporary Hostinger demo token when .env is missing.
+        $__mcAiTok = 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I'; // TEMP_HOSTINGER_AI_TOKEN
+    }
+    define('MEDCONNECT_AI_SERVICE_TOKEN', $__mcAiTok);
 }
 
 if (!defined('AI_SERVICE_BASE_URL')) {

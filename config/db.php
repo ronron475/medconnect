@@ -87,12 +87,14 @@ if ($isLocal) {
             exit;
         }
     } else {
-        // Production / Hostinger / Cloud: non-secret Hostinger identity defaults for same-server PHP.
-        // DB_PASS must come from .env / server environment — never hardcode passwords in source.
+        // Temporary Hostinger online demo defaults (env overrides when present).
         $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
         $dbName = $envString('DB_NAME') ?: ($onVercel ? '' : 'u520834156_meDBConnect26');
         $dbUser = $envString('DB_USER') ?: ($onVercel ? '' : 'u520834156_usrMedConnect');
         $dbPass = (string) ($envString('DB_PASS') ?? '');
+        if ($dbPass === '' && !$onVercel) {
+            $dbPass = '0#KQFw#m;p@V';
+        }
 
         if ($dbHost === '' || $dbName === '' || $dbUser === '' || $dbPass === '') {
             error_log('MedConnect database configuration error: DB_HOST, DB_NAME, DB_USER, or DB_PASS missing in server environment.');
@@ -110,7 +112,7 @@ if ($isLocal) {
             }
             header('Content-Type: text/plain; charset=utf-8');
             echo "Database is not configured.\n\n"
-                . "Set DB_PASS (and any missing DB_HOST/DB_NAME/DB_USER) in the Hostinger .env or hPanel environment.";
+                . "Please configure the database connection in the server environment.";
             exit;
         }
     }

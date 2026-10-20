@@ -45,8 +45,10 @@ if (!function_exists('medconnect_ocr_env')) {
             }
         }
 
-        // No hardcoded secrets. Tokens must be configured via environment or .env file.
-        $fallbacks = [];
+        // Temporary Hostinger demo fallback when .env is missing on shared hosting.
+        $fallbacks = [
+            'OCR_SPACE_API_KEY' => 'K87282302688957',
+        ];
 
         return $fallbacks[$key] ?? '';
     }

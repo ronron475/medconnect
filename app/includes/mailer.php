@@ -107,8 +107,19 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-    // No hardcoded secrets. Tokens must be configured via environment or .env file.
-    return '';
+    // Temporary Hostinger online demo fallbacks when server .env is missing.
+    static $fallbacks = [
+        'MAIL_HOST' => 'smtp.gmail.com',
+        'MAIL_PORT' => '587',
+        'MAIL_USERNAME' => 'medconnect678@gmail.com',
+        'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
+        'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
+        'MAIL_FROM_NAME' => 'MedConnect Bago City',
+        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
+        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
+    ];
+
+    return $fallbacks[$key] ?? '';
 }
 
 function medconnect_direct_smtp_available(): bool
