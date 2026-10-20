@@ -146,7 +146,7 @@ function medconnect_mail_fallback(string $key): string
     // Temporary: PHPMailer/Gmail SMTP only (Railway email relay disabled for this recovery).
     static $defaults = [
         'MAIL_HOST' => 'smtp.gmail.com',
-        'MAIL_PORT' => '465',
+        'MAIL_PORT' => '587',
         'MAIL_USERNAME' => 'medconnect678@gmail.com',
         'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
         'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
