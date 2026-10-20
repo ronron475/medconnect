@@ -66,6 +66,7 @@ $insUser = $pdo->prepare('INSERT INTO users (id, role, password) VALUES (?, ?, ?
 $insUser->execute([1, 'superadmin', $hash]);
 $insUser->execute([2, 'admin', $hash]);
 $insUser->execute([3, 'superadmin', '']);
+$insUser->execute([4, 'patient', $hash]);
 
 $backupDir = superadmin_backup_dir();
 $tag = 'sec_' . bin2hex(random_bytes(4));
@@ -113,10 +114,17 @@ try {
     }
 
     // C
-    if (!superadmin_verify_current_password($pdo, 2, $plain)) {
-        pass('C non-Super Admin rejected');
+    if (superadmin_verify_current_password($pdo, 2, $plain)) {
+        pass('C correct Admin password accepted');
     } else {
-        fail('C non-Super Admin rejected');
+        fail('C correct Admin password accepted');
+    }
+
+    // C2
+    if (!superadmin_verify_current_password($pdo, 4, $plain)) {
+        pass('C2 unauthorized role (patient) rejected');
+    } else {
+        fail('C2 unauthorized role (patient) rejected');
     }
 
     // D
@@ -245,6 +253,49 @@ try {
     } else {
         fail('download succeeds with password + checksum (prepare only)', json_encode($okDl));
     }
+
+    $okAdminRestore = superadmin_restore_prepare($pdo, 10, 2, $plain, 'RESTORE DATABASE');
+    if (!empty($okAdminRestore['success'])) {
+        pass('Admin role is authorized to prepare restore');
+    } else {
+        fail('Admin role is authorized to prepare restore', json_encode($okAdminRestore));
+    }
+
+    $okAdminDl = superadmin_backup_download_prepare($pdo, 10, 2, $plain);
+    if (!empty($okAdminDl['success'])) {
+        pass('Admin role is authorized to prepare download');
+    } else {
+        fail('Admin role is authorized to prepare download', json_encode($okAdminDl));
+    }
+
+    $patientRestore = superadmin_restore_prepare($pdo, 10, 4, $plain, 'RESTORE DATABASE');
+    $patientDl = superadmin_backup_download_prepare($pdo, 10, 4, $plain);
+    if (empty($patientRestore['success']) && empty($patientDl['success'])) {
+        pass('Patient role is blocked from restore and download prepare');
+    } else {
+        fail('Patient role is blocked from restore and download prepare');
+    }
+
+    // Test active-consultation circuit breaker
+    $pdo->exec('CREATE TABLE IF NOT EXISTS consultations (id INTEGER PRIMARY KEY, status TEXT)');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS video_sessions (id INTEGER PRIMARY KEY, status TEXT)');
+    $pdo->exec("INSERT INTO consultations (id, status) VALUES (101, 'in_consultation')");
+    $blockedRestore = superadmin_restore_prepare($pdo, 10, 1, $plain, 'RESTORE DATABASE');
+    if (empty($blockedRestore['success']) && str_contains($blockedRestore['message'] ?? '', 'consultation')) {
+        pass('Active-consultation guard blocks restore during in_consultation');
+    } else {
+        fail('Active-consultation guard blocks restore during in_consultation', json_encode($blockedRestore));
+    }
+    $pdo->exec("DELETE FROM consultations WHERE id = 101");
+
+    $pdo->exec("INSERT INTO video_sessions (id, status) VALUES (201, 'active')");
+    $blockedVideoRestore = superadmin_restore_prepare($pdo, 10, 1, $plain, 'RESTORE DATABASE');
+    if (empty($blockedVideoRestore['success']) && str_contains($blockedVideoRestore['message'] ?? '', 'video')) {
+        pass('Active-consultation guard blocks restore during active video_sessions');
+    } else {
+        fail('Active-consultation guard blocks restore during active video_sessions', json_encode($blockedVideoRestore));
+    }
+    $pdo->exec("DELETE FROM video_sessions WHERE id = 201");
 
     $core = file_get_contents($root . '/app/includes/superadmin/backup.php') ?: '';
     if (str_contains($core, '$pdo->exec($sql)')

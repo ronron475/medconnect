@@ -87,16 +87,14 @@ if ($isLocal) {
             exit;
         }
     } else {
-        // Hostinger PHP on the same server uses localhost. Env values override these defaults.
+        // Production / Hostinger / Cloud environment: credentials must be provided via environment.
         $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
-        $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
-        $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
+        $dbName = (string) ($envString('DB_NAME') ?? '');
+        $dbUser = (string) ($envString('DB_USER') ?? '');
         $dbPass = (string) ($envString('DB_PASS') ?? '');
-        if ($dbPass === '') {
-            $dbPass = '0#KQFw#m;p@V';
-        }
-        if ($dbHost === '') {
-            error_log('MedConnect database configuration error: DB_HOST is missing in server environment.');
+
+        if ($dbHost === '' || $dbName === '' || $dbUser === '') {
+            error_log('MedConnect database configuration error: DB_HOST, DB_NAME, or DB_USER missing in server environment.');
             http_response_code(500);
             $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
             $wantsJson = str_contains($uri, '/app/api/')

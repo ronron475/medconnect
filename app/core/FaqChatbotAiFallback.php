@@ -11,7 +11,7 @@ final class FaqChatbotAiFallback
     private const SESSION_HISTORY = 'faq_chatbot_ai_history';
     private const SESSION_GUARD = 'faq_chatbot_ai_guard';
     private const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash';
-    private const DEFAULT_GROQ_MODEL = 'llama-3.1-8b-instant';
+    private const DEFAULT_GROQ_MODEL = 'openai/gpt-oss-120b';
     private const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent';
     private const GROQ_ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
     private const MAX_USER_CHARS = 800;
@@ -312,11 +312,19 @@ final class FaqChatbotAiFallback
                 || str_starts_with($configured, 'openai/')
                 || str_starts_with($configured, 'meta-llama/')
                 || str_starts_with($configured, 'qwen/');
-            if ($provider === 'groq' && $looksGemini) {
-                return self::DEFAULT_GROQ_MODEL;
+            if ($provider === 'groq') {
+                $deprecatedGroq = [
+                    'llama-3.3-70b-versatile' => self::DEFAULT_GROQ_MODEL,
+                    'llama-3.1-8b-instant'    => self::DEFAULT_GROQ_MODEL,
+                    'llama-3.1-70b-versatile' => self::DEFAULT_GROQ_MODEL,
+                ];
+                if (isset($deprecatedGroq[$configured])) {
+                    return $deprecatedGroq[$configured];
+                }
+                return $looksGroq ? $configured : self::DEFAULT_GROQ_MODEL;
             }
-            if ($provider === 'gemini' && $looksGroq) {
-                return self::DEFAULT_GEMINI_MODEL;
+            if ($provider === 'gemini') {
+                return $looksGemini ? $configured : self::DEFAULT_GEMINI_MODEL;
             }
             return $configured;
         }
@@ -1219,11 +1227,11 @@ Allowed classifications:
 - MEDICAL_SYMPTOM: a real symptom/illness complaint (including informal wording and reasonable misspellings). Examples: "masakit akon ulo", "masakit akon olo", "I have a fever".
 - MEDICAL_FOLLOWUP_ANSWER: answering the CURRENT CHATBOT QUESTION (location, onset, severity, etc.), including misspellings that map to a reasonable clinical answer. Example: question "Diin ang masakit sa imo?" + patient "olo" → head (ulo). Example: question about onset + "kagapong" → yesterday.
 - MEDCONNECT_SERVICE: appointments, video consult, records, login/account, BHW, City Health Office services. Example: "How do I book an appointment?"
-- GREETING: hello/hi/good morning style openings with no other content.
+- GREETING: hello/hi/good morning style openings with no other content. Do NOT classify birthday wishes or celebrations as GREETING.
 - NONSENSE_OR_PRANK: keyboard smash, gibberish, meaningless filler, joking/test spam with no recoverable meaning. Examples of STYLE (not an exhaustive list): random letter strings, "asdfgh", repeated "haha"/"lol"/"test", digit spam.
 - UNKNOWN: potentially meaningful text you cannot reliably interpret — do not guess.
 - HEALTH_RELATED: legacy alias for MEDICAL_SYMPTOM or MEDCONNECT_SERVICE when you cannot split them.
-- NON_HEALTH_RELATED: real non-health chat (sports, weather, coding) that is NOT gibberish.
+- NON_HEALTH_RELATED: real non-health chat (sports, weather, coding, birthday wishes, celebrations) that is NOT gibberish.
 - UNCLEAR: legacy alias for UNKNOWN when unsure.
 
 Critical rules:

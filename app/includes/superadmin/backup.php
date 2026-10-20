@@ -77,7 +77,8 @@ function superadmin_backup_resolve_safe_path(string $path): ?string
 const SUPERADMIN_BACKUP_RESTORE_PHRASE = 'RESTORE DATABASE';
 
 /**
- * Re-authenticate the logged-in Super Admin with their current password.
+/**
+ * Re-authenticate the logged-in Admin or Super Admin with their current password.
  * Uses password_verify() against users.password. Never stores the submitted password.
  */
 function superadmin_verify_current_password(PDO $pdo, int $userId, string $password): bool
@@ -86,7 +87,7 @@ function superadmin_verify_current_password(PDO $pdo, int $userId, string $passw
         return false;
     }
     try {
-        $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ? AND role = 'superadmin' LIMIT 1");
+        $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ? AND role IN ('admin', 'superadmin') LIMIT 1");
         $stmt->execute([$userId]);
         $hash = (string) ($stmt->fetchColumn() ?: '');
     } catch (Throwable $e) {
@@ -96,6 +97,29 @@ function superadmin_verify_current_password(PDO $pdo, int $userId, string $passw
         return false;
     }
     return password_verify($password, $hash);
+}
+
+/**
+ * Determine the user's role for audit logs ('admin', 'superadmin', or 'system').
+ */
+function superadmin_backup_user_role(PDO $pdo, ?int $userId): string
+{
+    if (!$userId || $userId <= 0) {
+        return 'system';
+    }
+    if (!empty($_SESSION['user_role']) && (int) ($_SESSION['user_id'] ?? 0) === $userId) {
+        return (string) $_SESSION['user_role'];
+    }
+    try {
+        $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$userId]);
+        $role = (string) ($stmt->fetchColumn() ?: '');
+        if ($role !== '') {
+            return $role;
+        }
+    } catch (Throwable $e) {
+    }
+    return 'admin';
 }
 
 function superadmin_backup_confirm_phrase_valid(string $confirmText): bool
@@ -146,6 +170,7 @@ function superadmin_backup_audit_fail(
         $reason = 'failed';
     }
     $desc = $backupId > 0 ? "Backup #{$backupId}: {$reason}" : $reason;
+    $role = superadmin_backup_user_role($pdo, $userId > 0 ? $userId : null);
     try {
         superadmin_security_log(
             $pdo,
@@ -154,7 +179,7 @@ function superadmin_backup_audit_fail(
             'failure',
             $desc,
             $userId > 0 ? $userId : null,
-            $userId > 0 ? 'superadmin' : 'system'
+            $role
         );
     } catch (Throwable $e) {
         // Logging must never block deny-by-default.
@@ -170,6 +195,7 @@ function superadmin_backup_audit_success(
     string $status = 'success'
 ): void {
     $desc = $backupId > 0 ? "Backup #{$backupId}: {$description}" : $description;
+    $role = superadmin_backup_user_role($pdo, $userId > 0 ? $userId : null);
     try {
         superadmin_security_log(
             $pdo,
@@ -178,7 +204,7 @@ function superadmin_backup_audit_success(
             $status,
             $desc,
             $userId > 0 ? $userId : null,
-            $userId > 0 ? 'superadmin' : 'system'
+            $role
         );
     } catch (Throwable $e) {
     }
@@ -345,7 +371,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
 {
     superadmin_ensure_schema($pdo);
 
-    if (!in_array($type, ['manual', 'scheduled'], true)) {
+    if (!in_array($type, ['manual', 'scheduled', 'pre_restore'], true)) {
         $type = 'manual';
     }
 
@@ -405,6 +431,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
         if ($logId) {
             $pdo->prepare("UPDATE backup_logs SET status='failed', notes=? WHERE id=?")->execute([$e->getMessage(), $logId]);
         }
+        $callerRole = superadmin_backup_user_role($pdo, $userId);
         superadmin_security_log(
             $pdo,
             'database_backup',
@@ -412,7 +439,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
             'failure',
             "Backup failed ({$type}): " . $e->getMessage(),
             $userId,
-            $userId ? 'superadmin' : 'system'
+            $callerRole
         );
         return ['success' => false, 'message' => 'Backup failed: ' . $e->getMessage(), 'log_id' => $logId];
     }
@@ -433,6 +460,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
             $pdo->prepare("UPDATE backup_logs SET status='failed', notes=? WHERE id=?")
                 ->execute(['Could not compute backup integrity checksum.', $logId]);
         }
+        $callerRole = superadmin_backup_user_role($pdo, $userId);
         superadmin_security_log(
             $pdo,
             'database_backup',
@@ -440,7 +468,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
             'failure',
             "Backup checksum failed ({$type}): {$filename}",
             $userId,
-            $userId ? 'superadmin' : 'system'
+            $callerRole
         );
         return ['success' => false, 'message' => 'Could not compute backup integrity checksum.', 'log_id' => $logId];
     }
@@ -456,6 +484,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
         }
     }
 
+    $callerRole = superadmin_backup_user_role($pdo, $userId);
     superadmin_security_log(
         $pdo,
         'database_backup',
@@ -463,7 +492,7 @@ function superadmin_create_backup(PDO $pdo, ?int $userId = null, string $type = 
         'success',
         "Backup created ({$type}): {$filename}",
         $userId,
-        $userId ? 'superadmin' : 'system'
+        $callerRole
     );
 
     $purged = superadmin_apply_backup_retention($pdo);
@@ -645,10 +674,24 @@ function superadmin_restore_backup(
     }
 
     $safePath = (string) $prepared['path'];
+    // Validates path via resolver check
+    if (superadmin_backup_resolve_safe_path($safePath) === null) {
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'unsafe path');
+        return ['success' => false, 'message' => 'Backup file not found or not allowed.'];
+    }
+
     $sql = file_get_contents($safePath);
     if ($sql === false || $sql === '') {
         superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'empty or invalid backup file');
         return ['success' => false, 'message' => 'Backup file is empty.'];
+    }
+
+    // Automatic safety snapshot right before destructive restore
+    $preBackup = superadmin_create_backup($pdo, $userId, 'pre_restore');
+    if (empty($preBackup['success'])) {
+        $failMsg = 'Pre-restore safety backup failed: ' . ($preBackup['message'] ?? 'Unable to create pre-restore snapshot');
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, $failMsg);
+        return ['success' => false, 'message' => $failMsg];
     }
 
     try {
@@ -657,7 +700,7 @@ function superadmin_restore_backup(
         $pdo->exec('SET FOREIGN_KEY_CHECKS=1');
     } catch (Throwable $e) {
         superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'SQL restore failed');
-        return ['success' => false, 'message' => 'Restore failed.'];
+        return ['success' => false, 'message' => 'Restore failed: ' . $e->getMessage()];
     }
 
     try {
@@ -675,13 +718,27 @@ function superadmin_restore_backup(
     } catch (Throwable $e) {
     }
 
-    superadmin_security_log($pdo, 'database_restore', 'backup', 'warning', "Restored backup #{$backupId}", $userId, 'superadmin');
+    $callerRole = superadmin_backup_user_role($pdo, $userId);
+    superadmin_security_log($pdo, 'database_restore', 'backup', 'warning', "Restored backup #{$backupId}", $userId, $callerRole);
+
+    // Post-restore session invalidation: bump session_epoch for all other users and purge active_sessions
+    try {
+        $pdo->prepare('UPDATE users SET session_epoch = session_epoch + 1, updated_at = NOW() WHERE id != ?')->execute([$userId]);
+        $pdo->prepare('DELETE FROM active_sessions WHERE user_id != ?')->execute([$userId]);
+        $stmt = $pdo->prepare('SELECT session_epoch FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$userId]);
+        $restoredEpoch = $stmt->fetchColumn();
+        if ($restoredEpoch !== false) {
+            $_SESSION['session_epoch'] = (int) $restoredEpoch;
+        }
+    } catch (Throwable $e) {
+    }
 
     return ['success' => true, 'message' => 'Database restored from backup.'];
 }
 
 /**
- * Validate restore gates without executing SQL (password, phrase, path, checksum).
+ * Validate restore gates without executing SQL (password, phrase, path, checksum, active calls).
  *
  * @return array{success:bool,message?:string,path?:string,filename?:string}
  */
@@ -693,17 +750,17 @@ function superadmin_restore_prepare(
     string $confirmText
 ): array {
     if ($userId <= 0) {
-        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'authorized Super Admin required');
-        return ['success' => false, 'message' => 'Authorized Super Admin required to restore.'];
+        superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'authorized Admin or Super Admin required');
+        return ['success' => false, 'message' => 'Authorized Admin or Super Admin required to restore.'];
     }
 
     if ($currentPassword === '') {
         superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'missing password');
-        return ['success' => false, 'message' => 'Super Admin password is required to restore.'];
+        return ['success' => false, 'message' => 'Password is required to restore.'];
     }
     if (!superadmin_verify_current_password($pdo, $userId, $currentPassword)) {
         superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'wrong password');
-        return ['success' => false, 'message' => 'Super Admin password is incorrect.'];
+        return ['success' => false, 'message' => 'Password is incorrect.'];
     }
 
     if ($confirmText === '') {
@@ -713,6 +770,31 @@ function superadmin_restore_prepare(
     if (!superadmin_backup_confirm_phrase_valid($confirmText)) {
         superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, 'incorrect confirmation phrase');
         return ['success' => false, 'message' => 'Confirmation phrase is incorrect. Type RESTORE DATABASE.'];
+    }
+
+    // Active-consultation circuit breaker: guard against destructive restore during live visits
+    try {
+        $activeConsultations = 0;
+        $activeVideoSessions = 0;
+        $cStmt = $pdo->query("SELECT COUNT(*) FROM consultations WHERE status = 'in_consultation'");
+        if ($cStmt) {
+            $activeConsultations = (int) $cStmt->fetchColumn();
+        }
+        $vStmt = $pdo->query("SELECT COUNT(*) FROM video_sessions WHERE status = 'active'");
+        if ($vStmt) {
+            $activeVideoSessions = (int) $vStmt->fetchColumn();
+        }
+        if ($activeConsultations > 0 || $activeVideoSessions > 0) {
+            $msg = sprintf(
+                'Cannot restore database while clinical consultations are in progress (%d active consultation(s), %d active video session(s)).',
+                $activeConsultations,
+                $activeVideoSessions
+            );
+            superadmin_backup_audit_fail($pdo, 'database_restore', $userId, $backupId, $msg);
+            return ['success' => false, 'message' => $msg];
+        }
+    } catch (Throwable $e) {
+        // Mock/SQLite environments without consultations table will safely proceed
     }
 
     if ($backupId <= 0) {
@@ -785,17 +867,17 @@ function superadmin_backup_download_prepare(
     string $currentPassword
 ): array {
     if ($userId <= 0) {
-        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'authorized Super Admin required');
-        return ['success' => false, 'message' => 'Authorized Super Admin required to download.'];
+        superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'authorized Admin or Super Admin required');
+        return ['success' => false, 'message' => 'Authorized Admin or Super Admin required to download.'];
     }
 
     if ($currentPassword === '') {
         superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'missing password');
-        return ['success' => false, 'message' => 'Super Admin password is required to download.'];
+        return ['success' => false, 'message' => 'Password is required to download.'];
     }
     if (!superadmin_verify_current_password($pdo, $userId, $currentPassword)) {
         superadmin_backup_audit_fail($pdo, 'database_backup_download', $userId, $backupId, 'wrong password');
-        return ['success' => false, 'message' => 'Super Admin password is incorrect.'];
+        return ['success' => false, 'message' => 'Password is incorrect.'];
     }
 
     if ($backupId <= 0) {

@@ -29,8 +29,15 @@ function medconnect_gemini_api_key(): string
         if ($val === false || $val === '') {
             $val = $_ENV[$name] ?? '';
         }
-        $val = trim((string) $val);
-        if ($val !== '') {
+        $val = trim((string) $val, " \t\n\r\0\x0B\"'");
+        $lower = strtolower($val);
+        if (
+            $val !== ''
+            && !str_starts_with($lower, 'your_')
+            && !str_starts_with($lower, '<your')
+            && !str_starts_with($lower, 'placeholder')
+            && strlen($val) >= 25
+        ) {
             return $val;
         }
     }

@@ -195,8 +195,8 @@ function superadmin_ensure_schema(PDO $pdo): void
 }
 
 /**
- * Existing Hostinger tables are not updated by CREATE TABLE IF NOT EXISTS.
- * Add file_checksum when missing (SHA-256 hex of the dump file).
+ * Existing Hostinger/local tables are not updated by CREATE TABLE IF NOT EXISTS.
+ * Add missing columns when missing (file_checksum, filename, file_path, backup_type, created_by, notes).
  */
 function superadmin_backup_logs_ensure_checksum_column(PDO $pdo): void
 {
@@ -205,12 +205,37 @@ function superadmin_backup_logs_ensure_checksum_column(PDO $pdo): void
         return;
     }
     try {
-        $col = $pdo->query("SHOW COLUMNS FROM backup_logs LIKE 'file_checksum'")->fetch(PDO::FETCH_ASSOC);
-        if (!is_array($col) || $col === []) {
-            $pdo->exec('ALTER TABLE backup_logs ADD COLUMN file_checksum CHAR(64) NULL DEFAULT NULL AFTER file_size');
+        $cols = $pdo->query("SHOW COLUMNS FROM backup_logs")->fetchAll(PDO::FETCH_COLUMN);
+        if (is_array($cols) && $cols !== []) {
+            if (!in_array('filename', $cols, true)) {
+                if (in_array('file_name', $cols, true)) {
+                    $pdo->exec("ALTER TABLE backup_logs ADD COLUMN filename VARCHAR(255) NOT NULL DEFAULT '' AFTER id");
+                    $pdo->exec("UPDATE backup_logs SET filename = file_name WHERE (filename IS NULL OR filename = '') AND file_name IS NOT NULL");
+                } else {
+                    $pdo->exec("ALTER TABLE backup_logs ADD COLUMN filename VARCHAR(255) NOT NULL DEFAULT '' AFTER id");
+                }
+            }
+            if (!in_array('file_path', $cols, true)) {
+                $pdo->exec("ALTER TABLE backup_logs ADD COLUMN file_path VARCHAR(500) NULL AFTER filename");
+            }
+            if (!in_array('file_checksum', $cols, true)) {
+                $pdo->exec("ALTER TABLE backup_logs ADD COLUMN file_checksum CHAR(64) NULL DEFAULT NULL AFTER file_size");
+            }
+            if (!in_array('backup_type', $cols, true)) {
+                $pdo->exec("ALTER TABLE backup_logs ADD COLUMN backup_type ENUM('manual','scheduled','restore','pre_restore') NOT NULL DEFAULT 'manual' AFTER file_checksum");
+            } else {
+                $pdo->exec("ALTER TABLE backup_logs MODIFY COLUMN backup_type ENUM('manual','scheduled','restore','pre_restore') NOT NULL DEFAULT 'manual'");
+            }
+            if (!in_array('created_by', $cols, true)) {
+                $pdo->exec("ALTER TABLE backup_logs ADD COLUMN created_by INT UNSIGNED NULL AFTER backup_type");
+            }
+            if (!in_array('notes', $cols, true)) {
+                $pdo->exec("ALTER TABLE backup_logs ADD COLUMN notes TEXT NULL AFTER created_by");
+            }
+            $pdo->exec("ALTER TABLE backup_logs MODIFY COLUMN status ENUM('success','failed','in_progress') NOT NULL DEFAULT 'in_progress'");
         }
     } catch (Throwable $e) {
-        // Table may not exist yet on first boot; CREATE TABLE handles new installs.
+        // Table may not exist yet on first boot or in SQLite tests
     }
     $done = true;
 }

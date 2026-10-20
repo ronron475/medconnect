@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/_bootstrap.php';
 require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/superadmin/backup.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/app/includes/security_throttle.php';
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = $_POST['action'] ?? $_GET['action'] ?? 'list';
@@ -54,6 +55,20 @@ switch ($action) {
         superadmin_ensure_schema($pdo);
         $backupId = (int) ($_POST['backup_id'] ?? 0);
         $currentPassword = (string) ($_POST['current_password'] ?? '');
+
+        // Download rate limiting (max 3 downloads per 15 minutes)
+        $throttleKey = security_throttle_key('backup_download', (string) $userId . '_' . ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'));
+        $throttle = security_throttle_check($pdo, $throttleKey);
+        if (!empty($throttle['locked'])) {
+            http_response_code(429);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Download rate limit exceeded. Please wait 15 minutes before downloading another backup.',
+                'locked_until' => $throttle['locked_until'] ?? null,
+            ]);
+            exit;
+        }
+
         $prepared = superadmin_backup_download_prepare($pdo, $backupId, $userId, $currentPassword);
         if (empty($prepared['success'])) {
             echo json_encode([
@@ -62,6 +77,9 @@ switch ($action) {
             ]);
             break;
         }
+
+        security_throttle_fail($pdo, $throttleKey, 'backup_download', 900, 3, 15);
+
         $downloadName = basename((string) ($prepared['filename'] ?? 'medconnect_backup.sql'));
         $downloadName = preg_replace('/[^A-Za-z0-9._-]/', '_', $downloadName) ?: 'medconnect_backup.sql';
         header('Content-Type: application/sql');

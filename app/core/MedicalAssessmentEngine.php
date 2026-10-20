@@ -412,7 +412,7 @@ final class MedicalAssessmentEngine
         // Rule-based PHP NLP is the default CDS path. Python is opt-in only.
         // Default false so Gemini/AI fallbacks stay available unless explicitly PHP-only.
         $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '0', FILTER_VALIDATE_BOOLEAN);
-        if (!$phpOnly) {
+        if (!$phpOnly && (defined('AI_SERVICE_ENABLED') ? AI_SERVICE_ENABLED : true) && AiServiceClient::isHealthy(1)) {
             $serviceData = AiServiceClient::analyzeMedicalText($text);
             if ($serviceData) {
                 return array_merge($serviceData, [
@@ -440,7 +440,7 @@ final class MedicalAssessmentEngine
         // Default false so Gemini/AI fallbacks stay available unless explicitly PHP-only.
         $phpOnly = filter_var(getenv('MEDCONNECT_PHP_NLP_ONLY') ?: '0', FILTER_VALIDATE_BOOLEAN);
         $skip = filter_var(getenv('MEDCONNECT_SKIP_ML_LAYER') ?: ($phpOnly ? '1' : '0'), FILTER_VALIDATE_BOOLEAN);
-        if ($skip || $phpOnly) {
+        if ($skip || $phpOnly || !((defined('AI_SERVICE_ENABLED') ? AI_SERVICE_ENABLED : true) && AiServiceClient::isHealthy(1))) {
             return [
                 'available'     => false,
                 'predictions'   => [],
