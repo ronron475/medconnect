@@ -111,6 +111,6 @@ try {
     $mail->send();
     echo json_encode(['success' => true, 'message' => 'OTP sent to ' . $email . '. Please check your inbox.']);
 } catch (Exception $e) {
-    error_log('OTP send failed: ' . $e->getMessage());
+    error_log('OTP send failed.');
     echo json_encode(['success' => false, 'message' => 'Failed to send OTP. Please try again.']);
 }

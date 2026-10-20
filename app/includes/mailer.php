@@ -63,43 +63,77 @@ function medconnect_mail_env(string $key): string
     return medconnect_mail_fallback($key);
 }
 
+/**
+ * Resolve a mail-related key from private env files (never from PHP source).
+ * Also supports MEDCONNECT_MAIL_CONFIG → absolute path to a PHP file outside
+ * public_html that returns ['MAIL_USERNAME' => ..., 'MAIL_PASSWORD' => ..., ...].
+ */
 function medconnect_mail_env_from_file(string $key): string
 {
-    $path = dirname(__DIR__, 2) . '/.env';
-    if (!is_readable($path)) {
-        return '';
+    static $mailConfig = null;
+    if ($mailConfig === null) {
+        $mailConfig = [];
+        $cfgPath = getenv('MEDCONNECT_MAIL_CONFIG');
+        if ($cfgPath === false || trim((string) $cfgPath) === '') {
+            $cfgPath = $_ENV['MEDCONNECT_MAIL_CONFIG'] ?? ($_SERVER['MEDCONNECT_MAIL_CONFIG'] ?? '');
+        }
+        $cfgPath = trim((string) $cfgPath);
+        if ($cfgPath !== '' && is_readable($cfgPath)) {
+            $loaded = include $cfgPath;
+            if (is_array($loaded)) {
+                foreach ($loaded as $name => $value) {
+                    if (!is_string($name) || (!is_string($value) && !is_numeric($value))) {
+                        continue;
+                    }
+                    $mailConfig[$name] = trim((string) $value);
+                }
+            }
+        }
     }
-    $lines = file($path, FILE_IGNORE_NEW_LINES);
-    if ($lines === false) {
-        return '';
+    if (isset($mailConfig[$key]) && $mailConfig[$key] !== '') {
+        return $mailConfig[$key];
     }
-    foreach ($lines as $line) {
-        $line = trim(ltrim($line, "\xEF\xBB\xBF"));
-        if ($line === '' || str_starts_with($line, '#')) {
+
+    $paths = function_exists('medconnect_env_candidate_paths')
+        ? medconnect_env_candidate_paths()
+        : [dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . '.env'];
+
+    foreach ($paths as $path) {
+        if (!is_readable($path)) {
             continue;
         }
-        if (str_starts_with($line, 'export ')) {
-            $line = trim(substr($line, 7));
-        }
-        if (!str_contains($line, '=')) {
+        $lines = file($path, FILE_IGNORE_NEW_LINES);
+        if ($lines === false) {
             continue;
         }
-        [$name, $value] = explode('=', $line, 2);
-        if (trim($name) !== $key) {
-            continue;
+        foreach ($lines as $line) {
+            $line = trim(ltrim($line, "\xEF\xBB\xBF"));
+            if ($line === '' || str_starts_with($line, '#')) {
+                continue;
+            }
+            if (str_starts_with($line, 'export ')) {
+                $line = trim(substr($line, 7));
+            }
+            if (!str_contains($line, '=')) {
+                continue;
+            }
+            [$name, $value] = explode('=', $line, 2);
+            if (trim($name) !== $key) {
+                continue;
+            }
+            $value = trim($value);
+            if (
+                (str_starts_with($value, '"') && str_ends_with($value, '"'))
+                || (str_starts_with($value, "'") && str_ends_with($value, "'"))
+            ) {
+                $value = substr($value, 1, -1);
+            }
+            $value = trim($value);
+            if ($value === '') {
+                continue;
+            }
+            return $value;
         }
-        $value = trim($value);
-        if (
-            (str_starts_with($value, '"') && str_ends_with($value, '"'))
-            || (str_starts_with($value, "'") && str_ends_with($value, "'"))
-        ) {
-            $value = substr($value, 1, -1);
-        }
-        $value = trim($value);
-        if ($value === '') {
-            continue;
-        }
-        return $value;
     }
 
     return '';
@@ -107,19 +141,23 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-    // Temporary Hostinger online demo fallbacks when server .env is missing.
-    static $fallbacks = [
+    // Non-secret Gmail SMTP defaults for PHPMailer.
+    // MAIL_USERNAME / MAIL_PASSWORD / API tokens must come from environment / .env.
+    // Do not re-embed App Passwords or tokens that were previously committed to Git.
+    static $defaults = [
         'MAIL_HOST' => 'smtp.gmail.com',
         'MAIL_PORT' => '587',
-        'MAIL_USERNAME' => 'medconnect678@gmail.com',
-        'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
-        'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
         'MAIL_FROM_NAME' => 'MedConnect Bago City',
-        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
-        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
     ];
 
-    return $fallbacks[$key] ?? '';
+    return $defaults[$key] ?? '';
+}
+
+/** Safe log line for mail failures (never includes passwords, tokens, or SMTP auth text). */
+function medconnect_mail_log_failure(string $context): void
+{
+    $context = preg_replace('/\s+/', ' ', trim($context)) ?: 'mail';
+    error_log('MedConnect Mailer: ' . $context . ' failed.');
 }
 
 function medconnect_direct_smtp_available(): bool
@@ -212,13 +250,13 @@ function medconnect_smtp_deliver(string $to, string $subject, string $html, stri
         $fromName = 'MedConnect Bago City';
     }
     if ($user === '' || $pass === '') {
-        error_log('MedConnect Mailer: MAIL_USERNAME or MAIL_PASSWORD is not configured in environment.');
+        medconnect_mail_log_failure('SMTP credentials missing');
         throw new Exception('Email service is not configured.');
     }
     try {
         medconnect_smtp_deliver_with($to, $subject, $html, $text, $user, $pass, $from, $fromName);
     } catch (Exception $e) {
-        error_log('SMTP delivery failed: ' . $e->getMessage());
+        medconnect_mail_log_failure('SMTP delivery');
         throw new Exception('Email could not be sent.');
     }
 }
@@ -317,13 +355,9 @@ function medconnect_smtp_deliver_with(
         $mail->AltBody = $text !== '' ? $text : strip_tags($html);
         $mail->send();
     } catch (\PHPMailer\PHPMailer\Exception $e) {
-        // Never log passwords / full SMTP conversation; keep ErrorInfo high-level.
+        // Never log ErrorInfo — it can include SMTP conversation / auth details.
         $info = trim((string) $mail->ErrorInfo);
-        if ($info !== '' && !str_contains(strtolower($info), 'password')) {
-            error_log('PHPMailer SMTP failed: ' . $info);
-        } else {
-            error_log('PHPMailer SMTP failed.');
-        }
+        medconnect_mail_log_failure('PHPMailer SMTP');
         if (stripos($info, 'authenticate') !== false || stripos($info, '535') !== false) {
             throw new Exception('smtp-auth');
         }
@@ -389,7 +423,12 @@ class MedConnectRailwayMailer
             $decoded = is_string($raw) ? json_decode($raw, true) : null;
             $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
             if (!$ok) {
-                error_log('Railway email API failed: HTTP ' . $status);
+                // Never log recipients, subjects, OTP bodies, tokens, or response payloads.
+                if ($status === 0) {
+                    error_log('Railway email API failed: connection/timeout');
+                } else {
+                    error_log('Railway email API failed: HTTP ' . $status);
+                }
                 throw new Exception('Email could not be sent.');
             }
 
@@ -409,7 +448,11 @@ class MedConnectRailwayMailer
     {
         $relayUrl = function_exists('medconnect_railway_email_url')
             ? medconnect_railway_email_url()
-            : (defined('MEDCONNECT_RAILWAY_EMAIL_URL') ? MEDCONNECT_RAILWAY_EMAIL_URL : 'https://medconnect-production-ab04.up.railway.app/email/send');
+            : (defined('MEDCONNECT_RAILWAY_EMAIL_URL') ? (string) MEDCONNECT_RAILWAY_EMAIL_URL : '');
+        $relayUrl = trim($relayUrl);
+        if ($relayUrl === '' || $this->token === '' || $this->emailKey === '') {
+            return [0, ''];
+        }
 
         $headers = [
             'Content-Type: application/json',
@@ -440,7 +483,11 @@ class MedConnectRailwayMailer
             }
             $raw = curl_exec($ch);
             $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $errno = (int) curl_errno($ch);
             curl_close($ch);
+            if ($raw === false || $errno !== 0) {
+                return [0, ''];
+            }
             return [$status, is_string($raw) ? $raw : ''];
         }
 
@@ -451,6 +498,10 @@ class MedConnectRailwayMailer
                 'content' => $body,
                 'timeout' => 20,
                 'ignore_errors' => true,
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
             ],
         ]);
         $raw = @file_get_contents($relayUrl, false, $context);
@@ -495,7 +546,7 @@ function sendVerificationEmail($to, $verificationToken, $fullName) {
         $mail->send();
         return ['success' => true, 'message' => 'Email sent.'];
     } catch (Exception $e) {
-        error_log('Email failed: ' . $e->getMessage());
+        medconnect_mail_log_failure('verification email');
         return ['success' => false, 'message' => 'Failed to send email.'];
     }
 }
@@ -545,7 +596,7 @@ function sendPatientWelcomeEmail(string $to, string $fullName, string $patientCo
         $mail->send();
         return ['success' => true, 'message' => 'Welcome email sent.'];
     } catch (Exception $e) {
-        error_log('Patient welcome email failed: ' . $e->getMessage());
+        medconnect_mail_log_failure('patient welcome email');
         return ['success' => false, 'message' => 'Failed to send welcome email.'];
     }
 }
@@ -603,7 +654,7 @@ function sendBhwInviteEmail(
         $mail->send();
         return ['success' => true, 'message' => 'Invite email sent.'];
     } catch (Exception $e) {
-        error_log('BHW invite email failed: ' . $e->getMessage());
+        medconnect_mail_log_failure('BHW invite email');
         return ['success' => false, 'message' => 'Failed to send invite email.'];
     }
 }
@@ -643,7 +694,7 @@ function sendBhwCorrectionEmail(string $to, string $fullName, string $token, str
         $mail->send();
         return ['success' => true, 'message' => 'Correction email sent.'];
     } catch (Exception $e) {
-        error_log('BHW correction email failed: ' . $e->getMessage());
+        medconnect_mail_log_failure('BHW correction email');
         return ['success' => false, 'message' => 'Failed to send correction email.'];
     }
 }
@@ -734,7 +785,7 @@ function sendFollowUpReminderEmail(
         $mail->send();
         return ['success' => true, 'message' => 'Follow-up email sent via Gmail.'];
     } catch (Exception $e) {
-        error_log('Follow-up email failed: ' . $e->getMessage());
+        medconnect_mail_log_failure('follow-up email');
         return ['success' => false, 'message' => 'Failed to send follow-up email.'];
     }
 }

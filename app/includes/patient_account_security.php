@@ -542,5 +542,15 @@ function patient_find_by_setup_token(PDO $pdo, string $token): ?array
  */
 function patient_email_delivery_available(): bool
 {
-    return defined('MAIL_USERNAME') && MAIL_USERNAME !== '' && defined('MAIL_PASSWORD') && MAIL_PASSWORD !== '';
+    if (!function_exists('medconnect_direct_smtp_available') || !function_exists('medconnect_railway_relay_available')) {
+        $mailer = __DIR__ . '/mailer.php';
+        if (is_readable($mailer)) {
+            require_once $mailer;
+        }
+    }
+    if (function_exists('medconnect_direct_smtp_available') && function_exists('medconnect_railway_relay_available')) {
+        return medconnect_direct_smtp_available() || medconnect_railway_relay_available();
+    }
+
+    return false;
 }

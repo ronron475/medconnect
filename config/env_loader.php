@@ -1,6 +1,11 @@
 <?php
 /**
- * Load key=value pairs from project .env into getenv/$_ENV (does not override existing env).
+ * Load key=value pairs from .env into getenv/$_ENV (does not override existing env).
+ *
+ * Preferred Hostinger layout (secrets outside the web root):
+ *   /home/USER/domains/example.com/public_html/   ← app
+ *   /home/USER/domains/example.com/.env           ← secrets (parent of public_html)
+ * Or set MEDCONNECT_ENV_FILE to an absolute path outside public_html.
  */
 if (!function_exists('medconnect_load_env_file')) {
     function medconnect_load_env_file(string $path): void
@@ -15,9 +20,12 @@ if (!function_exists('medconnect_load_env_file')) {
         }
 
         foreach ($lines as $line) {
-            $line = trim($line);
+            $line = trim(ltrim($line, "\xEF\xBB\xBF"));
             if ($line === '' || str_starts_with($line, '#')) {
                 continue;
+            }
+            if (str_starts_with($line, 'export ')) {
+                $line = trim(substr($line, 7));
             }
             if (!str_contains($line, '=')) {
                 continue;
@@ -41,12 +49,52 @@ if (!function_exists('medconnect_load_env_file')) {
         }
     }
 
-    $projectEnv = dirname(__DIR__) . '/.env';
-    $parentEnv  = dirname(__DIR__, 2) . '/.env';
-    if (is_readable($projectEnv)) {
-        medconnect_load_env_file($projectEnv);
-    } elseif (is_readable($parentEnv)) {
-        medconnect_load_env_file($parentEnv);
+    /**
+     * Ordered candidate .env paths (first readable wins for initial load).
+     * MEDCONNECT_ENV_FILE may be set by the process environment / Hostinger panel.
+     *
+     * @return list<string>
+     */
+    function medconnect_env_candidate_paths(): array
+    {
+        $paths = [];
+        $custom = getenv('MEDCONNECT_ENV_FILE');
+        if ($custom === false || trim((string) $custom) === '') {
+            $custom = $_ENV['MEDCONNECT_ENV_FILE'] ?? ($_SERVER['MEDCONNECT_ENV_FILE'] ?? '');
+        }
+        $custom = trim((string) $custom);
+        if ($custom !== '') {
+            $paths[] = $custom;
+        }
+
+        $root = dirname(__DIR__);
+        $paths[] = $root . DIRECTORY_SEPARATOR . '.env';
+        $paths[] = dirname($root) . DIRECTORY_SEPARATOR . '.env';
+        // Common Hostinger private folder next to (or above) public_html.
+        $paths[] = dirname($root) . DIRECTORY_SEPARATOR . 'private' . DIRECTORY_SEPARATOR . 'medconnect.env';
+        $paths[] = dirname($root, 2) . DIRECTORY_SEPARATOR . 'private' . DIRECTORY_SEPARATOR . 'medconnect.env';
+
+        $unique = [];
+        foreach ($paths as $path) {
+            $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path);
+            if ($normalized === '' || isset($unique[$normalized])) {
+                continue;
+            }
+            $unique[$normalized] = true;
+        }
+
+        return array_keys($unique);
+    }
+
+    // Load every readable candidate so a private secrets file and an optional
+    // project .env can coexist. Existing keys are never overridden.
+    foreach (medconnect_env_candidate_paths() as $envPath) {
+        medconnect_load_env_file($envPath);
+    }
+    // If a loaded file defined MEDCONNECT_ENV_FILE, load that path too.
+    $customAfter = trim((string) (getenv('MEDCONNECT_ENV_FILE') ?: ($_ENV['MEDCONNECT_ENV_FILE'] ?? '')));
+    if ($customAfter !== '') {
+        medconnect_load_env_file($customAfter);
     }
 
     // Admin AI provider toggles/models (non-secret). Loaded after .env so UI saves take effect.

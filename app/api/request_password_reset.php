@@ -83,7 +83,7 @@ if ($user) {
 
     $mail = initMailer();
     if (!$mail) {
-        error_log('Reset OTP: mailer init failed for ' . $email);
+        error_log('Reset OTP: mailer init failed.');
         echo json_encode(['success' => false, 'message' => 'Mail service unavailable. Please try again in a moment.']);
         exit;
     }
@@ -112,7 +112,7 @@ if ($user) {
         $mail->AltBody = "Your MedConnect password reset OTP is: {$otp}. Expires in 10 minutes.";
         $mail->send();
     } catch (Exception $e) {
-        error_log('Reset OTP email failed: ' . $e->getMessage());
+        error_log('Reset OTP email failed.');
         echo json_encode(['success' => false, 'message' => 'Failed to send OTP. Please try again.']);
         exit;
     }

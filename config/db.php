@@ -20,10 +20,31 @@ $onVercel = getenv('VERCEL') !== false
     || !empty($_ENV['VERCEL'])
     || !empty($_ENV['VERCEL_ENV']);
 
+if (!function_exists('medconnect_cli_looks_like_hostinger')) {
+    /**
+     * Hostinger / shared-hosting cron has empty HTTP_HOST. Detect via path / home dir
+     * so CLI is not incorrectly treated as local XAMPP.
+     */
+    function medconnect_cli_looks_like_hostinger(?string $probe = null): bool
+    {
+        if ($probe === null) {
+            $probe = __DIR__ . '|' . (string) (getenv('HOME') ?: '') . '|' . (string) (getenv('PWD') ?: '');
+        }
+
+        return (bool) preg_match(
+            '#(?:/home/u\d+|/domains/[^/]+/public_html|/public_html)#i',
+            str_replace('\\', '/', $probe)
+        );
+    }
+}
+
+$cliLooksHostinger = PHP_SAPI === 'cli' && medconnect_cli_looks_like_hostinger();
+
 $isLocal = match (true) {
     $onVercel => false,
     $dbEnv === 'local' || $dbEnv === 'dev' => true,
     $dbEnv === 'cloud' || $dbEnv === 'production' || $dbEnv === 'prod' => false,
+    $cliLooksHostinger => false,
     $hostHeader === '' && PHP_SAPI === 'cli' => true,
     in_array($hostHeader, ['localhost', '127.0.0.1', '::1'], true) => true,
     (bool) preg_match('/^(192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/', $hostHeader) => true,
@@ -87,17 +108,17 @@ if ($isLocal) {
             exit;
         }
     } else {
-        // Temporary Hostinger online demo defaults (env overrides when present).
+        // Hostinger / production: env overrides when present.
+        // Non-secret connection identifiers may fall back to the intended Hostinger DB.
+        // DB_PASS must come from environment / .env — never re-embed passwords that
+        // were previously committed to Git (rotate any password that was in history).
         $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
         $dbName = $envString('DB_NAME') ?: ($onVercel ? '' : 'u520834156_meDBConnect26');
         $dbUser = $envString('DB_USER') ?: ($onVercel ? '' : 'u520834156_usrMedConnect');
         $dbPass = (string) ($envString('DB_PASS') ?? '');
-        if ($dbPass === '' && !$onVercel) {
-            $dbPass = '0#KQFw#m;p@V';
-        }
 
         if ($dbHost === '' || $dbName === '' || $dbUser === '' || $dbPass === '') {
-            error_log('MedConnect database configuration error: DB_HOST, DB_NAME, DB_USER, or DB_PASS missing in server environment.');
+            error_log('MedConnect database configuration error: required DB settings missing in server environment.');
             http_response_code(500);
             $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
             $wantsJson = str_contains($uri, '/app/api/')
@@ -165,7 +186,8 @@ try {
         ));
     }
 } catch (PDOException $e) {
-    error_log('MedConnect DB connection failed: ' . $e->getMessage());
+    // Never log DSN, user, password, or driver detail strings.
+    error_log('MedConnect DB connection failed.');
     http_response_code(500);
     // Never leak DB connection details to clients.
     $uri = (string) ($_SERVER['REQUEST_URI'] ?? '');
