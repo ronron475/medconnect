@@ -288,8 +288,11 @@ body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-chart-ca
 .adm-chart-period {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   flex-shrink: 0;
+  justify-content: flex-end;
+  max-width: 100%;
 }
 
 .adm-chart-period__label {
@@ -298,6 +301,119 @@ body.admin-body:not(.superadmin-body) .adm-overview-section--admin .adm-chart-ca
   font-weight: 600;
   color: #64748b;
   white-space: nowrap;
+}
+
+.adm-chart-custom {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.adm-chart-period__date {
+  min-width: 9.5rem;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+}
+
+.adm-chart-period__apply {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #0d9488;
+  background: #0d9488;
+  color: #fff;
+  cursor: pointer;
+}
+
+.adm-chart-period__apply:hover {
+  background: #0f766e;
+  border-color: #0f766e;
+}
+
+.adm-chart-period-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.adm-period-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.adm-period-chip::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--chip-color, #64748b);
+  flex-shrink: 0;
+}
+
+.adm-period-chip--total {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.adm-period-chip--total::before {
+  background: #0d9488;
+}
+
+.adm-period-chip__label {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.adm-period-chip__value {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.adm-chart-canvas-wrap {
+  position: relative;
+}
+
+.adm-chart-canvas-wrap.is-empty canvas,
+.adm-chart-canvas-wrap.is-error canvas {
+  opacity: 0.22;
+}
+
+.adm-chart-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.adm-chart-state--error {
+  color: #b91c1c;
+}
+
+#admUserTrendsCard.is-loading .adm-chart-canvas-wrap--trend {
+  opacity: 0.55;
 }
 
 .adm-charts-updated {
@@ -664,15 +780,36 @@ html[data-theme-resolved='dark'] .adm-sys-status__row {
   border-bottom-color: var(--mc-theme-border, #334155);
 }
 
-html[data-theme-resolved='dark'] .adm-chart-period__select {
+html[data-theme-resolved='dark'] .adm-chart-period__select,
+html[data-theme-resolved='dark'] .adm-chart-period__date {
   background: #1e293b;
   border-color: #334155;
   color: #e2e8f0;
 }
 
 html[data-theme-resolved='dark'] .adm-chart-period__label,
-html[data-theme-resolved='dark'] .adm-charts-updated {
+html[data-theme-resolved='dark'] .adm-charts-updated,
+html[data-theme-resolved='dark'] .adm-chart-state,
+html[data-theme-resolved='dark'] .adm-period-chip__label {
   color: var(--mc-theme-text-secondary, #cbd5e1);
+}
+
+html[data-theme-resolved='dark'] .adm-period-chip {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: #334155;
+}
+
+html[data-theme-resolved='dark'] .adm-period-chip--total {
+  background: rgba(13, 148, 136, 0.18);
+  border-color: rgba(45, 212, 191, 0.35);
+}
+
+html[data-theme-resolved='dark'] .adm-period-chip__value {
+  color: var(--mc-theme-text, #f8fafc);
+}
+
+html[data-theme-resolved='dark'] .adm-chart-state--error {
+  color: #fca5a5;
 }
 
 html[data-theme-resolved='dark'] .adm-overview-tile--total { background: rgba(15, 118, 110, 0.18); }

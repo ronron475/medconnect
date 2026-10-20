@@ -67,6 +67,169 @@ function admin_chart_period_range_label(int $days): string
     };
 }
 
+/** Validate YYYY-MM-DD; returns '' when invalid. */
+function admin_chart_valid_ymd(string $value): string
+{
+    $value = trim($value);
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        return '';
+    }
+    $dt = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+    if (!$dt || $dt->format('Y-m-d') !== $value) {
+        return '';
+    }
+
+    return $value;
+}
+
+/**
+ * Resolve preset days or an inclusive custom From–To range.
+ *
+ * @return array{
+ *   mode:string,
+ *   days:?int,
+ *   from:string,
+ *   to:string,
+ *   bucket:string,
+ *   period_label:string,
+ *   period_range_label:string
+ * }
+ */
+function admin_chart_resolve_period(int $days = 30, string $from = '', string $to = ''): array
+{
+    $fromYmd = admin_chart_valid_ymd($from);
+    $toYmd = admin_chart_valid_ymd($to);
+
+    if ($fromYmd !== '' && $toYmd !== '') {
+        if ($fromYmd > $toYmd) {
+            [$fromYmd, $toYmd] = [$toYmd, $fromYmd];
+        }
+
+        $start = new DateTimeImmutable($fromYmd . ' 00:00:00');
+        $end = new DateTimeImmutable($toYmd . ' 00:00:00');
+        $spanDays = (int) $start->diff($end)->days + 1;
+        // Cap custom ranges at 2 years for readable charts / query cost.
+        if ($spanDays > 731) {
+            $start = $end->modify('-730 days');
+            $fromYmd = $start->format('Y-m-d');
+            $spanDays = 731;
+        }
+
+        return [
+            'mode' => 'custom',
+            'days' => null,
+            'from' => $fromYmd,
+            'to' => $toYmd,
+            'bucket' => $spanDays > 62 ? 'month' : 'day',
+            'period_label' => 'Custom',
+            'period_range_label' => $fromYmd . ' to ' . $toYmd,
+        ];
+    }
+
+    $days = admin_chart_normalize_period_days($days);
+    $toYmd = date('Y-m-d');
+    if ($days >= 365) {
+        $fromYmd = date('Y-m-01', strtotime('-11 months'));
+        $bucket = 'month';
+    } else {
+        $fromYmd = $days === 1
+            ? $toYmd
+            : date('Y-m-d', strtotime('-' . ($days - 1) . ' days'));
+        $bucket = 'day';
+    }
+
+    return [
+        'mode' => 'preset',
+        'days' => $days,
+        'from' => $fromYmd,
+        'to' => $toYmd,
+        'bucket' => $bucket,
+        'period_label' => admin_chart_period_label($days),
+        'period_range_label' => admin_chart_period_range_label($days),
+    ];
+}
+
+/**
+ * Build chart axis points for an inclusive date range.
+ *
+ * @return list<array{date:string,label:string,is_today:bool,bucket_key:string}>
+ */
+function admin_chart_build_axis(string $from, string $to, string $bucket): array
+{
+    $from = admin_chart_valid_ymd($from);
+    $to = admin_chart_valid_ymd($to);
+    if ($from === '' || $to === '') {
+        return [];
+    }
+    if ($from > $to) {
+        [$from, $to] = [$to, $from];
+    }
+
+    $today = date('Y-m-d');
+    $series = [];
+
+    if ($bucket === 'month') {
+        $cursor = new DateTimeImmutable(substr($from, 0, 7) . '-01');
+        $end = new DateTimeImmutable(substr($to, 0, 7) . '-01');
+        while ($cursor <= $end) {
+            $key = $cursor->format('Y-m');
+            $series[] = [
+                'date' => $key . '-01',
+                'label' => $cursor->format('M Y'),
+                'is_today' => $key === substr($today, 0, 7),
+                'bucket_key' => $key,
+            ];
+            $cursor = $cursor->modify('+1 month');
+        }
+
+        return $series;
+    }
+
+    $start = new DateTimeImmutable($from);
+    $end = new DateTimeImmutable($to);
+    $spanDays = (int) $start->diff($end)->days + 1;
+    $cursor = $start;
+    while ($cursor <= $end) {
+        $ymd = $cursor->format('Y-m-d');
+        if ($spanDays === 1) {
+            $label = $ymd === $today ? 'Today' : $cursor->format('M j');
+        } elseif ($spanDays <= 7) {
+            $label = $cursor->format('D');
+        } elseif ($spanDays <= 31) {
+            $label = $cursor->format('M j');
+        } else {
+            $day = (int) $cursor->format('j');
+            $label = ($day === 1 || $ymd === $from || $ymd === $to)
+                ? $cursor->format('M j')
+                : '';
+        }
+        $series[] = [
+            'date' => $ymd,
+            'label' => $label,
+            'is_today' => $ymd === $today,
+            'bucket_key' => $ymd,
+        ];
+        $cursor = $cursor->modify('+1 day');
+    }
+
+    return $series;
+}
+
+/**
+ * Tracked dashboard roles (Administrators merges admin + superadmin).
+ *
+ * @return list<array{role:string,label:string,color:string,db_roles:list<string>}>
+ */
+function admin_chart_tracked_roles(): array
+{
+    return [
+        ['role' => 'patient', 'label' => 'Patients', 'color' => '#0d9488', 'db_roles' => ['patient']],
+        ['role' => 'provider', 'label' => 'Doctors', 'color' => '#2563eb', 'db_roles' => ['provider']],
+        ['role' => 'bhw', 'label' => 'BHW', 'color' => '#0284c7', 'db_roles' => ['bhw']],
+        ['role' => 'admin', 'label' => 'Administrators', 'color' => '#f59e0b', 'db_roles' => ['admin', 'superadmin']],
+    ];
+}
+
 /** @return list<array{date:string,label:string,count:int,is_today:bool}> */
 function admin_chart_last_n_days(int $days = 7): array
 {
@@ -371,6 +534,134 @@ function admin_chart_registrations_monthly(PDO $pdo, int $months = 6): array
 }
 
 /**
+ * Live new-user registrations by role for the selected period (parameterized bounds).
+ *
+ * @param array{from:string,to:string,bucket:string} $period
+ * @return array{
+ *   series:list<array{date:string,label:string,is_today:bool,counts:array<string,int>,total:int}>,
+ *   roles:list<array{role:string,label:string,color:string,total:int}>,
+ *   totals:array<string,int>,
+ *   total:int,
+ *   peak:int
+ * }
+ */
+function admin_chart_registrations_by_role(PDO $pdo, array $period): array
+{
+    $tracked = admin_chart_tracked_roles();
+    $roleKeys = array_column($tracked, 'role');
+    $axis = admin_chart_build_axis(
+        (string) ($period['from'] ?? ''),
+        (string) ($period['to'] ?? ''),
+        (string) ($period['bucket'] ?? 'day')
+    );
+
+    $series = [];
+    $matrix = [];
+    foreach ($axis as $point) {
+        $key = (string) $point['bucket_key'];
+        $zeros = array_fill_keys($roleKeys, 0);
+        $matrix[$key] = $zeros;
+        $series[] = [
+            'date' => (string) $point['date'],
+            'label' => (string) $point['label'],
+            'is_today' => (bool) $point['is_today'],
+            'counts' => $zeros,
+            'total' => 0,
+        ];
+    }
+
+    $totals = array_fill_keys($roleKeys, 0);
+    $peak = 0;
+
+    if ($series === []) {
+        return [
+            'series' => [],
+            'roles' => array_map(static function (array $r) use ($totals): array {
+                return [
+                    'role' => $r['role'],
+                    'label' => $r['label'],
+                    'color' => $r['color'],
+                    'total' => (int) ($totals[$r['role']] ?? 0),
+                ];
+            }, $tracked),
+            'totals' => $totals,
+            'total' => 0,
+            'peak' => 0,
+        ];
+    }
+
+    $from = (string) $period['from'];
+    $to = (string) $period['to'];
+    $startBound = $from . ' 00:00:00';
+    $endExclusive = date('Y-m-d', strtotime($to . ' +1 day')) . ' 00:00:00';
+    $alive = admin_chart_users_not_soft_deleted_sql($pdo);
+    $bucket = ((string) ($period['bucket'] ?? 'day')) === 'month' ? 'month' : 'day';
+    $bucketExpr = $bucket === 'month'
+        ? "DATE_FORMAT(created_at, '%Y-%m')"
+        : 'DATE(created_at)';
+    $roleExpr = "CASE
+            WHEN LOWER(TRIM(COALESCE(role,''))) IN ('admin','superadmin') THEN 'admin'
+            ELSE LOWER(TRIM(COALESCE(role,'')))
+        END";
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT {$bucketExpr} AS bucket_key, {$roleExpr} AS role_key, COUNT(*) AS cnt
+            FROM users
+            WHERE created_at >= ?
+              AND created_at < ?
+              AND {$alive}
+              AND LOWER(TRIM(COALESCE(role,''))) IN ('patient','provider','bhw','admin','superadmin')
+            GROUP BY bucket_key, role_key
+        ");
+        $stmt->execute([$startBound, $endExclusive]);
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $bucketKey = (string) ($row['bucket_key'] ?? '');
+            $roleKey = (string) ($row['role_key'] ?? '');
+            if (!isset($matrix[$bucketKey]) || !array_key_exists($roleKey, $matrix[$bucketKey])) {
+                continue;
+            }
+            $cnt = (int) ($row['cnt'] ?? 0);
+            $matrix[$bucketKey][$roleKey] = $cnt;
+            $totals[$roleKey] = (int) ($totals[$roleKey] ?? 0) + $cnt;
+        }
+    } catch (Throwable $e) {
+        // Keep zero series rather than failing the dashboard.
+    }
+
+    foreach ($series as &$point) {
+        $key = $bucket === 'month'
+            ? substr((string) $point['date'], 0, 7)
+            : (string) $point['date'];
+        $counts = $matrix[$key] ?? array_fill_keys($roleKeys, 0);
+        $point['counts'] = $counts;
+        $pointTotal = (int) array_sum($counts);
+        $point['total'] = $pointTotal;
+        $rolePeak = $counts !== [] ? max(0, ...array_values($counts)) : 0;
+        $peak = max($peak, $pointTotal, $rolePeak);
+    }
+    unset($point);
+
+    $rolesOut = [];
+    foreach ($tracked as $r) {
+        $rolesOut[] = [
+            'role' => $r['role'],
+            'label' => $r['label'],
+            'color' => $r['color'],
+            'total' => (int) ($totals[$r['role']] ?? 0),
+        ];
+    }
+
+    return [
+        'series' => $series,
+        'roles' => $rolesOut,
+        'totals' => $totals,
+        'total' => array_sum($totals),
+        'peak' => $peak,
+    ];
+}
+
+/**
  * Aggregate system services into Online / Maintenance / Issues for the status card.
  *
  * @return array{operational_pct:int,buckets:list<array{key:string,label:string,count:int,pct:int,color:string}>}
@@ -442,13 +733,26 @@ function admin_chart_triage_daily(PDO $pdo, int $days = 30): array
     return $series;
 }
 
-/** @return array<string, mixed> */
-function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
+/**
+ * @return array<string, mixed>
+ */
+function admin_dashboard_chart_payload(PDO $pdo, int $days = 30, string $from = '', string $to = ''): array
 {
-    $days = admin_chart_normalize_period_days($days);
-    $companionDays = $days > 30 ? 30 : $days;
-    $consultations = admin_chart_consultations_daily($pdo, $days);
-    $registrations = admin_chart_registrations_daily($pdo, $days);
+    $period = admin_chart_resolve_period($days, $from, $to);
+    $presetDays = $period['days'] ?? admin_chart_normalize_period_days($days);
+    if ($presetDays === null) {
+        // Custom range: keep companion series on a safe daily window for legacy consumers.
+        $span = (int) (new DateTimeImmutable($period['from']))
+            ->diff(new DateTimeImmutable($period['to']))
+            ->days + 1;
+        $presetDays = $span <= 1 ? 1 : ($span <= 7 ? 7 : ($span <= 31 ? 30 : 365));
+        $presetDays = admin_chart_normalize_period_days($presetDays);
+    }
+
+    $companionDays = $presetDays > 30 ? 30 : $presetDays;
+    $consultations = admin_chart_consultations_daily($pdo, $presetDays);
+    $registrations = admin_chart_registrations_daily($pdo, $presetDays);
+    $registrationsByRole = admin_chart_registrations_by_role($pdo, $period);
     $triage        = admin_chart_triage_daily($pdo, $companionDays);
     $roles         = admin_chart_user_roles($pdo);
     $status        = admin_chart_consult_status($pdo);
@@ -465,6 +769,16 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
         'doctors' => (int) ($roleMap['provider'] ?? 0),
         'bhw' => (int) ($roleMap['bhw'] ?? 0),
         'administrators' => $adminTotal,
+    ];
+
+    // New accounts in the selected period (updates when filters change).
+    $periodTotals = $registrationsByRole['totals'] ?? [];
+    $periodOverview = [
+        'total_users' => (int) ($registrationsByRole['total'] ?? 0),
+        'patients' => (int) ($periodTotals['patient'] ?? 0),
+        'doctors' => (int) ($periodTotals['provider'] ?? 0),
+        'bhw' => (int) ($periodTotals['bhw'] ?? 0),
+        'administrators' => (int) ($periodTotals['admin'] ?? 0),
     ];
 
     // Distribution card matches overview roles (Administrators = admin + superadmin).
@@ -492,9 +806,13 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
 
     return [
         'generated_at' => date('c'),
-        'days'         => $days,
-        'period_label' => admin_chart_period_label($days),
-        'period_range_label' => admin_chart_period_range_label($days),
+        'days'         => $period['days'],
+        'mode'         => $period['mode'],
+        'from'         => $period['from'],
+        'to'           => $period['to'],
+        'bucket'       => $period['bucket'],
+        'period_label' => $period['period_label'],
+        'period_range_label' => $period['period_range_label'],
         'consultations' => [
             'series' => $consultations,
             'total'  => admin_chart_series_total($consultations),
@@ -505,6 +823,7 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
             'total'  => admin_chart_series_total($registrations),
             'peak'   => $regPeak !== [] ? max(0, ...$regPeak) : 0,
         ],
+        'registrations_by_role' => $registrationsByRole,
         'triage' => [
             'series' => $triage,
             'total'  => admin_chart_series_total($triage),
@@ -513,6 +832,7 @@ function admin_dashboard_chart_payload(PDO $pdo, int $days = 30): array
         'roles'  => $roles,
         'distribution' => $distribution,
         'overview' => $overview,
+        'period_overview' => $periodOverview,
         'status' => $status,
         'system_status' => $systemStatus,
     ];

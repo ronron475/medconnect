@@ -5,6 +5,8 @@
   var charts = {};
   var pollTimer = null;
   var lastPayload = null;
+  var inFlight = false;
+  var hasLoadedOnce = false;
   var T = function () { return window.McChartTheme; };
 
   function ready(fn) {
@@ -19,12 +21,57 @@
     return document.getElementById('admChartsRoot');
   }
 
+  function daysSelect() {
+    return document.getElementById('admChartsDays');
+  }
+
+  function customRangeEl() {
+    return document.getElementById('admChartsCustomRange');
+  }
+
+  function fromInput() {
+    return document.getElementById('admChartsFrom');
+  }
+
+  function toInput() {
+    return document.getElementById('admChartsTo');
+  }
+
+  function isCustomMode() {
+    var sel = daysSelect();
+    return !!(sel && sel.value === 'custom');
+  }
+
+  function syncCustomVisibility() {
+    var box = customRangeEl();
+    if (!box) return;
+    box.hidden = !isCustomMode();
+  }
+
   function apiUrl() {
     var el = root();
     if (!el) return '';
     var base = document.body.dataset.assetBase || '';
-    var days = el.getAttribute('data-days') || '30';
-    return base + '/app/api/admin/dashboard_charts.php?days=' + encodeURIComponent(days);
+    var url = base + '/app/api/admin/dashboard_charts.php';
+    var params = [];
+
+    if (isCustomMode()) {
+      var from = fromInput() ? String(fromInput().value || '').trim() : '';
+      var to = toInput() ? String(toInput().value || '').trim() : '';
+      if (from && to) {
+        params.push('from=' + encodeURIComponent(from));
+        params.push('to=' + encodeURIComponent(to));
+      } else {
+        // Incomplete custom range — fall back to last selected preset days.
+        var days = el.getAttribute('data-days') || '30';
+        params.push('days=' + encodeURIComponent(days));
+      }
+    } else {
+      var preset = el.getAttribute('data-days') || '30';
+      params.push('days=' + encodeURIComponent(preset));
+    }
+
+    return url + '?' + params.join('&');
   }
 
   function destroy(id) {
@@ -41,13 +88,44 @@
 
   function setUpdated(iso) {
     var el = document.getElementById('admChartsUpdated');
-    if (!el || !iso) return;
+    if (!el) return;
+    if (!iso) {
+      el.textContent = 'Live data';
+      return;
+    }
     try {
       var d = new Date(iso);
       el.textContent = 'Updated ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
     } catch (e) {
       el.textContent = 'Live data';
     }
+  }
+
+  function setBusy(busy) {
+    var tiles = document.getElementById('admOverviewTiles');
+    if (tiles) tiles.setAttribute('aria-busy', busy ? 'true' : 'false');
+    var card = document.getElementById('admUserTrendsCard');
+    if (card) card.classList.toggle('is-loading', !!busy);
+  }
+
+  function setChartState(stateId, wrapId, mode, message) {
+    var state = document.getElementById(stateId);
+    var wrap = document.getElementById(wrapId);
+    if (!state || !wrap) return;
+
+    if (!mode) {
+      state.hidden = true;
+      state.textContent = '';
+      state.className = 'adm-chart-state';
+      wrap.classList.remove('is-empty', 'is-error');
+      return;
+    }
+
+    state.hidden = false;
+    state.textContent = message || '';
+    state.className = 'adm-chart-state adm-chart-state--' + mode;
+    wrap.classList.toggle('is-empty', mode === 'empty');
+    wrap.classList.toggle('is-error', mode === 'error');
   }
 
   function normalizeRoleRows(rows) {
@@ -71,39 +149,82 @@
     });
   }
 
-  function makeLineChart(canvasId, series, color) {
+  function suggestedMaxForRoleSeries(series, roles) {
+    var max = 0;
+    (series || []).forEach(function (point) {
+      var counts = point.counts || {};
+      (roles || []).forEach(function (role) {
+        var key = role.role || role;
+        max = Math.max(max, Number(counts[key] || 0));
+      });
+      max = Math.max(max, Number(point.total || 0));
+    });
+    if (max <= 0) return 5;
+    return Math.max(max + 1, 5);
+  }
+
+  function makeRoleLineChart(canvasId, byRole) {
     if (typeof Chart === 'undefined' || !T()) return;
     var el = document.getElementById(canvasId);
     if (!el) return;
     destroy(canvasId);
     T().syncColors();
     T().applyDefaults();
-    var ds = T().lineDataset(series, color || T().colors.teal);
-    ds.label = 'Consulted';
-    ds.pointRadius = 4;
-    ds.pointHoverRadius = 6;
-    ds.borderWidth = 2.5;
-    ds.backgroundColor = T().hexToRgba(color || T().colors.teal, 0.16);
+
+    var series = (byRole && byRole.series) || [];
+    var roles = (byRole && byRole.roles) || [];
+    var labels = series.map(function (p) { return p.label || ''; });
+    var datasets = roles.map(function (role) {
+      var color = role.color || T().colors.teal;
+      return {
+        label: role.label || role.role,
+        data: series.map(function (p) {
+          var counts = p.counts || {};
+          return Number(counts[role.role] || 0);
+        }),
+        borderColor: color,
+        backgroundColor: T().hexToRgba(color, 0.08),
+        pointBackgroundColor: color,
+        pointBorderColor: T().colors.pointBorder || '#fff',
+        pointBorderWidth: 2,
+        pointRadius: series.length > 60 ? 0 : 3,
+        pointHoverRadius: 5,
+        fill: false,
+        tension: 0.35,
+        borderWidth: 2.5,
+      };
+    });
+
     charts[canvasId] = new Chart(el, {
       type: 'line',
-      data: {
-        labels: T().labelsFromSeries(series),
-        datasets: [ds],
-      },
+      data: { labels: labels, datasets: datasets },
       options: T().cartesianOptions({
+        interaction: { mode: 'index', intersect: false },
         plugins: Object.assign({}, T().basePlugins(), {
-          legend: { display: false },
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              boxWidth: 10,
+              boxHeight: 10,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: { size: 11, weight: '600' },
+              color: T().colors.text,
+              padding: 12,
+            },
+          },
           tooltip: Object.assign({}, T().basePlugins().tooltip, {
             callbacks: {
               label: function (ctx) {
                 var n = ctx.parsed && ctx.parsed.y != null ? ctx.parsed.y : ctx.raw;
                 var count = Number(n || 0);
-                return ' ' + count.toLocaleString() + (count === 1 ? ' patient consulted' : ' patients consulted');
+                return ' ' + (ctx.dataset.label || 'Users') + ': ' + count.toLocaleString();
               },
             },
           }),
         }),
-      }, T().suggestedMaxForSeries(series)),
+      }, suggestedMaxForRoleSeries(series, roles)),
     });
   }
 
@@ -251,6 +372,30 @@
     setText('admOverviewAdmins', Number(o.administrators || 0).toLocaleString());
   }
 
+  function renderPeriodTotals(byRole, periodLabel) {
+    var host = document.getElementById('admPeriodTotals');
+    if (!host) return;
+    var roles = (byRole && byRole.roles) || [];
+    var total = Number((byRole && byRole.total) || 0);
+    if (!roles.length) {
+      host.innerHTML = '';
+      return;
+    }
+    var chips = roles.map(function (r) {
+      return (
+        '<span class="adm-period-chip" style="--chip-color:' + (r.color || '#64748b') + '">' +
+          '<span class="adm-period-chip__label">' + String(r.label || '') + '</span>' +
+          '<strong class="adm-period-chip__value">' + Number(r.total || 0).toLocaleString() + '</strong>' +
+        '</span>'
+      );
+    }).join('');
+    host.innerHTML =
+      '<span class="adm-period-chip adm-period-chip--total">' +
+        '<span class="adm-period-chip__label">New in ' + String(periodLabel || 'period') + '</span>' +
+        '<strong class="adm-period-chip__value">' + total.toLocaleString() + '</strong>' +
+      '</span>' + chips;
+  }
+
   function renderSysStatusList(buckets) {
     var list = document.getElementById('admSysStatusList');
     if (!list) return;
@@ -275,51 +420,112 @@
   function render(data) {
     if (!data || !T()) return;
     lastPayload = data;
+    hasLoadedOnce = true;
 
-    var consult = data.consultations || {};
+    var byRole = data.registrations_by_role || {};
     var overview = data.overview || {};
     var distribution = data.distribution || data.roles || [];
     var sys = data.system_status || {};
-
     var periodLabel = data.period_label || '1 Month';
+
     var regSub = document.getElementById('admChartRegSub');
     if (regSub) {
-      regSub.textContent = 'Patients who consulted — ' + periodLabel;
+      regSub.textContent = 'New accounts by role — ' + periodLabel +
+        (data.mode === 'custom' && data.from && data.to
+          ? ' (' + data.from + ' to ' + data.to + ')'
+          : '');
     }
 
     renderOverview(overview);
-    makeLineChart('admChartReg', consult.series || [], T().colors.teal);
+    renderPeriodTotals(byRole, periodLabel);
+    makeRoleLineChart('admChartReg', byRole);
     makeHBarChart('admChartRoles', distribution);
     makeSysStatusChart('admChartSysStatus', sys.buckets || [], sys.operational_pct);
     renderSysStatusList(sys.buckets || []);
     setUpdated(data.generated_at);
 
-    // Keep period select label in sync if server remapped days
-    var daysSel = document.getElementById('admChartsDays');
-    if (daysSel && data.days != null && String(daysSel.value) !== String(data.days)) {
+    var regTotal = Number(byRole.total || 0);
+    if (!((byRole.series || []).length)) {
+      setChartState('admChartRegState', 'admChartRegWrap', 'empty', 'No date range available for this filter.');
+    } else if (regTotal <= 0) {
+      setChartState('admChartRegState', 'admChartRegWrap', 'empty', 'No new registrations in this period.');
+    } else {
+      setChartState('admChartRegState', 'admChartRegWrap', null);
+    }
+
+    var distTotal = normalizeRoleRows(distribution).reduce(function (s, r) { return s + r.count; }, 0);
+    if (distTotal <= 0) {
+      setChartState('admChartRolesState', 'admChartRolesWrap', 'empty', 'No user accounts to display.');
+    } else {
+      setChartState('admChartRolesState', 'admChartRolesWrap', null);
+    }
+
+    var el = root();
+    if (el) {
+      if (data.mode === 'custom') {
+        el.setAttribute('data-mode', 'custom');
+        if (data.from) el.setAttribute('data-from', data.from);
+        if (data.to) el.setAttribute('data-to', data.to);
+      } else {
+        el.setAttribute('data-mode', 'preset');
+        if (data.days != null) el.setAttribute('data-days', String(data.days));
+      }
+    }
+
+    var daysSel = daysSelect();
+    if (daysSel && data.mode !== 'custom' && data.days != null && String(daysSel.value) !== String(data.days)) {
       var opt = daysSel.querySelector('option[value="' + data.days + '"]');
       if (opt) daysSel.value = String(data.days);
+    }
+    if (data.mode === 'custom' && daysSel) {
+      daysSel.value = 'custom';
+      syncCustomVisibility();
+      if (fromInput() && data.from) fromInput().value = data.from;
+      if (toInput() && data.to) toInput().value = data.to;
+    }
+
+    setBusy(false);
+  }
+
+  function showError(message) {
+    setBusy(false);
+    var el = document.getElementById('admChartsUpdated');
+    if (el) el.textContent = message || 'Refresh failed — retrying…';
+    if (!hasLoadedOnce) {
+      setChartState('admChartRegState', 'admChartRegWrap', 'error', 'Could not load live graph data. Retrying…');
+      setChartState('admChartRolesState', 'admChartRolesWrap', 'error', 'Could not load distribution data. Retrying…');
     }
   }
 
   function fetchAndRender() {
     var url = apiUrl();
     if (!url) return Promise.resolve();
+    if (inFlight) return Promise.resolve();
+    inFlight = true;
+
+    if (!hasLoadedOnce) setBusy(true);
 
     return fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now(), {
       credentials: 'same-origin',
       cache: 'no-store',
       headers: { Accept: 'application/json' },
     })
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
       .then(function (json) {
         if (json && json.success && json.data) {
           render(json.data);
+        } else {
+          showError('Refresh failed — retrying…');
         }
       })
       .catch(function () {
-        var el = document.getElementById('admChartsUpdated');
-        if (el) el.textContent = 'Refresh failed — retrying…';
+        showError('Refresh failed — retrying…');
+      })
+      .then(function () {
+        inFlight = false;
       });
   }
 
@@ -331,6 +537,42 @@
     }, REFRESH_MS);
   }
 
+  function applyPresetDays(days) {
+    var el = root();
+    if (el) {
+      el.setAttribute('data-days', String(days));
+      el.setAttribute('data-mode', 'preset');
+      el.removeAttribute('data-from');
+      el.removeAttribute('data-to');
+    }
+    fetchAndRender();
+  }
+
+  function applyCustomRange() {
+    var from = fromInput() ? String(fromInput().value || '').trim() : '';
+    var to = toInput() ? String(toInput().value || '').trim() : '';
+    var updated = document.getElementById('admChartsUpdated');
+    if (!from || !to) {
+      if (updated) updated.textContent = 'Select both From and To dates.';
+      setChartState('admChartRegState', 'admChartRegWrap', 'error', 'Select both From and To dates.');
+      return;
+    }
+    if (from > to) {
+      var tmp = from;
+      from = to;
+      to = tmp;
+      if (fromInput()) fromInput().value = from;
+      if (toInput()) toInput().value = to;
+    }
+    var el = root();
+    if (el) {
+      el.setAttribute('data-mode', 'custom');
+      el.setAttribute('data-from', from);
+      el.setAttribute('data-to', to);
+    }
+    fetchAndRender();
+  }
+
   function boot() {
     if (window.McChartTheme) {
       McChartTheme.applyDefaults();
@@ -340,20 +582,54 @@
         });
       }
     }
+    syncCustomVisibility();
     return fetchAndRender().then(startPolling);
   }
 
   ready(function () {
     if (!root()) return;
 
-    var daysSel = document.getElementById('admChartsDays');
+    var daysSel = daysSelect();
     if (daysSel) {
       daysSel.addEventListener('change', function () {
-        var el = root();
-        if (el) el.setAttribute('data-days', daysSel.value);
-        fetchAndRender();
+        syncCustomVisibility();
+        if (daysSel.value === 'custom') {
+          var updated = document.getElementById('admChartsUpdated');
+          if (updated) updated.textContent = 'Choose a From–To date range, then Apply.';
+          // Prefill a sensible default range if empty (local calendar dates).
+          function ymdLocal(d) {
+            var y = d.getFullYear();
+            var m = String(d.getMonth() + 1).padStart(2, '0');
+            var day = String(d.getDate()).padStart(2, '0');
+            return y + '-' + m + '-' + day;
+          }
+          if (fromInput() && !fromInput().value) {
+            var start = new Date();
+            start.setDate(start.getDate() - 29);
+            fromInput().value = ymdLocal(start);
+          }
+          if (toInput() && !toInput().value) {
+            toInput().value = ymdLocal(new Date());
+          }
+          return;
+        }
+        applyPresetDays(daysSel.value);
       });
     }
+
+    var applyBtn = document.getElementById('admChartsApplyCustom');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', applyCustomRange);
+    }
+    [fromInput(), toInput()].forEach(function (input) {
+      if (!input) return;
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') {
+          ev.preventDefault();
+          applyCustomRange();
+        }
+      });
+    });
 
     document.addEventListener('medconnect:live-sync', function (ev) {
       var changed = (ev.detail && ev.detail.changed) || [];

@@ -24,16 +24,16 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/medconnect-charts.css?v=<?= $chart_theme_css_ver ?>">
 <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css?v=<?= $chart_ui_css_ver ?>">
 
-<section class="adm-charts-section adm-overview-section<?= $adm_show_system_status ? '' : ' adm-overview-section--admin' ?>" id="admChartsRoot" data-days="<?= $chart_days ?>" aria-label="<?= $adm_show_system_status ? 'User overview and system status' : 'User overview' ?>">
+<section class="adm-charts-section adm-overview-section<?= $adm_show_system_status ? '' : ' adm-overview-section--admin' ?>" id="admChartsRoot" data-days="<?= $chart_days ?>" data-mode="preset" aria-label="<?= $adm_show_system_status ? 'User overview and system status' : 'User overview' ?>">
   <div class="adm-charts-grid adm-overview-grid">
     <article class="adm-chart-card adm-overview-card">
       <div class="adm-chart-card__head">
         <div>
           <h3 class="adm-chart-card__title">User Overview</h3>
-          <p class="adm-chart-card__sub">Total users in the system</p>
+          <p class="adm-chart-card__sub" id="admOverviewSub">Total users in the system</p>
         </div>
       </div>
-      <div class="adm-overview-tiles">
+      <div class="adm-overview-tiles" id="admOverviewTiles" aria-busy="true">
         <div class="adm-overview-tile adm-overview-tile--total">
           <div class="adm-overview-tile__icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -72,24 +72,34 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
       </div>
     </article>
 
-    <article class="adm-chart-card">
+    <article class="adm-chart-card" id="admUserTrendsCard">
       <div class="adm-chart-card__head">
         <div>
-          <h3 class="adm-chart-card__title">Consultation Trends</h3>
-          <p class="adm-chart-card__sub" id="admChartRegSub">Patients who consulted — <?= htmlspecialchars($chart_period_label) ?></p>
+          <h3 class="adm-chart-card__title">User Registrations</h3>
+          <p class="adm-chart-card__sub" id="admChartRegSub">New accounts by role — <?= htmlspecialchars($chart_period_label) ?></p>
         </div>
-        <div class="adm-chart-period">
+        <div class="adm-chart-period" id="admChartsPeriodControls">
           <label class="adm-chart-period__label" for="admChartsDays">Period</label>
-          <select id="admChartsDays" class="form-select adm-chart-period__select" aria-label="Registration trend period">
+          <select id="admChartsDays" class="form-select adm-chart-period__select" aria-label="User registration period">
             <option value="1"<?= $chart_days === 1 ? ' selected' : '' ?>>1 Day</option>
             <option value="7"<?= $chart_days === 7 ? ' selected' : '' ?>>1 Week</option>
             <option value="30"<?= $chart_days === 30 ? ' selected' : '' ?>>1 Month</option>
             <option value="365"<?= $chart_days === 365 ? ' selected' : '' ?>>1 Year</option>
+            <option value="custom">Custom Date Range</option>
           </select>
+          <div class="adm-chart-custom" id="admChartsCustomRange" hidden>
+            <label class="adm-chart-period__label" for="admChartsFrom">From</label>
+            <input type="date" id="admChartsFrom" class="adm-chart-period__date" aria-label="Custom from date">
+            <label class="adm-chart-period__label" for="admChartsTo">To</label>
+            <input type="date" id="admChartsTo" class="adm-chart-period__date" aria-label="Custom to date">
+            <button type="button" class="adm-chart-period__apply" id="admChartsApplyCustom">Apply</button>
+          </div>
         </div>
       </div>
-      <div class="adm-chart-canvas-wrap adm-chart-canvas-wrap--trend">
-        <canvas id="admChartReg" aria-label="Consultation trends chart"></canvas>
+      <div class="adm-chart-period-totals" id="admPeriodTotals" aria-live="polite"></div>
+      <div class="adm-chart-canvas-wrap adm-chart-canvas-wrap--trend" id="admChartRegWrap">
+        <canvas id="admChartReg" aria-label="User registrations by role chart"></canvas>
+        <div class="adm-chart-state" id="admChartRegState" hidden></div>
       </div>
       <p id="admChartsUpdated" class="adm-charts-updated">Loading…</p>
     </article>
@@ -101,8 +111,9 @@ $chart_ui_css_ver = (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.
           <p class="adm-chart-card__sub">Accounts by role</p>
         </div>
       </div>
-      <div class="adm-chart-canvas-wrap adm-chart-canvas-wrap--roles">
+      <div class="adm-chart-canvas-wrap adm-chart-canvas-wrap--roles" id="admChartRolesWrap">
         <canvas id="admChartRoles" aria-label="User distribution chart"></canvas>
+        <div class="adm-chart-state" id="admChartRolesState" hidden></div>
       </div>
     </article>
 
