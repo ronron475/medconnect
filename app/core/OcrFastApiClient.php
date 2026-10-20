@@ -57,13 +57,35 @@ final class OcrFastApiClient
 
     public static function health(int $timeout = 2): ?array
     {
-        $url = self::baseUrl() . '/health';
+        $url = self::baseUrl() . '/ocr/health';
         $body = self::httpGet($url, $timeout);
         if ($body === null) {
-            return null;
+            $body = self::httpGet(self::baseUrl() . '/health', $timeout);
+            if ($body === null) {
+                return null;
+            }
         }
         $data = json_decode($body, true);
         return is_array($data) ? $data : null;
+    }
+
+    public static function isHealthyResponse(?array $health): bool
+    {
+        if (!is_array($health)) {
+            return false;
+        }
+        $status = strtolower(trim((string) ($health['status'] ?? '')));
+        $legacy = strtolower(trim((string) ($health['legacy_status'] ?? '')));
+        $success = !empty($health['success']);
+
+        if ($status === 'ok') {
+            return true;
+        }
+        if ($status === 'online' && ($legacy === 'ok' || $success)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -123,17 +145,24 @@ final class OcrFastApiClient
     private static function httpGet(string $url, int $timeout): ?string
     {
         $curl = curl_init();
+        require_once dirname(__DIR__) . '/includes/ai_service_auth.php';
+        $headers = function_exists('medconnect_ai_service_auth_headers')
+            ? medconnect_ai_service_auth_headers()
+            : [];
+
         curl_setopt_array($curl, [
             CURLOPT_URL            => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT        => $timeout,
             CURLOPT_CONNECTTIMEOUT => $timeout,
+            CURLOPT_HTTPHEADER     => $headers,
         ] + self::curlSslOptions());
         $response = curl_exec($curl);
+        $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
         $curlErr = curl_error($curl);
         curl_close($curl);
-        if ($response === false || $curlErr !== '') {
-            error_log('OCR FastAPI health failed: ' . ($curlErr !== '' ? $curlErr : 'empty response'));
+        if ($response === false || $curlErr !== '' || $httpCode >= 400) {
+            error_log('OCR FastAPI health failed: ' . ($curlErr !== '' ? $curlErr : ('HTTP ' . $httpCode)));
             return null;
         }
 

@@ -12,7 +12,27 @@ if (!defined('BASE_PATH')) {
     require_once dirname(__DIR__, 2) . '/bootstrap/app.php';
 }
 
-const MEDCONNECT_RAILWAY_EMAIL_URL = 'https://medconnect-production-ab04.up.railway.app/email/send';
+if (!function_exists('medconnect_railway_email_url')) {
+    function medconnect_railway_email_url(): string
+    {
+        $custom = getenv('MEDCONNECT_EMAIL_RELAY_URL') ?: (getenv('MEDCONNECT_EMAIL_URL') ?: '');
+        if ($custom !== false && trim((string) $custom) !== '') {
+            return trim((string) $custom);
+        }
+        if (defined('AI_SERVICE_BASE_URL') && AI_SERVICE_BASE_URL !== '') {
+            return rtrim((string) AI_SERVICE_BASE_URL, '/') . '/email/send';
+        }
+        $aiUrl = getenv('MEDCONNECT_AI_SERVICE_URL') ?: '';
+        if ($aiUrl !== false && trim((string) $aiUrl) !== '') {
+            return rtrim(trim((string) $aiUrl), '/') . '/email/send';
+        }
+        return 'https://medconnect-production-ab04.up.railway.app/email/send';
+    }
+}
+
+if (!defined('MEDCONNECT_RAILWAY_EMAIL_URL')) {
+    define('MEDCONNECT_RAILWAY_EMAIL_URL', medconnect_railway_email_url());
+}
 
 function medconnect_mail_env(string $key): string
 {
@@ -84,7 +104,16 @@ function medconnect_mail_fallback(string $key): string
 
 function medconnect_direct_smtp_available(): bool
 {
-    return true;
+    $user = medconnect_mail_env('MAIL_USERNAME');
+    $pass = medconnect_mail_env('MAIL_PASSWORD');
+    return $user !== '' && $pass !== '';
+}
+
+function medconnect_railway_relay_available(): bool
+{
+    $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
+    $emailKey = medconnect_mail_env('EMAIL_API_KEY');
+    return $token !== '' && $emailKey !== '';
 }
 
 function medconnect_smtp_read($fp): string
@@ -287,42 +316,63 @@ class MedConnectRailwayMailer
             throw new Exception('Email could not be sent.');
         }
 
+        $smtpAttempted = false;
+
         if (medconnect_direct_smtp_available()) {
-            medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
+            $smtpAttempted = true;
+            try {
+                medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
+                return true;
+            } catch (Exception $e) {
+                // Log safe notice without exposing credentials
+                error_log('Direct SMTP delivery attempt failed; evaluating relay fallback.');
+            }
+        }
+
+        if (medconnect_railway_relay_available()) {
+            $payload = [
+                'recipient' => $this->recipient,
+                'subject' => $this->Subject,
+                'html' => $this->Body,
+            ];
+            $text = trim($this->AltBody);
+            if ($text !== '') {
+                $payload['text'] = $text;
+            }
+
+            [$status, $raw] = $this->postJson((string) json_encode($payload, JSON_UNESCAPED_UNICODE));
+            $decoded = is_string($raw) ? json_decode($raw, true) : null;
+            $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
+            if (!$ok) {
+                error_log('Railway email API failed: HTTP ' . $status);
+                throw new Exception('Email could not be sent.');
+            }
+
             return true;
         }
 
-        $payload = [
-            'recipient' => $this->recipient,
-            'subject' => $this->Subject,
-            'html' => $this->Body,
-        ];
-        $text = trim($this->AltBody);
-        if ($text !== '') {
-            $payload['text'] = $text;
-        }
-
-        [$status, $raw] = $this->postJson((string) json_encode($payload, JSON_UNESCAPED_UNICODE));
-        $decoded = is_string($raw) ? json_decode($raw, true) : null;
-        $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
-        if (!$ok) {
-            error_log('Railway email API failed: HTTP ' . $status);
+        if ($smtpAttempted) {
             throw new Exception('Email could not be sent.');
         }
 
-        return true;
+        error_log('Mailer send failed: neither direct SMTP nor Railway email relay is configured.');
+        throw new Exception('Email could not be sent.');
     }
 
     /** @return array{0:int,1:string} */
     private function postJson(string $body): array
     {
+        $relayUrl = function_exists('medconnect_railway_email_url')
+            ? medconnect_railway_email_url()
+            : (defined('MEDCONNECT_RAILWAY_EMAIL_URL') ? MEDCONNECT_RAILWAY_EMAIL_URL : 'https://medconnect-production-ab04.up.railway.app/email/send');
+
         $headers = [
             'Content-Type: application/json',
             'Authorization: Bearer ' . $this->token,
             'X-Email-Api-Key: ' . $this->emailKey,
         ];
         if (function_exists('curl_init')) {
-            $ch = curl_init(MEDCONNECT_RAILWAY_EMAIL_URL);
+            $ch = curl_init($relayUrl);
             if ($ch === false) {
                 return [0, ''];
             }
@@ -358,7 +408,7 @@ class MedConnectRailwayMailer
                 'ignore_errors' => true,
             ],
         ]);
-        $raw = @file_get_contents(MEDCONNECT_RAILWAY_EMAIL_URL, false, $context);
+        $raw = @file_get_contents($relayUrl, false, $context);
         $status = 0;
         foreach ($http_response_header ?? [] as $headerLine) {
             if (preg_match('#HTTP/\S+\s+(\d+)#', $headerLine, $match) === 1) {
@@ -371,19 +421,16 @@ class MedConnectRailwayMailer
 
 function initMailer(): ?MedConnectRailwayMailer
 {
-    $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
-    $emailKey = medconnect_mail_env('EMAIL_API_KEY');
-    $missing = [];
-    if ($token === '') {
-        $missing[] = 'MEDCONNECT_AI_SERVICE_TOKEN';
-    }
-    if ($emailKey === '') {
-        $missing[] = 'EMAIL_API_KEY';
-    }
-    if ($missing !== []) {
-        error_log('Mailer init failed: missing environment variables: ' . implode(', ', $missing));
+    $smtpAvailable = medconnect_direct_smtp_available();
+    $relayAvailable = medconnect_railway_relay_available();
+
+    if (!$smtpAvailable && !$relayAvailable) {
+        error_log('Mailer init failed: neither direct SMTP nor Railway email relay is configured in environment.');
         return null;
     }
+
+    $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
+    $emailKey = medconnect_mail_env('EMAIL_API_KEY');
 
     return new MedConnectRailwayMailer($token, $emailKey);
 }

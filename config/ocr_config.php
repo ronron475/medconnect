@@ -45,10 +45,8 @@ if (!function_exists('medconnect_ocr_env')) {
             }
         }
 
-        // Hostinger does not expose this to PHP. Env and the server .env still win when present.
-        $fallbacks = [
-            'OCR_SPACE_API_KEY' => 'K87282302688957',
-        ];
+        // No hardcoded secrets. Tokens must be configured via environment or .env file.
+        $fallbacks = [];
 
         return $fallbacks[$key] ?? '';
     }

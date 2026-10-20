@@ -116,10 +116,10 @@ if ($code === 0 && $debugDefault === '0') {
 } else {
     fail('OCR_DEBUG defaults to false', 'got debug=' . $debugDefault . ' exit=' . $code);
 }
-if ($code === 0 && $keyDefault === 'set') {
-    pass('OCR_SPACE_API_KEY uses the server-side fallback when env and .env are missing');
+if ($code === 0 && $keyDefault === 'empty') {
+    pass('OCR_SPACE_API_KEY defaults to empty when env and .env are missing (no hardcoded fallback)');
 } else {
-    fail('OCR_SPACE_API_KEY server-side fallback', 'got=' . $keyDefault);
+    fail('OCR_SPACE_API_KEY must default to empty when env and .env are missing', 'got=' . $keyDefault);
 }
 
 // ── 4) Env override works ─────────────────────────────────────

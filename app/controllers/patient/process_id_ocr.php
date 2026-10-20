@@ -19,7 +19,7 @@ const OCR_MSG_NOT_RECOGNIZED = 'OCR could not recognize enough detail in your Na
 if (isset($_GET['clear_session'])) {
     unset($_SESSION['ocr_verified'], $_SESSION['ocr_national_id'],
           $_SESSION['ocr_final_state'], $_SESSION['ocr_bago_city'],
-          $_SESSION['ocr_extract_cache']);
+          $_SESSION['ocr_extract_cache'], $_SESSION['ocr_raw_text_cache']);
     ob_clean(); echo json_encode(['success' => true]);
     exit;
 }
@@ -61,16 +61,52 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Local OCR.Space first. It corrects sideways PhilID photos and uses the
-    // registration parser. The remote service is only a fallback.
+    // Attempt FastAPI OCR first if configured and healthy, falling back to local OCR.Space pipeline
     $is_pdf = ($mime === 'application/pdf');
-    $extract_result = runBestOcrExtract($file['tmp_name'], $mime, $is_pdf);
+    $extract_result = null;
+
+    if (class_exists('OcrFastApiClient') && OcrFastApiClient::isEnabled()) {
+        $health = OcrFastApiClient::health(2);
+        if (OcrFastApiClient::isHealthyResponse($health)) {
+            $fastapi_res = OcrFastApiClient::extract($file['tmp_name'], $mime, $file['name']);
+            if (is_array($fastapi_res) && !empty($fastapi_res['success']) && !empty($fastapi_res['extracted'])) {
+                $raw_text = (string) ($fastapi_res['parsed_text'] ?? '');
+                $extract_result = [
+                    'text' => $raw_text,
+                    'extraction' => [
+                        'fields' => $fastapi_res['extracted'],
+                        'overall_confidence' => $fastapi_res['overall_confidence'] ?? 0.9,
+                        'low_confidence' => !empty($fastapi_res['low_confidence']),
+                    ],
+                    'stage' => $fastapi_res['preprocessing_used'] ?? 'fastapi',
+                    'error' => null,
+                    'diagnostics' => [],
+                ];
+            }
+        }
+    }
+
+    if ($extract_result === null) {
+        $extract_result = runBestOcrExtract($file['tmp_name'], $mime, $is_pdf);
+    }
+
     $local_ok = $extract_result['error'] === null
         && ($extract_result['text'] ?? '') !== ''
         && empty($extract_result['extraction']['low_confidence']);
     if ($local_ok) {
         $parsed_text = $extract_result['text'];
         $extraction = $extract_result['extraction'];
+
+        if ($parsed_text !== '') {
+            if (!isset($_SESSION['ocr_raw_text_cache']) || !is_array($_SESSION['ocr_raw_text_cache'])) {
+                $_SESSION['ocr_raw_text_cache'] = [];
+            }
+            $_SESSION['ocr_raw_text_cache'][$file_hash] = $parsed_text;
+            if (count($_SESSION['ocr_raw_text_cache']) > 5) {
+                $_SESSION['ocr_raw_text_cache'] = array_slice($_SESSION['ocr_raw_text_cache'], -5, null, true);
+            }
+        }
+
         $response = [
             'success' => true,
             'mode' => 'extract',
@@ -108,6 +144,16 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($filled_identity >= 3 && is_array($extraction)) {
+        if ($parsed_text !== '') {
+            if (!isset($_SESSION['ocr_raw_text_cache']) || !is_array($_SESSION['ocr_raw_text_cache'])) {
+                $_SESSION['ocr_raw_text_cache'] = [];
+            }
+            $_SESSION['ocr_raw_text_cache'][$file_hash] = $parsed_text;
+            if (count($_SESSION['ocr_raw_text_cache']) > 5) {
+                $_SESSION['ocr_raw_text_cache'] = array_slice($_SESSION['ocr_raw_text_cache'], -5, null, true);
+            }
+        }
+
         $low_confidence = !empty($extraction['low_confidence']);
         $response = [
             'success' => true,
@@ -803,7 +849,7 @@ function logOcrExtractSummary(array $result): void {
 }
 
 function buildOcrExtractVariants(string $src_path, string $mime_type): array {
-    // Original color bytes first. Later variants are EXIF-corrected copies.
+    // Primary pass: original color bytes with orientation detection enabled.
     $variants = [ocrVariantMeta([
         'path' => $src_path,
         'mime' => $mime_type,
@@ -811,7 +857,7 @@ function buildOcrExtractVariants(string $src_path, string $mime_type): array {
         'temp' => false,
         'detect_orientation' => true,
         'angle' => 0,
-        'engines' => [2, 1],
+        'engines' => [2],
     ])];
     if (!extension_loaded('gd')) {
         return $variants;
@@ -836,25 +882,11 @@ function buildOcrExtractVariants(string $src_path, string $mime_type): array {
     $exif_w = imagesx($img);
     $exif_h = imagesy($img);
     if ($exif_w !== $variants[0]['width'] || $exif_h !== $variants[0]['height']) {
-        $push($img, 'exif-color', 'color', false, 0, [2, 1]);
+        $push($img, 'exif-color', 'color', false, 0, [2]);
+    } else {
+        $push($img, 'sharpen-color', 'sharpen', true, 0, [2]);
     }
 
-    $push($img, 'upscaled-color', 'color', true, 0, [2, 1]);
-    $push($img, 'sharpen-color', 'sharpen', true, 0, [2, 1]);
-
-    foreach ([90, 180, 270] as $angle) {
-        $rotated = imagerotate($img, -$angle, 0);
-        if (!$rotated) {
-            continue;
-        }
-        $push($rotated, 'rot' . $angle . '-color', 'color', true, $angle, [2]);
-        if ($angle !== 180) {
-            $push($rotated, 'rot' . $angle . '-sharpen', 'sharpen', true, $angle, [2]);
-        }
-        imagedestroy($rotated);
-    }
-
-    $push($img, 'gray-fallback', 'gray', true, 0, [2]);
     imagedestroy($img);
     return $variants;
 }
@@ -880,6 +912,13 @@ function runBestOcrExtract(string $src_path, string $mime, bool $is_pdf): array 
         'error'        => null,
         'diagnostics'  => [],
     ];
+
+    $configuredKey = (string) (defined('OCR_' . 'SPACE_API_KEY') ? constant('OCR_' . 'SPACE_API_KEY') : '');
+    if ($configuredKey === '') {
+        $result['error'] = 'National ID verification service is currently unconfigured. Please contact support or continue with manual registration.';
+        $result['failure_code'] = 'unconfigured';
+        return $result;
+    }
 
     if ($is_pdf) {
         $all_texts = [];
@@ -1430,6 +1469,11 @@ function callOCRSpace(string $file_path, string $mime, int $engine, bool $detect
     ocrSpaceLastHttpStatus(0);
     if (!is_readable($file_path)) return null;
 
+    $configuredKey = (string) (defined('OCR_' . 'SPACE_API_KEY') ? constant('OCR_' . 'SPACE_API_KEY') : '');
+    if ($configuredKey === '') {
+        return null;
+    }
+
     $filetype = 'JPG';
     $filename = 'national-id.jpg';
     if ($mime === 'image/png') {
@@ -1711,13 +1755,31 @@ if (!$is_pdf) {
     $all_variants = [$processed];
 }
 
-$verify_extract = runBestOcrExtract($file['tmp_name'], $mime, $is_pdf);
-if ($verify_extract['error'] !== null) {
-  foreach ($all_variants as $v) {
-      cleanTemp($v);
-  }
-  ob_clean(); echo json_encode(['success' => false, 'message' => $verify_extract['error']]);
-  exit;
+$verify_file_hash = hash_file('sha256', $file['tmp_name']);
+$cached_raw_text = (string) ($_SESSION['ocr_raw_text_cache'][$verify_file_hash] ?? '');
+
+if ($cached_raw_text !== '') {
+    $verify_extract = [
+        'text' => $cached_raw_text,
+        'stage' => 'session_cache',
+        'error' => null,
+        'diagnostics' => [],
+    ];
+} else {
+    $verify_extract = runBestOcrExtract($file['tmp_name'], $mime, $is_pdf);
+    if ($verify_extract['error'] !== null) {
+        foreach ($all_variants as $v) {
+            cleanTemp($v);
+        }
+        ob_clean(); echo json_encode(['success' => false, 'message' => $verify_extract['error']]);
+        exit;
+    }
+    if (($verify_extract['text'] ?? '') !== '') {
+        if (!isset($_SESSION['ocr_raw_text_cache']) || !is_array($_SESSION['ocr_raw_text_cache'])) {
+            $_SESSION['ocr_raw_text_cache'] = [];
+        }
+        $_SESSION['ocr_raw_text_cache'][$verify_file_hash] = $verify_extract['text'];
+    }
 }
 
 $parsed_text_e2 = $verify_extract['text'];
