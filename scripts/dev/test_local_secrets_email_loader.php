@@ -33,13 +33,7 @@ ok('example documents EMAIL_API_KEY', str_contains($exampleSrc, "'EMAIL_API_KEY'
 ok('example documents MEDCONNECT_AI_SERVICE_TOKEN', str_contains($exampleSrc, "'MEDCONNECT_AI_SERVICE_TOKEN'"));
 ok('example EMAIL_API_KEY placeholder is empty', (bool) preg_match("/'EMAIL_API_KEY'\\s*=>\\s*''/", $exampleSrc));
 ok('example MEDCONNECT_AI_SERVICE_TOKEN placeholder is empty', (bool) preg_match("/'MEDCONNECT_AI_SERVICE_TOKEN'\\s*=>\\s*''/", $exampleSrc));
-ok(
-    'mailer loads Gmail SMTP from local_secrets and disables Railway email relay',
-    str_contains($mailSrc, 'local_secrets.php')
-    && str_contains($mailSrc, 'PHPMailer/Gmail SMTP only')
-    && str_contains($mailSrc, 'medconnect_railway_relay_available')
-    && str_contains($mailSrc, 'return false;')
-);
+ok('mailer checks Railway relay via EMAIL_API_KEY + MEDCONNECT_AI_SERVICE_TOKEN', str_contains($mailSrc, 'EMAIL_API_KEY') && str_contains($mailSrc, 'MEDCONNECT_AI_SERVICE_TOKEN'));
 
 // Isolate loader logic in a subprocess-like fresh include using a temp secrets file.
 $tmpDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'mc_local_secrets_test_' . bin2hex(random_bytes(4));

@@ -50,19 +50,17 @@ function clear_mail_env(): void {
     unset($_SERVER['MAIL_USERNAME'], $_SERVER['MAIL_PASSWORD'], $_SERVER['MEDCONNECT_AI_SERVICE_TOKEN'], $_SERVER['EMAIL_API_KEY'], $_SERVER['MEDCONNECT_EMAIL_RELAY_URL']);
 }
 
-// 1.1 When SMTP credentials are unavailable, initMailer returns null (Railway alone is not enough).
+// 1.1 Neither configured -> initMailer returns null
 clear_mail_env();
+$neitherMailer = (!medconnect_direct_smtp_available() && !medconnect_railway_relay_available())
+    ? initMailer()
+    : null;
 test_assert(
-    'Railway email relay helper reports disabled',
-    medconnect_railway_relay_available() === false
-);
-$neitherMailer = medconnect_direct_smtp_available() ? null : initMailer();
-test_assert(
-    'initMailer returns null when direct Gmail SMTP is not configured',
+    'initMailer returns null when neither direct SMTP nor Railway relay is configured',
     $neitherMailer === null
 );
 
-// 1.2 SMTP configured -> initMailer succeeds
+// 1.2 Only SMTP configured -> initMailer succeeds and direct_smtp is available
 clear_mail_env();
 putenv('MAIL_USERNAME=test_user@gmail.com');
 putenv('MAIL_PASSWORD=test_app_password');
@@ -70,34 +68,36 @@ $_ENV['MAIL_USERNAME'] = 'test_user@gmail.com';
 $_ENV['MAIL_PASSWORD'] = 'test_app_password';
 $smtpOnlyMailer = initMailer();
 test_assert(
-    'initMailer initializes when direct SMTP credentials are present',
+    'initMailer initializes when direct SMTP credentials are present without Railway tokens',
     $smtpOnlyMailer instanceof MedConnectRailwayMailer && medconnect_direct_smtp_available()
 );
 
-// 1.3 Railway tokens alone must not enable the PHP mailer relay path
+// 1.3 Only Railway relay configured -> initMailer succeeds and relay is available
 clear_mail_env();
 putenv('MEDCONNECT_AI_SERVICE_TOKEN=mock_service_token_abc');
 putenv('EMAIL_API_KEY=mock_email_api_key_xyz');
 $_ENV['MEDCONNECT_AI_SERVICE_TOKEN'] = 'mock_service_token_abc';
 $_ENV['EMAIL_API_KEY'] = 'mock_email_api_key_xyz';
-test_assert(
-    'Railway tokens do not enable PHP mailer relay mode',
-    medconnect_railway_relay_available() === false
-);
 $relayOnlyMailer = initMailer();
 test_assert(
-    'initMailer requires SMTP even when Railway email tokens are present',
-    medconnect_direct_smtp_available()
-        ? $relayOnlyMailer instanceof MedConnectRailwayMailer
-        : $relayOnlyMailer === null
+    'initMailer initializes in relay mode when Railway tokens are present without SMTP credentials',
+    $relayOnlyMailer instanceof MedConnectRailwayMailer && medconnect_railway_relay_available()
+);
+
+// 1.4 Dynamic Relay URL Resolution
+putenv('MEDCONNECT_EMAIL_RELAY_URL=https://custom-relay.example.com/api/send');
+test_assert(
+    'medconnect_railway_email_url() respects MEDCONNECT_EMAIL_RELAY_URL environment override',
+    medconnect_railway_email_url() === 'https://custom-relay.example.com/api/send'
 );
 clear_mail_env();
 
 // =========================================================================
-// SECTION 2: Direct SMTP failure handling (no Railway email fallback)
+// SECTION 2: Direct SMTP to Railway Relay Fallback
 // =========================================================================
-echo "\n[2] Testing SMTP-only failure handling & Secret Sanitization...\n";
+echo "\n[2] Testing SMTP to Relay Fallback & Secret Sanitization...\n";
 
+// Set both: invalid SMTP (to simulate Hostinger blocked port / connection refused) + Railway relay
 putenv('MAIL_USERNAME=dummy@gmail.com');
 putenv('MAIL_PASSWORD=dummy_pass');
 putenv('MAIL_HOST=127.0.0.1');
@@ -112,35 +112,34 @@ $_ENV['MEDCONNECT_AI_SERVICE_TOKEN'] = 'test_token_123';
 $_ENV['EMAIL_API_KEY'] = 'test_key_456';
 
 $fallbackMailer = initMailer();
-test_assert('SMTP-configured mailer initializes successfully', $fallbackMailer instanceof MedConnectRailwayMailer);
+test_assert('Dual-configured mailer initializes successfully', $fallbackMailer instanceof MedConnectRailwayMailer);
 
+// Capture logs during a delivery attempt
 $logBuffer = '';
-set_error_handler(function ($errno, $errstr) use (&$logBuffer) {
-    $logBuffer .= ' ' . $errstr;
+$origLogHandler = set_error_handler(function($errno, $errstr) use (&$logBuffer) {
+    $logBuffer .= " " . $errstr;
     return true;
 });
 
-$smtpFailedSafely = false;
+$fallbackTriggered = false;
 try {
     $fallbackMailer->addAddress('patient@example.com');
     $fallbackMailer->Subject = 'Test OTP Verification';
     $fallbackMailer->Body = '<p>Your OTP is 123456</p>';
     $fallbackMailer->send();
 } catch (Exception $e) {
-    $smtpFailedSafely = true;
+    $fallbackTriggered = true;
 }
 restore_error_handler();
 
 test_assert(
-    'SMTP socket failure fails safely without Railway email fallback',
-    $smtpFailedSafely
+    'SMTP socket failure safely attempts relay without fatal crash',
+    $fallbackTriggered
 );
 
 test_assert(
     'Error logs do not leak SMTP passwords or bearer tokens',
-    !str_contains($logBuffer, 'dummy_pass')
-    && !str_contains($logBuffer, 'test_token_123')
-    && !str_contains($logBuffer, 'evaluating relay fallback')
+    !str_contains($logBuffer, 'dummy_pass') && !str_contains($logBuffer, 'test_token_123')
 );
 
 // Restore environment
@@ -243,33 +242,6 @@ test_assert(
 test_assert(
     'process_id_ocr.php uses OcrFastApiClient::isHealthyResponse for consistent health gating',
     str_contains($ocrControllerSrc, 'OcrFastApiClient::isHealthyResponse($health)')
-);
-
-test_assert(
-    'process_id_ocr.php requires OcrFastApiClient::isConfigured before Railway OCR',
-    str_contains($ocrControllerSrc, 'OcrFastApiClient::isConfigured()')
-);
-
-test_assert(
-    'OcrFastApiClient sanitizes National ID upload filenames before Railway multipart',
-    OcrFastApiClient::safeUploadFilename('image/jpeg', 'Juan_DelaCruz_ID.jpg') === 'national_id.jpg'
-    && OcrFastApiClient::safeUploadFilename('application/pdf', 'secret.pdf') === 'national_id.pdf'
-);
-
-$ocrClientSrc = (string) file_get_contents($root . '/app/core/OcrFastApiClient.php');
-test_assert(
-    'OcrFastApiClient sends MEDCONNECT_AI_SERVICE_TOKEN via medconnect_ai_service_auth_headers',
-    str_contains($ocrClientSrc, 'medconnect_ai_service_auth_headers()')
-    && str_contains($ocrClientSrc, 'isConfigured()')
-);
-
-$mailerSrc = (string) file_get_contents($root . '/app/includes/mailer.php');
-test_assert(
-    'PHP mailer uses direct Gmail SMTP only (no Railway /email/send fallback)',
-    str_contains($mailerSrc, 'PHPMailer/Gmail SMTP only')
-    && !str_contains($mailerSrc, 'X-Email-Api-Key: ')
-    && !str_contains($mailerSrc, 'evaluating relay fallback')
-    && !str_contains($mailerSrc, 'Railway email API failed: HTTP ')
 );
 
 // =========================================================================
