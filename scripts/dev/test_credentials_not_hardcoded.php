@@ -71,11 +71,17 @@ exec('git -C ' . escapeshellarg($root) . ' ls-files -- .env .env.local ai_servic
 ok('real .env files are not git-tracked', $code === 0 && $tracked === []);
 $gitignore = (string) file_get_contents($root . '/.gitignore');
 ok('config/local_secrets.php is gitignored', str_contains($gitignore, 'local_secrets.php'));
+$exampleSecrets = (string) file_get_contents($root . '/config/local_secrets.example.php');
 ok(
     'local_secrets.example.php has empty password placeholders',
     is_readable($root . '/config/local_secrets.example.php')
-    && (bool) preg_match("/'DB_PASS'\\s*=>\\s*''/", (string) file_get_contents($root . '/config/local_secrets.example.php'))
-    && (bool) preg_match("/'MAIL_PASSWORD'\\s*=>\\s*''/", (string) file_get_contents($root . '/config/local_secrets.example.php'))
+    && (bool) preg_match("/'DB_PASS'\\s*=>\\s*''/", $exampleSecrets)
+    && (bool) preg_match("/'MAIL_PASSWORD'\\s*=>\\s*''/", $exampleSecrets)
+);
+ok(
+    'local_secrets.example.php has empty Railway email relay placeholders',
+    (bool) preg_match("/'EMAIL_API_KEY'\\s*=>\\s*''/", $exampleSecrets)
+    && (bool) preg_match("/'MEDCONNECT_AI_SERVICE_TOKEN'\\s*=>\\s*''/", $exampleSecrets)
 );
 
 echo "\n{$pass} PASS, {$fail} FAIL\n";
