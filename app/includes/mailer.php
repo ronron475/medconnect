@@ -45,9 +45,13 @@ $mailPort = medconnect_mail_env_string('MAIL_PORT') ?: '587';
 $mailUser = medconnect_mail_env_string('MAIL_USERNAME') ?: 'medconnect678@gmail.com';
 $mailPass = (string) (medconnect_mail_env_string('MAIL_PASSWORD') ?? '');
 if ($mailPass === '') {
-    $mailPass = 'vvmjwpnmsifyzawq';
+    // TODO(temporary-hostinger-recovery): remove after Hostinger .env has MAIL_PASSWORD.
+    $mailPass = 'kdivsmhihjifejzz';
 }
-$mailFromEmail = medconnect_mail_env_string('MAIL_FROM_EMAIL') ?: $mailUser;
+$mailFromEmail = medconnect_mail_env_string('MAIL_FROM_EMAIL') ?: 'medconnect678@gmail.com';
+if ($mailFromEmail === '' || !filter_var($mailFromEmail, FILTER_VALIDATE_EMAIL)) {
+    $mailFromEmail = $mailUser !== '' ? $mailUser : 'medconnect678@gmail.com';
+}
 $mailFromName = medconnect_mail_env_string('MAIL_FROM_NAME') ?: 'MedConnect Bago City';
 $mailEmailApiKey = medconnect_mail_env_string('EMAIL_API_KEY') ?: 'mc-email-7f92b8d4a1e6c3f0-2026';
 $mailAiToken = medconnect_mail_env_string('MEDCONNECT_AI_SERVICE_TOKEN')
@@ -449,50 +453,77 @@ function medconnect_smtp_deliver_with(
         $port = 587;
     }
 
-    $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
-    try {
-        $mail->isSMTP();
-        $mail->Host = $host;
-        $mail->SMTPAuth = true;
-        $mail->Username = $user;
-        $mail->Password = $pass;
-        $mail->Port = $port;
-        $mail->CharSet = 'UTF-8';
-        $mail->Timeout = 15;
-        if ($port === 465) {
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
-        } else {
-            $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        }
+    $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
+    $lastInfo = '';
 
-        $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
-        if (is_readable($ca)) {
-            $mail->SMTPOptions = [
-                'ssl' => [
-                    'verify_peer' => true,
-                    'verify_peer_name' => true,
-                    'allow_self_signed' => false,
-                    'cafile' => $ca,
-                ],
-            ];
-        }
+    // Strict TLS first; on broken local CA bundles (common on XAMPP) retry relaxed
+    // like the Railway relay path — auth still required over STARTTLS/SMTPS.
+    foreach ([true, false] as $verify) {
+        $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
+        try {
+            $mail->isSMTP();
+            $mail->Host = $host;
+            $mail->SMTPAuth = true;
+            $mail->Username = $user;
+            $mail->Password = $pass;
+            $mail->Port = $port;
+            $mail->CharSet = 'UTF-8';
+            $mail->Timeout = 15;
+            if ($port === 465) {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS;
+            } else {
+                $mail->SMTPSecure = \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            }
 
-        $mail->setFrom($from, $fromName);
-        $mail->addAddress($to);
-        $mail->Subject = $subject;
-        $mail->isHTML(true);
-        $mail->Body = $html;
-        $mail->AltBody = $text !== '' ? $text : strip_tags($html);
-        $mail->send();
-    } catch (\PHPMailer\PHPMailer\Exception $e) {
-        // Never log ErrorInfo — it can include SMTP conversation / auth details.
-        $info = trim((string) $mail->ErrorInfo);
-        medconnect_mail_log_failure('PHPMailer SMTP');
-        if (stripos($info, 'authenticate') !== false || stripos($info, '535') !== false) {
-            throw new Exception('smtp-auth');
+            if ($verify && is_readable($ca)) {
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer' => true,
+                        'verify_peer_name' => true,
+                        'allow_self_signed' => false,
+                        'cafile' => $ca,
+                    ],
+                ];
+            } elseif (!$verify) {
+                $mail->SMTPOptions = [
+                    'ssl' => [
+                        'verify_peer' => false,
+                        'verify_peer_name' => false,
+                        'allow_self_signed' => true,
+                    ],
+                ];
+            }
+
+            $mail->setFrom($from, $fromName);
+            $mail->addAddress($to);
+            $mail->Subject = $subject;
+            $mail->isHTML(true);
+            $mail->Body = $html;
+            $mail->AltBody = $text !== '' ? $text : strip_tags($html);
+            $mail->send();
+            return;
+        } catch (\PHPMailer\PHPMailer\Exception $e) {
+            $lastInfo = trim((string) $mail->ErrorInfo);
+            $certFail = stripos($lastInfo, 'certificate') !== false
+                || stripos($lastInfo, 'ssl') !== false
+                || stripos($lastInfo, 'enable_crypto') !== false;
+            if ($verify && $certFail) {
+                error_log('MedConnect Mailer: SMTP TLS verify failed; retrying with relaxed SSL (XAMPP/Hostinger).');
+                continue;
+            }
+            medconnect_mail_log_failure('PHPMailer SMTP');
+            if (stripos($lastInfo, 'authenticate') !== false || stripos($lastInfo, '535') !== false) {
+                throw new Exception('smtp-auth');
+            }
+            throw new Exception('Email could not be sent.');
         }
-        throw new Exception('Email could not be sent.');
     }
+
+    medconnect_mail_log_failure('PHPMailer SMTP');
+    if (stripos($lastInfo, 'authenticate') !== false || stripos($lastInfo, '535') !== false) {
+        throw new Exception('smtp-auth');
+    }
+    throw new Exception('Email could not be sent.');
 }
 
 class MedConnectRailwayMailer
