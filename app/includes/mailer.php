@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 /**
  * MedConnect Mailer
  */
@@ -73,20 +73,34 @@ function medconnect_mail_env_from_file(string $key): string
     static $mailConfig = null;
     if ($mailConfig === null) {
         $mailConfig = [];
+        $candidates = [];
         $cfgPath = getenv('MEDCONNECT_MAIL_CONFIG');
         if ($cfgPath === false || trim((string) $cfgPath) === '') {
             $cfgPath = $_ENV['MEDCONNECT_MAIL_CONFIG'] ?? ($_SERVER['MEDCONNECT_MAIL_CONFIG'] ?? '');
         }
         $cfgPath = trim((string) $cfgPath);
-        if ($cfgPath !== '' && is_readable($cfgPath)) {
-            $loaded = include $cfgPath;
-            if (is_array($loaded)) {
-                foreach ($loaded as $name => $value) {
-                    if (!is_string($name) || (!is_string($value) && !is_numeric($value))) {
-                        continue;
-                    }
-                    $mailConfig[$name] = trim((string) $value);
+        if ($cfgPath !== '') {
+            $candidates[] = $cfgPath;
+        }
+        // TODO(temporary-hostinger-recovery): Prefer gitignored local_secrets.php for Gmail SMTP.
+        $candidates[] = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'local_secrets.php';
+        foreach ($candidates as $path) {
+            if (!is_readable($path)) {
+                continue;
+            }
+            $loaded = include $path;
+            if (!is_array($loaded)) {
+                continue;
+            }
+            foreach ($loaded as $name => $value) {
+                if (!is_string($name) || (!is_string($value) && !is_numeric($value))) {
+                    continue;
                 }
+                $trimmed = trim((string) $value);
+                if ($trimmed === '' || isset($mailConfig[$name])) {
+                    continue;
+                }
+                $mailConfig[$name] = $trimmed;
             }
         }
     }
@@ -141,21 +155,9 @@ function medconnect_mail_env_from_file(string $key): string
 
 function medconnect_mail_fallback(string $key): string
 {
-        // TODO(temporary-hostinger-recovery): Remove Gmail + Railway email credential fallbacks after
-        // Hostinger administrator configures MAIL_* / EMAIL_API_KEY / MEDCONNECT_AI_SERVICE_TOKEN in server .env.
-        // Env always wins. Railway /email/send is used when Hostinger blocks outbound SMTP.
-    static $defaults = [
-        'MAIL_HOST' => 'smtp.gmail.com',
-        'MAIL_PORT' => '587',
-        'MAIL_USERNAME' => 'medconnect678@gmail.com',
-        'MAIL_PASSWORD' => 'vvmjwpnmsifyzawq',
-        'MAIL_FROM_EMAIL' => 'medconnect678@gmail.com',
-        'MAIL_FROM_NAME' => 'MedConnect Bago City',
-        'EMAIL_API_KEY' => 'mc-email-7f92b8d4a1e6c3f0-2026',
-        'MEDCONNECT_AI_SERVICE_TOKEN' => 'bQzpoa-8I0kbKZIpNd9oDXv3CRwFhrFOGjx6Cz2ie_I',
-    ];
-
-    return $defaults[$key] ?? '';
+    // TODO(temporary-hostinger-recovery): No credential literals in tracked PHP.
+    // Configure MAIL_* via gitignored config/local_secrets.php or server environment.
+    return '';
 }
 
 /** Safe log line for mail failures (never includes passwords, tokens, or SMTP auth text). */
@@ -174,9 +176,9 @@ function medconnect_direct_smtp_available(): bool
 
 function medconnect_railway_relay_available(): bool
 {
-    $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
-    $emailKey = medconnect_mail_env('EMAIL_API_KEY');
-    return $token !== '' && $emailKey !== '';
+    // TODO(temporary-hostinger-recovery): Railway /email/send fallback disabled.
+    // PHP mailer uses direct Gmail SMTP (PHPMailer) only. AI service OCR/triage unchanged.
+    return false;
 }
 
 function medconnect_smtp_read($fp): string
@@ -286,15 +288,12 @@ function medconnect_phpmailer_autoload(): bool
 function medconnect_mailer_status(): array
 {
     $smtp = medconnect_direct_smtp_available();
-    $relay = medconnect_railway_relay_available();
-    if ($smtp && $relay) {
-        $message = 'Direct SMTP and Railway email relay are configured.';
-    } elseif ($smtp) {
-        $message = 'Direct SMTP is configured. On Hostinger, outbound ports 587/465 are often blocked — Railway relay is recommended.';
-    } elseif ($relay) {
-        $message = 'Railway email relay is configured.';
+    // TODO(temporary-hostinger-recovery): Railway email relay disabled in PHP mailer.
+    $relay = false;
+    if ($smtp) {
+        $message = 'Direct Gmail SMTP (PHPMailer) is configured.';
     } else {
-        $message = 'Email is not configured. Set MAIL_USERNAME and MAIL_PASSWORD for SMTP, or EMAIL_API_KEY and MEDCONNECT_AI_SERVICE_TOKEN for the Railway relay.';
+        $message = 'Email is not configured. Set MAIL_USERNAME and MAIL_PASSWORD in config/local_secrets.php (gitignored) or the server environment.';
     }
 
     return ['smtp' => $smtp, 'relay' => $relay, 'message' => $message];
@@ -315,12 +314,17 @@ function medconnect_smtp_deliver_with(
         throw new Exception('Email service is not configured.');
     }
 
+    // TODO(temporary-hostinger-recovery): Direct Gmail SMTP only (587 + STARTTLS).
     $host = medconnect_mail_env('MAIL_HOST');
     if ($host === '') {
         $host = 'smtp.gmail.com';
     }
     $port = (int) medconnect_mail_env('MAIL_PORT');
     if ($port <= 0) {
+        $port = 587;
+    }
+    // Temporary policy: force Gmail submission port with STARTTLS.
+    if (strcasecmp($host, 'smtp.gmail.com') === 0) {
         $port = 587;
     }
 
@@ -400,141 +404,32 @@ class MedConnectRailwayMailer
             throw new Exception('Email could not be sent.');
         }
 
-        $smtpAttempted = false;
-
-        if (medconnect_direct_smtp_available()) {
-            $smtpAttempted = true;
-            try {
-                medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
-                return true;
-            } catch (Exception $e) {
-                // Log safe notice without exposing credentials
-                error_log('Direct SMTP delivery attempt failed; evaluating relay fallback.');
-            }
-        }
-
-        if (medconnect_railway_relay_available()) {
-            $payload = [
-                'recipient' => $this->recipient,
-                'subject' => $this->Subject,
-                'html' => $this->Body,
-            ];
-            $text = trim($this->AltBody);
-            if ($text !== '') {
-                $payload['text'] = $text;
-            }
-
-            [$status, $raw] = $this->postJson((string) json_encode($payload, JSON_UNESCAPED_UNICODE));
-            $decoded = is_string($raw) ? json_decode($raw, true) : null;
-            $ok = $status >= 200 && $status < 300 && is_array($decoded) && (($decoded['success'] ?? false) === true);
-            if (!$ok) {
-                // Never log recipients, subjects, OTP bodies, tokens, or response payloads.
-                if ($status === 0) {
-                    error_log('Railway email API failed: connection/timeout');
-                } else {
-                    error_log('Railway email API failed: HTTP ' . $status);
-                }
-                throw new Exception('Email could not be sent.');
-            }
-
-            return true;
-        }
-
-        if ($smtpAttempted) {
+        // TODO(temporary-hostinger-recovery): PHPMailer/Gmail SMTP only (no Railway /email/send).
+        if (!medconnect_direct_smtp_available()) {
+            medconnect_mail_log_failure('SMTP credentials missing');
             throw new Exception('Email could not be sent.');
         }
 
-        error_log('Mailer send failed: neither direct SMTP nor Railway email relay is configured.');
-        throw new Exception('Email could not be sent.');
-    }
-
-    /** @return array{0:int,1:string} */
-    private function postJson(string $body): array
-    {
-        $relayUrl = function_exists('medconnect_railway_email_url')
-            ? medconnect_railway_email_url()
-            : (defined('MEDCONNECT_RAILWAY_EMAIL_URL') ? (string) MEDCONNECT_RAILWAY_EMAIL_URL : '');
-        $relayUrl = trim($relayUrl);
-        if ($relayUrl === '' || $this->token === '' || $this->emailKey === '') {
-            return [0, ''];
+        try {
+            medconnect_smtp_deliver($this->recipient, trim($this->Subject), $this->Body, $this->AltBody);
+            return true;
+        } catch (Exception $e) {
+            medconnect_mail_log_failure('SMTP delivery');
+            throw new Exception('Email could not be sent.');
         }
-
-        $headers = [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $this->token,
-            'X-Email-Api-Key: ' . $this->emailKey,
-        ];
-        if (function_exists('curl_init')) {
-            $ch = curl_init($relayUrl);
-            if ($ch === false) {
-                return [0, ''];
-            }
-            curl_setopt_array($ch, [
-                CURLOPT_POST => true,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_TIMEOUT => 20,
-                CURLOPT_CONNECTTIMEOUT => 5,
-                CURLOPT_HTTPHEADER => $headers,
-                CURLOPT_POSTFIELDS => $body,
-                CURLOPT_SSL_VERIFYPEER => true,
-                CURLOPT_SSL_VERIFYHOST => 2,
-            ]);
-            $ca = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'ssl' . DIRECTORY_SEPARATOR . 'cacert.pem';
-            if (!is_readable($ca)) {
-                $ca = (string) (ini_get('curl.cainfo') ?: ini_get('openssl.cafile') ?: '');
-            }
-            if ($ca !== '' && is_readable($ca)) {
-                curl_setopt($ch, CURLOPT_CAINFO, $ca);
-            }
-            $raw = curl_exec($ch);
-            $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $errno = (int) curl_errno($ch);
-            curl_close($ch);
-            if ($raw === false || $errno !== 0) {
-                return [0, ''];
-            }
-            return [$status, is_string($raw) ? $raw : ''];
-        }
-
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'POST',
-                'header' => implode("\r\n", $headers),
-                'content' => $body,
-                'timeout' => 20,
-                'ignore_errors' => true,
-            ],
-            'ssl' => [
-                'verify_peer' => true,
-                'verify_peer_name' => true,
-            ],
-        ]);
-        $raw = @file_get_contents($relayUrl, false, $context);
-        $status = 0;
-        foreach ($http_response_header ?? [] as $headerLine) {
-            if (preg_match('#HTTP/\S+\s+(\d+)#', $headerLine, $match) === 1) {
-                $status = (int) $match[1];
-            }
-        }
-        return [$status, is_string($raw) ? $raw : ''];
     }
 }
 
 function initMailer(): ?MedConnectRailwayMailer
 {
-    $smtpAvailable = medconnect_direct_smtp_available();
-    $relayAvailable = medconnect_railway_relay_available();
-
-    if (!$smtpAvailable && !$relayAvailable) {
+    // TODO(temporary-hostinger-recovery): Direct Gmail SMTP only via PHPMailer.
+    if (!medconnect_direct_smtp_available()) {
         $status = medconnect_mailer_status();
         error_log('Mailer init failed: ' . $status['message']);
         return null;
     }
 
-    $token = medconnect_mail_env('MEDCONNECT_AI_SERVICE_TOKEN');
-    $emailKey = medconnect_mail_env('EMAIL_API_KEY');
-
-    return new MedConnectRailwayMailer($token, $emailKey);
+    return new MedConnectRailwayMailer('', '');
 }
 
 function sendVerificationEmail($to, $verificationToken, $fullName) {

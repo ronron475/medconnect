@@ -99,12 +99,11 @@ if (!function_exists('medconnect_load_env_file')) {
 
     /**
      * TODO(temporary-hostinger-recovery): Remove this local_secrets.php bridge once the
-     * Hostinger administrator configures production DB_*, MAIL_*, EMAIL_API_KEY, and
-     * MEDCONNECT_AI_SERVICE_TOKEN in the server .env (or real hosting env vars).
-     * Do not commit config/local_secrets.php.
+     * Hostinger administrator configures production DB_* and MAIL_* in the server .env
+     * (or real hosting env vars). Do not commit config/local_secrets.php.
      *
      * Private PHP file (gitignored) may return an array of env keys for recovery when
-     * the server .env is missing — including Gmail SMTP and Railway /email/send keys.
+     * the server .env is missing — including Gmail SMTP for the temporary PHPMailer path.
      * Existing getenv/$_ENV values are never overridden. Loaded before db.php/mailer.php.
      */
     $localSecrets = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'local_secrets.php';
