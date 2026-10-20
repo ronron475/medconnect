@@ -1,19 +1,40 @@
 <?php
 ob_start(); // buffer all output — prevents PHP notices from corrupting JSON
-require_once dirname(__DIR__, 3) . '/app/includes/session_cookie.php';
+
+// Direct controller (no bootstrap). Match bootstrap/app.php so restore-barrier
+// includes that expect BASE_PATH do not emit an HTML fatal instead of JSON.
+$mcProjectRoot = dirname(__DIR__, 3);
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', $mcProjectRoot);
+}
+
+require_once BASE_PATH . '/app/includes/session_cookie.php';
 medconnect_session_start();
-require_once dirname(__DIR__, 3) . '/app/includes/superadmin/backup.php';
+// Restore/emergency barrier only — required during lockdown; keep this dependency.
+require_once BASE_PATH . '/app/includes/superadmin/backup.php';
 superadmin_restore_barrier_enforce();
 
-header('Content-Type: application/json');
-require_once dirname(__DIR__, 3) . '/config/db.php';
+header('Content-Type: application/json; charset=UTF-8');
+
+// ── Session clear endpoint — called by JS when address fields change after verify ──
+// Handled before DB/OCR config so a DB outage cannot turn this into an HTML fatal.
+if (isset($_GET['clear_session'])) {
+    unset($_SESSION['ocr_verified'], $_SESSION['ocr_national_id'],
+          $_SESSION['ocr_final_state'], $_SESSION['ocr_bago_city'],
+          $_SESSION['ocr_extract_cache'], $_SESSION['ocr_raw_text_cache']);
+    ob_clean();
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+require_once BASE_PATH . '/config/db.php';
 // Load app.php before OCR config so production Hostinger gets Railway AI/OCR URL
 // (process_id_ocr is called directly and does not go through bootstrap/app.php).
-require_once dirname(__DIR__, 3) . '/config/app.php';
-require_once dirname(__DIR__, 3) . '/config/ocr_config.php';
-require_once dirname(__DIR__, 3) . '/app/core/PhilSysOcrParser.php';
-require_once dirname(__DIR__, 3) . '/app/core/OcrFastApiClient.php';
-require_once dirname(__DIR__, 3) . '/app/includes/file_encryption.php';
+require_once BASE_PATH . '/config/app.php';
+require_once BASE_PATH . '/config/ocr_config.php';
+require_once BASE_PATH . '/app/core/PhilSysOcrParser.php';
+require_once BASE_PATH . '/app/core/OcrFastApiClient.php';
+require_once BASE_PATH . '/app/includes/file_encryption.php';
 
 // A detected National ID card smaller than this cannot be read by OCR.space.
 const OCR_MIN_CARD_LONG_PX = 480;
@@ -21,14 +42,6 @@ const OCR_MIN_CARD_SHORT_PX = 290;
 const OCR_MSG_TOO_SMALL = 'National ID image is too small for reliable OCR. Please upload the original ID photo instead of a screenshot.';
 const OCR_MSG_NOT_RECOGNIZED = 'OCR could not recognize enough detail in your National ID image. Please upload a sharper, closer photo of the card, or continue with manual entry.';
 
-// ── Session clear endpoint — called by JS when address fields change after verify ──
-if (isset($_GET['clear_session'])) {
-    unset($_SESSION['ocr_verified'], $_SESSION['ocr_national_id'],
-          $_SESSION['ocr_final_state'], $_SESSION['ocr_bago_city'],
-          $_SESSION['ocr_extract_cache'], $_SESSION['ocr_raw_text_cache']);
-    ob_clean(); echo json_encode(['success' => true]);
-    exit;
-}
 
 // ── Extract mode — OCR auto-fill (no verification against entered fields) ──
 $ocr_mode = strtolower(trim($_POST['ocr_mode'] ?? $_GET['ocr_mode'] ?? ''));
@@ -71,7 +84,11 @@ if ($ocr_mode === 'extract' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $is_pdf = ($mime === 'application/pdf');
     $extract_result = null;
 
-    if (class_exists('OcrFastApiClient') && OcrFastApiClient::isEnabled()) {
+    if (
+        class_exists('OcrFastApiClient')
+        && OcrFastApiClient::isEnabled()
+        && OcrFastApiClient::isConfigured()
+    ) {
         $health = OcrFastApiClient::health(2);
         if (OcrFastApiClient::isHealthyResponse($health)) {
             $fastapi_res = OcrFastApiClient::extract($file['tmp_name'], $mime, $file['name']);

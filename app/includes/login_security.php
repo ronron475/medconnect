@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
-require_once BASE_PATH . '/app/includes/audit_log.php';
-require_once __DIR__ . '/../../app/core/NotificationManager.php';
+// Relative requires so direct controllers (OCR/OTP) that load the restore barrier
+// without bootstrap/app.php do not fatal on an undefined BASE_PATH constant.
+require_once __DIR__ . '/audit_log.php';
+require_once __DIR__ . '/../core/NotificationManager.php';
 
 function login_security_ensure_schema(PDO $pdo): void
 {

@@ -1,6 +1,9 @@
 <?php
 /**
- * HTTP client for National ID OCR on the unified FastAPI service (port 8765).
+ * HTTP client for National ID OCR on the unified FastAPI service (Railway / local).
+ *
+ * Hostinger PHP calls MEDCONNECT_AI_SERVICE_URL over HTTPS with
+ * MEDCONNECT_AI_SERVICE_TOKEN. No secrets are hardcoded here.
  */
 
 final class OcrFastApiClient
@@ -8,6 +11,15 @@ final class OcrFastApiClient
     public static function isEnabled(): bool
     {
         return defined('OCR_USE_FASTAPI') && OCR_USE_FASTAPI === true;
+    }
+
+    /**
+     * Railway OCR routes require the shared service token.
+     */
+    public static function isConfigured(): bool
+    {
+        require_once dirname(__DIR__) . '/includes/ai_service_auth.php';
+        return medconnect_ai_service_token() !== '';
     }
 
     /**
@@ -46,17 +58,45 @@ final class OcrFastApiClient
 
     public static function baseUrl(): string
     {
-        if (defined('OCR_FASTAPI_URL')) {
+        if (defined('OCR_FASTAPI_URL') && OCR_FASTAPI_URL !== '') {
             return rtrim((string) OCR_FASTAPI_URL, '/');
         }
-        if (defined('AI_SERVICE_BASE_URL')) {
+        if (defined('AI_SERVICE_BASE_URL') && AI_SERVICE_BASE_URL !== '') {
             return rtrim((string) AI_SERVICE_BASE_URL, '/');
+        }
+        $envUrl = getenv('MEDCONNECT_AI_SERVICE_URL');
+        if ($envUrl === false || trim((string) $envUrl) === '') {
+            $envUrl = $_ENV['MEDCONNECT_AI_SERVICE_URL'] ?? '';
+        }
+        $envUrl = trim((string) $envUrl);
+        if ($envUrl !== '') {
+            return rtrim($envUrl, '/');
         }
         return 'http://127.0.0.1:8765';
     }
 
+    /**
+     * Safe multipart filename — never send the original upload name (may contain PII).
+     */
+    public static function safeUploadFilename(string $mime, string $originalName = ''): string
+    {
+        $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+        if (!in_array($ext, $allowed, true)) {
+            $ext = match (strtolower($mime)) {
+                'image/png' => 'png',
+                'application/pdf' => 'pdf',
+                default => 'jpg',
+            };
+        }
+        return 'national_id.' . $ext;
+    }
+
     public static function health(int $timeout = 2): ?array
     {
+        if (!self::isConfigured()) {
+            return null;
+        }
         $url = self::baseUrl() . '/ocr/health';
         $body = self::httpGet($url, $timeout);
         if ($body === null) {
@@ -93,14 +133,18 @@ final class OcrFastApiClient
      */
     public static function extract(string $filePath, string $mime, string $filename): ?array
     {
-        if (!is_readable($filePath)) {
+        if (!is_readable($filePath) || !self::isConfigured()) {
             return null;
         }
 
         $url = self::baseUrl() . '/ocr/extract';
         $curl = curl_init();
         $post = [
-            'national_id_image' => new CURLFile($filePath, $mime, $filename),
+            'national_id_image' => new CURLFile(
+                $filePath,
+                $mime,
+                self::safeUploadFilename($mime, $filename)
+            ),
         ];
 
         require_once dirname(__DIR__) . '/includes/ai_service_auth.php';
@@ -116,16 +160,23 @@ final class OcrFastApiClient
 
         $response = curl_exec($curl);
         $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        $curlErr  = curl_error($curl);
+        $curlErrno = (int) curl_errno($curl);
         curl_close($curl);
 
-        if ($response === false || $curlErr !== '') {
-            error_log('OCR FastAPI request failed: ' . ($curlErr !== '' ? $curlErr : 'empty response'));
+        if ($response === false || $curlErrno !== 0) {
+            // Never log filenames, tokens, or response bodies.
+            error_log('OCR FastAPI request failed: connection/timeout (errno ' . $curlErrno . ')');
+            return null;
+        }
+
+        if ($httpCode === 0) {
+            error_log('OCR FastAPI request failed: empty HTTP status');
             return null;
         }
 
         $data = json_decode($response, true);
         if (!is_array($data)) {
+            error_log('OCR FastAPI request failed: invalid JSON (HTTP ' . $httpCode . ')');
             return null;
         }
 
@@ -134,9 +185,9 @@ final class OcrFastApiClient
             return ['success' => false, 'message' => $detail];
         }
 
-        if ($httpCode >= 400) {
-            $msg = $data['detail'] ?? $data['message'] ?? 'OCR service error';
-            return ['success' => false, 'message' => is_string($msg) ? $msg : 'OCR service error'];
+        if ($httpCode < 200 || $httpCode >= 300) {
+            error_log('OCR FastAPI request failed: HTTP ' . $httpCode);
+            return ['success' => false, 'message' => 'OCR service error'];
         }
 
         return $data;
@@ -159,10 +210,13 @@ final class OcrFastApiClient
         ] + self::curlSslOptions());
         $response = curl_exec($curl);
         $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        $curlErr = curl_error($curl);
+        $curlErrno = (int) curl_errno($curl);
         curl_close($curl);
-        if ($response === false || $curlErr !== '' || $httpCode >= 400) {
-            error_log('OCR FastAPI health failed: ' . ($curlErr !== '' ? $curlErr : ('HTTP ' . $httpCode)));
+        if ($response === false || $curlErrno !== 0 || $httpCode < 200 || $httpCode >= 300) {
+            error_log(
+                'OCR FastAPI health failed: '
+                . ($curlErrno !== 0 ? ('connection/timeout errno ' . $curlErrno) : ('HTTP ' . $httpCode))
+            );
             return null;
         }
 
