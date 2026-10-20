@@ -4,11 +4,23 @@ declare(strict_types=1);
 require_once __DIR__ . '/schema.php';
 require_once __DIR__ . '/security.php';
 
+/**
+ * Absolute project root for backup/restore paths.
+ * Must match bootstrap BASE_PATH so Hostinger lock files stay consistent whether
+ * callers load via bootstrap or direct controllers (OCR/OTP).
+ */
+function superadmin_project_root(): string
+{
+    if (defined('BASE_PATH') && is_string(BASE_PATH) && BASE_PATH !== '') {
+        return rtrim(str_replace('\\', '/', BASE_PATH), '/');
+    }
+    // app/includes/superadmin → three levels up is the repo root (not app/).
+    return str_replace('\\', '/', dirname(__DIR__, 3));
+}
+
 function superadmin_backup_dir(): string
 {
-    // Controllers that load this file without bootstrap (OCR/OTP) may not define BASE_PATH.
-    $base = defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2);
-    $dir = $base . '/storage/backups';
+    $dir = superadmin_project_root() . '/storage/backups';
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
@@ -1014,6 +1026,108 @@ function superadmin_restore_emergency_lockdown(
 }
 
 /**
+ * Split a MedConnect SQL dump into executable statements.
+ * Semicolons inside single/double/backtick quotes are preserved (not a naive explode).
+ *
+ * @return list<string>
+ */
+function superadmin_backup_split_sql_statements(string $sql): array
+{
+    $sql = str_replace(["\r\n", "\r"], "\n", $sql);
+    $statements = [];
+    $buf = '';
+    $len = strlen($sql);
+    $inSingle = false;
+    $inDouble = false;
+    $inBacktick = false;
+    $inLineComment = false;
+    $inBlockComment = false;
+
+    for ($i = 0; $i < $len; $i++) {
+        $ch = $sql[$i];
+        $next = ($i + 1 < $len) ? $sql[$i + 1] : '';
+
+        if ($inLineComment) {
+            $buf .= $ch;
+            if ($ch === "\n") {
+                $inLineComment = false;
+            }
+            continue;
+        }
+        if ($inBlockComment) {
+            $buf .= $ch;
+            if ($ch === '*' && $next === '/') {
+                $buf .= '/';
+                $i++;
+                $inBlockComment = false;
+            }
+            continue;
+        }
+
+        if (!$inSingle && !$inDouble && !$inBacktick) {
+            if ($ch === '-' && $next === '-') {
+                $inLineComment = true;
+                $buf .= $ch;
+                continue;
+            }
+            if ($ch === '#' && ($buf === '' || str_ends_with($buf, "\n"))) {
+                $inLineComment = true;
+                $buf .= $ch;
+                continue;
+            }
+            if ($ch === '/' && $next === '*') {
+                $inBlockComment = true;
+                $buf .= $ch;
+                continue;
+            }
+            if ($ch === ';') {
+                $stmt = trim($buf);
+                if ($stmt !== '') {
+                    $statements[] = $stmt;
+                }
+                $buf = '';
+                continue;
+            }
+        }
+
+        if (!$inDouble && !$inBacktick && $ch === "'") {
+            if ($inSingle && $next === "'") {
+                $buf .= "''";
+                $i++;
+                continue;
+            }
+            $inSingle = !$inSingle;
+            $buf .= $ch;
+            continue;
+        }
+        if (!$inSingle && !$inBacktick && $ch === '"') {
+            $inDouble = !$inDouble;
+            $buf .= $ch;
+            continue;
+        }
+        if (!$inSingle && !$inDouble && $ch === '`') {
+            $inBacktick = !$inBacktick;
+            $buf .= $ch;
+            continue;
+        }
+        if (($inSingle || $inDouble) && $ch === '\\' && $next !== '') {
+            $buf .= $ch . $next;
+            $i++;
+            continue;
+        }
+
+        $buf .= $ch;
+    }
+
+    $tail = trim($buf);
+    if ($tail !== '') {
+        $statements[] = $tail;
+    }
+
+    return $statements;
+}
+
+/**
  * Apply a MedConnect SQL dump statement-by-statement.
  * Avoids "MySQL server has gone away" from sending multi‑MB dumps in one exec().
  *
@@ -1021,28 +1135,21 @@ function superadmin_restore_emergency_lockdown(
  */
 function superadmin_backup_exec_sql_dump(PDO $pdo, string $sql): void
 {
-    $sql = str_replace(["\r\n", "\r"], "\n", $sql);
-    $chunks = preg_split('/;\s*\n/', $sql) ?: [];
-
-    foreach ($chunks as $chunk) {
-        $lines = preg_split('/\n/', $chunk) ?: [];
+    foreach (superadmin_backup_split_sql_statements($sql) as $stmt) {
+        $lines = preg_split('/\n/', $stmt) ?: [];
         $kept = [];
         foreach ($lines as $line) {
             $trim = ltrim($line);
-            if ($trim === '' || str_starts_with($trim, '--')) {
+            if ($trim === '' || str_starts_with($trim, '--') || str_starts_with($trim, '#')) {
                 continue;
             }
             $kept[] = $line;
         }
-        $stmt = trim(implode("\n", $kept));
-        if ($stmt === '') {
+        $exec = trim(implode("\n", $kept));
+        if ($exec === '') {
             continue;
         }
-        $stmt = rtrim($stmt, " \t;");
-        if ($stmt === '') {
-            continue;
-        }
-        $pdo->exec($stmt);
+        $pdo->exec($exec);
     }
 }
 
@@ -1187,9 +1294,104 @@ function superadmin_restore_emergency_clear(
 }
 
 /**
+ * True only for the Super Admin Backup & Recovery view.
+ * Production routes that view through public/view.php?path=... (see .htaccess).
+ * Must not treat every view.php request as allowed.
+ */
+function superadmin_restore_barrier_is_superadmin_backup_view(string $script): bool
+{
+    $script = str_replace('\\', '/', $script);
+    $uri = str_replace('\\', '/', (string) ($_SERVER['REQUEST_URI'] ?? ''));
+    $uriPath = (string) (parse_url($uri, PHP_URL_PATH) ?: $uri);
+
+    // Legacy / mistaken direct path checks (keep for tests and odd deploys).
+    if (str_contains($script, '/views/superadmin/backup.php') && !str_contains($script, '/view.php')) {
+        return true;
+    }
+    if (preg_match('#/views/superadmin/backup\.php$#', $uriPath) === 1) {
+        return true;
+    }
+
+    $isViewRouter = str_ends_with($script, '/view.php')
+        || str_contains($script, '/public/view.php')
+        || basename($script) === 'view.php';
+    if (!$isViewRouter) {
+        return false;
+    }
+
+    $path = '';
+    if (defined('MC_VIEW_PATH') && is_string(MC_VIEW_PATH) && MC_VIEW_PATH !== '') {
+        $path = (string) MC_VIEW_PATH;
+    } else {
+        $path = (string) ($_GET['path'] ?? '');
+    }
+    $path = str_replace(['\\', "\0"], '/', $path);
+    $path = preg_replace('#/+#', '/', $path) ?? '';
+    $path = ltrim($path, '/');
+
+    return $path === 'superadmin/backup.php';
+}
+
+/**
+ * Whether the current request is an authorized Super Admin break-glass path
+ * during emergency lockdown (login + recovery surfaces only).
+ */
+function superadmin_restore_barrier_is_emergency_break_glass(string $script, string $method): bool
+{
+    $script = str_replace('\\', '/', $script);
+    $method = strtoupper($method);
+
+    // Login / logout so Super Admin can re-authenticate after session loss.
+    // (Requires a working DB — when MySQL is down, use CLI recovery instead.)
+    if ($method === 'POST' && str_contains($script, '/app/api/login.php')) {
+        return true;
+    }
+    if (str_contains($script, '/app/api/logout.php')) {
+        return true;
+    }
+
+    // Public landing / login shell (GET only).
+    if ($method === 'GET') {
+        $base = basename($script);
+        if ($base === 'index.php' || $base === '' || $script === '/' || str_ends_with($script, '/medconnect/') || str_ends_with($script, '/medconnect')) {
+            return true;
+        }
+        if (str_contains($script, '/public/assets/') || str_contains($script, '/assets/')) {
+            return true;
+        }
+    }
+
+    if (session_status() === PHP_SESSION_NONE && function_exists('medconnect_session_start')) {
+        medconnect_session_start();
+    }
+    $userId = (int) ($_SESSION['user_id'] ?? 0);
+    $userRole = (string) ($_SESSION['user_role'] ?? '');
+    if ($userId <= 0 || $userRole !== 'superadmin') {
+        return false;
+    }
+
+    // Authenticated Super Admin recovery UI (routed view) + API only.
+    if (superadmin_restore_barrier_is_superadmin_backup_view($script)) {
+        return true;
+    }
+    if (str_contains($script, '/app/api/superadmin/backup.php')) {
+        $action = trim((string) ($_POST['action'] ?? $_GET['action'] ?? ''));
+        if ($action === '' || $action === 'status' || $action === 'list') {
+            return true;
+        }
+        if ($method === 'POST' && in_array($action, ['emergency_clear', 'emergency_recover'], true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Universal maintenance barrier check.
  * Blocks all conflicting requests with HTTP 503 during restore or emergency lockdown.
  * Preserves access strictly for authorized recovery and backup status endpoints.
+ * During emergency_lockdown only, Super Admin may use a break-glass login + clear path.
  */
 function superadmin_restore_barrier_enforce(?string $customPath = null): void
 {
@@ -1209,8 +1411,13 @@ function superadmin_restore_barrier_enforce(?string $customPath = null): void
 
     $script = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? $_SERVER['REQUEST_URI'] ?? ''));
     $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+    $isEmergency = ($state['status'] ?? '') === 'emergency_lockdown';
     $isSuperadminBackupApi = str_contains($script, '/app/api/superadmin/backup.php');
     $isAdminBackupApi = str_contains($script, '/app/api/admin/backup.php');
+
+    if ($isEmergency && superadmin_restore_barrier_is_emergency_break_glass($script, $method)) {
+        return;
+    }
 
     // Only allowlisted backup/recovery API requests from authorized users may pass through
     if ($isSuperadminBackupApi || $isAdminBackupApi) {
@@ -1238,10 +1445,12 @@ function superadmin_restore_barrier_enforce(?string $customPath = null): void
     }
 
     // Block ALL other requests (GET views, write APIs, unauthorized callers) with HTTP 503
-    $isEmergency = ($state['status'] ?? '') === 'emergency_lockdown';
     $message = $isEmergency
-        ? 'The system is in emergency recovery mode following a database restore event. Data modifications and portal views are temporarily unavailable.'
+        ? 'The system is in emergency recovery mode following a database restore event. Super Admin may sign in and open Backup & Recovery to clear the lockdown when the database is healthy. Other portals remain unavailable.'
         : 'Scheduled database restoration maintenance is currently in progress. Data modifications and portal views are temporarily unavailable.';
+    $cliHint = $isEmergency
+        ? ' If the website cannot connect to MySQL, web login and emergency_clear cannot run safely. On the server use: php scripts/ops/clear_emergency_lockdown.php --help'
+        : '';
 
     http_response_code(503);
     header('Retry-After: 60');
@@ -1253,18 +1462,23 @@ function superadmin_restore_barrier_enforce(?string $customPath = null): void
     if ($isJson) {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
-        echo json_encode([
+        $payload = [
             'success' => false,
-            'message' => $message,
+            'message' => $message . $cliHint,
             'code' => $isEmergency ? 'emergency_lockdown' : 'maintenance_mode',
             'retry_after' => 60,
-        ], JSON_UNESCAPED_UNICODE);
+            'break_glass' => $isEmergency,
+        ];
+        if ($isEmergency) {
+            $payload['cli_recovery'] = 'php scripts/ops/clear_emergency_lockdown.php --help';
+        }
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
         exit;
     }
 
     header('Content-Type: text/html; charset=utf-8');
     echo '<!DOCTYPE html><html><head><title>503 Service Unavailable</title></head><body style="font-family:sans-serif;text-align:center;padding:50px;">'
-        . '<h1>503 - Service Unavailable</h1><p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p></body></html>';
+        . '<h1>503 - Service Unavailable</h1><p>' . htmlspecialchars($message . $cliHint, ENT_QUOTES, 'UTF-8') . '</p></body></html>';
     exit;
 }
 

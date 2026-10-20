@@ -292,14 +292,49 @@ if (PHP_SAPI !== 'cli' && !headers_sent()) {
     }
 }
 
-// Maintenance barrier check: block all conflicting write routes during active restore or emergency lockdown
+// Load restore barrier helpers before DB so emergency lockdown can fail closed
+// with a clear 503 even when MySQL is unavailable (no web auth bypass).
 require_once BASE_PATH . '/app/includes/superadmin/backup.php';
-superadmin_restore_barrier_enforce();
+
+$__mcBarrierScript = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? $_SERVER['REQUEST_URI'] ?? ''));
+$__mcBarrierMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+$__mcBarrierState = superadmin_restore_state();
+if (!empty($__mcBarrierState['active'])) {
+    $__mcBarrierEmergency = ($__mcBarrierState['status'] ?? '') === 'emergency_lockdown';
+    // Pre-DB allowlist is path-only (no session yet / remember-me needs PDO).
+    // Post-DB barrier still enforces Super Admin session + action allowlist.
+    $__mcBase = basename($__mcBarrierScript);
+    $__mcMayNeedDb = $__mcBarrierEmergency && (
+        ($__mcBarrierMethod === 'POST' && str_contains($__mcBarrierScript, '/app/api/login.php'))
+        || str_contains($__mcBarrierScript, '/app/api/logout.php')
+        || (
+            $__mcBarrierMethod === 'GET'
+            && (
+                $__mcBase === 'index.php'
+                || $__mcBase === ''
+                || $__mcBarrierScript === '/'
+                || str_ends_with($__mcBarrierScript, '/medconnect/')
+                || str_ends_with($__mcBarrierScript, '/medconnect')
+                || str_contains($__mcBarrierScript, '/public/assets/')
+                || str_contains($__mcBarrierScript, '/assets/')
+            )
+        )
+        || superadmin_restore_barrier_is_superadmin_backup_view($__mcBarrierScript)
+        || str_contains($__mcBarrierScript, '/app/api/superadmin/backup.php')
+    );
+    if (!$__mcMayNeedDb) {
+        superadmin_restore_barrier_enforce();
+    }
+}
 
 require_once CONFIG_PATH . '/db.php';
 
 require_once BASE_PATH . '/app/includes/remember_me.php';
 remember_me_restore_session($pdo);
+
+// Full barrier after session restore so remember-me Super Admin sessions
+// can reach emergency break-glass recovery while MySQL is healthy.
+superadmin_restore_barrier_enforce();
 
 require_once BASE_PATH . '/app/includes/session_timeout.php';
 session_timeout_check();

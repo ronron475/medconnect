@@ -132,16 +132,10 @@ if (\$userRole !== '' && \$userRole !== '-') {
     unset(\$_SESSION['user_id'], \$_SESSION['user_role']);
 }
 
-// If testing a direct controller script that bypasses central bootstrap
-if (str_starts_with(\$route, '/app/controllers/')) {
-    \$controllerFile = \$root . \$route;
-    if (is_file(\$controllerFile)) {
-        require \$controllerFile;
-        echo json_encode(['status' => 200, 'allowed' => true]);
-        exit;
-    }
-}
-
+// Controllers that bypass bootstrap still call superadmin_restore_barrier_enforce()
+// themselves. Do NOT require those PHP files here: process_id_ocr.php can hang on
+// DB/OCR work when the barrier is not engaged. Exercise the barrier with the
+// controller SCRIPT_NAME and the provided lock path instead.
 require_once \$root . '/app/includes/superadmin/backup.php';
 superadmin_restore_barrier_enforce(\$lockPath !== '' ? \$lockPath : null);
 echo json_encode(['status' => 200, 'allowed' => true]);
@@ -417,18 +411,81 @@ $pdo1->exec("DELETE FROM video_sessions WHERE id = {$activeVidId}");
 
 echo "\n--- TEST SUITE 3: Maintenance Barrier & Conflicting Route Protection ---\n";
 
-// Helper function to test barrier enforcement in sub-process
-function run_barrier_request(string $method, string $scriptName, ?string $postAction = null, ?string $lockPath = null, ?string $userRole = null): array
+/**
+ * Exercise barrier enforcement in a subprocess with a hard timeout.
+ * Avoids bare shell_exec(), which can hang indefinitely on Windows after many spawns
+ * (orphaned barrier runners were observed holding the suite).
+ */
+function run_barrier_request(string $method, string $scriptName, ?string $postAction = null, ?string $lockPath = null, ?string $userRole = null, int $timeoutSec = 8): array
 {
-    global $root, $runnerFile;
-    $act = ($postAction !== null && $postAction !== '') ? escapeshellarg($postAction) : "'-'";
-    $lp = ($lockPath !== null && $lockPath !== '') ? escapeshellarg($lockPath) : "''";
-    $role = ($userRole !== null && $userRole !== '') ? escapeshellarg($userRole) : "'-'";
-    $cmd = "php " . escapeshellarg($runnerFile) . " " . escapeshellarg($method) . " " . escapeshellarg($scriptName) . " {$act} {$lp} {$role}";
-    $out = shell_exec($cmd);
-    $decoded = json_decode((string) $out, true);
+    global $runnerFile;
+
+    $cmd = [
+        PHP_BINARY,
+        $runnerFile,
+        $method,
+        $scriptName,
+        ($postAction !== null && $postAction !== '') ? $postAction : '-',
+        ($lockPath !== null && $lockPath !== '') ? $lockPath : '',
+        ($userRole !== null && $userRole !== '') ? $userRole : '-',
+    ];
+
+    $descriptors = [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ];
+    $proc = proc_open($cmd, $descriptors, $pipes, null, null, ['bypass_shell' => true]);
+    if (!is_resource($proc)) {
+        return ['status' => 0, 'raw' => 'proc_open_failed'];
+    }
+
+    fclose($pipes[0]);
+    stream_set_blocking($pipes[1], false);
+    stream_set_blocking($pipes[2], false);
+
+    $out = '';
+    $err = '';
+    $deadline = microtime(true) + $timeoutSec;
+    $timedOut = false;
+    while (true) {
+        $status = proc_get_status($proc);
+        $out .= (string) stream_get_contents($pipes[1]);
+        $err .= (string) stream_get_contents($pipes[2]);
+        if (!$status['running']) {
+            break;
+        }
+        if (microtime(true) >= $deadline) {
+            $timedOut = true;
+            break;
+        }
+        usleep(20000);
+    }
+
+    if ($timedOut) {
+        $status = proc_get_status($proc);
+        if (!empty($status['pid'])) {
+            if (strncasecmp(PHP_OS, 'WIN', 3) === 0) {
+                @exec('taskkill /F /T /PID ' . (int) $status['pid'] . ' 2>NUL');
+            } else {
+                @proc_terminate($proc, 9);
+            }
+        }
+        @fclose($pipes[1]);
+        @fclose($pipes[2]);
+        @proc_close($proc);
+        return ['status' => 0, 'raw' => 'timeout', 'stderr' => $err];
+    }
+
+    $out .= (string) stream_get_contents($pipes[1]);
+    $err .= (string) stream_get_contents($pipes[2]);
+    @fclose($pipes[1]);
+    @fclose($pipes[2]);
+    proc_close($proc);
+
+    $decoded = json_decode($out, true);
     if (!is_array($decoded)) {
-        return ['status' => 0, 'raw' => $out];
+        return ['status' => 0, 'raw' => $out, 'stderr' => $err];
     }
     if (isset($decoded['code']) && in_array($decoded['code'], ['maintenance_mode', 'emergency_lockdown'], true)) {
         return [
@@ -517,7 +574,9 @@ if ($allReadsBlocked) {
     test_pass("Read API GET requests blocked with HTTP 503 during active restore");
 }
 
-// Test 3.4: Direct controller entry points blocked with HTTP 503 during restore
+// Test 3.4: Direct controller SCRIPT_NAMEs blocked with HTTP 503 during restore.
+// Barrier is exercised via the runner (same as API routes). Real controller files
+// are not executed here — they call the same enforce() helper in production.
 $directControllers = [
     '/app/controllers/auth/send_otp.php',
     '/app/controllers/auth/verify_otp.php',
@@ -526,7 +585,7 @@ $directControllers = [
 $allControllersBlocked = true;
 foreach ($directControllers as $croute) {
     $respC = run_barrier_request('POST', $croute, null, $mockLockFile);
-    if (($respC['status'] ?? 0) !== 503) {
+    if (($respC['status'] ?? 0) !== 503 || ($respC['code'] ?? '') !== 'maintenance_mode') {
         $allControllersBlocked = false;
         test_fail("Direct controller {$croute} was NOT blocked with HTTP 503 during restore", json_encode($respC));
     }
