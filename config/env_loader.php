@@ -97,6 +97,37 @@ if (!function_exists('medconnect_load_env_file')) {
         medconnect_load_env_file($customAfter);
     }
 
+    /**
+     * TODO(temporary-hostinger-recovery): Remove this local_secrets.php bridge once the
+     * Hostinger administrator configures production DB_* / MAIL_* in the server .env
+     * (or real hosting environment variables). Do not commit config/local_secrets.php.
+     *
+     * Private PHP file (gitignored) may return an array of env keys for recovery when
+     * the server .env is missing. Existing getenv/$_ENV values are never overridden.
+     */
+    $localSecrets = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'local_secrets.php';
+    if (is_readable($localSecrets)) {
+        $loadedSecrets = include $localSecrets;
+        if (is_array($loadedSecrets)) {
+            foreach ($loadedSecrets as $secretName => $secretValue) {
+                if (!is_string($secretName) || $secretName === '') {
+                    continue;
+                }
+                if (!is_string($secretValue) && !is_numeric($secretValue)) {
+                    continue;
+                }
+                $secretValue = trim((string) $secretValue);
+                if ($secretValue === '') {
+                    continue;
+                }
+                if (getenv($secretName) === false && !array_key_exists($secretName, $_ENV)) {
+                    putenv("{$secretName}={$secretValue}");
+                    $_ENV[$secretName] = $secretValue;
+                }
+            }
+        }
+    }
+
     // Admin AI provider toggles/models (non-secret). Loaded after .env so UI saves take effect.
     $aiRuntime = dirname(__DIR__) . '/storage/ai_provider_runtime.env';
     if (is_readable($aiRuntime)) {
