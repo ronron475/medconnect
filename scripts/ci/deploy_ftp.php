@@ -34,7 +34,6 @@ $excludeExact = [
     '.git',
     '.env',
     '.cursor',
-    '.vercel',
     'node_modules',
     'vendor',
     '.venv',

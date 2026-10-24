@@ -41,8 +41,6 @@ mirror -R --verbose --parallel=4 \
   --exclude-glob app/config/openrouter_local.php \
   --exclude-glob .cursor/ \
   --exclude-glob .cursor/** \
-  --exclude-glob .vercel/ \
-  --exclude-glob .vercel/** \
   --exclude-glob node_modules/ \
   --exclude-glob node_modules/** \
   --exclude-glob vendor/ \

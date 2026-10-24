@@ -58,7 +58,7 @@ $projectParagraphs = [
         </div>
 
         <div class="about-team-section__partners">
-          <img src="<?= htmlspecialchars($asset) ?>/assets/img/bcclogo.png" alt="College partner" class="about-team-section__bcc-logo" width="48" height="48" />
+          <img src="<?= htmlspecialchars($asset) ?>/assets/img/cho_logo.jpg" alt="Bago City Health Office / Primary Care Facility" class="about-team-section__cho-logo" width="48" height="48" />
           <div>
             <span class="about-team-section__partners-label">Developed in partnership with</span>
             <span class="about-team-section__partners-name">City Health Office</span>

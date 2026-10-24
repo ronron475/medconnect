@@ -43,15 +43,6 @@ function medconnect_session_cookie_path(): string
         }
     }
 
-    $onVercel = getenv('VERCEL') !== false
-        || getenv('VERCEL_ENV') !== false
-        || !empty($_ENV['VERCEL'])
-        || !empty($_ENV['VERCEL_ENV']);
-    if ($onVercel) {
-        $cached = '/';
-        return $cached;
-    }
-
     $projectRoot = str_replace('\\', '/', (string) realpath(dirname(__DIR__, 2)) ?: dirname(__DIR__, 2));
     $publicFs = str_replace('\\', '/', (string) realpath($projectRoot . '/public') ?: ($projectRoot . '/public'));
     $docRoot = str_replace('\\', '/', (string) realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '');

@@ -6,19 +6,12 @@ if (!defined('APP_TIMEZONE')) {
 require_once __DIR__ . '/env_loader.php';
 
 /**
- * Local XAMPP vs Hostinger cloud / Vercel.
- * Override with .env or Vercel env: DB_ENV, DB_HOST, DB_NAME, DB_USER, DB_PASS.
- *
- * On Vercel, DB_HOST must be the Hostinger *remote* MySQL hostname
- * (hPanel → Databases → Remote MySQL), not "localhost".
+ * Local XAMPP vs Hostinger / cloud.
+ * Override with .env: DB_ENV, DB_HOST, DB_NAME, DB_USER, DB_PASS.
  */
 $dbEnv = strtolower((string) (getenv('DB_ENV') ?: ($_ENV['DB_ENV'] ?? '')));
 $hostHeader = strtolower((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
 $hostHeader = preg_replace('/:\d+$/', '', $hostHeader) ?: '';
-$onVercel = getenv('VERCEL') !== false
-    || getenv('VERCEL_ENV') !== false
-    || !empty($_ENV['VERCEL'])
-    || !empty($_ENV['VERCEL_ENV']);
 
 if (!function_exists('medconnect_cli_looks_like_hostinger')) {
     /**
@@ -41,7 +34,6 @@ if (!function_exists('medconnect_cli_looks_like_hostinger')) {
 $cliLooksHostinger = PHP_SAPI === 'cli' && medconnect_cli_looks_like_hostinger();
 
 $isLocal = match (true) {
-    $onVercel => false,
     $dbEnv === 'local' || $dbEnv === 'dev' => true,
     $dbEnv === 'cloud' || $dbEnv === 'production' || $dbEnv === 'prod' => false,
     $cliLooksHostinger => false,
@@ -110,11 +102,11 @@ if ($isLocal) {
     } else {
         // TODO(temporary-hostinger-recovery): Remove hardcoded fallbacks after Hostinger
         // administrator configures production DB_* in server .env. Env always wins.
-        $dbHost = $envString('DB_HOST') ?: ($onVercel ? '' : 'localhost');
-        $dbName = $envString('DB_NAME') ?: ($onVercel ? '' : 'u520834156_meDBConnect26');
-        $dbUser = $envString('DB_USER') ?: ($onVercel ? '' : 'u520834156_usrMedConnect');
+        $dbHost = $envString('DB_HOST') ?: 'localhost';
+        $dbName = $envString('DB_NAME') ?: 'u520834156_meDBConnect26';
+        $dbUser = $envString('DB_USER') ?: 'u520834156_usrMedConnect';
         $dbPass = (string) ($envString('DB_PASS') ?? '');
-        if ($dbPass === '' && !$onVercel) {
+        if ($dbPass === '') {
             $dbPass = '0#KQFw#m;p@V';
         }
 
