@@ -149,11 +149,6 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
   <div class="phs-hero__content">
     <p class="phs-hero__sub">Your health information at a glance.</p>
   </div>
-  <div class="phs-hero__actions">
-    <button type="button" class="pdash-btn pdash-btn--outline" id="phsRequestUpdateBtn" hidden>
-      Request update
-    </button>
-  </div>
 </header>
 
 <?php if (!empty($latest_triage)): ?>
@@ -284,7 +279,7 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
   <div class="phs-skeleton-line"></div>
 </div>
 
-<section id="phsContent" class="phs-panel phs-content" hidden aria-label="Medical profile">
+<section id="phsContent" class="phs-panel phs-content phs-panel--profile" hidden aria-label="Medical profile">
   <header class="phs-panel__head">
     <div class="phs-panel__head-main">
       <span class="phs-panel__head-icon" aria-hidden="true"><?= phs_icon('clipboard') ?></span>
@@ -325,7 +320,7 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
       <p class="phs-info-card__hint" id="phsConditionsHint">No existing medical conditions</p>
     </article>
 
-    <article class="phs-info-card phs-info-card--wide" role="listitem" aria-labelledby="phs-meds-title">
+    <article class="phs-info-card" role="listitem" aria-labelledby="phs-meds-title">
       <div class="phs-info-card__head">
         <span class="phs-info-card__icon phs-info-card__icon--meds" aria-hidden="true"><?= phs_icon('pill') ?></span>
         <h3 class="phs-info-card__label" id="phs-meds-title">Maintenance medications</h3>
@@ -338,26 +333,32 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
 
   <footer class="phs-meta" aria-labelledby="phs-meta-title">
     <div class="phs-meta__intro">
-      <h3 class="phs-meta__title" id="phs-meta-title">Profile metadata</h3>
-      <p class="phs-meta__note">
-        Verified information cannot be edited directly. Use <strong>Request update</strong> if something needs correction.
-      </p>
+      <span class="phs-meta__icon" aria-hidden="true"><?= phs_icon('user') ?></span>
+      <div class="phs-meta__copy">
+        <h3 class="phs-meta__title" id="phs-meta-title">Profile metadata</h3>
+        <p class="phs-meta__note">
+          Verified information cannot be edited directly. Use Request update if something needs correction.
+        </p>
+      </div>
     </div>
-    <div class="phs-meta__grid">
-      <div class="phs-meta__item">
-        <span class="phs-meta__icon" aria-hidden="true"><?= phs_icon('clock') ?></span>
-        <div class="phs-meta__copy">
-          <span class="phs-meta__label">Last updated</span>
-          <strong class="phs-meta__value" id="phsLastUpdated">—</strong>
-        </div>
+    <div class="phs-meta__item">
+      <span class="phs-meta__icon" aria-hidden="true"><?= phs_icon('calendar') ?></span>
+      <div class="phs-meta__copy">
+        <span class="phs-meta__label">Last updated</span>
+        <strong class="phs-meta__value" id="phsLastUpdated">—</strong>
       </div>
-      <div class="phs-meta__item">
-        <span class="phs-meta__icon" aria-hidden="true"><?= phs_icon('user') ?></span>
-        <div class="phs-meta__copy">
-          <span class="phs-meta__label">Updated by</span>
-          <strong class="phs-meta__value" id="phsLastProvider">—</strong>
-        </div>
+    </div>
+    <div class="phs-meta__item">
+      <span class="phs-meta__icon" aria-hidden="true"><?= phs_icon('user') ?></span>
+      <div class="phs-meta__copy">
+        <span class="phs-meta__label">Updated by</span>
+        <strong class="phs-meta__value" id="phsLastProvider">—</strong>
       </div>
+    </div>
+    <div class="phs-meta__action">
+      <button type="button" class="pdash-btn pdash-btn--outline phs-meta__request-btn" id="phsRequestUpdateBtn" hidden>
+        Request update
+      </button>
     </div>
   </footer>
 </section>
