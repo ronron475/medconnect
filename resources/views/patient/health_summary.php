@@ -61,6 +61,7 @@ try {
                 $cLookup->execute([(int) $uid, (int) ($trRow['id'] ?? 0)]);
                 $cRow = $cLookup->fetch(PDO::FETCH_ASSOC) ?: [];
                 $consultId = (int) ($cRow['id'] ?? 0);
+                $trRow['consultation_id'] = $consultId;
                 if ($consultId > 0) {
                     $trRow['finalized_by_name'] = provider_clinical_support_finalized_by_label(
                         $pdo,
@@ -71,6 +72,7 @@ try {
                 }
             } catch (Throwable $e) {
                 $consultId = 0;
+                $trRow['consultation_id'] = 0;
             }
             if (empty($trRow['finalized_by_name'])) {
                 $trRow['finalized_by_name'] = $name !== ''

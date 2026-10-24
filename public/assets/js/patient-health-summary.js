@@ -251,5 +251,38 @@
     el.addEventListener('click', closeModal);
   });
 
+  function bindAssessmentHistoryUi() {
+    const list = document.getElementById('phsMonthList');
+    const sortSelect = document.getElementById('phsHistorySort');
+    if (!list) return;
+
+    list.querySelectorAll('[data-phs-month]').forEach(function (monthEl) {
+      const btn = monthEl.querySelector('.phs-month__toggle');
+      const panel = monthEl.querySelector('.phs-month__panel');
+      if (!btn || !panel) return;
+      btn.addEventListener('click', function () {
+        const open = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+        panel.hidden = open;
+        monthEl.classList.toggle('is-open', !open);
+      });
+    });
+
+    if (!sortSelect) return;
+    sortSelect.addEventListener('change', function () {
+      const months = Array.prototype.slice.call(list.querySelectorAll('[data-phs-month]'));
+      const latestFirst = sortSelect.value !== 'oldest';
+      months.sort(function (a, b) {
+        const av = Number(a.getAttribute('data-sort') || 0);
+        const bv = Number(b.getAttribute('data-sort') || 0);
+        return latestFirst ? (bv - av) : (av - bv);
+      });
+      months.forEach(function (el) {
+        list.appendChild(el);
+      });
+    });
+  }
+
+  bindAssessmentHistoryUi();
   loadSummary();
 })();

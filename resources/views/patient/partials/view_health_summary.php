@@ -17,6 +17,9 @@ if (!function_exists('phs_icon')) {
             'clock' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
             'user' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
             'spark' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4"/><path d="M12 17v4"/><path d="M3 12h4"/><path d="M17 12h4"/><path d="m5.6 5.6 2.8 2.8"/><path d="m15.6 15.6 2.8 2.8"/><path d="m5.6 18.4 2.8-2.8"/><path d="m15.6 8.4 2.8-2.8"/></svg>',
+            'eye' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+            'calendar' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+            'chevron' => '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
         ];
 
         return $icons[$name] ?? '';
@@ -78,9 +81,10 @@ if (!function_exists('phs_render_assessment_pair')) {
         <div class="phs-assess-card__head">
           <span class="phs-assess-card__icon" aria-hidden="true"><?= phs_icon('spark') ?></span>
           <h4 class="phs-assess-card__label">Preliminary AI Assessment</h4>
+          <span class="phs-tag phs-tag--ai">AI generated</span>
         </div>
         <span class="phs-status <?= htmlspecialchars(phs_status_class($aiKey)) ?>"><?= htmlspecialchars($ai) ?></span>
-        <?php if ($assessedAt !== ''): ?>
+        <?php if ($assessedAt !== '' && $compact): ?>
         <p class="phs-assess-card__meta"><span class="phs-assess-card__meta-icon" aria-hidden="true"><?= phs_icon('clock') ?></span><?= htmlspecialchars($assessedAt) ?></p>
         <?php endif; ?>
         <p class="phs-assess-card__hint">Automated triage result from medConnect AI</p>
@@ -90,11 +94,14 @@ if (!function_exists('phs_render_assessment_pair')) {
         <div class="phs-assess-card__head">
           <span class="phs-assess-card__icon" aria-hidden="true"><?= phs_icon('stethoscope') ?></span>
           <h4 class="phs-assess-card__label">Final Doctor Assessment</h4>
+          <?php if ($showDoctor): ?>
+          <span class="phs-tag phs-tag--verified">Verified</span>
+          <?php endif; ?>
         </div>
         <span class="phs-status <?= htmlspecialchars(phs_status_class($showDoctor ? $finalKey : 'unknown')) ?>"><?= htmlspecialchars($finalLabel) ?></span>
         <?php if ($showDoctor && $finalizedBy !== ''): ?>
         <p class="phs-assess-card__meta"><span class="phs-assess-card__meta-icon" aria-hidden="true"><?= phs_icon('user') ?></span><?= htmlspecialchars($finalizedBy) ?></p>
-        <?php elseif ($assessedAt !== '' && $showDoctor): ?>
+        <?php elseif ($assessedAt !== '' && $showDoctor && $compact): ?>
         <p class="phs-assess-card__meta"><span class="phs-assess-card__meta-icon" aria-hidden="true"><?= phs_icon('clock') ?></span><?= htmlspecialchars($assessedAt) ?></p>
         <?php endif; ?>
         <p class="phs-assess-card__hint"><?= $showDoctor
@@ -111,6 +118,32 @@ if (!function_exists('phs_render_assessment_pair')) {
         <?php
     }
 }
+
+$phs_history_rows = [];
+$phs_history_months = [];
+if (!empty($triage_history) && is_array($triage_history)) {
+    $phs_history_rows = array_slice($triage_history, 1);
+    foreach ($phs_history_rows as $histRow) {
+        $ts = !empty($histRow['assessed_at']) ? strtotime((string) $histRow['assessed_at']) : false;
+        $monthKey = $ts ? date('Y-m', $ts) : 'unknown';
+        $monthLabel = $ts ? date('F Y', $ts) : 'Undated';
+        if (!isset($phs_history_months[$monthKey])) {
+            $phs_history_months[$monthKey] = [
+                'key' => $monthKey,
+                'label' => $monthLabel,
+                'sort' => $ts ? (int) date('Ym', $ts) : 0,
+                'rows' => [],
+            ];
+        }
+        $phs_history_months[$monthKey]['rows'][] = $histRow;
+    }
+}
+$phs_latest_consult_id = (is_array($latest_triage ?? null))
+    ? (int) ($latest_triage['consultation_id'] ?? 0)
+    : 0;
+$phs_latest_details_url = $phs_latest_consult_id > 0
+    ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $phs_latest_consult_id)
+    : (ASSET_BASE . '/views/patient/my_health.php?tab=timeline');
 ?>
 <header class="phs-hero patient-page-intro" aria-label="Health Summary overview">
   <div class="phs-hero__content">
@@ -124,12 +157,15 @@ if (!function_exists('phs_render_assessment_pair')) {
 </header>
 
 <?php if (!empty($latest_triage)): ?>
-<section class="phs-panel phs-panel--assess" aria-label="Latest triage assessment">
-  <header class="phs-panel__head">
+<section class="phs-panel phs-panel--assess phs-panel--current" aria-label="Latest triage assessment">
+  <header class="phs-panel__head phs-panel__head--current">
     <div class="phs-panel__head-main">
       <span class="phs-panel__head-icon" aria-hidden="true"><?= phs_icon('activity') ?></span>
-      <div>
-        <h2 class="phs-panel__title">Current assessment</h2>
+      <div class="phs-panel__head-copy">
+        <div class="phs-panel__title-row">
+          <h2 class="phs-panel__title">Current Assessment</h2>
+          <span class="phs-badge phs-badge--latest">Latest</span>
+        </div>
         <p class="phs-panel__meta">
           <?= !empty($latest_triage['assessed_at']) ? htmlspecialchars(date('M j, Y', strtotime((string) $latest_triage['assessed_at'])) . ' • ' . date('g:i A', strtotime((string) $latest_triage['assessed_at']))) : 'Most recent case' ?>
           <?php if (trim((string) ($latest_triage['chief_complaint'] ?? '')) !== ''): ?>
@@ -138,32 +174,90 @@ if (!function_exists('phs_render_assessment_pair')) {
         </p>
       </div>
     </div>
+    <a class="phs-view-details" href="<?= htmlspecialchars($phs_latest_details_url, ENT_QUOTES, 'UTF-8') ?>">
+      <span class="phs-view-details__icon" aria-hidden="true"><?= phs_icon('eye') ?></span>
+      View details
+    </a>
   </header>
   <div class="phs-panel__body">
     <?php phs_render_assessment_pair($latest_triage, false); ?>
   </div>
+</section>
+<?php endif; ?>
 
-  <?php if (count($triage_history) > 1): ?>
-  <div class="phs-history">
-    <h3 class="phs-history__title">Earlier assessments</h3>
-    <ol class="phs-history__list">
-      <?php foreach (array_slice($triage_history, 1) as $histRow): ?>
-      <li class="phs-history__item">
-        <div class="phs-history__rail" aria-hidden="true"></div>
-        <div class="phs-history__card">
-          <div class="phs-history__meta">
-            <time class="phs-history__date">
-              <?= !empty($histRow['assessed_at']) ? htmlspecialchars(date('M j, Y', strtotime((string) $histRow['assessed_at']))) : '—' ?>
-            </time>
-            <span class="phs-history__complaint"><?= htmlspecialchars(trim((string) ($histRow['chief_complaint'] ?? '')) !== '' ? (string) $histRow['chief_complaint'] : 'Health concern on file') ?></span>
-          </div>
-          <?php phs_render_assessment_pair($histRow, true); ?>
-        </div>
-      </li>
-      <?php endforeach; ?>
-    </ol>
-  </div>
-  <?php endif; ?>
+<?php if (!empty($phs_history_months)): ?>
+<section class="phs-panel phs-panel--history" id="phsHistoryPanel" aria-label="Assessment history">
+  <header class="phs-panel__head phs-panel__head--history">
+    <div class="phs-panel__head-main">
+      <span class="phs-panel__head-icon" aria-hidden="true"><?= phs_icon('clock') ?></span>
+      <div>
+        <h2 class="phs-panel__title">Assessment History</h2>
+        <p class="phs-panel__meta">View your previous health assessments and consultations.</p>
+      </div>
+    </div>
+    <label class="phs-sort" for="phsHistorySort">
+      <span class="phs-sort__label">Sort by</span>
+      <select id="phsHistorySort" class="phs-sort__select" aria-label="Sort assessment history">
+        <option value="latest" selected>Latest</option>
+        <option value="oldest">Oldest</option>
+      </select>
+    </label>
+  </header>
+
+  <ul class="phs-month-list" id="phsMonthList">
+    <?php foreach ($phs_history_months as $month): ?>
+      <?php
+        $monthCount = count($month['rows']);
+        $monthId = 'phs-month-' . preg_replace('/[^a-zA-Z0-9\-]/', '', (string) $month['key']);
+        $countLabel = $monthCount === 1 ? '1 consultation' : ($monthCount . ' consultations');
+        $viewLabel = $monthCount === 1 ? 'View 1 assessment' : ('View ' . $monthCount . ' assessments');
+      ?>
+    <li class="phs-month" data-phs-month data-sort="<?= (int) $month['sort'] ?>">
+      <button type="button"
+              class="phs-month__toggle"
+              id="<?= htmlspecialchars($monthId) ?>-btn"
+              aria-expanded="false"
+              aria-controls="<?= htmlspecialchars($monthId) ?>">
+        <span class="phs-month__lead">
+          <span class="phs-month__icon" aria-hidden="true"><?= phs_icon('calendar') ?></span>
+          <span class="phs-month__copy">
+            <strong class="phs-month__label"><?= htmlspecialchars((string) $month['label']) ?></strong>
+            <span class="phs-month__count"><?= htmlspecialchars($countLabel) ?></span>
+          </span>
+        </span>
+        <span class="phs-month__action">
+          <span class="phs-month__action-text"><?= htmlspecialchars($viewLabel) ?></span>
+          <span class="phs-month__chevron" aria-hidden="true"><?= phs_icon('chevron') ?></span>
+        </span>
+      </button>
+      <div class="phs-month__panel" id="<?= htmlspecialchars($monthId) ?>" hidden>
+        <ol class="phs-history__list">
+          <?php foreach ($month['rows'] as $histRow): ?>
+          <li class="phs-history__item">
+            <div class="phs-history__rail" aria-hidden="true"></div>
+            <div class="phs-history__card">
+              <div class="phs-history__meta">
+                <time class="phs-history__date">
+                  <?= !empty($histRow['assessed_at']) ? htmlspecialchars(date('M j, Y', strtotime((string) $histRow['assessed_at'])) . ' • ' . date('g:i A', strtotime((string) $histRow['assessed_at']))) : '—' ?>
+                </time>
+                <span class="phs-history__complaint"><?= htmlspecialchars(trim((string) ($histRow['chief_complaint'] ?? '')) !== '' ? (string) $histRow['chief_complaint'] : 'Health concern on file') ?></span>
+              </div>
+              <?php phs_render_assessment_pair($histRow, true); ?>
+              <?php
+                $histConsultId = (int) ($histRow['consultation_id'] ?? 0);
+                $histDetailsUrl = $histConsultId > 0
+                    ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $histConsultId)
+                    : (ASSET_BASE . '/views/patient/my_health.php?tab=timeline');
+              ?>
+              <a class="phs-history__link" href="<?= htmlspecialchars($histDetailsUrl, ENT_QUOTES, 'UTF-8') ?>">View details →</a>
+            </div>
+          </li>
+          <?php endforeach; ?>
+        </ol>
+      </div>
+    </li>
+    <?php endforeach; ?>
+  </ul>
 </section>
 <?php endif; ?>
 

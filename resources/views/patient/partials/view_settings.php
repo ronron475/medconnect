@@ -186,7 +186,7 @@ $session_count = is_array($sessions) ? count($sessions) : 0;
                <?= $initial_tab !== 'language' ? 'hidden' : '' ?>>
         <header class="pts-panel-head">
           <h2 data-ui-i18n="language">Language</h2>
-          <p data-ui-i18n="language_help">Your choice is saved to this account and applied immediately.</p>
+          <p data-ui-i18n="language_help">Choose a language, then click Save changes. Your choice is saved to this account.</p>
         </header>
         <div id="ptsLanguageAlert" class="pts-alert" role="alert" hidden></div>
         <form id="ptsLanguageForm" class="pts-pw-stack">

@@ -83,11 +83,110 @@ body.patient-portal .phs-panel__head {
   border-bottom: 1px solid var(--phs-border-soft);
 }
 
+body.patient-portal .phs-panel__head--current,
+body.patient-portal .phs-panel__head--history {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
 body.patient-portal .phs-panel__head-main {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   min-width: 0;
+}
+
+body.patient-portal .phs-panel__head-copy {
+  min-width: 0;
+}
+
+body.patient-portal .phs-panel__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+body.patient-portal .phs-panel__title-row .phs-panel__title {
+  margin: 0;
+}
+
+body.patient-portal .phs-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+body.patient-portal .phs-badge--latest {
+  background: #0f766e;
+  color: #fff;
+}
+
+body.patient-portal .phs-tag {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body.patient-portal .phs-tag--ai {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+body.patient-portal .phs-tag--verified {
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+}
+
+body.patient-portal .phs-view-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--phs-teal-border);
+  background: var(--phs-teal-soft);
+  color: var(--phs-teal);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+body.patient-portal .phs-view-details:hover,
+body.patient-portal .phs-view-details:focus-visible {
+  background: #ccfbf1;
+  outline: none;
+}
+
+body.patient-portal .phs-view-details__icon {
+  display: inline-flex;
+}
+
+body.patient-portal .phs-panel--current {
+  border-color: var(--phs-teal-border);
+  background: linear-gradient(180deg, #f7fffd 0%, #ffffff 42%);
 }
 
 body.patient-portal .phs-panel__head-icon {
@@ -312,24 +411,152 @@ body.patient-portal .patient-health-summary-page .pt-assess-chip--emergency {
 }
 
 /* --------------------------------------------------------------------------
-   Earlier assessments (timeline)
+   Assessment history — month groups + expandable timeline
    -------------------------------------------------------------------------- */
-body.patient-portal .phs-history {
-  margin-top: var(--pt-card-gap, 12px);
-  padding-top: var(--pt-space-md, 12px);
+body.patient-portal .phs-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+body.patient-portal .phs-sort__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--phs-muted);
+  white-space: nowrap;
+}
+
+body.patient-portal .phs-sort__select {
+  min-height: 36px;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--phs-border);
+  border-radius: 999px;
+  background: var(--phs-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;
+  color: var(--phs-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  appearance: none;
+  cursor: pointer;
+}
+
+body.patient-portal .phs-month-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+body.patient-portal .phs-month {
+  border: 1px solid var(--phs-border);
+  border-radius: var(--phs-radius-sm);
+  background: var(--phs-surface-soft);
+  overflow: hidden;
+}
+
+body.patient-portal .phs-month.is-open {
+  border-color: var(--phs-teal-border);
+  background: #fff;
+}
+
+body.patient-portal .phs-month__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+body.patient-portal .phs-month__toggle:hover,
+body.patient-portal .phs-month__toggle:focus-visible {
+  background: rgba(15, 118, 110, 0.04);
+  outline: none;
+}
+
+body.patient-portal .phs-month__lead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+body.patient-portal .phs-month__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--phs-teal-soft);
+  color: var(--phs-teal);
+  border: 1px solid var(--phs-teal-border);
+}
+
+body.patient-portal .phs-month__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+body.patient-portal .phs-month__label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--phs-ink);
+  line-height: 1.25;
+}
+
+body.patient-portal .phs-month__count {
+  font-size: 0.8rem;
+  color: var(--phs-muted);
+  font-weight: 600;
+}
+
+body.patient-portal .phs-month__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--phs-teal-border);
+  background: #fff;
+  color: var(--phs-teal);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+body.patient-portal .phs-month__chevron {
+  display: inline-flex;
+  transition: transform 0.18s ease;
+}
+
+body.patient-portal .phs-month.is-open .phs-month__chevron {
+  transform: rotate(180deg);
+}
+
+body.patient-portal .phs-month__panel {
+  padding: 0 14px 14px;
   border-top: 1px solid var(--phs-border-soft);
 }
 
-body.patient-portal .phs-history__title {
-  margin: 0 0 12px;
-  font-size: 0.88rem;
-  font-weight: 800;
-  color: var(--phs-ink);
+body.patient-portal .phs-month__panel[hidden] {
+  display: none !important;
 }
 
 body.patient-portal .phs-history__list {
   list-style: none;
-  margin: 0;
+  margin: 12px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -403,6 +630,21 @@ body.patient-portal .phs-history__complaint {
   color: var(--phs-muted);
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+body.patient-portal .phs-history__link {
+  display: inline-flex;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--phs-teal);
+  text-decoration: none;
+}
+
+body.patient-portal .phs-history__link:hover,
+body.patient-portal .phs-history__link:focus-visible {
+  text-decoration: underline;
+  outline: none;
 }
 
 body.patient-portal .phs-assess-grid--compact {
@@ -966,6 +1208,31 @@ body.patient-portal select.phs-field__input {
 
   body.patient-portal .phs-history__item {
     grid-template-columns: 12px minmax(0, 1fr);
+  }
+
+  body.patient-portal .phs-panel__head--current,
+  body.patient-portal .phs-panel__head--history {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.patient-portal .phs-view-details,
+  body.patient-portal .phs-sort {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body.patient-portal .phs-sort__select {
+    flex: 1;
+  }
+
+  body.patient-portal .phs-month__toggle {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.patient-portal .phs-month__action {
+    justify-content: center;
   }
 
   body.patient-portal .phs-modal {

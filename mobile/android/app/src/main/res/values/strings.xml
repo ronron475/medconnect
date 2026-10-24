@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">medConnect</string>
+    <string name="error_title">Unable to connect</string>
+    <string name="error_message">Check your internet connection, then try again.</string>
+    <string name="error_retry">Retry</string>
+    <string name="error_ssl">Secure connection failed. Please try again later.</string>
 </resources>

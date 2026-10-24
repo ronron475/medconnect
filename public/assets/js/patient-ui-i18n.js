@@ -45,7 +45,7 @@
       password_lead: 'Keep your account secure by using a strong, unique password.',
       save_changes: 'Save changes',
       language: 'Language',
-      language_help: 'Your choice is saved to this account and applied immediately.',
+      language_help: 'Choose a language, then click Save changes. Your choice is saved to this account.',
       save_language: 'Save Language',
       language_saved: 'Language saved.',
       language_save_fail: 'Could not save language.',
@@ -162,7 +162,7 @@
       password_lead: 'Panatilihing ligtas ang account gamit ang malakas at natatanging password.',
       save_changes: 'I-save ang mga pagbabago',
       language: 'Wika',
-      language_help: 'Nase-save ang napili sa account at agad itong inilalapat.',
+      language_help: 'Pumili ng wika, pagkatapos i-click ang I-save ang mga pagbabago. Nase-save ang napili sa account.',
       save_language: 'I-save ang Wika',
       language_saved: 'Na-save ang wika.',
       language_save_fail: 'Hindi ma-save ang wika.',
@@ -279,7 +279,7 @@
       password_lead: 'Padayuna nga segurado ang account gamit ang mabaskog kag lahi nga password.',
       save_changes: 'I-save ang mga pagbag-o',
       language: 'Lengwahe',
-      language_help: 'Gina-save ang napili sa account kag dayon ini ginabutang.',
+      language_help: 'Pili sang lengwahe, dayon i-click ang I-save ang mga pagbag-o. Gina-save ang napili sa account.',
       save_language: 'I-save ang Lengwahe',
       language_saved: 'Na-save ang lengwahe.',
       language_save_fail: 'Indi ma-save ang lengwahe.',
@@ -435,19 +435,9 @@
     });
   }
 
-  function bindLiveSelect() {
-    var select = document.getElementById('ptsLanguage');
-    if (!select || select._mcUiBound) return;
-    select._mcUiBound = true;
-    select.addEventListener('change', function () {
-      apply(select.value);
-      save(select.value);
-    });
-  }
-
   function boot() {
+    // Apply the account language already on the page — do not live-apply the dropdown.
     apply(current());
-    bindLiveSelect();
   }
 
   global.McPatientUiI18n = { t: t, apply: apply, save: save, normalize: normalize };
