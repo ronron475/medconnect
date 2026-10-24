@@ -572,6 +572,14 @@ body.patient-portal .phs-month__panel[hidden] {
   display: none !important;
 }
 
+body.patient-portal .phs-history-empty {
+  margin: 0;
+  padding: 8px 2px 4px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #64748b;
+}
+
 body.patient-portal .phs-history__list {
   list-style: none;
   margin: 12px 0 0;

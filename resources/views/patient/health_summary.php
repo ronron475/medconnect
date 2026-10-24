@@ -36,7 +36,8 @@ try {
         ");
         $s->execute([(int) $uid]);
         $triage_history = $s->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        // Drop cancelled unfinished stubs; keep completed + active IN_PROGRESS (Processing...).
+        // Drop empty cancelled interview stubs only. Keep real assessments even when a
+        // later "start new complaint" marks an older finished row as CANCELLED.
         $consultationTriageIds = mc_patient_visit_history_consultation_triage_ids($pdo, (int) $uid);
         $triage_history = array_values(array_filter(
             $triage_history,
@@ -47,10 +48,39 @@ try {
                 }
                 $status = strtoupper(trim((string) ($row['assessment_status'] ?? '')));
                 $outcome = strtolower(trim((string) ($row['outcome'] ?? '')));
+                // Active interview — show as Processing...
                 if ($status === 'IN_PROGRESS' || $outcome === 'assessment_in_progress') {
                     return true;
                 }
-                return $id > 0 && isset($consultationTriageIds[$id]);
+                if ($id > 0 && isset($consultationTriageIds[$id])) {
+                    return true;
+                }
+                // Doctor-reviewed case
+                if ((int) ($row['recommendation_approved_by'] ?? 0) > 0) {
+                    return true;
+                }
+                // Finished AI result (column). Do not keep mid-interview stubs that only
+                // have provisional_engine_classification in the payload.
+                if (trim((string) ($row['triage_classification'] ?? '')) !== '') {
+                    return true;
+                }
+                $payload = function_exists('triage_assessment_payload_array')
+                    ? triage_assessment_payload_array($row)
+                    : [];
+                $triage = is_array($payload['triage'] ?? null) ? $payload['triage'] : [];
+                $payloadClass = trim((string) (
+                    $triage['triage_classification']
+                    ?? $payload['triage_classification']
+                    ?? ''
+                ));
+                $payloadDisplay = trim((string) ($triage['triage_display'] ?? $payload['triage_display'] ?? ''));
+                $payloadStatus = strtoupper(trim((string) (
+                    $payload['assessment_status']
+                    ?? ($triage['assessment_status'] ?? '')
+                )));
+
+                return ($payloadClass !== '' || $payloadDisplay !== '')
+                    && $payloadStatus === 'COMPLETED';
             }
         ));
         $triage_history = array_slice($triage_history, 0, 12);

@@ -189,7 +189,6 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
 </section>
 <?php endif; ?>
 
-<?php if (!empty($phs_history_months)): ?>
 <section class="phs-panel phs-panel--history" id="phsHistoryPanel" aria-label="Assessment history">
   <header class="phs-panel__head phs-panel__head--history">
     <div class="phs-panel__head-main">
@@ -199,6 +198,7 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
         <p class="phs-panel__meta">View your previous health assessments and consultations.</p>
       </div>
     </div>
+    <?php if (!empty($phs_history_months)): ?>
     <label class="phs-sort" for="phsHistorySort">
       <span class="phs-sort__label">Sort by</span>
       <select id="phsHistorySort" class="phs-sort__select" aria-label="Sort assessment history">
@@ -206,8 +206,14 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
         <option value="oldest">Oldest</option>
       </select>
     </label>
+    <?php endif; ?>
   </header>
 
+  <?php if (empty($phs_history_months)): ?>
+  <div class="phs-panel__body">
+    <p class="phs-history-empty">No previous assessments yet. Your next completed triage after this one will appear here.</p>
+  </div>
+  <?php else: ?>
   <ul class="phs-month-list" id="phsMonthList">
     <?php foreach ($phs_history_months as $month): ?>
       <?php
@@ -262,8 +268,8 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
     </li>
     <?php endforeach; ?>
   </ul>
+  <?php endif; ?>
 </section>
-<?php endif; ?>
 
 <div id="phsAlert" class="phs-alert" role="alert" hidden></div>
 
