@@ -477,9 +477,9 @@ $patient_page_stylesheets = [
     refreshDashJoinButtons();
     setInterval(function () {
       if (document.hidden) return;
-      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 4000) return;
+      if (window.MedConnectLiveSync && Date.now() - (window.MedConnectLiveSync.lastHubAt() || 0) < 12000) return;
       refreshDashJoinButtons();
-    }, 5000);
+    }, 10000);
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) refreshDashJoinButtons();

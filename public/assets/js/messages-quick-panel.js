@@ -15,8 +15,9 @@
   const API_MARK_READ = '/app/api/messages/mark_read.php';
   const API_THREAD_ACTION = '/app/api/messages/thread_action.php';
 
-  const POLL_CONV_MS = 3000;
-  const POLL_THREAD_MS = 2000;
+  // Softened from 3s / 2s while the panel is open.
+  const POLL_CONV_MS = 8000;
+  const POLL_THREAD_MS = 4000;
 
   function getAssetBase() {
     const body = document.body;

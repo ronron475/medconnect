@@ -6,7 +6,8 @@
 
   if (global.MedConnectPortalNavBadges) return;
 
-  const POLL_MS = 3000;
+  // Softened from 3s; LiveSync / BroadcastChannel still push faster updates.
+  const POLL_MS = 10000;
   const CHANNEL = 'mc_portal_nav_badges_v1';
 
   const API_BY_PORTAL = {

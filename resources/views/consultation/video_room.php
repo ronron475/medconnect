@@ -288,9 +288,8 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   $glJsVer  = mc_global_loader_asset_ver('js/global-loader.js');
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/global-loader.css?v=<?= $glCssVer ?>"/>
-  <script src="<?= ASSET_BASE ?>/assets/js/global-loader.js?v=<?= $glJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/global-loader.js?v=<?= $glJsVer ?>" defer></script>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/responsive.css"/>
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <?php
   $muteTtsCssVer = (int) @filemtime(ASSETS_PATH . '/css/video-mute-tts.css');
   $muteTtsJsVer = (int) @filemtime(ASSETS_PATH . '/js/video-mute-tts.js');
@@ -305,10 +304,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-consultation-ui.css?v=<?= $videoUiCssVer ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/video-room-enhancements.css?v=<?= $videoEnhCssVer ?>"/>
   <?php require_once VIEWS_PATH . '/partials/mobile_scroll_assets.php'; ?>
-  <script src="<?= ASSET_BASE ?>/assets/js/video-call-core.js?v=<?= $videoCoreJsVer ?>"></script>
-  <script src="<?= ASSET_BASE ?>/assets/js/webrtc-peer-call.js?v=<?= $webrtcPeerJsVer ?>"></script>
-  <script src="<?= ASSET_BASE ?>/assets/js/video-consultation-ui.js?v=<?= $videoUiJsVer ?>"></script>
-  <script src="<?= ASSET_BASE ?>/assets/js/video-mute-tts.js?v=<?= $muteTtsJsVer ?>"></script>
+  <link rel="preload" href="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js" as="script"/>
   <script>
     window.__mcVideoRoomMeta = {
       apiBase: <?= json_encode((string) ASSET_BASE) ?>,
@@ -334,7 +330,6 @@ if (session_status() === PHP_SESSION_ACTIVE) {
       scheduledEndLabel: <?= json_encode($slot_end_label) ?>,
     };
   </script>
-  <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <style>
     html, body { margin:0; background:#0b1220; color:#fff; height:100%; width:100%; max-width:100%; overflow:hidden; }
     body { min-height:100%; height:100%; }
@@ -1345,6 +1340,13 @@ if (session_status() === PHP_SESSION_ACTIVE) {
   </div>
   <?php endif; ?>
 
+  <!-- Video libs after first paint; sync order right before room boot (no defer race). -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/video-call-core.js?v=<?= $videoCoreJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/webrtc-peer-call.js?v=<?= $webrtcPeerJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/video-consultation-ui.js?v=<?= $videoUiJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/video-mute-tts.js?v=<?= $muteTtsJsVer ?>"></script>
+  <script src="<?= ASSET_BASE ?>/assets/js/video-room-enhancements.js?v=<?= $videoEnhJsVer ?>"></script>
   <script>
     const roomToken = '<?= $token ?>';
     const userRole  = '<?= $role ?>';
@@ -3349,7 +3351,7 @@ if (session_status() === PHP_SESSION_ACTIVE) {
 
     function startPatientStatusPoll() {
       if (!isPatient || patientStatusPollInterval || patientAwaitingSoap || patientSoapRedirected) return;
-      patientStatusPollInterval = setInterval(pollPatientCallStatus, 3000);
+      patientStatusPollInterval = setInterval(pollPatientCallStatus, 5000);
     }
 
     function pingSessionKeepAlive() {

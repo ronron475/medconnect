@@ -4,7 +4,8 @@
 (function () {
   'use strict';
 
-  const POLL_MS = 5000;
+  // Softened from 5s; queue still refreshes on LiveSync events.
+  const POLL_MS = 10000;
   const base = String(window.APP_BASE || document.body?.dataset?.assetBase || '').replace(/\/$/, '');
   const actionCells = document.querySelectorAll('[data-queue-action]');
   if (!actionCells.length) return;

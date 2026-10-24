@@ -6,7 +6,8 @@
   'use strict';
 
   // Prefer the centralized unread service when available.
-  const POLL_MS = 5000;
+  // Softened from 5s; prefers unread-service events when available.
+  const POLL_MS = 15000;
   const API_PATH = '/app/api/messages/unread_count.php';
 
   function getAssetBase() {

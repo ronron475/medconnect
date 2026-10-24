@@ -8,7 +8,8 @@
   if (global.MedConnectProviderNavCounts) return;
 
   const API_PATH = '/app/api/provider/nav_counts.php';
-  const POLL_MS = 5000;
+  // Softened from 5s; LiveSync covers many count changes.
+  const POLL_MS = 15000;
   const CHANNEL = 'mc_provider_nav_counts_v1';
 
   function getAssetBase() {

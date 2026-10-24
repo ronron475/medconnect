@@ -42,7 +42,9 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   $patientDashMockVer = file_exists($patientDashMockCss) ? (int) filemtime($patientDashMockCss) : time();
   ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/provider-landing-theme.css?v=<?= $providerLandingThemeVer ?>"/>
+  <?php if (!empty($load_provider_dashboard_mock_css)): ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/patient-dashboard-mock.css?v=<?= $patientDashMockVer ?>"/>
+  <?php endif; ?>
   <?php require_once VIEWS_PATH . '/partials/responsive_assets.php'; ?>
   <?php require_once VIEWS_PATH . '/partials/notification_assets.php'; ?>
   <?php $unreadSvcVer = (int) @filemtime(ASSETS_PATH . '/js/messages-unread-service.js'); ?>

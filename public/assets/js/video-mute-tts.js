@@ -740,7 +740,7 @@
     });
     updateCharCount();
 
-    window.setInterval(pollMuteMessages, 2500);
+    window.setInterval(pollMuteMessages, 5000);
 
     function syncMuteStateToPeer() {
       if (typeof sendData !== 'function') return;

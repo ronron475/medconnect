@@ -23,7 +23,9 @@ if (!empty($_SESSION['user_id']) && isset($pdo) && $pdo instanceof PDO) {
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/design-system.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/design-system.css') ?>"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin_dashboard.css"/>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-mobile.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-mobile.css') ?>"/>
-  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css"/>
+  <?php if (!empty($load_admin_charts)): ?>
+  <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/admin-dashboard-charts.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/admin-dashboard-charts.css') ?>"/>
+  <?php endif; ?>
   <?php if (defined('MC_PORTAL_SHELL') && MC_PORTAL_SHELL === 'superadmin'): ?>
   <link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/superadmin_dashboard.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/superadmin_dashboard.css') ?>"/>
   <?php endif; ?>

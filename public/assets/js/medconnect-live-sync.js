@@ -8,7 +8,8 @@
   if (global.MedConnectLiveSync) return;
 
   var API_PATH = '/app/api/live/sync.php';
-  var POLL_MS = 3000;
+  // Softened from 3s — hub still pauses when tab hidden / on video room.
+  var POLL_MS = 10000;
   var MAX_BACKOFF_MS = 30000;
   var timer = null;
   var inFlight = false;

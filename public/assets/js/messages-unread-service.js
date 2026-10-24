@@ -15,7 +15,8 @@
   if (global.MedConnectUnreadService) return; // singleton
 
   const API_PATH = '/app/api/messages/unread_count.php';
-  const POLL_MS = 5000;
+  // Softened from 5s; BroadcastChannel still syncs other tabs immediately.
+  const POLL_MS = 15000;
   const CHANNEL = 'mc_messages_unread_v1';
 
   function getAssetBase() {

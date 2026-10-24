@@ -12,6 +12,7 @@ doctor_application_ensure_schema($pdo);
 bhw_application_ensure_schema($pdo);
 
 $page_title = 'Dashboard';
+$load_admin_charts = true;
 $recentActivities = superadmin_recent_activities($pdo, 8);
 $recentLogins = superadmin_recent_logins($pdo, 6);
 $health = superadmin_system_health($pdo);

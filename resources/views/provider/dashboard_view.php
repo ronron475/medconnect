@@ -6,6 +6,7 @@ $active_page = 'dashboard';
 $page_title  = 'Dashboard';
 $pd_hide_header_brand = true;
 $page_styles = ['provider-dashboard-home.css', 'provider_session_alert.css'];
+$load_provider_dashboard_mock_css = true;
 
 require __DIR__.'/partials/icons.php';
 require __DIR__.'/partials/data.php';

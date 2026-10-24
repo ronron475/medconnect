@@ -18,6 +18,7 @@ doctor_application_ensure_schema($pdo);
 bhw_application_ensure_schema($pdo);
 
 $page_title = 'Dashboard';
+$load_admin_charts = true;
 
 $admin_id = (int) ($_SESSION['user_id'] ?? 0);
 
