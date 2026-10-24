@@ -10,6 +10,14 @@ body.admin-body .portal-page-body {
   gap: 12px !important;
 }
 
+/* Settings / Profile — tighter page chrome, full content width */
+body.admin-body .portal-page-body:has(.portal-profile-page),
+body.admin-body .portal-page-body:has(.mcs[data-mc-settings]) {
+  padding: 8px 14px 12px !important;
+  padding-top: calc(var(--mc-header-offset, var(--portal-header-h, 64px)) + 6px) !important;
+  gap: 8px !important;
+}
+
 /* Dashboard + Analytics: compact header → charts → cards rhythm */
 body.admin-body:has([data-live-dashboard]) .portal-page-body,
 body.admin-body:has(.adm-charts-section) .portal-page-body {

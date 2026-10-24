@@ -371,6 +371,24 @@ body.patient-portal .phs-status--muted {
   font-weight: 700;
 }
 
+body.patient-portal .phs-status--processing {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+body.patient-portal .phs-status--unavailable {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
 /* Legacy triage stack (if any remaining shared markup) */
 body.patient-portal .patient-health-summary-page .pt-assess-stack {
   display: flex;

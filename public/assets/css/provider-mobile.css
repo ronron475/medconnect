@@ -161,4 +161,16 @@
   body.provider-body .provider-page-body .gis-stat-value {
     font-size: 1.05rem !important;
   }
+
+  body.provider-body .provider-page-body .prov-dash-metrics,
+  body.provider-body .provider-page-body .prov-dash-metrics--unified,
+  body.provider-body .provider-page-body .queue-metrics,
+  body.provider-body .provider-page-body .triage-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.provider-body .provider-page-body .mcs-stage .ps-card__head--row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }

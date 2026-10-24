@@ -562,8 +562,26 @@ function patient_symptoms_review_bind_assessment_row(
     $classification = $inProgress
         ? null
         : (string) ($assessment['triage']['triage_classification'] ?? '');
+    if ($classification === '' && !$inProgress && function_exists('triage_ai_persist_classification_from_assessment')) {
+        $classification = (string) (triage_ai_persist_classification_from_assessment($assessment) ?? '');
+    }
     if ($classification === '') {
         $classification = null;
+    }
+    // Keep payload in sync with the persisted AI column so refresh/history stay consistent.
+    if (!$inProgress && $classification !== null && $classification !== '') {
+        if (!isset($assessment['triage']) || !is_array($assessment['triage'])) {
+            $assessment['triage'] = [];
+        }
+        $assessment['triage']['triage_classification'] = $classification;
+        if (trim((string) ($assessment['triage']['triage_display'] ?? '')) === '') {
+            $display = strtoupper(str_replace('_', '-', $classification));
+            if (in_array($display, ['EMERGENCY', 'URGENT', 'NON-URGENT'], true)) {
+                $assessment['triage']['triage_display'] = $display;
+            }
+        }
+        $assessment['assessment_status'] = ClinicalInterviewEngine::STATUS_COMPLETED;
+        $assessment['triage']['assessment_status'] = ClinicalInterviewEngine::STATUS_COMPLETED;
     }
     $assessmentStatus = $inProgress
         ? ClinicalInterviewEngine::STATUS_IN_PROGRESS

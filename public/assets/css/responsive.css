@@ -1730,3 +1730,323 @@ video {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   Full-system mobile pass — Settings / Profile / forms / charts
+   All roles: Patient, Provider, Admin, Superadmin, BHW
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  /* Size-contain shells — do not clip (sidebar drawer lives inside these) */
+  .portal-shell,
+  .root-wrapper,
+  .provider-shell,
+  .adm-shell {
+    max-width: 100%;
+  }
+
+  .portal-page-body,
+  .provider-page-body,
+  .adm-content,
+  .pd-content,
+  .main-workspace {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (max-width: 860px) {
+  /* Settings shells — stack menu above content */
+  .mcs,
+  .pts-shell,
+  .ps-layout,
+  .pts-layout {
+    grid-template-columns: 1fr !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .mcs-menu,
+  .pts-menu {
+    border-right: 0 !important;
+    border-bottom: 1px solid #eef2f6;
+    width: 100%;
+  }
+
+  .mcs-stage,
+  .pts-stage,
+  .ps-content {
+    width: 100%;
+    min-width: 0;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .mcs-stage-bar,
+  .pts-stage__bar {
+    justify-content: stretch;
+  }
+
+  .mcs-search,
+  .pts-search {
+    width: 100%;
+  }
+
+  /* Form / field grids → single column */
+  .pts-form-grid,
+  .ps-form-grid,
+  .portal-profile-fields,
+  .portal-profile-security-form,
+  .bhw-form-grid,
+  .form-grid-2,
+  .profile-grid,
+  .phs-assess-grid,
+  .phs-info-grid,
+  .ps-validation__grid,
+  .pts-notif-grid,
+  .pts-privacy-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .pts-field--full,
+  .ps-span-2,
+  .bhw-form-grid .span-2,
+  .portal-profile-field--full {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Action rows: full-width buttons on narrow screens */
+  .pts-form-actions,
+  .ps-actions,
+  .bhw-form-actions,
+  .portal-profile-security-form .portal-profile-btn,
+  .mcs-stage .ps-actions,
+  .mcs-stage .bhw-form-actions {
+    justify-content: stretch;
+  }
+
+  .pts-form-actions .pts-btn,
+  .ps-actions .ps-save-btn,
+  .ps-actions .mc-btn,
+  .ps-actions button,
+  .bhw-form-actions .bhw-btn-teal,
+  .bhw-form-actions .bhw-btn-outline,
+  .bhw-form-actions .bhw-btn-ghost,
+  .portal-profile-security-form .portal-profile-btn,
+  .profile-grid .profile-card-save,
+  .profile-grid > .mc-card > form > .mc-btn {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    justify-content: center;
+  }
+
+  /* Admin/BHW profile photo layout */
+  .portal-profile-page .portal-profile-photo-layout,
+  .portal-profile-page .portal-profile-card--photo .portal-profile-card__body {
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+  }
+
+  .portal-profile-page .portal-profile-photo-tips {
+    border-left: 0 !important;
+    border-top: 1px solid #eef2f6;
+    margin-top: 12px;
+    padding: 12px 0 0 !important;
+  }
+
+  .portal-profile-page .portal-profile-photo-main {
+    grid-template-columns: 1fr !important;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .portal-profile-page .portal-profile-photo-main .profile-picture-upload__meta,
+  .portal-profile-page .portal-profile-role-badge {
+    justify-self: center;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Contain width without clipping nested table/chart scrollers */
+  body.patient-portal .portal-page-body,
+  body.provider-body .provider-page-body,
+  body.admin-body .portal-page-body,
+  body.superadmin-body .portal-page-body,
+  body.bhw-body .portal-page-body {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* Unwrapped tables: scroll themselves instead of stretching the page */
+  .portal-page-body > table,
+  .provider-page-body > table,
+  .adm-content > table,
+  .pd-content > table,
+  .mc-card > table,
+  .adm-card > table,
+  .ps-card > table,
+  .bhw-card > table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Charts stay in viewport */
+  .chart-container,
+  .chart-wrap,
+  .mc-chart-wrap,
+  .adm-chart,
+  .adm-charts-section,
+  .gis-chart,
+  [data-chart-wrap] {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chart-container canvas,
+  .chart-wrap canvas,
+  .mc-chart-wrap canvas,
+  .adm-chart canvas {
+    max-width: 100% !important;
+  }
+
+  /* Header titles: truncate instead of wrapping the chrome */
+  .topbar-title,
+  .topbar-page-title,
+  .pd-header-page,
+  .pd-header-title,
+  .pt-header-title,
+  .adm-topbar-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: min(52vw, 280px);
+  }
+
+  /* Cards / panels never force page width */
+  .mc-card,
+  .adm-card,
+  .ps-card,
+  .pts-card,
+  .bhw-card,
+  .bhw-form-card,
+  .portal-profile-card,
+  .pd-panel,
+  .queue-panel,
+  .triage-panel,
+  .mr-card,
+  .phs-panel {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Flex toolbars wrap */
+  .mc-card-header,
+  .adm-card-head,
+  .ps-card__head,
+  .ps-card__head--row,
+  .pts-card__head,
+  .pts-card__head--row,
+  .bhw-form-card-title,
+  .phs-panel__head,
+  .queue-panel__head,
+  .triage-panel__head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Inputs / selects readable on iOS */
+  .portal-page-body input,
+  .portal-page-body select,
+  .portal-page-body textarea,
+  .provider-page-body input,
+  .provider-page-body select,
+  .provider-page-body textarea,
+  .pts-input,
+  .ps-input,
+  .form-control {
+    font-size: 16px; /* avoids iOS zoom-on-focus */
+  }
+
+  /* Security devices */
+  .mc-security-devices__stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Notification / filter chip rows scroll instead of overflow */
+  .chip-row,
+  .filter-chips,
+  .pmh-tabs,
+  .tabs-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 640px) {
+  .mcs-stage .ps-actions .ps-save-btn,
+  .mcs-stage .bhw-form-actions > *,
+  .pts-form-actions .pts-btn,
+  .portal-profile-btn,
+  .mc-security-devices__intro .mc-btn {
+    width: 100%;
+  }
+
+  /* denser page padding on phones */
+  body.patient-portal .portal-page-body,
+  body.provider-body .provider-page-body,
+  body.admin-body .portal-page-body,
+  body.superadmin-body .portal-page-body,
+  body.bhw-body .portal-page-body {
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+  }
+
+  /* Avoid cut-off fixed FABs */
+  .messages-fab,
+  .mc-messages-fab,
+  .faq-chatbot-fab,
+  .landing-fab {
+    right: max(12px, env(safe-area-inset-right, 0px));
+    bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .mcs-title,
+  .pts-menu__title,
+  .mcs-panel-head h2,
+  .pts-panel-head h2 {
+    font-size: 1.05rem;
+  }
+
+  .mcs-item,
+  .pts-shell .pts-nav__item {
+    min-height: 40px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* Stack provider profile hero */
+  .ps-profile-hero {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .ps-profile-hero .profile-picture-upload,
+  .ps-profile-hero .profile-picture-upload--settings {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    width: 100%;
+  }
+}
+

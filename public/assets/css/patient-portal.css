@@ -140,10 +140,17 @@ body.patient-portal {
 /* ── Profile / forms ── */
 .patient-portal .profile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--pt-card-gap, 12px);
   align-items: stretch;
   margin: 0;
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .patient-portal .profile-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Equal-height identity cards; push save actions to a shared baseline */
@@ -176,12 +183,35 @@ body.patient-portal {
 
 .patient-portal .form-grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--pt-form-gap, 12px);
+  width: 100%;
 }
 
 .patient-portal .form-group {
   margin-bottom: var(--pt-form-gap, 12px);
+}
+
+/* My Identity / Profile — denser cards, full-width actions */
+.patient-portal .patient-page:has(.profile-grid) > .mc-card {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+}
+
+.patient-portal .profile-grid > .mc-card {
+  padding: 12px 14px;
+}
+
+.patient-portal .profile-grid .profile-card-save,
+.patient-portal .profile-grid > .mc-card > form > .mc-btn,
+.patient-portal .profile-grid > .mc-card > .patient-appearance-form > .mc-btn {
+  min-height: 36px;
+  min-width: 120px;
+  width: auto;
+  max-width: none;
+  align-self: flex-end;
+  padding: 8px 16px;
+  box-sizing: border-box;
 }
 
 .patient-portal .form-group:last-child {

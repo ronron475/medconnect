@@ -30,10 +30,11 @@ if (!function_exists('mc_render_triage_assessment_stack')) {
         // Doctor final only after a completed visit — never mirror AI as "final".
         $showDoctorFinal = $showDoctorFinal || $bookingState === 'completed';
         $finalKey = $showDoctorFinal ? triage_doctor_final_key($row) : 'unknown';
-        // Require an explicit doctor key that differs from AI, or a finalized_by marker.
+        $aiClassKnown = in_array($aiKey, ['emergency', 'urgent', 'non_urgent'], true);
+        // Require clinician evidence — never invent a doctor final from AI engine level fields alone.
         $hasExplicitDoctorFinal = $finalKey !== 'unknown'
             && (
-                $finalKey !== $aiKey
+                ($aiClassKnown && $finalKey !== $aiKey)
                 || trim((string) ($row['finalized_by_name'] ?? $row['finalized_by'] ?? '')) !== ''
                 || !empty($row['doctor_override'])
                 || !empty($row['manual_urgency'])

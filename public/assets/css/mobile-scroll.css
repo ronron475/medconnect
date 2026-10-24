@@ -218,6 +218,29 @@ body.adm-body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Settings shells / profile grids — never widen the page */
+.mcs,
+.pts-shell,
+.ps-page,
+.portal-profile-page,
+.bhw-profile-page,
+.patient-settings-page,
+.mc-security-devices {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.mcs-stage,
+.pts-stage,
+.ps-content,
+.pts-form-grid,
+.ps-form-grid,
+.portal-profile-fields,
+.bhw-form-grid {
+  max-width: 100%;
+  min-width: 0;
+}
+
 /* ── Modals: fit width, vertical scroll; h-scroll only inside wide children ── */
 @media (max-width: 768px) {
   .mc-modal,
@@ -226,7 +249,9 @@ body.adm-body {
   .reg-req-modal__dialog,
   .signin-modal-wrap .signin-card,
   .ann-box,
-  #logout-modal-overlay .mc-modal {
+  #logout-modal-overlay .mc-modal,
+  .phs-modal__card,
+  .provider-session-alert__dialog {
     width: min(100vw - 20px, 100%) !important;
     max-width: calc(100vw - 20px) !important;
     max-height: min(92dvh, calc(100vh - 24px));

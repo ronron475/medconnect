@@ -24,7 +24,7 @@ try {
         $s = $pdo->prepare("
             SELECT tr.id, tr.chief_complaint, tr.assessed_at, tr.triage_classification, tr.level, tr.urgency_label,
                    tr.triage_level, tr.assessment_payload, tr.outcome, tr.recommendation_status,
-                   tr.recommendation_approved_by, tr.assigned_provider_id,
+                   tr.recommendation_approved_by, tr.assigned_provider_id, tr.assessment_status,
                    TRIM(CONCAT(COALESCE(rev.first_name, ''), ' ', COALESCE(rev.last_name, ''))) AS reviewer_name,
                    TRIM(CONCAT(COALESCE(asn.first_name, ''), ' ', COALESCE(asn.last_name, ''))) AS assigned_name
             FROM triage_results tr
@@ -32,10 +32,28 @@ try {
             LEFT JOIN users asn ON asn.id = tr.assigned_provider_id
             WHERE tr.patient_id = ?
             ORDER BY tr.assessed_at DESC, tr.id DESC
-            LIMIT 12
+            LIMIT 24
         ");
         $s->execute([(int) $uid]);
         $triage_history = $s->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        // Drop cancelled unfinished stubs; keep completed + active IN_PROGRESS (Processing...).
+        $consultationTriageIds = mc_patient_visit_history_consultation_triage_ids($pdo, (int) $uid);
+        $triage_history = array_values(array_filter(
+            $triage_history,
+            static function (array $row) use ($consultationTriageIds): bool {
+                $id = (int) ($row['id'] ?? 0);
+                if (!mc_patient_visit_history_is_unfinished_attempt($row)) {
+                    return true;
+                }
+                $status = strtoupper(trim((string) ($row['assessment_status'] ?? '')));
+                $outcome = strtolower(trim((string) ($row['outcome'] ?? '')));
+                if ($status === 'IN_PROGRESS' || $outcome === 'assessment_in_progress') {
+                    return true;
+                }
+                return $id > 0 && isset($consultationTriageIds[$id]);
+            }
+        ));
+        $triage_history = array_slice($triage_history, 0, 12);
         foreach ($triage_history as &$trRow) {
             $name = trim((string) ($trRow['reviewer_name'] ?? ''));
             if ($name === '') {

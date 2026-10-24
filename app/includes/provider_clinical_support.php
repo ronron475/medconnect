@@ -273,9 +273,10 @@ function provider_consultation_clinical_support(PDO $pdo, int $consultationId, i
         $bucket = 'non_urgent';
     }
 
+    // AI preliminary only — never fall back to doctor-overwritten level/urgency fields.
     $aiKey = triage_ai_preliminary_key($row);
-    if ($aiKey === 'unknown') {
-        $aiKey = provider_clinical_support_normalize_bucket($bucket);
+    if (!in_array($aiKey, ['emergency', 'urgent', 'non_urgent'], true)) {
+        $aiKey = 'unknown';
     }
     $aiCaps = $aiKey !== 'unknown' ? provider_clinical_support_caps_label($aiKey) : '';
 
@@ -990,9 +991,12 @@ function provider_clinical_support_original_ai(PDO $pdo, int $consultationId, in
             return $out;
         }
         $bucket = triage_ai_preliminary_key($row);
+        if (!in_array($bucket, ['emergency', 'urgent', 'non_urgent'], true)) {
+            $bucket = 'unknown';
+        }
         $out['triage_id'] = $triageId;
         $out['row'] = $row;
-        $out['bucket'] = $bucket !== 'unknown' ? $bucket : 'unknown';
+        $out['bucket'] = $bucket;
         $out['label'] = $bucket !== 'unknown'
             ? provider_clinical_support_caps_label($bucket)
             : '';

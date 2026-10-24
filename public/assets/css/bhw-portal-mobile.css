@@ -350,3 +350,28 @@
     animation: none !important;
   }
 }
+
+/* BHW Settings / Profile — mobile stack */
+@media (max-width: 860px) {
+  body.bhw-body .bhw-profile-page .mcs {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.bhw-body .bhw-profile-page .mcs-stage .bhw-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.bhw-body .bhw-profile-page .mcs-stage .bhw-form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.bhw-body .bhw-profile-page .mcs-stage .bhw-form-actions > * {
+    width: 100%;
+  }
+
+  body.bhw-body .bhw-profile-page .form-control {
+    font-size: 16px;
+  }
+}

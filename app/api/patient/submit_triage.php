@@ -271,6 +271,10 @@ try {
             ? $complaint
             : ($symptomList !== [] ? implode(', ', $symptomList) : 'General Consultation');
     } else {
+        $persistClass = (string) ($assessment['triage']['triage_classification'] ?? '');
+        if ($persistClass === '' && function_exists('triage_ai_persist_classification_from_assessment')) {
+            $persistClass = (string) (triage_ai_persist_classification_from_assessment($assessment) ?? '');
+        }
         $stmt = $pdo->prepare("
             INSERT INTO triage_results
                 (patient_id, symptoms, chief_complaint, level, urgency_label, status, assessed_at,
@@ -288,7 +292,7 @@ try {
             (int) ($assessment['confidence']['score'] ?? 0),
             (string) ($assessment['severity']['severity'] ?? ''),
             $triageLevel,
-            (string) ($assessment['triage']['triage_classification'] ?? ''),
+            $persistClass !== '' ? $persistClass : null,
             (string) ($assessment['english_translation'] ?? ''),
             json_encode($assessment['detected_symptoms'] ?? [], JSON_UNESCAPED_UNICODE),
             json_encode($assessment['possible_conditions'] ?? [], JSON_UNESCAPED_UNICODE),
@@ -303,7 +307,7 @@ try {
             $triageLevel,
             $complaint,
             $recText,
-            (string) ($assessment['triage']['triage_classification'] ?? '')
+            $persistClass
         );
         $pdo->prepare('UPDATE triage_results SET recommendation_status = ?, recommendation_patient_ack_at = NULL WHERE id = ?')
             ->execute([$recStatus, $triageId]);

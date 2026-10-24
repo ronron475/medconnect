@@ -58,13 +58,15 @@ try {
 
 portal_layout_open($role);
 ?>
+<link rel="stylesheet" href="<?= ASSET_BASE ?>/assets/css/portal-settings-shell.css?v=<?= (int) @filemtime(ASSETS_PATH . '/css/portal-settings-shell.css') ?>">
 
-<div class="mc-card" style="margin-bottom:16px;">
-  <h2 class="text-h2" style="margin:0 0 4px;">Security</h2>
-  <p class="text-muted text-sm" style="margin:0;">Review devices and recent logins for your account.</p>
+<div class="mc-security-devices">
+<div class="mc-card mc-security-devices__intro">
+  <h2 class="text-h2">Security</h2>
+  <p class="text-muted text-sm">Review devices and recent logins for your account.</p>
 </div>
 
-<div class="mc-notif-widgets" style="margin-bottom:16px;">
+<div class="mc-notif-widgets mc-security-devices__stats">
   <div class="mc-notif-widget">
     <div class="mc-notif-widget-value"><?= number_format(count($devices)) ?></div>
     <div class="mc-notif-widget-label">Known devices</div>
@@ -75,16 +77,16 @@ portal_layout_open($role);
   </div>
 </div>
 
-<div class="mc-card" style="padding:0;overflow:hidden;margin-bottom:16px;">
-  <div style="padding:16px 18px;border-bottom:1px solid #f1f5f9;background:#fafbfc;">
-    <h3 class="text-h3" style="margin:0;">Devices</h3>
-    <p class="text-muted text-sm" style="margin:4px 0 0;">Devices are grouped by a privacy-conscious fingerprint (not a hardware ID).</p>
+<div class="mc-card mc-security-devices__card">
+  <div class="mc-security-devices__card-head">
+    <h3 class="text-h3">Devices</h3>
+    <p class="text-muted text-sm">Devices are grouped by a privacy-conscious fingerprint (not a hardware ID).</p>
   </div>
-  <div style="padding:0;">
+  <div class="mc-security-devices__card-body">
     <?php if (empty($devices)): ?>
       <div class="mc-notif-empty">No device records yet.</div>
     <?php else: ?>
-      <div class="mc-notif-list mc-notif-list--feed" style="max-height:none;">
+      <div class="mc-notif-list mc-notif-list--feed mc-security-devices__list">
         <?php foreach ($devices as $d): ?>
           <div class="mc-notif-item">
             <div class="mc-notif-icon mc-notif-icon--critical">
@@ -94,7 +96,7 @@ portal_layout_open($role);
             </div>
             <div class="mc-notif-body">
               <p class="mc-notif-title">Device fingerprint</p>
-              <p class="mc-notif-message" style="-webkit-line-clamp:3;">
+              <p class="mc-notif-message mc-security-devices__message">
                 <?= htmlspecialchars(substr((string) ($d['device_fingerprint'] ?? ''), 0, 16) . '…') ?>
                 <br/>
                 Last seen: <?= htmlspecialchars(date('M j, Y', strtotime((string) ($d['last_seen_at'] ?? 'now'))) . ' • ' . date('g:i A', strtotime((string) ($d['last_seen_at'] ?? 'now')))) ?>
@@ -111,16 +113,16 @@ portal_layout_open($role);
   </div>
 </div>
 
-<div class="mc-card" style="padding:0;overflow:hidden;">
-  <div style="padding:16px 18px;border-bottom:1px solid #f1f5f9;background:#fafbfc;">
-    <h3 class="text-h3" style="margin:0;">Recent logins</h3>
-    <p class="text-muted text-sm" style="margin:4px 0 0;">If you don’t recognize a login, change your password immediately.</p>
+<div class="mc-card mc-security-devices__card">
+  <div class="mc-security-devices__card-head">
+    <h3 class="text-h3">Recent logins</h3>
+    <p class="text-muted text-sm">If you don’t recognize a login, change your password immediately.</p>
   </div>
-  <div style="padding:0;">
+  <div class="mc-security-devices__card-body">
     <?php if (empty($events)): ?>
       <div class="mc-notif-empty">No login events found.</div>
     <?php else: ?>
-      <div class="mc-notif-list mc-notif-list--feed" style="max-height:none;">
+      <div class="mc-notif-list mc-notif-list--feed mc-security-devices__list">
         <?php foreach ($events as $e): ?>
           <div class="mc-notif-item">
             <div class="mc-notif-icon mc-notif-icon--warning">
@@ -145,6 +147,7 @@ portal_layout_open($role);
       </div>
     <?php endif; ?>
   </div>
+</div>
 </div>
 
 <?php portal_layout_close($role); ?>

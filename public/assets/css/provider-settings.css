@@ -180,7 +180,16 @@ body.provider-body .provider-page-body:has(.ps-page) {
 }
 
 .ps-card__body {
-  padding: 14px 16px 16px;
+  padding: 12px 14px 14px;
+}
+
+.ps-page .mcs {
+  width: 100%;
+}
+
+.ps-page .ps-form-grid {
+  width: 100%;
+  max-width: none;
 }
 
 /* Profile hero */
@@ -304,10 +313,11 @@ body.provider-body .provider-page-body:has(.ps-page) {
   gap: 12px 14px;
 }
 
-/* Security module readability */
+/* Security module — full content width, left-aligned with other panels */
 .ps-security-module {
-  max-width: 700px;
-  margin: 0 auto;
+  max-width: none;
+  width: 100%;
+  margin: 0;
 }
 
 /* Validation container (strength + requirements) */
@@ -682,15 +692,22 @@ body.provider-body .provider-page-body:has(.ps-page) {
 /* Actions */
 .ps-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
   margin-top: 4px;
   padding-top: 12px;
   border-top: 1px solid #f1f5f9;
 }
 
-.ps-save-btn {
-  min-width: 148px;
+.ps-save-btn,
+.ps-actions .mc-btn,
+.ps-actions button {
+  min-width: 120px;
+  min-height: 36px;
+  padding: 8px 16px;
+  box-sizing: border-box;
 }
 
 .ps-save-btn:disabled {
@@ -779,6 +796,32 @@ body.provider-body .provider-page-body:has(.ps-page) {
   .ps-profile-hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 860px) {
+  .ps-page .mcs {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .ps-page .ps-form-grid,
+  .ps-page .ps-validation__grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .ps-page .ps-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ps-page .ps-actions > * {
+    width: 100%;
+  }
+
+  .ps-page .ps-input,
+  .ps-page .ps-field select {
+    font-size: 16px;
   }
 }
 

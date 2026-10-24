@@ -33,6 +33,8 @@ if (!function_exists('phs_status_class')) {
             'emergency' => 'phs-status--emergency',
             'urgent' => 'phs-status--urgent',
             'non_urgent' => 'phs-status--routine',
+            'processing' => 'phs-status--processing',
+            'unavailable' => 'phs-status--unavailable',
             default => 'phs-status--muted',
         };
     }
@@ -54,9 +56,11 @@ if (!function_exists('phs_render_assessment_pair')) {
         $approvedBy = (int) ($row['recommendation_approved_by'] ?? 0);
         $hasOverride = !empty($row['doctor_override']) || !empty($row['manual_urgency']);
         $bookingCompleted = strtolower((string) ($row['_booking_state'] ?? '')) === 'completed';
+        $aiClassKnown = in_array($aiKey, ['emergency', 'urgent', 'non_urgent'], true);
+        // Doctor final only with clinician evidence — never invent it from AI engine level fields alone.
         $hasExplicitDoctorFinal = $finalKey !== 'unknown'
             && (
-                $finalKey !== $aiKey
+                ($aiClassKnown && $finalKey !== $aiKey)
                 || $hasOverride
                 || $approvedBy > 0
                 || $bookingCompleted
@@ -87,7 +91,12 @@ if (!function_exists('phs_render_assessment_pair')) {
         <?php if ($assessedAt !== '' && $compact): ?>
         <p class="phs-assess-card__meta"><span class="phs-assess-card__meta-icon" aria-hidden="true"><?= phs_icon('clock') ?></span><?= htmlspecialchars($assessedAt) ?></p>
         <?php endif; ?>
-        <p class="phs-assess-card__hint">Automated triage result from medConnect AI</p>
+        <p class="phs-assess-card__hint"><?= htmlspecialchars(match ($aiKey) {
+            'processing' => 'AI triage is still analyzing this complaint',
+            'unavailable' => 'No AI triage result is available for this case',
+            'unknown' => 'No preliminary AI classification on file yet',
+            default => 'Automated triage result from medConnect AI',
+        }) ?></p>
       </article>
 
       <article class="phs-assess-card phs-assess-card--doctor<?= $isEmergency ? ' is-emergency' : '' ?>">

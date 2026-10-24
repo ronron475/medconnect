@@ -611,3 +611,38 @@
     grid-template-columns: 1fr !important;
   }
 }
+
+/* Admin / Superadmin Settings & Profile — mobile */
+@media (max-width: 860px) {
+  body.admin-body .portal-profile-page .mcs,
+  body.superadmin-body .portal-profile-page .mcs {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  body.admin-body .portal-profile-page .portal-profile-fields,
+  body.superadmin-body .portal-profile-page .portal-profile-fields,
+  body.admin-body .portal-profile-page .portal-profile-security-form,
+  body.superadmin-body .portal-profile-page .portal-profile-security-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.admin-body .portal-profile-page .portal-profile-security-form .portal-profile-btn,
+  body.superadmin-body .portal-profile-page .portal-profile-security-form .portal-profile-btn {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  body.admin-body .portal-profile-page .portal-profile-security-field input,
+  body.superadmin-body .portal-profile-page .portal-profile-security-field input {
+    font-size: 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  body.admin-body .portal-profile-page .portal-profile-session-item,
+  body.superadmin-body .portal-profile-page .portal-profile-session-item {
+    flex-wrap: wrap;
+  }
+}

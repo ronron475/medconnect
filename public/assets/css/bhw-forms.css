@@ -6,7 +6,12 @@
 
 /* ── BHW Profile — full-width settings workspace ── */
 .bhw-profile-page .bhw-profile-metrics {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
+}
+
+.bhw-profile-page.bhw-update-page {
+  width: 100%;
+  max-width: none;
 }
 
 .bhw-profile-page .bhw-update-grid {
@@ -545,8 +550,38 @@
 
 .bhw-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  width: 100%;
+  max-width: none;
+}
+
+/* Settings/profile shell: denser cards, full-width forms, consistent actions */
+.bhw-profile-page .mcs-stage .bhw-form-card,
+.bhw-profile-page .mcs-stage .bhw-card {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+}
+
+.bhw-profile-page .mcs-stage .bhw-form-card-sub {
+  margin: 0 0 12px;
+  max-width: none;
+}
+
+.bhw-profile-page .mcs-stage .bhw-form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .bhw-profile-page .mcs-stage .bhw-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .bhw-profile-page .mcs-stage .bhw-form-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .bhw-form-grid .span-2 {
@@ -582,19 +617,21 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   align-items: center;
-  gap: 10px;
-  margin-top: 28px;
-  padding-top: 24px;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid var(--mc-border-thin, #e2edf1);
 }
 
 .bhw-form-actions .bhw-btn-teal,
 .bhw-form-actions .bhw-btn-outline,
 .bhw-form-actions .bhw-btn-ghost {
-  min-height: 44px;
-  padding: 10px 22px;
+  min-height: 36px;
+  min-width: 120px;
+  padding: 8px 16px;
   font-size: 13px;
   border-radius: 10px;
+  box-sizing: border-box;
   transition: transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 

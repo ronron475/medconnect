@@ -962,30 +962,163 @@ function triage_urgency_display_label(string $key): string
         TriageLevelService::EMERGENCY => 'EMERGENCY',
         TriageLevelService::URGENT => 'URGENT',
         TriageLevelService::NON_URGENT => 'NON-URGENT',
+        'processing' => 'Processing...',
+        'unavailable' => 'Unavailable',
         default => 'Not recorded',
     };
 }
 
 /**
- * Original AI preliminary classification. Never use doctor-overwritten fields.
- *
  * @param array<string, mixed> $row
+ * @return array<string, mixed>
  */
-function triage_ai_preliminary_key(array $row): string
+function triage_assessment_payload_array(array $row): array
 {
-    $class = trim((string) ($row['triage_classification'] ?? ''));
-    if ($class !== '') {
-        return triage_urgency_key_from_fields($class, null, null, null);
-    }
-
     $payload = $row['assessment_payload'] ?? null;
+    if (is_array($payload)) {
+        return $payload;
+    }
     if (is_string($payload) && $payload !== '') {
         $decoded = json_decode($payload, true);
         if (is_array($decoded)) {
-            $fromPayload = (string) ($decoded['triage']['triage_classification'] ?? $decoded['triage_classification'] ?? '');
-            if ($fromPayload !== '') {
-                return triage_urgency_key_from_fields($fromPayload, null, null, null);
-            }
+            return $decoded;
+        }
+    }
+
+    return [];
+}
+
+/**
+ * True when the triage interview is still running (not cancelled).
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_ai_is_processing(array $row): bool
+{
+    if (triage_ai_is_cancelled_or_failed($row)) {
+        return false;
+    }
+
+    $status = strtoupper(trim((string) ($row['assessment_status'] ?? '')));
+    if ($status === 'IN_PROGRESS') {
+        return true;
+    }
+
+    $outcome = strtolower(trim((string) ($row['outcome'] ?? '')));
+    if ($outcome === 'assessment_in_progress') {
+        return true;
+    }
+
+    $payload = triage_assessment_payload_array($row);
+    $payloadStatus = strtoupper(trim((string) ($payload['assessment_status'] ?? '')));
+    if ($payloadStatus === '' && is_array($payload['triage'] ?? null)) {
+        $payloadStatus = strtoupper(trim((string) ($payload['triage']['assessment_status'] ?? '')));
+    }
+    if ($payloadStatus === 'IN_PROGRESS') {
+        return true;
+    }
+
+    $level = strtolower(trim((string) ($row['level'] ?? '')));
+    $label = strtolower(trim((string) ($row['urgency_label'] ?? '')));
+
+    return $level === 'pending' || str_contains($label, 'assessment in progress');
+}
+
+/**
+ * @param array<string, mixed> $row
+ */
+function triage_ai_is_cancelled_or_failed(array $row): bool
+{
+    $status = strtoupper(trim((string) ($row['assessment_status'] ?? '')));
+    if (in_array($status, ['CANCELLED', 'CANCELED', 'NEEDS_VALID_COMPLAINT'], true)) {
+        return true;
+    }
+
+    $outcome = strtolower(trim((string) ($row['outcome'] ?? '')));
+    if (in_array($outcome, ['cancelled', 'canceled', 'failed', 'error'], true)) {
+        return true;
+    }
+
+    $payload = triage_assessment_payload_array($row);
+    $payloadStatus = strtoupper(trim((string) ($payload['assessment_status'] ?? '')));
+    if ($payloadStatus === '' && is_array($payload['triage'] ?? null)) {
+        $payloadStatus = strtoupper(trim((string) ($payload['triage']['assessment_status'] ?? '')));
+    }
+
+    return in_array($payloadStatus, ['CANCELLED', 'CANCELED', 'NEEDS_VALID_COMPLAINT'], true);
+}
+
+/**
+ * Raw AI classification candidates from column + assessment payload only.
+ * Never reads doctor-overwritten level / urgency_label / triage_level.
+ *
+ * @param array<string, mixed> $rowOrAssessment Triage DB row or assessment payload array
+ */
+function triage_ai_raw_classification_candidates(array $rowOrAssessment): array
+{
+    $candidates = [];
+    $push = static function (mixed $value) use (&$candidates): void {
+        $s = trim((string) $value);
+        if ($s !== '') {
+            $candidates[] = $s;
+        }
+    };
+
+    // DB column (when present on a triage_results row)
+    $push($rowOrAssessment['triage_classification'] ?? null);
+
+    $payload = isset($rowOrAssessment['assessment_payload'])
+        ? triage_assessment_payload_array($rowOrAssessment)
+        : $rowOrAssessment;
+    if (!is_array($payload)) {
+        $payload = [];
+    }
+    $triage = is_array($payload['triage'] ?? null) ? $payload['triage'] : [];
+
+    $push($triage['triage_classification'] ?? null);
+    $push($payload['triage_classification'] ?? null);
+    $push($triage['triage_display'] ?? null);
+    $push($payload['triage_display'] ?? null);
+    $push($triage['provisional_engine_classification'] ?? null);
+    $push($payload['provisional_engine_classification'] ?? null);
+
+    if (is_array($triage['recommendation_payload'] ?? null)) {
+        $push($triage['recommendation_payload']['classification'] ?? null);
+    }
+    if (is_array($payload['recommendation_payload'] ?? null)) {
+        $push($payload['recommendation_payload']['classification'] ?? null);
+    }
+    if (is_array($triage['structured_output'] ?? null)) {
+        $push($triage['structured_output']['classification'] ?? null);
+    }
+    if (is_array($payload['structured_output'] ?? null)) {
+        $push($payload['structured_output']['classification'] ?? null);
+    }
+    if (is_array($triage['triage_path_comparison']['old'] ?? null)) {
+        $push($triage['triage_path_comparison']['old']['triage_display'] ?? null);
+        $push($triage['triage_path_comparison']['old']['triage_classification'] ?? null);
+    }
+    if (is_array($triage['triage_path_comparison']['new'] ?? null)) {
+        $push($triage['triage_path_comparison']['new']['triage_display'] ?? null);
+        $push($triage['triage_path_comparison']['new']['triage_classification'] ?? null);
+    }
+    $push($payload['classification'] ?? null);
+
+    return $candidates;
+}
+
+/**
+ * First valid AI urgency key from assessment payload / classification candidates.
+ * Returns emergency|urgent|non_urgent|unknown — never doctor fields.
+ *
+ * @param array<string, mixed> $rowOrAssessment
+ */
+function triage_ai_key_from_assessment_data(array $rowOrAssessment): string
+{
+    foreach (triage_ai_raw_classification_candidates($rowOrAssessment) as $candidate) {
+        $key = triage_urgency_key_from_fields($candidate, null, null, null);
+        if ($key !== 'unknown') {
+            return $key;
         }
     }
 
@@ -993,12 +1126,61 @@ function triage_ai_preliminary_key(array $row): string
 }
 
 /**
+ * Canonical AI class string for DB persistence (EMERGENCY|URGENT|NON_URGENT).
+ *
+ * @param array<string, mixed> $assessment
+ */
+function triage_ai_persist_classification_from_assessment(array $assessment): ?string
+{
+    require_once dirname(__DIR__) . '/core/TriageLevelService.php';
+
+    $key = triage_ai_key_from_assessment_data($assessment);
+    if ($key === TriageLevelService::EMERGENCY) {
+        return 'EMERGENCY';
+    }
+    if ($key === TriageLevelService::URGENT) {
+        return 'URGENT';
+    }
+    if ($key === TriageLevelService::NON_URGENT) {
+        return 'NON_URGENT';
+    }
+
+    return null;
+}
+
+/**
+ * Original AI preliminary classification. Never use doctor-overwritten fields.
+ * Returns emergency|urgent|non_urgent|processing|unavailable.
+ *
+ * @param array<string, mixed> $row
+ */
+function triage_ai_preliminary_key(array $row): string
+{
+    if (triage_ai_is_processing($row)) {
+        return 'processing';
+    }
+
+    $fromAi = triage_ai_key_from_assessment_data($row);
+    if ($fromAi !== 'unknown') {
+        return $fromAi;
+    }
+
+    // Failed / cancelled / completed with no usable AI class.
+    return 'unavailable';
+}
+
+/**
  * Doctor / current official result from level, urgency_label, triage_level.
+ * Never treats in-progress or cancelled interview stubs as a doctor final.
  *
  * @param array<string, mixed> $row
  */
 function triage_doctor_final_key(array $row): string
 {
+    if (triage_ai_is_processing($row) || triage_ai_is_cancelled_or_failed($row)) {
+        return 'unknown';
+    }
+
     return triage_urgency_key_from_fields(
         null,
         (string) ($row['triage_level'] ?? ''),
@@ -1022,7 +1204,11 @@ function triage_doctor_final_label(array $row): string
 {
     $key = triage_doctor_final_key($row);
     if ($key === 'unknown') {
-        $key = triage_ai_preliminary_key($row);
+        // Fall back to a completed AI class only — never mirror processing/unavailable as doctor.
+        $aiKey = triage_ai_preliminary_key($row);
+        if (in_array($aiKey, ['emergency', 'urgent', 'non_urgent'], true)) {
+            $key = $aiKey;
+        }
     }
 
     return triage_urgency_display_label($key);

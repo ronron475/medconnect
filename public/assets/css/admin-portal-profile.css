@@ -8,11 +8,12 @@
 
 .portal-profile-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-  gap: 20px;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: 12px;
   align-items: stretch;
   margin-top: 0;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
+  width: 100%;
 }
 
 .portal-profile-card {
@@ -29,11 +30,11 @@
 .portal-profile-card__head {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 22px 24px 18px;
+  gap: 12px;
+  padding: 14px 16px;
   border-bottom: 1px solid #f1f5f9;
   background: linear-gradient(180deg, #fafbfc 0%, #fff 100%);
-  min-height: 92px;
+  min-height: 0;
   box-sizing: border-box;
 }
 
@@ -66,13 +67,13 @@
   font-size: 0.8125rem;
   color: #64748b;
   margin: 0;
-  line-height: 1.5;
-  max-width: 42ch;
+  line-height: 1.45;
+  max-width: none;
 }
 
 .portal-profile-card__body {
   flex: 1;
-  padding: 24px;
+  padding: 14px 16px 16px;
 }
 
 .portal-profile-card--photo .portal-profile-card__body {
@@ -80,7 +81,7 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 28px 24px 32px;
+  padding: 16px;
 }
 
 /* Photo upload — stacked portal layout */
@@ -188,7 +189,8 @@
 .portal-profile-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
+  gap: 10px 14px;
+  width: 100%;
 }
 
 .portal-profile-field {
@@ -440,11 +442,20 @@
 .portal-profile-page .portal-profile-card--photo .portal-profile-card__body,
 .portal-profile-page .portal-profile-photo-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 220px);
   align-items: center;
   text-align: left;
   gap: 0;
-  padding: 22px 8px 22px 28px;
+  padding: 14px 12px 14px 16px;
+}
+
+.portal-profile-page {
+  width: 100%;
+  max-width: none;
+}
+
+.portal-profile-page .mcs {
+  width: 100%;
 }
 
 .portal-profile-page .portal-profile-photo-main {
@@ -576,10 +587,16 @@
 }
 
 .portal-profile-security-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 420px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+  max-width: none;
+  width: 100%;
+}
+
+.portal-profile-security-form .portal-profile-alert,
+.portal-profile-security-form .portal-profile-btn {
+  grid-column: 1 / -1;
 }
 
 .portal-profile-security-field {
@@ -611,10 +628,20 @@
 }
 
 .portal-profile-security-form .portal-profile-btn {
-  align-self: flex-start;
+  justify-self: end;
+  align-self: end;
+  min-width: 120px;
+  min-height: 36px;
+  padding: 8px 16px;
   background: #0f766e;
   border-color: #0f766e;
   color: #fff;
+}
+
+@media (max-width: 640px) {
+  .portal-profile-security-form {
+    grid-template-columns: 1fr;
+  }
 }
 
 html[data-theme-resolved='dark'] body.admin-body .portal-profile-security-field span {
