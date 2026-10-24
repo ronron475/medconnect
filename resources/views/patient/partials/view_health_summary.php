@@ -128,30 +128,51 @@ if (!function_exists('phs_render_assessment_pair')) {
     }
 }
 
+// Prefer explicit history list (excludes Current Assessment). Fall back to slice for legacy.
 $phs_history_rows = [];
-$phs_history_months = [];
-if (!empty($triage_history) && is_array($triage_history)) {
+if (!empty($assessment_history) && is_array($assessment_history)) {
+    $phs_history_rows = $assessment_history;
+} elseif (!empty($triage_history) && is_array($triage_history)) {
     $phs_history_rows = array_slice($triage_history, 1);
-    foreach ($phs_history_rows as $histRow) {
-        $ts = !empty($histRow['assessed_at']) ? strtotime((string) $histRow['assessed_at']) : false;
-        $monthKey = $ts ? date('Y-m', $ts) : 'unknown';
-        $monthLabel = $ts ? date('F Y', $ts) : 'Undated';
-        if (!isset($phs_history_months[$monthKey])) {
-            $phs_history_months[$monthKey] = [
-                'key' => $monthKey,
-                'label' => $monthLabel,
-                'sort' => $ts ? (int) date('Ym', $ts) : 0,
-                'rows' => [],
-            ];
-        }
-        $phs_history_months[$monthKey]['rows'][] = $histRow;
-    }
 }
-$phs_latest_consult_id = (is_array($latest_triage ?? null))
-    ? (int) ($latest_triage['consultation_id'] ?? 0)
-    : 0;
-$phs_latest_details_url = $phs_latest_consult_id > 0
-    ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $phs_latest_consult_id)
+
+$phs_history_months = [];
+foreach ($phs_history_rows as $histRow) {
+    if (!is_array($histRow)) {
+        continue;
+    }
+    $ts = !empty($histRow['assessed_at']) ? strtotime((string) $histRow['assessed_at']) : false;
+    $monthKey = $ts ? date('Y-m', $ts) : 'unknown';
+    $monthLabel = $ts ? date('F Y', $ts) : 'Undated';
+    if (!isset($phs_history_months[$monthKey])) {
+        $phs_history_months[$monthKey] = [
+            'key' => $monthKey,
+            'label' => $monthLabel,
+            'sort' => $ts ? (int) date('Ym', $ts) : 0,
+            'rows' => [],
+        ];
+    }
+    $phs_history_months[$monthKey]['rows'][] = $histRow;
+}
+// Newest month first (rows within each month stay newest-first from the loader).
+uasort($phs_history_months, static function (array $a, array $b): int {
+    return ((int) ($b['sort'] ?? 0)) <=> ((int) ($a['sort'] ?? 0));
+});
+
+$phs_details_url = static function (array $row): string {
+    $consultId = (int) ($row['consultation_id'] ?? 0);
+    if ($consultId > 0) {
+        return ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $consultId;
+    }
+    $triageId = (int) ($row['id'] ?? 0);
+    if ($triageId > 0) {
+        return ASSET_BASE . '/views/patient/my_health.php?tab=timeline&triage_id=' . $triageId;
+    }
+    return ASSET_BASE . '/views/patient/my_health.php?tab=timeline';
+};
+
+$phs_latest_details_url = is_array($latest_triage ?? null)
+    ? $phs_details_url($latest_triage)
     : (ASSET_BASE . '/views/patient/my_health.php?tab=timeline');
 ?>
 <header class="phs-hero patient-page-intro" aria-label="Health Summary overview">
@@ -211,7 +232,7 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
 
   <?php if (empty($phs_history_months)): ?>
   <div class="phs-panel__body">
-    <p class="phs-history-empty">No previous assessments yet. Your next completed triage after this one will appear here.</p>
+    <p class="phs-history-empty">No previous assessments yet. Past consultations and triage cases from My Health will appear here.</p>
   </div>
   <?php else: ?>
   <ul class="phs-month-list" id="phsMonthList">
@@ -253,13 +274,7 @@ $phs_latest_details_url = $phs_latest_consult_id > 0
                 <span class="phs-history__complaint"><?= htmlspecialchars(trim((string) ($histRow['chief_complaint'] ?? '')) !== '' ? (string) $histRow['chief_complaint'] : 'Health concern on file') ?></span>
               </div>
               <?php phs_render_assessment_pair($histRow, true); ?>
-              <?php
-                $histConsultId = (int) ($histRow['consultation_id'] ?? 0);
-                $histDetailsUrl = $histConsultId > 0
-                    ? (ASSET_BASE . '/views/patient/consultation_detail.php?id=' . $histConsultId)
-                    : (ASSET_BASE . '/views/patient/my_health.php?tab=timeline');
-              ?>
-              <a class="phs-history__link" href="<?= htmlspecialchars($histDetailsUrl, ENT_QUOTES, 'UTF-8') ?>">View details →</a>
+              <a class="phs-history__link" href="<?= htmlspecialchars($phs_details_url($histRow), ENT_QUOTES, 'UTF-8') ?>">View details →</a>
             </div>
           </li>
           <?php endforeach; ?>
